@@ -160,15 +160,18 @@ function viewChangeCode() {
     type: "password", inputmode: "numeric", autocomplete: "off",
     class: "code-input", minlength: 4, maxlength: 8, required: true,
   });
+  const currentCode = codeInput();
   const newCode = codeInput();
   const repeatCode = codeInput();
   const error = h("p", { class: "form-error", role: "alert" });
-  const done = h("p", { class: "form-success", role: "status" });
 
   async function onsubmit(event) {
     event.preventDefault();
     error.textContent = "";
-    done.textContent = "";
+    if (!currentCode.value) {
+      error.textContent = "Escribe el código actual.";
+      return;
+    }
     if (!/^\d{4,8}$/.test(newCode.value)) {
       error.textContent = "El código tiene que tener entre 4 y 8 números.";
       return;
@@ -178,26 +181,35 @@ function viewChangeCode() {
       return;
     }
     try {
-      await api("PUT", "/api/parents/code", { json: { code: newCode.value } });
+      await api("PUT", "/api/parents/code", {
+        json: { current_code: currentCode.value, code: newCode.value },
+      });
       state.parentCode = newCode.value;
-      newCode.value = "";
-      repeatCode.value = "";
-      done.textContent = "Código cambiado. Úsalo la próxima vez que entres.";
+      // Drop the form entirely: only the message and the back link remain.
+      form.replaceWith(
+        h("p", { class: "form-success", role: "status" },
+          "Código cambiado. Úsalo la próxima vez que entres."));
     } catch (err) {
-      error.textContent = errorMessage(err);
+      error.textContent = err instanceof ApiError && err.status === 403
+        ? "El código actual no es correcto."
+        : errorMessage(err);
+      currentCode.value = "";
+      currentCode.focus();
     }
   }
+
+  const form = h("form", { class: "lock lock--left", onsubmit },
+    h("label", {}, "Código actual", currentCode),
+    h("label", {}, "Código nuevo (4 a 8 números)", newCode),
+    h("label", {}, "Repite el código nuevo", repeatCode),
+    error,
+    h("button", { class: "btn btn--primary", type: "submit" }, "Cambiar código"));
 
   render(
     h("main", { class: "page" },
       parentsHeader("Código de padres", { href: "#/parents/config", label: "← Configurar" }),
-      h("form", { class: "lock lock--left", onsubmit },
-        h("label", {}, "Código nuevo (4 a 8 números)", newCode),
-        h("label", {}, "Repite el código nuevo", repeatCode),
-        error,
-        done,
-        h("button", { class: "btn btn--primary", type: "submit" }, "Cambiar código"))));
-  newCode.focus();
+      form));
+  currentCode.focus();
 }
 
 async function viewChildrenList() {

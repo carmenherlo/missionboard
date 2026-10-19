@@ -13,6 +13,7 @@ class UnlockRequest(BaseModel):
 
 
 class ChangeCodeRequest(BaseModel):
+    current_code: str
     code: str = Field(pattern=r"^\d{4,8}$")
 
 
@@ -37,5 +38,8 @@ def unlock(body: UnlockRequest, request: Request) -> None:
 
 @router.put("/code", status_code=204, dependencies=[Depends(require_parent)])
 def change_code(body: ChangeCodeRequest, request: Request) -> None:
+    # Asked again on purpose, so an unattended unlocked tablet can't change it.
+    if not _is_valid_code(request, body.current_code):
+        raise HTTPException(status_code=403, detail="Current code is incorrect")
     with config_store.edit(request.app.state.data_dir) as config:
         config["parents"] = {**(config.get("parents") or {}), "code": body.code}
