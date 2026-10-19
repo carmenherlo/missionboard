@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import db
+from app import children, db, parents
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
@@ -28,6 +28,9 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         with db.connect(data_dir) as conn:
             conn.execute("SELECT 1")
         return {"status": "ok"}
+
+    app.include_router(parents.router)
+    app.include_router(children.router)
 
     @app.get("/", include_in_schema=False)
     def index():

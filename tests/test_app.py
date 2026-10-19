@@ -1,19 +1,6 @@
 import pytest
-from fastapi.testclient import TestClient
 
 from app import db
-from app.main import create_app
-
-
-@pytest.fixture
-def data_dir(tmp_path):
-    return tmp_path / "data"
-
-
-@pytest.fixture
-def client(data_dir):
-    with TestClient(create_app(data_dir)) as c:
-        yield c
 
 
 def test_startup_creates_database(client, data_dir):
