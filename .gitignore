@@ -1,0 +1,12 @@
+# Real family data: never in the repo
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
