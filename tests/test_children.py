@@ -78,12 +78,22 @@ def test_photo_avatar_requires_palette_color(client):
     assert create(client, avatar_type="photo", preset=None).status_code == 422
 
 
-def test_colors_are_exclusive(client):
+def test_presets_are_exclusive(client):
     assert create(client).status_code == 201
     assert create(client, name="Alex").status_code == 409
-    response = create(client, name="Alex", avatar_type="photo", preset=None, color=PURPLE)
-    assert response.status_code == 409
     assert create(client, name="Alex", preset="dinosaur").status_code == 201
+
+
+def test_photo_color_may_repeat(client):
+    create(client)
+    for name in ("Alex", "Leo"):
+        response = create(client, name=name, avatar_type="photo", preset=None, color=PURPLE)
+        assert response.status_code == 201
+
+
+def test_photo_color_does_not_block_preset(client):
+    create(client, name="Alex", avatar_type="photo", preset=None, color=PURPLE)
+    assert create(client, name="Bea", preset="unicorn").status_code == 201
 
 
 def test_update_child(client):
@@ -108,7 +118,7 @@ def test_update_can_keep_own_color(client):
     assert response.status_code == 200
 
 
-def test_update_rejects_color_of_other_child(client):
+def test_update_rejects_preset_of_other_child(client):
     create(client)
     alex = create(client, name="Alex", preset="dinosaur").json()
     response = client.put(

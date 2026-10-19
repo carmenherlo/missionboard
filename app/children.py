@@ -55,20 +55,22 @@ def _find(config: dict, child_id: str) -> dict:
 
 
 def _resolve_avatar(body: ChildIn, config: dict, child_id: str | None) -> tuple[str | None, str]:
-    """Validate the avatar choice and return (preset, color)."""
-    if body.avatar_type == "preset":
-        preset = avatars.PRESETS_BY_ID.get(body.preset or "")
-        if preset is None:
-            raise HTTPException(status_code=422, detail="Unknown preset")
-        color = preset["color"]
-    else:
+    """Validate the avatar choice and return (preset, color).
+
+    A preset is exclusive to one child and always brings its own color.
+    Photo avatars pick any palette color; colors may repeat.
+    """
+    if body.avatar_type == "photo":
         if body.color not in avatars.PALETTE_COLORS:
             raise HTTPException(status_code=422, detail="Color must come from the palette")
-        preset, color = None, body.color
+        return None, body.color
 
-    if any(c["color"] == color and c["id"] != child_id for c in config["children"]):
-        raise HTTPException(status_code=409, detail="Color already in use")
-    return (preset["id"] if preset else None), color
+    preset = avatars.PRESETS_BY_ID.get(body.preset or "")
+    if preset is None:
+        raise HTTPException(status_code=422, detail="Unknown preset")
+    if any(c["preset"] == preset["id"] and c["id"] != child_id for c in config["children"]):
+        raise HTTPException(status_code=409, detail="Preset already in use")
+    return preset["id"], preset["color"]
 
 
 def _remove_photo(request: Request, filename: str | None) -> None:

@@ -1,7 +1,7 @@
 """Built-in avatars and the fixed colour palette.
 
-Every preset owns one palette colour. A child's colour is exclusive, so a preset
-is unavailable while another child is using its colour.
+Every preset owns one palette colour and can only be used by one child.
+Children with a photo pick any palette colour, even one already in use.
 """
 
 PALETTE = [

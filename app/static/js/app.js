@@ -74,7 +74,7 @@ function avatar(child, { size = "md", photoUrl } = {}) {
 function errorMessage(err) {
   if (!(err instanceof ApiError)) return "No se ha podido conectar con la app.";
   if (err.status === 401) return "El código de padres no es válido.";
-  if (err.status === 409) return "Ese color ya lo tiene otro niño.";
+  if (err.status === 409) return "Ese avatar ya lo tiene otro niño.";
   if (err.status === 413) return "La foto es demasiado grande (máximo 5 MB).";
   if (err.status === 415 || err.status === 422) return "Revisa los datos: hay algo que no es válido.";
   return "Algo ha fallado. Inténtalo otra vez.";
@@ -267,7 +267,8 @@ async function viewChildForm(childId) {
     return;
   }
 
-  const usedColors = new Set(children.filter((c) => c.id !== childId).map((c) => c.color));
+  // Presets are exclusive to one child; colours may repeat.
+  const usedPresets = new Set(children.filter((c) => c.id !== childId).map((c) => c.preset));
   const form = {
     name: existing?.name ?? "",
     avatar_type: existing?.avatar_type ?? null,
@@ -316,7 +317,6 @@ async function viewChildForm(childId) {
     form.preset = null;
     form.photoFile = file;
     form.photoPreview = URL.createObjectURL(file);
-    if (usedColors.has(form.color)) form.color = null;
     refreshAll();
   }
 
@@ -331,13 +331,13 @@ async function viewChildForm(childId) {
       return;
     }
     const presets = state.avatars.presets.map((preset) => {
-      const taken = usedColors.has(preset.color);
+      const taken = usedPresets.has(preset.id);
       const selected = form.avatar_type === "preset" && form.preset === preset.id;
       return h("button", {
         type: "button",
         class: `choice${selected ? " choice--selected" : ""}`,
         disabled: taken,
-        title: taken ? `${preset.label} (color en uso)` : preset.label,
+        title: taken ? `${preset.label} (ya lo tiene otro niño)` : preset.label,
         onclick: () => choosePreset(preset),
       }, h("span", { class: "avatar avatar--md", style: `--child-color: ${preset.color}` }, preset.emoji),
          h("span", { class: "choice__label" }, preset.label));
@@ -363,18 +363,15 @@ async function viewChildForm(childId) {
       sections.push(
         h("h2", {}, "Elige un color"),
         h("div", { class: "swatches" },
-          state.avatars.palette.map(({ color, label }) => {
-            const taken = usedColors.has(color);
-            return h("button", {
+          state.avatars.palette.map(({ color, label }) =>
+            h("button", {
               type: "button",
               class: `swatch${form.color === color ? " swatch--selected" : ""}`,
               style: `--swatch: ${color}`,
-              disabled: taken,
-              title: taken ? `${label} (en uso)` : label,
+              title: label,
               "aria-label": label,
               onclick: () => chooseColor(color),
-            });
-          })));
+            }))));
     }
     picker.replaceChildren(...sections);
   }
