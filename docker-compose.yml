@@ -1,0 +1,8 @@
+services:
+  missionboard:
+    build: .
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./data:/srv/data
+    restart: unless-stopped

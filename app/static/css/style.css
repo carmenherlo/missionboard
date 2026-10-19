@@ -1,0 +1,38 @@
+:root {
+  --bg: #f7f4ee;
+  --text: #2b2b2b;
+  --muted: #8a8578;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.home__title {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.children__empty {
+  color: var(--muted);
+  font-size: 1.25rem;
+  text-align: center;
+}
