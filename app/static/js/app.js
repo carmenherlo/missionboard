@@ -138,6 +138,68 @@ function parentsHeader(title, back) {
     h("h1", {}, title));
 }
 
+function viewConfigIndex() {
+  const sections = [
+    { href: "#/parents/config/children", icon: "🧒", label: "Niños" },
+    { href: "#/parents/config/code", icon: "🔒", label: "Código de padres" },
+  ];
+  render(
+    h("main", { class: "page" },
+      parentsHeader("Configurar", { href: "#/", label: "🏠 Salir" }),
+      h("ul", { class: "rows" },
+        sections.map(({ href, icon, label }) =>
+          h("li", {},
+            h("a", { class: "row row--link", href },
+              h("span", { class: "row__icon" }, icon),
+              h("span", { class: "row__name" }, label),
+              h("span", { class: "row__chevron" }, "›")))))));
+}
+
+function viewChangeCode() {
+  const codeInput = () => h("input", {
+    type: "password", inputmode: "numeric", autocomplete: "off",
+    class: "code-input", minlength: 4, maxlength: 8, required: true,
+  });
+  const newCode = codeInput();
+  const repeatCode = codeInput();
+  const error = h("p", { class: "form-error", role: "alert" });
+  const done = h("p", { class: "form-success", role: "status" });
+
+  async function onsubmit(event) {
+    event.preventDefault();
+    error.textContent = "";
+    done.textContent = "";
+    if (!/^\d{4,8}$/.test(newCode.value)) {
+      error.textContent = "El código tiene que tener entre 4 y 8 números.";
+      return;
+    }
+    if (newCode.value !== repeatCode.value) {
+      error.textContent = "Los dos códigos no coinciden.";
+      return;
+    }
+    try {
+      await api("PUT", "/api/parents/code", { json: { code: newCode.value } });
+      state.parentCode = newCode.value;
+      newCode.value = "";
+      repeatCode.value = "";
+      done.textContent = "Código cambiado. Úsalo la próxima vez que entres.";
+    } catch (err) {
+      error.textContent = errorMessage(err);
+    }
+  }
+
+  render(
+    h("main", { class: "page" },
+      parentsHeader("Código de padres", { href: "#/parents/config", label: "← Configurar" }),
+      h("form", { class: "lock lock--left", onsubmit },
+        h("label", {}, "Código nuevo (4 a 8 números)", newCode),
+        h("label", {}, "Repite el código nuevo", repeatCode),
+        error,
+        done,
+        h("button", { class: "btn btn--primary", type: "submit" }, "Cambiar código"))));
+  newCode.focus();
+}
+
 async function viewChildrenList() {
   const [children] = await Promise.all([api("GET", "/api/children"), loadAvatars()]);
 
@@ -175,7 +237,7 @@ async function viewChildrenList() {
 
   render(
     h("main", { class: "page" },
-      parentsHeader("Niños", { href: "#/", label: "🏠 Salir" }),
+      parentsHeader("Niños", { href: "#/parents/config", label: "← Configurar" }),
       children.length
         ? h("ul", { class: "rows" }, children.map(row))
         : h("p", { class: "empty" }, "Todavía no hay niños. Añade el primero."),
@@ -372,7 +434,9 @@ async function viewChildForm(childId) {
 
 const routes = [
   [/^#?\/?$/, () => viewHome()],
-  [/^#\/parents\/?$/, () => { location.hash = "#/parents/config/children"; }, true],
+  [/^#\/parents\/?$/, () => { location.hash = "#/parents/config"; }, true],
+  [/^#\/parents\/config$/, () => viewConfigIndex(), true],
+  [/^#\/parents\/config\/code$/, () => viewChangeCode(), true],
   [/^#\/parents\/config\/children$/, () => viewChildrenList(), true],
   [/^#\/parents\/config\/children\/new$/, () => viewChildForm(null), true],
   [/^#\/parents\/config\/children\/([\w-]+)$/, (m) => viewChildForm(m[1]), true],

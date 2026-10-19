@@ -1,7 +1,7 @@
 import secrets
 
-from fastapi import APIRouter, Header, HTTPException, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, Field
 
 from app import config_store
 
@@ -10,6 +10,10 @@ router = APIRouter(prefix="/api/parents", tags=["parents"])
 
 class UnlockRequest(BaseModel):
     code: str
+
+
+class ChangeCodeRequest(BaseModel):
+    code: str = Field(pattern=r"^\d{4,8}$")
 
 
 def _is_valid_code(request: Request, code: str | None) -> bool:
@@ -29,3 +33,9 @@ def require_parent(request: Request, x_parent_code: str | None = Header(default=
 def unlock(body: UnlockRequest, request: Request) -> None:
     if not _is_valid_code(request, body.code):
         raise HTTPException(status_code=401, detail="Invalid parent code")
+
+
+@router.put("/code", status_code=204, dependencies=[Depends(require_parent)])
+def change_code(body: ChangeCodeRequest, request: Request) -> None:
+    with config_store.edit(request.app.state.data_dir) as config:
+        config["parents"] = {**(config.get("parents") or {}), "code": body.code}
