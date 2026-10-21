@@ -558,10 +558,11 @@ input[type="time"] {
   font-weight: 600;
 }
 
+/* Selected chips and tabs use the primary colour, like the main buttons. */
 .chip--on {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--surface);
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
 }
 
 .tabs {
@@ -587,8 +588,8 @@ input[type="time"] {
 }
 
 .tab--on {
-  background: var(--text);
-  color: var(--surface);
+  background: var(--primary);
+  color: #fff;
 }
 
 /* ---------- images ---------- */
@@ -810,8 +811,12 @@ a.child-card {
 .is-dragging {
   position: relative;
   z-index: 1;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.15);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
   cursor: grabbing;
+}
+
+.row--sortable {
+  will-change: transform;
 }
 
 .times {

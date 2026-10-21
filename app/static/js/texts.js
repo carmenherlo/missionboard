@@ -100,6 +100,11 @@ export const t = {
     missingName: "Escribe el nombre de la misión.",
   },
   missionEdit: {
+    daysSummary: {
+      all: "Todos los días",
+      weekdays: "De lunes a viernes",
+      weekend: "Sábado y domingo",
+    },
     name: "Nombre",
     image: "Imagen",
     changeImage: "Cambiar imagen",

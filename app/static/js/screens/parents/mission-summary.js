@@ -7,6 +7,18 @@ export function daysText(days) {
   return WEEKDAYS.filter((d) => days.includes(d)).map((d) => t.days[d]).join(" ");
 }
 
+// The active days in words: "De lunes a viernes", "lunes, miércoles y viernes"…
+export function daysLongText(days) {
+  const sorted = WEEKDAYS.filter((d) => days.includes(d));
+  const key = sorted.join();
+  if (key === WEEKDAYS.join()) return t.missionEdit.daysSummary.all;
+  if (key === WEEKDAYS.slice(0, 5).join()) return t.missionEdit.daysSummary.weekdays;
+  if (key === WEEKDAYS.slice(5).join()) return t.missionEdit.daysSummary.weekend;
+  const names = sorted.map((d) => t.dayNames[d]);
+  const text = names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0];
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export function scheduleText(schedule) {
   if (!schedule) return t.childMissions.alwaysOpen;
   return schedule.end

@@ -8,7 +8,7 @@ import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { WEEKDAYS } from "./mission-summary.js";
+import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const NAME_SAVE_DELAY_MS = 600;
 
@@ -74,7 +74,9 @@ export async function viewMissionEdit(missionId) {
   // ---------- days ----------
   const daysBox = h("div", { class: "chips" });
   const daysError = h("p", { class: "form-error", role: "alert" });
+  const daysSummary = h("p", { class: "hint" });
   function renderDays() {
+    daysSummary.textContent = daysLongText(mission.days);
     daysBox.replaceChildren(...WEEKDAYS.map((day) => {
       const on = mission.days.includes(day);
       return h("button", {
@@ -210,7 +212,7 @@ export async function viewMissionEdit(missionId) {
         h("section", { class: "stack" },
           imageBox,
           h("label", {}, t.missionEdit.name, nameInput),
-          h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysError),
+          h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysSummary, daysError),
           h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.schedule), scheduleBox, scheduleError)),
         h("section", { class: "stack" },
           stepsTitle, stepsEmpty, stepsList, addStep)),
