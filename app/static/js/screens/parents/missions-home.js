@@ -16,7 +16,7 @@ export async function viewMissionsHome() {
 
   const content = children.length
     ? [
-        h("p", { class: "hint hint--center" }, t.missions.whose),
+        h("p", { class: "hint" }, t.missions.whose),
         h("div", { class: "children children--compact" },
           children.map((child, i) =>
             h("a", { class: "child-card", href: `#/parents/config/missions/child/${child.id}` },

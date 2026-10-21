@@ -205,7 +205,7 @@ export async function viewMissionEdit(missionId) {
   renderFooter();
 
   render(
-    h("main", { class: "page page--wide" },
+    h("main", { class: "page" },
       parentsHeader(h("span", { class: "title-line" }, titleName, status.element),
         { href: listHref, label: t.childMissions.title(child.name) }),
       h("div", { class: "columns" },
