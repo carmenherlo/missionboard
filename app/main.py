@@ -21,6 +21,19 @@ from app.storage.photo_store import PhotoStore
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
 
+# The app's own code must never be stale after an update: the browser asks
+# the server every time (a quick "not modified" when nothing changed).
+NO_CACHE = {"Cache-Control": "no-cache"}
+
+
+class AppStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if path.endswith((".js", ".css")):
+            response.headers.update(NO_CACHE)
+        return response
+
+
 ERROR_STATUS = {
     errors.NotFoundError: 404,
     errors.ConflictError: 409,
@@ -72,9 +85,9 @@ def create_app(
 
     @app.get("/", include_in_schema=False)
     def index():
-        return FileResponse(STATIC_DIR / "index.html")
+        return FileResponse(STATIC_DIR / "index.html", headers=NO_CACHE)
 
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    app.mount("/static", AppStaticFiles(directory=STATIC_DIR), name="static")
     return app
 
 

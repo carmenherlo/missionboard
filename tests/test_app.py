@@ -39,6 +39,11 @@ def test_static_assets(client, path):
         assert "javascript" in response.headers["content-type"]
 
 
+@pytest.mark.parametrize("path", ["/", "/static/js/main.js", "/static/css/style.css"])
+def test_app_code_is_revalidated(client, path):
+    assert client.get(path).headers["cache-control"] == "no-cache"
+
+
 def test_js_imports_resolve():
     """Every relative import in a module points to a file that exists."""
     for module in STATIC_DIR.rglob("*.js"):
