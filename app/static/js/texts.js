@@ -6,6 +6,7 @@ export const t = {
     saving: "Guardando…",
     saved: "✓ Guardado",
     done: "Listo",
+    backTo: (place) => `Volver a ${place}`,
   },
   errors: {
     offline: "No se ha podido conectar con la app.",

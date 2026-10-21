@@ -95,9 +95,10 @@ export async function viewStepEdit(missionId, stepId) {
     parentsHeader(h("span", { class: "title-line" }, t.stepEdit.title, status.element),
       { href: missionHref, label: mission.name }),
     h("main", { class: "page" },
-      h("div", { class: "stack" },
-        h("label", {}, t.stepEdit.text, textInput, h("span", { class: "hint" }, t.stepEdit.textHint)),
-        preview,
-        h("div", { class: "field" }, h("span", { class: "field__label" }, t.stepEdit.image), picker.element),
-        footer)));
+      h("div", { class: "columns columns--equal" },
+        h("section", { class: "stack" },
+          h("label", {}, t.stepEdit.text, textInput, h("span", { class: "hint" }, t.stepEdit.textHint)),
+          h("div", { class: "field" }, h("span", { class: "field__label" }, t.stepEdit.image), picker.element)),
+        // Right: what the child will see, always in view, with the actions.
+        h("aside", { class: "side-panel" }, preview, footer))));
 }
