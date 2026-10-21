@@ -53,6 +53,11 @@ def test_change_code_rejects_wrong_current_code(client, data_dir):
     assert not config_path(data_dir).exists()
 
 
+def test_change_code_rejects_same_code(client, data_dir):
+    assert change_code(client, DEFAULT_PARENT_CODE).status_code == 409
+    assert not config_path(data_dir).exists()
+
+
 @pytest.mark.parametrize("code", ["123", "123456789", "12a4", " 1234", ""])
 def test_change_code_rejects_invalid(client, code):
     assert change_code(client, code).status_code == 422

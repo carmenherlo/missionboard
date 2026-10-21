@@ -1,6 +1,6 @@
 import secrets
 
-from app.errors import PermissionDeniedError
+from app.errors import ConflictError, PermissionDeniedError
 from app.parents.repository import ParentsRepository
 
 
@@ -17,4 +17,6 @@ class ParentsService:
         # Asked again on purpose, so an unattended unlocked tablet can't change it.
         if not self.is_valid_code(current_code):
             raise PermissionDeniedError("Current code is incorrect")
+        if new_code == current_code:
+            raise ConflictError("New code must differ from the current one")
         self._parents.set_code(new_code)

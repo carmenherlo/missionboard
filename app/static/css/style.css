@@ -202,6 +202,50 @@ input[type="password"] {
   text-align: center;
 }
 
+.code-field {
+  position: relative;
+  display: flex;
+}
+
+.code-field .code-input {
+  flex: 1;
+  min-width: 0;
+  padding-right: 3.25rem;
+  padding-left: 3.25rem;
+}
+
+.code-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.code-field__toggle:hover,
+.code-field__toggle:focus-visible {
+  color: var(--text);
+}
+
+.code-field__toggle svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .form-error {
   margin: 0;
   color: var(--danger);

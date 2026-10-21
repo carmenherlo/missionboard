@@ -15,10 +15,15 @@ export const t = {
     empty: "Todavía no hay niños.",
     parentsLabel: "Zona de padres",
   },
+  codeField: {
+    show: "Mostrar código",
+    hide: "Ocultar código",
+  },
   lock: {
     title: "Zona de padres",
     code: "Código",
     submit: "Entrar",
+    missing: "Escribe el código.",
     homeLabel: "Inicio",
   },
   config: {
@@ -36,7 +41,8 @@ export const t = {
     submit: "Cambiar código",
     missingCurrent: "Escribe el código actual.",
     badFormat: "El código tiene que tener entre 4 y 8 números.",
-    mismatch: "Los dos códigos no coinciden.",
+    mismatch: "Los dos códigos nuevos no coinciden.",
+    sameAsCurrent: "El código nuevo no puede ser igual al anterior.",
     wrongCurrent: "El código actual no es correcto.",
     done: "Código cambiado. Úsalo la próxima vez que entres.",
   },
