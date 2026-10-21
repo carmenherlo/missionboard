@@ -1,11 +1,16 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
+import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const NAME_SAVE_DELAY_MS = 600;
+
+// New child: short form with an "Añadir niño" button.
+// Existing child: every change is saved on the spot, like missions and steps.
 
 export async function viewChildForm(childId) {
   const [children, catalog] = await Promise.all([api("GET", "/api/children"), loadAvatars()]);
@@ -26,10 +31,19 @@ export async function viewChildForm(childId) {
     photoPreview: null,
   };
   let pickerOpen = !existing;
+  let hasSavedPhoto = Boolean(existing?.photo_url);
+  const status = existing ? saveStatus() : null;
+  let nameTimer = null;
 
   const nameInput = h("input", {
     type: "text", maxlength: 30, required: true, value: form.name,
-    oninput: (e) => { form.name = e.target.value; refreshPreview(); },
+    oninput: (e) => {
+      form.name = e.target.value;
+      refreshPreview();
+      clearTimeout(nameTimer);
+      nameTimer = setTimeout(autosave, NAME_SAVE_DELAY_MS);
+    },
+    onblur: () => { if (existing && form.name.trim() !== title.textContent) autosave(); },
   });
   const preview = h("div", { class: "avatar-edit" });
   const picker = h("div", { class: "picker" });
@@ -51,6 +65,7 @@ export async function viewChildForm(childId) {
     form.photoFile = null;
     form.photoPreview = null;
     refreshAll();
+    autosave();
   }
 
   function choosePhoto(file) {
@@ -66,11 +81,13 @@ export async function viewChildForm(childId) {
     form.photoFile = file;
     form.photoPreview = URL.createObjectURL(file);
     refreshAll();
+    autosave();
   }
 
   function chooseColor(color) {
     form.color = color;
     refreshAll();
+    autosave();
   }
 
   function refreshPicker() {
@@ -133,7 +150,7 @@ export async function viewChildForm(childId) {
   function validate() {
     if (!form.name.trim()) return t.childForm.missingName;
     if (!form.avatar_type) return t.childForm.missingAvatar;
-    if (form.avatar_type === "photo" && !form.photoFile && !existing?.photo_url) {
+    if (form.avatar_type === "photo" && !form.photoFile && !hasSavedPhoto) {
       return t.childForm.missingPhoto;
     }
     if (!form.color) return t.childForm.missingColor;
@@ -144,45 +161,77 @@ export async function viewChildForm(childId) {
   // updates the same child instead of creating a duplicate.
   let savedId = existing?.id ?? null;
 
-  async function onsubmit(event) {
-    event.preventDefault();
-    error.textContent = validate() ?? "";
-    if (error.textContent) return;
-
+  // Saves the form as it is now. An existing child gets the new photo first,
+  // so the avatar type and colour saved next refer to it.
+  async function saveForm() {
     const payload = {
       name: form.name,
       avatar_type: form.avatar_type,
       preset: form.preset,
       color: form.color,
     };
+    const upload = (id) => api("PUT", `/api/children/${id}/photo`, {
+      body: form.photoFile, contentType: form.photoFile.type,
+    });
+    if (savedId && form.photoFile) {
+      await upload(savedId);
+      form.photoFile = null;
+    }
+    const saved = savedId
+      ? await api("PUT", `/api/children/${savedId}`, { json: payload })
+      : await api("POST", "/api/children", { json: payload });
+    savedId = saved.id;
+    if (form.photoFile) {
+      await upload(saved.id);
+      form.photoFile = null;
+    }
+    hasSavedPhoto = form.avatar_type === "photo";
+    return saved;
+  }
+
+  async function autosave() {
+    if (!existing) return;
+    clearTimeout(nameTimer);
+    const problem = validate();
+    if (problem) {
+      status.fail(problem);
+      return;
+    }
+    await status.track(saveForm()).catch(() => {});
+    title.textContent = form.name.trim();
+  }
+
+  async function onsubmit(event) {
+    event.preventDefault();
+    if (existing) return; // already saved; Enter in the name field does nothing more
+    error.textContent = validate() ?? "";
+    if (error.textContent) return;
     try {
-      const saved = savedId
-        ? await api("PUT", `/api/children/${savedId}`, { json: payload })
-        : await api("POST", "/api/children", { json: payload });
-      savedId = saved.id;
-      if (form.photoFile) {
-        await api("PUT", `/api/children/${saved.id}/photo`, {
-          body: form.photoFile, contentType: form.photoFile.type,
-        });
-      }
+      await saveForm();
       location.hash = "#/parents/config/children";
     } catch (err) {
       error.textContent = errorMessage(err);
     }
   }
 
+  const title = h("span", {}, existing ? existing.name : "");
+
   refreshAll();
   render(
-    parentsHeader(existing ? t.childForm.titleEdit(existing.name) : t.childForm.titleNew,
-        { href: "#/parents/config/children", label: t.children.back }),
+    parentsHeader(
+      existing ? h("span", { class: "title-line" }, title, status.element) : t.childForm.titleNew,
+      { href: "#/parents/config/children", label: t.children.back }),
     h("main", { class: "page" },
       h("form", { class: "child-form", onsubmit },
         preview,
         h("label", {}, t.childForm.name, nameInput),
         picker,
         error,
-        h("div", { class: "form-actions" },
-          h("a", { class: "btn", href: "#/parents/config/children" }, t.childForm.cancel),
-          h("button", { class: "btn btn--primary", type: "submit" }, t.childForm.save)))));
+        existing
+          ? h("div", { class: "form-actions" },
+              h("a", { class: "btn btn--primary", href: "#/parents/config/children" }, t.common.done))
+          : h("div", { class: "form-actions" },
+              h("a", { class: "btn", href: "#/parents/config/children" }, t.childForm.cancel),
+              h("button", { class: "btn btn--primary", type: "submit" }, t.childForm.add)))));
   if (!existing) nameInput.focus();
 }

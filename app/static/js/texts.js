@@ -3,7 +3,6 @@
 export const t = {
   common: {
     cancel: "Cancelar",
-    save: "Guardar",
     saving: "Guardando…",
     saved: "✓ Guardado",
     done: "Listo",
@@ -154,7 +153,6 @@ export const t = {
   },
   childForm: {
     titleNew: "Añadir niño",
-    titleEdit: (name) => `Editar a ${name}`,
     name: "Nombre",
     changeAvatar: "Cambiar avatar",
     chooseAvatar: "Elige un avatar",
@@ -167,6 +165,6 @@ export const t = {
     missingPhoto: "Elige una foto.",
     missingColor: "Elige un color.",
     cancel: "Cancelar",
-    save: "Guardar",
+    add: "Añadir niño",
   },
 };
