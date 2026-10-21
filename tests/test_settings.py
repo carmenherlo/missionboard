@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from app.clock import SystemClock, today
 from app.main import create_app
 from app.settings import Features, Settings, SettingsRepository
+from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import ConfigStore, config_path
 
 
@@ -72,7 +73,7 @@ def test_startup_upgrades_config(tmp_path):
     repo_with(tmp_path, {"version": 1, "parents": {"code": "1111"}, "children": []})
     with TestClient(create_app(tmp_path)):
         pass
-    assert yaml.safe_load(config_path(tmp_path).read_text())["version"] == 2
+    assert yaml.safe_load(config_path(tmp_path).read_text())["version"] == CURRENT_VERSION
 
 
 class FixedClock:

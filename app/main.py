@@ -9,6 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from app import errors
 from app.children import api as children_api
 from app.clock import Clock, SystemClock
+from app.images import api as images_api
+from app.images.libraries import LIBRARIES, ImageLibraries, Library
+from app.missions import api as missions_api
 from app.parents import api as parents_api
 from app.settings import SettingsRepository
 from app.storage import db
@@ -28,7 +31,11 @@ ERROR_STATUS = {
 }
 
 
-def create_app(data_dir: Path | None = None, clock: Clock | None = None) -> FastAPI:
+def create_app(
+    data_dir: Path | None = None,
+    clock: Clock | None = None,
+    libraries: list[Library] | None = None,
+) -> FastAPI:
     data_dir = data_dir or Path(os.environ.get("MISSIONBOARD_DATA_DIR", DEFAULT_DATA_DIR))
     config_store = ConfigStore(data_dir)
 
@@ -46,6 +53,7 @@ def create_app(data_dir: Path | None = None, clock: Clock | None = None) -> Fast
     app.state.config_store = config_store
     app.state.photo_store = PhotoStore(data_dir)
     app.state.clock = clock or SystemClock()
+    app.state.image_libraries = ImageLibraries(LIBRARIES if libraries is None else libraries)
 
     @app.exception_handler(errors.DomainError)
     def domain_error(request: Request, exc: errors.DomainError):
@@ -59,6 +67,8 @@ def create_app(data_dir: Path | None = None, clock: Clock | None = None) -> Fast
 
     app.include_router(parents_api.router)
     app.include_router(children_api.router)
+    app.include_router(missions_api.router)
+    app.include_router(images_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():

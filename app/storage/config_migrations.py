@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 2
+CURRENT_VERSION = 3
 
 
 class ConfigVersionError(Exception):
@@ -45,8 +45,14 @@ def _v1_to_v2(doc: dict) -> dict:
     }
 
 
+def _v2_to_v3(doc: dict) -> dict:
+    """Add the missions list (each mission belongs to one child)."""
+    return {**doc, "version": 3, "missions": doc.get("missions") or []}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
+    2: _v2_to_v3,
 }
 
 

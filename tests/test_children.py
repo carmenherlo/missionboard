@@ -205,7 +205,7 @@ def test_invalid_photo(client, data, content_type, status):
 
 
 def test_photo_too_large(client, monkeypatch):
-    monkeypatch.setattr("app.children.service.MAX_PHOTO_BYTES", 10)
+    monkeypatch.setattr("app.images.photos.MAX_PHOTO_BYTES", 10)
     child = create(client).json()
     assert upload(client, child["id"]).status_code == 413
 

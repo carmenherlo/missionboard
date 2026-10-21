@@ -12,6 +12,9 @@ const EMOJI = {
   parentCode: "🔒",
   edit: "✏️",
   photo: "📷",
+  missions: "🚀",
+  search: "🔍",
+  drag: "⠿",
   back: "←",
   next: "›",
 };

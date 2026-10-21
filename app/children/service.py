@@ -1,14 +1,14 @@
 import secrets
 from dataclasses import dataclass, replace
 from pathlib import Path
+from collections.abc import Iterable
+from typing import Protocol
 
 from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
-from app.errors import ConflictError, InvalidError, NotFoundError, TooLargeError, UnsupportedTypeError
+from app.errors import ConflictError, InvalidError, NotFoundError
+from app.images.photos import validate_photo
 from app.storage.photo_store import PhotoStore
-
-MAX_PHOTO_BYTES = 5 * 1024 * 1024
-PHOTO_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
 
 
 @dataclass
@@ -21,20 +21,24 @@ class ChildData:
     color: str | None = None
 
 
-def sniff_photo_type(data: bytes) -> str | None:
-    if data.startswith(b"\xff\xd8\xff"):
-        return "image/jpeg"
-    if data.startswith(b"\x89PNG\r\n\x1a\n"):
-        return "image/png"
-    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
-        return "image/webp"
-    return None
+class ChildDependent(Protocol):
+    """Configuration that belongs to a child (e.g. missions) and goes away with it."""
+
+    def remove_child_data(self, child_id: str) -> list[str]:
+        """Remove the child's entries and return the photo files they used."""
+        ...
 
 
 class ChildrenService:
-    def __init__(self, children: ChildrenRepository, photos: PhotoStore):
+    def __init__(
+        self,
+        children: ChildrenRepository,
+        photos: PhotoStore,
+        dependents: Iterable[ChildDependent] = (),
+    ):
         self._children = children
         self._photos = photos
+        self._dependents = list(dependents)
 
     def list(self) -> list[Child]:
         return self._children.list()
@@ -77,23 +81,22 @@ class ChildrenService:
         return child
 
     def delete(self, child_id: str) -> None:
-        # Only the config entry and avatar go away; history in SQLite (when it exists) stays.
+        # The child's configuration (entry, missions...) and photos go away;
+        # history in SQLite (when it exists) stays.
         with self._children.atomic():
             child = self.get(child_id)
             self._children.remove(child_id)
-        self._photos.delete(child.photo)
+            photos = [child.photo]
+            for dependent in self._dependents:
+                photos += dependent.remove_child_data(child_id)
+        for filename in photos:
+            self._photos.delete(filename)
 
     def set_photo(self, child_id: str, data: bytes, media_type: str) -> Child:
-        if media_type not in PHOTO_TYPES:
-            raise UnsupportedTypeError("Photo must be JPEG, PNG or WebP")
-        if len(data) > MAX_PHOTO_BYTES:
-            raise TooLargeError("Photo is too large (max 5 MB)")
-        if sniff_photo_type(data) != media_type:
-            raise InvalidError("File content does not match its type")
-
+        extension = validate_photo(data, media_type)
         with self._children.atomic():
             old = self.get(child_id)
-            filename = self._photos.save(data, prefix=child_id, extension=PHOTO_TYPES[media_type])
+            filename = self._photos.save(data, prefix=child_id, extension=extension)
             child = replace(old, avatar_type="photo", preset=None, photo=filename)
             self._children.update(child)
         self._photos.delete(old.photo)

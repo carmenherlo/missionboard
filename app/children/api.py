@@ -9,6 +9,8 @@ from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.children.service import ChildData, ChildrenService
 from app.deps import get_config_store, get_photo_store, require_parent
+from app.missions.api import get_missions_service
+from app.missions.service import MissionsService
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 
@@ -33,8 +35,9 @@ class ChildIn(BaseModel):
 def get_children_service(
     store: ConfigStore = Depends(get_config_store),
     photos: PhotoStore = Depends(get_photo_store),
+    missions: MissionsService = Depends(get_missions_service),
 ) -> ChildrenService:
-    return ChildrenService(ChildrenRepository(store), photos)
+    return ChildrenService(ChildrenRepository(store), photos, dependents=[missions])
 
 
 def _public(child: Child) -> dict:

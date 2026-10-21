@@ -6,6 +6,7 @@ import { parentsHeader } from "./common.js";
 export function viewConfigIndex() {
   const sections = [
     { href: "#/parents/config/children", iconName: "children", label: t.config.children },
+    { href: "#/parents/config/missions", iconName: "missions", label: t.config.missions },
     { href: "#/parents/config/code", iconName: "parentCode", label: t.config.parentCode },
   ];
   render(

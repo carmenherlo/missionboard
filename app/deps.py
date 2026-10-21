@@ -7,6 +7,7 @@ these functions hand them to the routes, and tests can override them.
 from fastapi import Depends, Header, HTTPException, Request
 
 from app.clock import Clock
+from app.images.libraries import ImageLibraries
 from app.parents.repository import ParentsRepository
 from app.parents.service import ParentsService
 from app.storage.config_store import ConfigStore
@@ -23,6 +24,10 @@ def get_photo_store(request: Request) -> PhotoStore:
 
 def get_clock(request: Request) -> Clock:
     return request.app.state.clock
+
+
+def get_image_libraries(request: Request) -> ImageLibraries:
+    return request.app.state.image_libraries
 
 
 def get_parents_service(store: ConfigStore = Depends(get_config_store)) -> ParentsService:

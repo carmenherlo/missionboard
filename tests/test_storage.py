@@ -159,3 +159,13 @@ def test_newer_db_is_refused(tmp_path):
     db.migrate(tmp_path, MIGRATIONS)
     with pytest.raises(db.SchemaVersionError):
         db.migrate(tmp_path, MIGRATIONS[:1])
+
+
+def test_v2_file_gets_missions(tmp_path):
+    write_yaml(tmp_path, {**V1_FILE, "version": 2, "settings": {}, "features": {}})
+    ConfigStore(tmp_path).migrate()
+    doc = read_yaml(tmp_path)
+    assert doc["version"] == 3
+    assert doc["missions"] == []
+    assert doc["children"] == V1_FILE["children"]
+    assert (tmp_path / "config.yaml.v2.bak").is_file()
