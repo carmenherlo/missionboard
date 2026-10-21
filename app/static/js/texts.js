@@ -14,6 +14,7 @@ export const t = {
     title: "¿Quién eres?",
     empty: "Todavía no hay niños.",
     parentsLabel: "Zona de padres",
+    homeLabel: "Salir al inicio",
   },
   codeField: {
     show: "Mostrar código",
@@ -24,12 +25,10 @@ export const t = {
     code: "Código",
     submit: "Entrar",
     missing: "Escribe el código.",
-    homeLabel: "Inicio",
   },
   config: {
     title: "Configurar",
-    exit: "🏠 Salir",
-    back: "← Configurar",
+    back: "Configurar",
     children: "Niños",
     parentCode: "Código de padres",
   },
@@ -48,7 +47,7 @@ export const t = {
   },
   children: {
     title: "Niños",
-    back: "← Niños",
+    back: "Niños",
     empty: "Todavía no hay niños. Añade el primero.",
     add: "+ Añadir niño",
     historyNote: "Borrar un niño no borra su historial de estrellas.",

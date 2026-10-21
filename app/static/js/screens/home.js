@@ -1,5 +1,6 @@
 import { api, session } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
+import { cornerButton } from "../components/corner-button.js";
 import { h, render } from "../dom.js";
 import { t } from "../texts.js";
 
@@ -16,7 +17,7 @@ export async function viewHome() {
 
   render(
     h("main", { class: "home" },
-      h("a", { class: "corner-button", href: "#/parents", "aria-label": t.home.parentsLabel }, "⚙️"),
+      cornerButton("#/parents", "settings", t.home.parentsLabel),
       h("h1", { class: "home__title" }, t.home.title),
       grid));
 }

@@ -1,6 +1,7 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { h, render } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
@@ -42,7 +43,7 @@ export async function viewChildForm(childId) {
       h("button", {
         class: "avatar-edit__pencil", type: "button", "aria-label": t.childForm.changeAvatar,
         onclick: () => { pickerOpen = !pickerOpen; refreshPicker(); },
-      }, "✏️"));
+      }, icon("edit")));
   }
 
   function choosePreset(preset) {
@@ -98,7 +99,7 @@ export async function viewChildForm(childId) {
       type: "button",
       class: `choice${form.avatar_type === "photo" ? " choice--selected" : ""}`,
       onclick: () => fileInput.click(),
-    }, h("span", { class: "avatar avatar--md avatar--photo-choice" }, "📷"),
+    }, h("span", { class: "avatar avatar--md avatar--photo-choice" }, icon("photo")),
        h("span", { class: "choice__label" }, t.childForm.ownPhoto), fileInput);
 
     const sections = [

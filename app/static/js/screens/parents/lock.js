@@ -1,5 +1,6 @@
 import { api, errorMessage, session } from "../../api.js";
 import { codeField } from "../../components/code-input.js";
+import { cornerButton } from "../../components/corner-button.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 
@@ -27,7 +28,7 @@ export function viewParentsLock(onUnlock) {
 
   render(
     h("main", { class: "page page--center" },
-      h("a", { class: "corner-button", href: "#/", "aria-label": t.lock.homeLabel }, "🏠"),
+      cornerButton("#/", "home", t.home.homeLabel),
       h("form", { class: "lock", novalidate: true, onsubmit },
         h("h1", {}, t.lock.title),
         field,
