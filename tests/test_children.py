@@ -1,8 +1,8 @@
 import pytest
 import yaml
 
-from app import avatars
-from app.config_store import config_path
+from app.children import avatars
+from app.storage.config_store import config_path
 from tests.conftest import PARENT
 
 JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 32
@@ -205,7 +205,7 @@ def test_invalid_photo(client, data, content_type, status):
 
 
 def test_photo_too_large(client, monkeypatch):
-    monkeypatch.setattr("app.children.MAX_PHOTO_BYTES", 10)
+    monkeypatch.setattr("app.children.service.MAX_PHOTO_BYTES", 10)
     child = create(client).json()
     assert upload(client, child["id"]).status_code == 413
 

@@ -1,7 +1,8 @@
 import pytest
 import yaml
 
-from app.config_store import DEFAULT_PARENT_CODE, config_path
+from app.parents.repository import DEFAULT_PARENT_CODE
+from app.storage.config_store import config_path
 from tests.conftest import PARENT
 
 

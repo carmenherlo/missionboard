@@ -1,0 +1,39 @@
+// The only module that talks to the backend.
+
+import { t } from "./texts.js";
+
+// Parent code typed in this session; sent with every request while set.
+export const session = { parentCode: null };
+
+export class ApiError extends Error {
+  constructor(status, detail) {
+    super(detail || `HTTP ${status}`);
+    this.status = status;
+  }
+}
+
+export async function api(method, path, { json, body, contentType } = {}) {
+  const headers = {};
+  if (session.parentCode) headers["X-Parent-Code"] = session.parentCode;
+  if (json !== undefined) {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(json);
+  } else if (contentType) {
+    headers["Content-Type"] = contentType;
+  }
+  const res = await fetch(path, { method, headers, body });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, typeof payload.detail === "string" ? payload.detail : null);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+export function errorMessage(err) {
+  if (!(err instanceof ApiError)) return t.errors.offline;
+  if (err.status === 401) return t.errors.badParentCode;
+  if (err.status === 409) return t.errors.presetTaken;
+  if (err.status === 413) return t.errors.photoTooLarge;
+  if (err.status === 415 || err.status === 422) return t.errors.invalidData;
+  return t.errors.generic;
+}
