@@ -172,10 +172,24 @@ h1 {
   align-items: center;
 }
 
-.page__header {
+.top-bar {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-height: calc(2rem + 3rem); /* room for the 🏠 button, 1rem from the top */
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.top-bar__title {
+  min-width: 0;
+  font-size: 1.75rem;
+}
+
+/* In the bar it sits exactly where the fixed ⚙️ sits on the home screen. */
+.corner-button--in-bar {
+  position: static;
+  margin-left: auto;
 }
 
 .lock {

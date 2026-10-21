@@ -30,7 +30,7 @@ export async function viewMissionsHome() {
       ];
 
   render(
+    parentsHeader(t.missions.title, { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
-      parentsHeader(t.missions.title, { href: "#/parents/config", label: t.config.back }),
       ...content));
 }

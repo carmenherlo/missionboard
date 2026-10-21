@@ -40,8 +40,8 @@ export async function viewChildrenList() {
   }
 
   render(
+    parentsHeader(t.children.title, { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
-      parentsHeader(t.children.title, { href: "#/parents/config", label: t.config.back }),
       children.length
         ? h("ul", { class: "rows" }, children.map(row))
         : h("p", { class: "empty" }, t.children.empty),

@@ -55,8 +55,8 @@ export function viewChangeCode() {
     h("button", { class: "btn btn--primary", type: "submit" }, t.changeCode.submit));
 
   render(
+    parentsHeader(t.changeCode.title, { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
-      parentsHeader(t.changeCode.title, { href: "#/parents/config", label: t.config.back }),
       form));
   currentCode.focus();
 }

@@ -43,8 +43,8 @@ export async function viewMissionNew(childId) {
   }
 
   render(
+    parentsHeader(t.missionNew.title(child.name), { href: backHref, label: t.childMissions.title(child.name) }),
     h("main", { class: "page" },
-      parentsHeader(t.missionNew.title(child.name), { href: backHref, label: t.childMissions.title(child.name) }),
       h("form", { class: "stack", novalidate: true, onsubmit },
         h("label", {}, t.missionNew.name, nameInput),
         h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionNew.image), picker.element),

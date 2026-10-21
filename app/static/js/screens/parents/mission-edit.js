@@ -205,9 +205,9 @@ export async function viewMissionEdit(missionId) {
   renderFooter();
 
   render(
-    h("main", { class: "page" },
-      parentsHeader(h("span", { class: "title-line" }, titleName, status.element),
+    parentsHeader(h("span", { class: "title-line" }, titleName, status.element),
         { href: listHref, label: t.childMissions.title(child.name) }),
+    h("main", { class: "page" },
       h("div", { class: "columns" },
         h("section", { class: "stack" },
           imageBox,

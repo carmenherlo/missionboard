@@ -84,8 +84,8 @@ export async function viewStepEdit(missionId, stepId) {
   renderActions();
 
   render(
+    parentsHeader(t.stepEdit.title, { href: missionHref, label: mission.name }),
     h("main", { class: "page" },
-      parentsHeader(t.stepEdit.title, { href: missionHref, label: mission.name }),
       h("form", { class: "stack", novalidate: true, onsubmit },
         h("label", {}, t.stepEdit.text, textInput, h("span", { class: "hint" }, t.stepEdit.textHint)),
         h("div", { class: "field" }, h("span", { class: "field__label" }, t.stepEdit.image), picker.element),

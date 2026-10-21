@@ -41,8 +41,8 @@ export async function viewChildMissions(childId) {
   });
 
   render(
+    parentsHeader(h("span", { class: "title-with-avatar" }, avatar(child, { size: "sm" }), t.childMissions.title(child.name)), back),
     h("main", { class: "page" },
-      parentsHeader(h("span", { class: "title-with-avatar" }, avatar(child, { size: "sm" }), t.childMissions.title(child.name)), back),
       missions.length
         ? [h("p", { class: "hint" }, t.childMissions.routeHint(child.name)), list]
         : h("p", { class: "empty" }, t.childMissions.empty(child.name)),

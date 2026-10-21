@@ -173,9 +173,9 @@ export async function viewChildForm(childId) {
 
   refreshAll();
   render(
-    h("main", { class: "page" },
-      parentsHeader(existing ? t.childForm.titleEdit(existing.name) : t.childForm.titleNew,
+    parentsHeader(existing ? t.childForm.titleEdit(existing.name) : t.childForm.titleNew,
         { href: "#/parents/config/children", label: t.children.back }),
+    h("main", { class: "page" },
       h("form", { class: "child-form", onsubmit },
         preview,
         h("label", {}, t.childForm.name, nameInput),

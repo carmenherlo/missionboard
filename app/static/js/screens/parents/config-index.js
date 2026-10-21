@@ -10,8 +10,8 @@ export function viewConfigIndex() {
     { href: "#/parents/config/code", iconName: "parentCode", label: t.config.parentCode },
   ];
   render(
+    parentsHeader(t.config.title),
     h("main", { class: "page" },
-      parentsHeader(t.config.title),
       h("ul", { class: "rows" },
         sections.map(({ href, iconName, label }) =>
           h("li", {},
