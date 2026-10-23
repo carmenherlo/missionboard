@@ -49,14 +49,14 @@
   --md-surface-container: #f0ecf4;
   --md-surface-container-high: #ebe7ef;
   --md-surface-container-highest: #e5e1e9;
-  --md-success: #266a4a;
+  --md-success: #1c6b50;
   --md-on-success: #ffffff;
-  --md-success-container: #acf2c8;
-  --md-on-success-container: #025233;
-  --md-accent: #88511d;
+  --md-success-container: #a7f2d0;
+  --md-on-success-container: #00513a;
+  --md-accent: #79590c;
   --md-on-accent: #ffffff;
-  --md-accent-container: #ffdcc2;
-  --md-on-accent-container: #6b3b05;
-  --md-success-custom: #2fb37a;
-  --md-accent-custom: #ff9f43;
+  --md-accent-container: #ffdea2;
+  --md-on-accent-container: #5c4200;
+  --md-success-custom: #1fbf8f;
+  --md-accent-custom: #ffc233;
 }
