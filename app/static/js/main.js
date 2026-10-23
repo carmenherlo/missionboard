@@ -15,6 +15,12 @@ import { viewMissionsHome } from "./screens/parents/missions-home.js";
 import { viewStepEdit } from "./screens/parents/step-edit.js";
 import { t } from "./texts.js";
 
+// ?theme=<name> loads app/static/css/themes/<name>.css instead of the default one.
+const theme = new URLSearchParams(location.search).get("theme");
+if (theme && /^[\w-]+$/.test(theme)) {
+  document.getElementById("theme").href = `/static/css/themes/${theme}.css`;
+}
+
 // [pattern, screen, parentsOnly]
 const routes = [
   [/^#?\/?$/, () => viewHome()],

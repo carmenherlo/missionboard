@@ -1,0 +1,29 @@
+{
+    "description": "Extended colours for azul-vivo. Paste here the values Material Theme Builder shows; missing ones are computed by tools/build_theme.py.",
+    "customColors": {
+        "success": "#2FB37A",
+        "accent": "#FF9F43"
+    },
+    "computed": {
+        "light": {
+            "success": "#266A4A",
+            "onSuccess": "#FFFFFF",
+            "successContainer": "#ACF2C8",
+            "onSuccessContainer": "#025233",
+            "accent": "#88511D",
+            "onAccent": "#FFFFFF",
+            "accentContainer": "#FFDCC2",
+            "onAccentContainer": "#6B3B05"
+        },
+        "dark": {
+            "success": "#90D5AD",
+            "onSuccess": "#003822",
+            "successContainer": "#025233",
+            "onSuccessContainer": "#ACF2C8",
+            "accent": "#FFB77A",
+            "onAccent": "#4C2700",
+            "accentContainer": "#6B3B05",
+            "onAccentContainer": "#FFDCC2"
+        }
+    }
+}

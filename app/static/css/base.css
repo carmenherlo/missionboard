@@ -18,7 +18,7 @@ h1,
 h2,
 h3 {
   margin: 0;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 button,
@@ -31,7 +31,7 @@ label {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 input[type="text"],
@@ -40,17 +40,17 @@ input[type="search"],
 input[type="time"] {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
-  border: 2px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 input:focus-visible {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-soft);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 :focus-visible {
@@ -62,7 +62,7 @@ input:focus-visible {
   margin: 0;
   color: var(--muted);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .empty,

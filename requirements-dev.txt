@@ -1,0 +1,2 @@
+# Development only (not in the Docker image)
+materialyoucolor==3.0.4  # tools/build_theme.py; pulls in pillow

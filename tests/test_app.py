@@ -62,3 +62,13 @@ def test_colours_only_in_tokens():
         if sheet.name == "tokens.css":
             continue
         assert not re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", sheet.read_text()), sheet.name
+
+
+def test_every_theme_defines_the_roles_the_app_uses(client):
+    used = set(re.findall(r"var\((--md-[\w-]+)\)", (STATIC_DIR / "css" / "tokens.css").read_text()))
+    themes = sorted((STATIC_DIR / "css" / "themes").glob("*.css"))
+    assert used and themes
+    for theme in themes:
+        defined = set(re.findall(r"(--md-[\w-]+):", theme.read_text()))
+        assert used <= defined, f"{theme.name} lacks {sorted(used - defined)}"
+    assert client.get("/static/css/themes/indigo.css").status_code == 200

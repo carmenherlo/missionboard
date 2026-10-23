@@ -8,8 +8,7 @@
   gap: var(--space-3);
   min-height: calc(var(--icon-button) + 2rem); /* the corner button sits 1rem from the top */
   padding: 0 1rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
 
 .top-bar__title {
@@ -63,7 +62,7 @@
 /* Side by side: a clear gutter between the two columns (panels already separate them) */
 @media (min-width: 860px) {
   .columns {
-    column-gap: var(--space-5);
+    column-gap: var(--space-6);
   }
 }
 
@@ -96,7 +95,6 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding-top: var(--space-3);
-  border-top: 1px solid var(--line);
 }
 
 .form-actions {

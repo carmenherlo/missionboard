@@ -24,28 +24,35 @@
 }
 
 :root {
-  /* Palette from Material Theme Builder (light, standard contrast), source colour #5b4ae6.
-     Roles: primary, onPrimaryContainer (strong), primaryContainer (soft), surfaceContainer (bg),
-     surfaceContainerLowest (surface), onSurface, onSurfaceVariant, outlineVariant.
-     Success (#2fb37a) and accent (#ff9f43) are extended colours harmonised with the source. */
-  --primary: #5c5891;
-  --primary-strong: #444078;
-  --primary-soft: #e4dfff;
-  --accent: #775a0b;
-  --accent-soft: #ffdf9e;
-  --on-accent-soft: #5b4300; /* text on accent-soft (order numbers, ✦) */
-  --bg: #f0ecf4;
-  --surface: #ffffff;
-  --text: #1c1b20;
-  --muted: #47464f;
-  --line: #c8c5d0;
-  --on-primary: #ffffff; /* text and icons on coloured buttons and badges */
+  /* Palette: Material roles (--md-*) from the theme loaded before this file
+     (app/static/css/themes/<name>.css, built by tools/build_theme.py). To try
+     another theme, add ?theme=<name> to the address. Page on the lightest
+     surface, panels and cards one tone darker, fields and rows white on them. */
+  --primary: var(--md-primary);
+  --primary-strong: var(--md-on-primary-container);
+  --primary-soft: var(--md-primary-container);
+  --accent: var(--md-accent);
+  --accent-soft: var(--md-accent-container);
+  --on-accent-soft: var(--md-on-accent-container); /* text on accent-soft (order numbers, ✦) */
+  --accent-vivid: var(--md-accent-custom);
+  --bg: var(--md-surface);
+  --container: var(--md-surface-container); /* panels and cards */
+  --surface: var(--md-surface-container-lowest); /* fields, rows and buttons on a panel */
+  --text: var(--md-on-surface);
+  --muted: var(--md-on-surface-variant);
+  --line: var(--md-outline-variant); /* dividers, idle chips */
+  --outline: var(--md-outline); /* text fields */
+  --on-primary: var(--md-on-primary); /* text and icons on coloured buttons and badges */
 
   /* Colours with a fixed meaning */
-  --success: #266a4a;
-  --success-soft: #acf2c8;
-  --danger: #ba1a1a;
-  --danger-soft: #ffdad6;
+  --success: var(--md-success);
+  --success-soft: var(--md-success-container);
+  /* Three tones per colour, each with one use: base for text, soft (container)
+     for fills, vivid (the custom colour typed into Theme Builder) for rings,
+     progress bars and ✓ badges, never with text on it. */
+  --success-vivid: var(--md-success-custom);
+  --danger: var(--md-error);
+  --danger-soft: var(--md-error-container);
 
   /* Tints for steps and missions without an image (their initial on a colour) */
   --tint-1: #5b4ae6;
@@ -59,8 +66,7 @@
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  --shadow-card: 0 2px 0 rgb(36 32 74 / 0.05), 0 6px 18px rgb(36 32 74 / 0.06);
-  --shadow-button: 0 4px 0 var(--primary-strong);
+  --shadow-card: 0 1px 2px rgb(36 32 74 / 0.06);
   --shadow-lifted: 0 10px 28px rgb(36 32 74 / 0.2);
 
   /* Type */
