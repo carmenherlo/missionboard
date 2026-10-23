@@ -24,24 +24,28 @@
 }
 
 :root {
-  /* Palette "Aventura espacial" */
-  --primary: #5b4ae6;
-  --primary-strong: #4535c4;
-  --primary-soft: #e9e6fd;
-  --accent: #ff9f43;
-  --accent-soft: #ffefdc;
-  --bg: #f4f5ff;
+  /* Palette from Material Theme Builder (light, standard contrast), source colour #5b4ae6.
+     Roles: primary, onPrimaryContainer (strong), primaryContainer (soft), surfaceContainer (bg),
+     surfaceContainerLowest (surface), onSurface, onSurfaceVariant, outlineVariant.
+     Success (#2fb37a) and accent (#ff9f43) are extended colours harmonised with the source. */
+  --primary: #5c5891;
+  --primary-strong: #444078;
+  --primary-soft: #e4dfff;
+  --accent: #775a0b;
+  --accent-soft: #ffdf9e;
+  --on-accent-soft: #5b4300; /* text on accent-soft (order numbers, ✦) */
+  --bg: #f0ecf4;
   --surface: #ffffff;
-  --text: #24204a;
-  --muted: #7a77a0;
-  --line: #e1e3f5;
+  --text: #1c1b20;
+  --muted: #47464f;
+  --line: #c8c5d0;
   --on-primary: #ffffff; /* text and icons on coloured buttons and badges */
 
   /* Colours with a fixed meaning */
-  --success: #2fb37a;
-  --success-soft: #dff5ea;
-  --danger: #d9473f;
-  --danger-soft: #fbe7e5;
+  --success: #266a4a;
+  --success-soft: #acf2c8;
+  --danger: #ba1a1a;
+  --danger-soft: #ffdad6;
 
   /* Tints for steps and missions without an image (their initial on a colour) */
   --tint-1: #5b4ae6;
