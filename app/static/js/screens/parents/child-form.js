@@ -55,7 +55,7 @@ export async function viewChildForm(childId) {
         { ...form, name: form.name, photo_url: existing?.photo_url },
         { size: "lg", photoUrl: form.photoPreview ?? undefined }),
       h("button", {
-        class: "avatar-edit__pencil", type: "button", "aria-label": t.childForm.changeAvatar,
+        class: "icon-button avatar-edit__pencil", type: "button", "aria-label": t.childForm.changeAvatar,
         onclick: () => { pickerOpen = !pickerOpen; refreshPicker(); },
       }, icon("edit")));
   }
@@ -104,7 +104,8 @@ export async function viewChildForm(childId) {
         disabled: taken,
         title: taken ? t.childForm.presetTaken(preset.label) : preset.label,
         onclick: () => choosePreset(preset),
-      }, h("span", { class: "avatar avatar--md", style: `--child-color: ${preset.color}` }, preset.emoji),
+      }, h("span", { class: "avatar avatar--md", style: `--child-color: ${preset.color}` },
+           h("img", { src: preset.image_url, alt: "" })),
          h("span", { class: "choice__label" }, preset.label));
     });
 

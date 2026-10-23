@@ -53,7 +53,8 @@ export async function viewMissionEdit(missionId) {
     const toggle = h("button", {
       type: "button", class: "image-button", "aria-label": t.missionEdit.changeImage,
       onclick: () => { pickerOpen = !pickerOpen; renderImage(); },
-    }, imageThumb(mission.image_url, { size: "lg" }), h("span", { class: "image-button__pencil" }, icon("edit")));
+    }, imageThumb(mission.image_url, { size: "lg", label: mission.name }),
+      h("span", { class: "icon-button image-button__pencil" }, icon("edit")));
     if (!pickerOpen) {
       imageBox.replaceChildren(toggle);
       return;
@@ -65,7 +66,7 @@ export async function viewMissionEdit(missionId) {
           patch: (ref) => patch({ image: ref }),
           upload: (file) => save(api("PUT", `${missionUrl}/photo`, { body: file, contentType: file.type })),
         }).catch(() => {});
-        imageBox.querySelector(".image-button .thumb").replaceWith(imageThumb(mission.image_url, { size: "lg" }));
+        imageBox.querySelector(".image-button .thumb").replaceWith(imageThumb(mission.image_url, { size: "lg", label: mission.name }));
       },
     });
     imageBox.replaceChildren(toggle, picker.element);
@@ -103,10 +104,10 @@ export async function viewMissionEdit(missionId) {
   const scheduleError = h("p", { class: "form-error", role: "alert" });
   let withSchedule = Boolean(mission.schedule);
   function renderSchedule() {
-    const modes = h("div", { class: "chips" },
+    const modes = h("div", { class: "tabs" },
       [[false, t.missionEdit.alwaysOpen], [true, t.missionEdit.withSchedule]].map(([value, label]) =>
         h("button", {
-          type: "button", class: `chip${withSchedule === value ? " chip--on" : ""}`,
+          type: "button", class: `tab${withSchedule === value ? " tab--on" : ""}`,
           "aria-pressed": String(withSchedule === value),
           onclick: () => {
             if (withSchedule === value) return;
@@ -137,7 +138,8 @@ export async function viewMissionEdit(missionId) {
     scheduleBox.replaceChildren(modes,
       h("div", { class: "times" },
         h("label", { class: "time" }, t.missionEdit.from, start),
-        h("label", { class: "time" }, t.missionEdit.to, end, h("span", { class: "hint" }, t.missionEdit.toOptional))));
+        h("label", { class: "time" }, t.missionEdit.to, end)),
+      h("p", { class: "hint" }, t.missionEdit.endOptional));
   }
 
   // ---------- steps ----------
@@ -153,10 +155,12 @@ export async function viewMissionEdit(missionId) {
     stepsList.replaceChildren(...mission.steps.map((step) =>
       h("li", { class: "row row--sortable row--compact", "data-id": step.id },
         h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
-        imageThumb(step.image_url, { size: "sm" }),
+        imageThumb(step.image_url, { size: "sm", label: step.text }),
         h("span", { class: "row__text" }, step.text),
-        h("a", { class: "btn", href: `#/parents/config/missions/${missionId}/steps/${step.id}` },
-          t.missionEdit.editStep))));
+        h("a", {
+          class: "icon-button icon-button--ghost", href: `#/parents/config/missions/${missionId}/steps/${step.id}`,
+          "aria-label": t.missionEdit.editStepNamed(step.text), title: t.missionEdit.editStep,
+        }, icon("edit")))));
     stepsEmpty.hidden = mission.steps.length > 0;
   }
   const stepsEmpty = h("p", { class: "hint" }, t.missionEdit.noSteps);
@@ -176,7 +180,7 @@ export async function viewMissionEdit(missionId) {
       }
       newStep.focus();
     },
-  }, newStep, h("button", { class: "btn btn--primary", type: "submit" }, t.missionEdit.addStep));
+  }, newStep, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.missionEdit.addStep));
 
   // ---------- footer ----------
   const footer = h("div", { class: "page-footer" });

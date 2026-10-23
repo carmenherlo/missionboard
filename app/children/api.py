@@ -8,7 +8,8 @@ from pydantic import BaseModel, Field, field_validator
 from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.children.service import ChildData, ChildrenService
-from app.deps import get_config_store, get_photo_store, require_parent
+from app.deps import get_config_store, get_image_libraries, get_photo_store, require_parent
+from app.images.libraries import ImageLibraries
 from app.missions.api import get_missions_service
 from app.missions.service import MissionsService
 from app.storage.config_store import ConfigStore
@@ -48,8 +49,9 @@ def _public(child: Child) -> dict:
 
 
 @router.get("/avatars")
-def list_avatars():
-    return {"presets": avatars.PRESETS, "palette": avatars.PALETTE}
+def list_avatars(libraries: ImageLibraries = Depends(get_image_libraries)):
+    presets = [{**preset, "image_url": libraries.url(preset["image"])} for preset in avatars.PRESETS]
+    return {"presets": presets, "palette": avatars.PALETTE}
 
 
 @router.get("/children")

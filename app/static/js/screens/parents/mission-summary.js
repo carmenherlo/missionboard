@@ -1,3 +1,5 @@
+import { h } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -26,10 +28,15 @@ export function scheduleText(schedule) {
     : t.childMissions.from(schedule.start);
 }
 
-// "L M X J V · 07:00–08:15 · 6 pasos"
-export function missionSummary(mission) {
-  return [daysText(mission.days), scheduleText(mission.schedule), t.childMissions.steps(mission.steps.length)]
-    .join(" · ");
+// [L M X J V] [07:00–08:15] [6 pasos]
+export function missionPills(mission) {
+  return [
+    h("span", { class: "pill" }, daysText(mission.days)),
+    mission.schedule
+      ? h("span", { class: "pill" }, icon("clock"), scheduleText(mission.schedule))
+      : h("span", { class: "pill pill--muted" }, scheduleText(mission.schedule)),
+    h("span", { class: "pill pill--muted" }, t.childMissions.steps(mission.steps.length)),
+  ];
 }
 
 export { WEEKDAYS };

@@ -6,7 +6,7 @@ import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { missionSummary } from "./mission-summary.js";
+import { missionPills } from "./mission-summary.js";
 
 export async function viewChildMissions(childId) {
   const [children, missions] = await Promise.all([
@@ -21,16 +21,26 @@ export async function viewChildMissions(childId) {
     : { href: "#/parents/config", label: t.config.back };
   const error = h("p", { class: "form-error", role: "alert" });
 
-  const list = h("ul", { class: "rows" }, missions.map((mission) =>
+  // The order number follows the route, so it is redrawn after dragging.
+  function renumber() {
+    list.querySelectorAll(".order").forEach((el, i) => { el.textContent = i + 1; });
+  }
+
+  const list = h("ul", { class: "rows" }, missions.map((mission, i) =>
     h("li", { class: "row row--sortable", "data-id": mission.id },
       h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
-      imageThumb(mission.image_url),
+      h("span", { class: "order" }, i + 1),
+      imageThumb(mission.image_url, { size: "md", label: mission.name }),
       h("span", { class: "row__name" }, mission.name,
-        h("small", { class: "row__detail" }, missionSummary(mission))),
-      h("a", { class: "btn", href: `#/parents/config/missions/${mission.id}` }, t.childMissions.edit))));
+        h("span", { class: "row__detail" }, missionPills(mission))),
+      h("a", {
+        class: "icon-button icon-button--ghost", href: `#/parents/config/missions/${mission.id}`,
+        "aria-label": t.childMissions.editMission(mission.name), title: t.childMissions.edit,
+      }, icon("edit")))));
 
   sortable(list, {
     onEnd: async (ids) => {
+      renumber();
       error.textContent = "";
       try {
         await api("PUT", `/api/children/${childId}/missions/order`, { json: { ids } });
@@ -43,10 +53,10 @@ export async function viewChildMissions(childId) {
   render(
     parentsHeader(h("span", { class: "title-with-avatar" }, avatar(child, { size: "sm" }), t.childMissions.title(child.name)), back),
     h("main", { class: "page" },
-      missions.length
-        ? [h("p", { class: "hint" }, t.childMissions.routeHint(child.name)), list]
-        : h("p", { class: "empty" }, t.childMissions.empty(child.name)),
-      error,
-      h("a", { class: "btn btn--primary btn--block", href: `#/parents/config/missions/child/${childId}/new` },
-        t.childMissions.add)));
+      h("div", { class: "page-header" },
+        h("p", { class: "hint" }, missions.length ? t.childMissions.routeHint(child.name) : t.childMissions.empty(child.name)),
+        h("a", { class: "btn btn--primary", href: `#/parents/config/missions/child/${childId}/new` },
+          icon("plus"), t.childMissions.add)),
+      missions.length ? list : null,
+      error));
 }

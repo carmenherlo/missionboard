@@ -39,7 +39,7 @@ def test_static_assets(client, path):
         assert "javascript" in response.headers["content-type"]
 
 
-@pytest.mark.parametrize("path", ["/", "/static/js/main.js", "/static/css/style.css"])
+@pytest.mark.parametrize("path", ["/", "/static/js/main.js", "/static/css/tokens.css"])
 def test_app_code_is_revalidated(client, path):
     assert client.get(path).headers["cache-control"] == "no-cache"
 
@@ -49,3 +49,16 @@ def test_js_imports_resolve():
     for module in STATIC_DIR.rglob("*.js"):
         for target in re.findall(r'from "(\.{1,2}/[^"]+)"', module.read_text()):
             assert (module.parent / target).resolve().is_file(), f"{module.name}: {target}"
+
+
+def test_fonts_ship_with_the_app(client):
+    for name in ("nunito-latin.woff2", "nunito-latin-ext.woff2", "OFL.txt"):
+        assert client.get(f"/static/fonts/nunito/{name}").status_code == 200, name
+
+
+def test_colours_only_in_tokens():
+    """Design tokens live in tokens.css; other stylesheets must not hard-code colours."""
+    for sheet in (STATIC_DIR / "css").glob("*.css"):
+        if sheet.name == "tokens.css":
+            continue
+        assert not re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", sheet.read_text()), sheet.name

@@ -1,6 +1,7 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { h, render } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
@@ -12,7 +13,10 @@ export async function viewChildrenList() {
 
     function showDefault() {
       actions.replaceChildren(
-        h("a", { class: "btn", href: `#/parents/config/children/${child.id}` }, t.children.edit),
+        h("a", {
+          class: "icon-button icon-button--ghost", href: `#/parents/config/children/${child.id}`,
+          "aria-label": t.children.editNamed(child.name), title: t.children.edit,
+        }, icon("edit")),
         h("button", { class: "btn btn--danger", type: "button", onclick: showConfirm }, t.children.delete));
     }
 

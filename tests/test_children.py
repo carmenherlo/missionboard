@@ -29,6 +29,8 @@ def test_avatars_catalog(client):
     body = client.get("/api/avatars").json()
     assert len(body["presets"]) == len(avatars.PRESETS)
     assert all(p["color"] in avatars.PALETTE_COLORS for p in body["presets"])
+    for preset in body["presets"]:
+        assert client.get(preset["image_url"]).status_code == 200, preset["id"]
 
 
 def test_list_is_empty_without_config(client):

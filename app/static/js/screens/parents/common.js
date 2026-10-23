@@ -8,10 +8,10 @@ import { t } from "../../texts.js";
 export function parentsHeader(title, back = null) {
   return h("header", { class: "top-bar" },
     back && h("a", {
-      class: "back-button", href: back.href,
+      class: "icon-button", href: back.href,
       "aria-label": t.common.backTo(back.label), title: t.common.backTo(back.label),
     }, icon("back")),
     h("h1", { class: "top-bar__title" }, title),
-    h("a", { class: "corner-button corner-button--in-bar", href: "#/", "aria-label": t.home.homeLabel },
+    h("a", { class: "icon-button corner-button corner-button--in-bar", href: "#/", "aria-label": t.home.homeLabel },
       icon("home")));
 }

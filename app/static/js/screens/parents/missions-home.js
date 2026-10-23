@@ -17,12 +17,12 @@ export async function viewMissionsHome() {
   const content = children.length
     ? [
         h("p", { class: "hint" }, t.missions.whose),
-        h("div", { class: "children children--compact" },
+        h("div", { class: "kid-cards" },
           children.map((child, i) =>
-            h("a", { class: "child-card", href: `#/parents/config/missions/child/${child.id}` },
-              avatar(child, { size: "md" }),
+            h("a", { class: "kid-card", href: `#/parents/config/missions/child/${child.id}` },
+              avatar(child, { size: "xl" }),
               h("span", { class: "child-card__name" }, child.name),
-              h("span", { class: "hint" }, t.missions.count(counts[i]))))),
+              h("span", { class: counts[i] ? "pill" : "pill pill--muted" }, t.missions.count(counts[i]))))),
       ]
     : [
         h("p", { class: "empty" }, t.missions.noChildren),
