@@ -60,6 +60,13 @@
   gap: var(--space-4);
 }
 
+/* Side by side: a clear gutter between the two columns */
+@media (min-width: 860px) {
+  .columns {
+    column-gap: var(--space-6);
+  }
+}
+
 @media (min-width: 860px) {
   .columns {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
