@@ -68,9 +68,11 @@ class MissionsService:
     def create(self, child_id: str, name: str, image: str | None = None) -> Mission:
         with self._missions.atomic():
             self._check_child(child_id)
-            mission = Mission(
-                id=_new_id(), child_id=child_id, name=name, image=self._check_library_image(image)
-            )
+            mission = Mission(id=_new_id(), child_id=child_id, name=name)
+            if image is not None:
+                mission.image = self._check_library_image(image)
+            else:
+                mission.image, mission.image_suggested = self._suggest(name)
             self._missions.add(mission)
         return mission
 
@@ -82,6 +84,7 @@ class MissionsService:
                 mission.name = name
             if image is not UNSET:
                 mission.image = self._check_new_image(old.image, image)
+                mission.image_suggested = False
             if days is not UNSET:
                 mission.days = _check_days(days)
             if schedule is not UNSET:
@@ -109,7 +112,7 @@ class MissionsService:
         with self._missions.atomic():
             old = self.get(mission_id)
             filename = self._photos.save(data, prefix=mission_id, extension=extension)
-            mission = replace(old, image=photo_ref(filename))
+            mission = replace(old, image=photo_ref(filename), image_suggested=False)
             self._missions.update(mission)
         self._drop_replaced_photo(old.image, mission.image)
         return mission
@@ -119,7 +122,8 @@ class MissionsService:
     def add_step(self, mission_id: str, text: str) -> Mission:
         with self._missions.atomic():
             mission = self.get(mission_id)
-            mission.steps.append(Step(id=_new_id(), text=text))
+            image, suggested = self._suggest(text)
+            mission.steps.append(Step(id=_new_id(), text=text, image=image, image_suggested=suggested))
             self._missions.update(mission)
         return mission
 
@@ -132,6 +136,7 @@ class MissionsService:
                 step.text = text
             if image is not UNSET:
                 step.image = self._check_new_image(old_image, image)
+                step.image_suggested = False
             self._missions.update(mission)
         self._drop_replaced_photo(old_image, step.image)
         return mission
@@ -162,6 +167,7 @@ class MissionsService:
             old_image = step.image
             filename = self._photos.save(data, prefix=mission_id, extension=extension)
             step.image = photo_ref(filename)
+            step.image_suggested = False
             self._missions.update(mission)
         self._drop_replaced_photo(old_image, step.image)
         return mission
@@ -184,6 +190,11 @@ class MissionsService:
         if step is None:
             raise NotFoundError("Step not found")
         return step
+
+    def _suggest(self, text: str) -> tuple[str | None, bool]:
+        """An image picked from the text, marked as suggested; (None, False) if none fits."""
+        ref = self._libraries.suggest(text)
+        return ref, ref is not None
 
     def _check_library_image(self, image: str | None) -> str | None:
         if image is not None and not self._libraries.exists(image):

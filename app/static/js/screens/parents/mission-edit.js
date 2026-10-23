@@ -53,7 +53,7 @@ export async function viewMissionEdit(missionId) {
     const toggle = h("button", {
       type: "button", class: "image-button", "aria-label": t.missionEdit.changeImage,
       onclick: () => { pickerOpen = !pickerOpen; renderImage(); },
-    }, imageThumb(mission.image_url, { size: "lg", label: mission.name }),
+    }, imageThumb(mission.image_url, { size: "lg", label: mission.name, suggested: mission.image_suggested }),
       h("span", { class: "icon-button image-button__pencil" }, icon("edit")));
     if (!pickerOpen) {
       imageBox.replaceChildren(toggle);
@@ -66,7 +66,9 @@ export async function viewMissionEdit(missionId) {
           patch: (ref) => patch({ image: ref }),
           upload: (file) => save(api("PUT", `${missionUrl}/photo`, { body: file, contentType: file.type })),
         }).catch(() => {});
-        imageBox.querySelector(".image-button .thumb").replaceWith(imageThumb(mission.image_url, { size: "lg", label: mission.name }));
+        // Only swap the picture, so the picker keeps its search and scroll.
+        imageBox.querySelector(".image-button").firstElementChild.replaceWith(
+          imageThumb(mission.image_url, { size: "lg", label: mission.name, suggested: mission.image_suggested }));
       },
     });
     imageBox.replaceChildren(toggle, picker.element);
@@ -155,7 +157,7 @@ export async function viewMissionEdit(missionId) {
     stepsList.replaceChildren(...mission.steps.map((step) =>
       h("li", { class: "row row--sortable row--compact", "data-id": step.id },
         h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
-        imageThumb(step.image_url, { size: "sm", label: step.text }),
+        imageThumb(step.image_url, { size: "sm", label: step.text, suggested: step.image_suggested }),
         h("span", { class: "row__text" }, step.text),
         h("a", {
           class: "icon-button icon-button--ghost", href: `#/parents/config/missions/${missionId}/steps/${step.id}`,

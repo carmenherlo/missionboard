@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 
+from app.images import suggest
+
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 PHOTO_SOURCE = "photo"
 
@@ -31,6 +33,21 @@ class Library:
     @cached_property
     def item_ids(self) -> frozenset[str]:
         return frozenset(item["id"] for item in self.catalog["items"])
+
+    @cached_property
+    def featured_words(self) -> list[tuple[str, set[str]]]:
+        """(ref, words of its name and keywords) for every featured image, in order."""
+        items = {item["id"]: item for item in self.catalog["items"]}
+        result, seen = [], set()
+        for theme in self.catalog.get("featured", []):
+            for item_id in theme["items"]:
+                if item_id in seen or item_id not in items:
+                    continue
+                seen.add(item_id)
+                item = items[item_id]
+                text = " ".join([item["name"], *item["keywords"]])
+                result.append((f"{self.id}/{item_id}", set(suggest.words(text))))
+        return result
 
 
 LIBRARIES = [
@@ -63,6 +80,11 @@ class ImageLibraries:
         return [
             {**library.catalog, "base_url": library.base_url} for library in self._by_id.values()
         ]
+
+    def suggest(self, text: str) -> str | None:
+        """An image for this text among the featured ones, or None."""
+        candidates = [c for library in self._by_id.values() for c in library.featured_words]
+        return suggest.best_match(text, candidates)
 
     def exists(self, ref: str) -> bool:
         source, name = split_ref(ref)

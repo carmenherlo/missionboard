@@ -10,6 +10,7 @@ class Step:
     id: str
     text: str
     image: str | None = None
+    image_suggested: bool = False  # chosen by the app; cleared when a parent sets the image
 
 
 @dataclass
@@ -26,6 +27,7 @@ class Mission:
     child_id: str
     name: str
     image: str | None = None
+    image_suggested: bool = False
     days: list[str] = field(default_factory=lambda: list(WEEKDAYS))
     schedule: Schedule | None = None
     steps: list[Step] = field(default_factory=list)
@@ -42,10 +44,13 @@ def _from_doc(entry: dict) -> Mission:
         child_id=entry["child_id"],
         name=entry["name"],
         image=entry.get("image"),
+        image_suggested=bool(entry.get("image_suggested", False)),
         days=list(entry.get("days") or WEEKDAYS),
         schedule=Schedule(start=schedule["start"], end=schedule.get("end")) if schedule else None,
         steps=[
-            Step(id=s["id"], text=s["text"], image=s.get("image")) for s in entry.get("steps") or []
+            Step(id=s["id"], text=s["text"], image=s.get("image"),
+                 image_suggested=bool(s.get("image_suggested", False)))
+            for s in entry.get("steps") or []
         ],
     )
 

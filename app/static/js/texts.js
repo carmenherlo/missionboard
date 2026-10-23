@@ -154,6 +154,7 @@ export const t = {
     choosePhoto: "Elegir foto",
     changePhoto: "Cambiar foto",
     badPhotoType: "La foto tiene que ser JPG, PNG o WebP.",
+    suggested: "Imagen elegida por la app: cámbiala si no encaja",
   },
   childForm: {
     titleNew: "Añadir niño",

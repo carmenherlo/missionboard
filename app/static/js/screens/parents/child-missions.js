@@ -30,7 +30,7 @@ export async function viewChildMissions(childId) {
     h("li", { class: "row row--sortable", "data-id": mission.id },
       h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
       h("span", { class: "order" }, i + 1),
-      imageThumb(mission.image_url, { size: "md", label: mission.name }),
+      imageThumb(mission.image_url, { size: "md", label: mission.name, suggested: mission.image_suggested }),
       h("span", { class: "row__name" }, mission.name,
         h("span", { class: "row__detail" }, missionPills(mission))),
       h("a", {

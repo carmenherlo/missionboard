@@ -57,10 +57,10 @@ def photo_files(data_dir):
 
 
 def test_new_mission_defaults(client, bea, data_dir):
-    response = create_mission(client, bea["id"], name="  Despegue  ")
+    response = create_mission(client, bea["id"], name="  Zeta  ")
     assert response.status_code == 201
     mission = response.json()
-    assert mission["name"] == "Despegue"
+    assert mission["name"] == "Zeta"
     assert mission["child_id"] == bea["id"]
     assert mission["days"] == ALL_DAYS
     assert mission["schedule"] is None
@@ -256,7 +256,6 @@ def test_add_steps(client, mission, data_dir):
     steps = response.json()["steps"]
     assert [s["text"] for s in steps] == ["Hacer la cama", "Lleva el plato al fregadero"]
     assert steps[0]["id"] != steps[1]["id"]
-    assert steps[0]["image"] is None and steps[0]["image_url"] is None
     assert len(saved(data_dir)["missions"][0]["steps"]) == 2
 
 
@@ -346,3 +345,60 @@ def test_image_of_removed_library_shows_nothing(tmp_path):
         body = client.get(f"/api/missions/{mission['id']}").json()
     assert body["image"] == "fluent/rocket"
     assert body["image_url"] is None
+
+
+# ---------- suggested images ----------
+
+
+def test_new_mission_gets_a_suggested_image(client, bea):
+    mission = create_mission(client, bea["id"], name="Despegue").json()
+    assert mission["image"] == "fluent/rocket"
+    assert mission["image_suggested"] is True
+
+
+def test_chosen_image_is_not_marked_as_suggested(client, bea):
+    mission = create_mission(client, bea["id"], name="Despegue", image="fluent/bed").json()
+    assert mission["image"] == "fluent/bed"
+    assert mission["image_suggested"] is False
+
+
+def test_new_step_gets_a_suggested_image(client, mission):
+    steps = add_step(client, mission["id"], "Lavarse los dientes").json()["steps"]
+    assert steps[0]["image"] == "fluent/toothbrush"
+    assert steps[0]["image_suggested"] is True
+
+
+def test_no_suggestion_when_nothing_fits(client, mission):
+    step = add_step(client, mission["id"], "Peinarse").json()["steps"][0]
+    assert step["image"] is None
+    assert step["image_suggested"] is False
+
+
+def test_touching_the_image_clears_the_mark(client, mission):
+    step = add_step(client, mission["id"], "Desayunar").json()["steps"][0]
+    url = f"/api/missions/{mission['id']}/steps/{step['id']}"
+    body = client.patch(url, json={"image": step["image"]}, headers=PARENT).json()
+    assert body["steps"][0]["image_suggested"] is False
+    assert patch(client, mission["id"], image=None).json()["image_suggested"] is False
+
+
+def test_text_change_keeps_the_suggestion(client, mission):
+    step = add_step(client, mission["id"], "Desayunar").json()["steps"][0]
+    url = f"/api/missions/{mission['id']}/steps/{step['id']}"
+    body = client.patch(url, json={"text": "Desayunar todo"}, headers=PARENT).json()
+    assert body["steps"][0]["image_suggested"] is True
+
+
+def test_photo_clears_the_mark(client, mission):
+    step = add_step(client, mission["id"], "Desayunar").json()["steps"][0]
+    body = upload(client, f"/api/missions/{mission['id']}/steps/{step['id']}/photo").json()
+    assert body["steps"][0]["image_suggested"] is False
+
+
+def test_missions_saved_before_suggestions_still_load(client, bea, data_dir):
+    create_mission(client, bea["id"], name="Mi misión")
+    doc = saved(data_dir)
+    for entry in doc["missions"]:
+        entry.pop("image_suggested")
+    config_path(data_dir).write_text(yaml.safe_dump(doc))
+    assert client.get(f"/api/children/{bea['id']}/missions").json()[0]["image_suggested"] is False
