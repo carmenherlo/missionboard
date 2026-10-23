@@ -123,6 +123,39 @@
   cursor: pointer;
 }
 
+/* ---------- panels: each group of content in its own container ---------- */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+}
+
+.panel__title {
+  margin: 0;
+  color: var(--primary);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+/* Inside a panel, rows are plain lines on a light tint, not cards in a card */
+.panel .row {
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.panel .row--add {
+  background: transparent;
+}
+
+.panel .step-preview {
+  border: 0;
+  padding: var(--space-2) 0;
+}
+
 /* ---------- cards and lists ---------- */
 
 .card {
@@ -309,7 +342,8 @@
 }
 
 .chip--day {
-  width: 52px;
+  width: 46px;
+  min-height: 46px;
   padding: 0;
 }
 
@@ -331,7 +365,8 @@
 .tab {
   flex: 1;
   min-height: 44px;
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-1);
+  white-space: nowrap;
   border: 0;
   border-radius: 12px;
   background: transparent;
@@ -552,6 +587,18 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-3);
+}
+
+/* Picture and name side by side */
+.mission-identity {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.mission-identity > label {
+  flex: 1;
+  min-width: 0;
 }
 
 .mission-image > .image-picker {

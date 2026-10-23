@@ -3,6 +3,7 @@ import { confirmBar } from "../../components/confirm-bar.js";
 import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { saveStatus } from "../../components/save-status.js";
+import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
@@ -96,9 +97,9 @@ export async function viewStepEdit(missionId, stepId) {
       { href: missionHref, label: mission.name }),
     h("main", { class: "page" },
       h("div", { class: "columns columns--equal" },
-        h("section", { class: "stack" },
-          h("label", {}, t.stepEdit.text, textInput, h("span", { class: "hint" }, t.stepEdit.textHint)),
-          h("div", { class: "field" }, h("span", { class: "field__label" }, t.stepEdit.image), picker.element)),
+        h("div", { class: "stack" },
+          panel(t.stepEdit.text, textInput, h("span", { class: "hint" }, t.stepEdit.textHint)),
+          panel(t.stepEdit.image, picker.element)),
         // Right: what the child will see, always in view, with the actions.
-        h("aside", { class: "side-panel" }, preview, footer))));
+        h("aside", { class: "side-panel" }, panel(null, preview), footer))));
 }

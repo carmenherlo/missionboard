@@ -1,6 +1,7 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { saveStatus } from "../../components/save-status.js";
+import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
@@ -224,9 +225,8 @@ export async function viewChildForm(childId) {
       { href: "#/parents/config/children", label: t.children.back }),
     h("main", { class: "page" },
       h("form", { class: "child-form", onsubmit },
-        preview,
-        h("label", {}, t.childForm.name, nameInput),
-        picker,
+        panel(null, preview, h("label", {}, t.childForm.name, nameInput)),
+        panel(null, picker),
         error,
         existing
           ? h("div", { class: "form-actions" },

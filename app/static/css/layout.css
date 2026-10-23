@@ -60,10 +60,10 @@
   gap: var(--space-4);
 }
 
-/* Side by side: a clear gutter between the two columns */
+/* Side by side: a clear gutter between the two columns (panels already separate them) */
 @media (min-width: 860px) {
   .columns {
-    column-gap: var(--space-6);
+    column-gap: var(--space-5);
   }
 }
 

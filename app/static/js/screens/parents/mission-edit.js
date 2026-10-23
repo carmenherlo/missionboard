@@ -4,6 +4,7 @@ import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { saveStatus } from "../../components/save-status.js";
 import { sortable } from "../../components/sortable.js";
+import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
@@ -48,6 +49,7 @@ export async function viewMissionEdit(missionId) {
 
   // ---------- image ----------
   const imageBox = h("div", { class: "mission-image" });
+  const pickerBox = h("div", {}); // below the picture-and-name row, full width
   let pickerOpen = false;
   async function renderImage() {
     const toggle = h("button", {
@@ -55,8 +57,9 @@ export async function viewMissionEdit(missionId) {
       onclick: () => { pickerOpen = !pickerOpen; renderImage(); },
     }, imageThumb(mission.image_url, { size: "lg", label: mission.name, suggested: mission.image_suggested }),
       h("span", { class: "icon-button image-button__pencil" }, icon("edit")));
+    imageBox.replaceChildren(toggle);
     if (!pickerOpen) {
-      imageBox.replaceChildren(toggle);
+      pickerBox.replaceChildren();
       return;
     }
     const picker = await imagePicker({
@@ -71,7 +74,7 @@ export async function viewMissionEdit(missionId) {
           imageThumb(mission.image_url, { size: "lg", label: mission.name, suggested: mission.image_suggested }));
       },
     });
-    imageBox.replaceChildren(toggle, picker.element);
+    pickerBox.replaceChildren(picker.element);
   }
 
   // ---------- days ----------
@@ -145,7 +148,7 @@ export async function viewMissionEdit(missionId) {
   }
 
   // ---------- steps ----------
-  const stepsTitle = h("h2", { class: "section-title" });
+  const stepsTitle = h("span", {});
   const stepsList = h("ul", { class: "rows" });
   sortable(stepsList, {
     onEnd: (ids) => save(api("PUT", `${missionUrl}/steps/order`, { json: { ids } }))
@@ -215,12 +218,15 @@ export async function viewMissionEdit(missionId) {
         { href: listHref, label: t.childMissions.title(child.name) }),
     h("main", { class: "page" },
       h("div", { class: "columns" },
-        h("section", { class: "stack" },
-          imageBox,
-          h("label", {}, t.missionEdit.name, nameInput),
-          h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysSummary, daysError),
-          h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.schedule), scheduleBox, scheduleError)),
-        h("section", { class: "stack" },
-          stepsTitle, stepsEmpty, stepsList, addStep)),
+        h("div", { class: "stack" },
+          panel(t.missionEdit.panelMission,
+            h("div", { class: "mission-identity" },
+              imageBox,
+              h("label", {}, t.missionEdit.name, nameInput)),
+            pickerBox),
+          panel(t.missionEdit.panelWhen,
+            h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysSummary, daysError),
+            h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.schedule), scheduleBox, scheduleError))),
+        panel(stepsTitle, stepsEmpty, stepsList, addStep)),
       footer));
 }

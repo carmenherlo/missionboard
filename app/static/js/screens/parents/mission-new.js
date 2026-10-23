@@ -1,5 +1,6 @@
 import { api, errorMessage } from "../../api.js";
 import { imagePicker } from "../../components/image-picker.js";
+import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
@@ -46,8 +47,8 @@ export async function viewMissionNew(childId) {
     parentsHeader(t.missionNew.title(child.name), { href: backHref, label: t.childMissions.title(child.name) }),
     h("main", { class: "page" },
       h("form", { class: "stack", novalidate: true, onsubmit },
-        h("label", {}, t.missionNew.name, nameInput),
-        h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionNew.image), picker.element),
+        panel(t.missionNew.name, nameInput),
+        panel(t.missionNew.image, picker.element),
         error,
         h("div", { class: "form-actions" },
           h("a", { class: "btn", href: backHref }, t.common.cancel),

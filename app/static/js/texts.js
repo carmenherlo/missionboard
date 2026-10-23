@@ -102,6 +102,8 @@ export const t = {
     missingName: "Escribe el nombre de la misión.",
   },
   missionEdit: {
+    panelMission: "Misión",
+    panelWhen: "Cuándo",
     daysSummary: {
       all: "Todos los días",
       weekdays: "De lunes a viernes",
