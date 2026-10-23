@@ -71,4 +71,4 @@ def test_every_theme_defines_the_roles_the_app_uses(client):
     for theme in themes:
         defined = set(re.findall(r"(--md-[\w-]+):", theme.read_text()))
         assert used <= defined, f"{theme.name} lacks {sorted(used - defined)}"
-    assert client.get("/static/css/themes/indigo.css").status_code == 200
+    assert client.get("/static/css/themes/azul-mision.css").status_code == 200

@@ -1,0 +1,28 @@
+{
+    "customColors": {
+        "success": "#1FBF8F",
+        "accent": "#FFC233"
+    },
+    "computed": {
+        "light": {
+            "success": "#1C6B50",
+            "onSuccess": "#FFFFFF",
+            "successContainer": "#A7F2D0",
+            "onSuccessContainer": "#00513A",
+            "accent": "#79590C",
+            "onAccent": "#FFFFFF",
+            "accentContainer": "#FFDEA2",
+            "onAccentContainer": "#5C4200"
+        },
+        "dark": {
+            "success": "#8BD5B5",
+            "onSuccess": "#003827",
+            "successContainer": "#00513A",
+            "onSuccessContainer": "#A7F2D0",
+            "accent": "#EBC16C",
+            "onAccent": "#402D00",
+            "accentContainer": "#5C4200",
+            "onAccentContainer": "#FFDEA2"
+        }
+    }
+}
