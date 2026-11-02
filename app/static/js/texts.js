@@ -27,6 +27,8 @@ export const t = {
     empty: "Todavía no hay niños.",
     parentsLabel: "Zona de padres",
     homeLabel: "Salir al inicio",
+    fullscreen: "Pantalla completa",
+    exitFullscreen: "Salir de pantalla completa",
   },
   child: {
     hello: (name) => `¡Hola, ${name}!`,

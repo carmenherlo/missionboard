@@ -61,6 +61,14 @@
   z-index: 10;
 }
 
+/* Top-left of the home screen: full screen (the right is for switching zones). */
+.fullscreen-button {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+}
+
 .corner-button--in-bar {
   position: static;
   margin-left: auto;
