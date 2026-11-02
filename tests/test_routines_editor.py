@@ -185,19 +185,20 @@ def test_a_part_photo(client, data_dir):
 # ---------- "Probar ahora" ----------
 
 
-def test_trial_moves_the_routine_to_now(client, clock):
+def test_trial_keeps_the_routines_own_times(client, clock):
     trial = client.get(f"{URL}/trial", headers=PARENT).json()
-    assert trial["trial"] is True and trial["wake"] == "16:20"
-    assert [(p["start"], p["end"]) for p in trial["parts"]][:2] == [("16:25", "16:35"), ("16:35", "16:50")]
-    assert trial["goal"]["at"] == "17:35"
-    assert trial["now"] == pytest.approx(16 * 60 + 20.5)
+    assert trial["trial"] is True and trial["wake"] == "06:30"
+    assert [(p["start"], p["end"]) for p in trial["parts"]][:2] == [("06:35", "06:45"), ("06:45", "07:00")]
+    assert trial["goal"]["at"] == "07:45"
+    assert trial["now"] == pytest.approx(6 * 60 + 30)  # as if it were 6:30, whatever the time now
     assert descriptions(client, limit=1) == ["Probaste la rutina «Mañana»"]
     assert client.get("/api/routines/current").json() is None  # nothing really rings
 
 
 def test_trial_from_a_part(client):
     trial = client.get(f"{URL}/trial?from=2", headers=PARENT).json()
-    assert trial["parts"][2]["start"] == "16:21"
+    assert trial["parts"][2]["start"] == "07:00"
+    assert trial["now"] == pytest.approx(7 * 60 - 20 / 60)  # 20 seconds before: its countdown is heard
     assert client.get(f"{URL}/trial?from=9", headers=PARENT).status_code == 404
 
 

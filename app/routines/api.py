@@ -364,9 +364,13 @@ def trial(
     libraries: ImageLibraries = Depends(get_image_libraries),
     clock=Depends(get_clock),
 ):
-    """"Probar ahora": the routine as if it were on now, for this device only."""
+    """"Probar ahora": the routine with its own times, as if it were that moment of the
+    day (on this device only; the screen's clock goes on from there)."""
     now = clock.now()
-    routine = editor.trial(routine_id, now, from_part)
+    routine, pretend = editor.trial(routine_id, from_part)
+    if pretend is not None:
+        seconds = round(pretend * 60) % (24 * 3600)
+        now = now.replace(hour=seconds // 3600, minute=seconds // 60 % 60, second=seconds % 60, microsecond=0)
     current = routines.current_for(routine, now)
     editor.tested(routine_id)
     return {**_present(current, libraries), "trial": True}

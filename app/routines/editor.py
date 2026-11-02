@@ -6,7 +6,6 @@ that breaks either is refused and nothing is saved.
 """
 
 import secrets
-from datetime import datetime
 from types import SimpleNamespace
 
 from pydantic import ValidationError
@@ -23,6 +22,7 @@ from app.routines.repository import Part, Routine, RoutinesRepository, hhmm, min
 from app.storage.photo_store import PhotoStore
 
 UNSET = object()
+TRIAL_LEAD_SECONDS = 20  # "Probar desde aquí" starts this long before the part
 NEW_ROUTINE_DAYS = WEEKDAYS[:5]
 NEW_PART_MINUTES = 5
 
@@ -213,17 +213,19 @@ class RoutinesEditor:
 
     # ---------- "Probar ahora" ----------
 
-    def trial(self, routine_id: str, now: datetime, from_part: int = 0) -> Routine:
-        """The routine with all its times moved the same, so it rings now (or its part
-        `from_part` starts at the next minute): to hear and see it without waiting."""
+    def trial(self, routine_id: str, from_part: int = 0) -> tuple[Routine, float | None]:
+        """"Probar ahora": the routine with its own times, and the moment of the day to
+        pretend it is: when it rings, or a little before the part `from_part` (so its
+        countdown and announcement are heard as they will be). By hand: None, it
+        starts when tried, as when started for real."""
         routine = self.get(routine_id)
         if not 0 <= from_part < len(routine.parts):
             raise NotFoundError("Part not found")
         if routine.manual:
-            return routine  # it starts when tried, like when started by hand
-        minute = now.hour * 60 + now.minute
-        start = minute_of(routine.wake) if from_part == 0 else routine.timeline()[from_part][1]
-        return routine.shifted(minute - start if from_part == 0 else minute + 1 - start)
+            return routine, None
+        if from_part == 0:
+            return routine, float(minute_of(routine.wake))
+        return routine, routine.timeline()[from_part][1] - TRIAL_LEAD_SECONDS / 60
 
     def tested(self, routine_id: str) -> None:
         self._events.config_changed("routine", "tested", mission=_named(self.get(routine_id)))
