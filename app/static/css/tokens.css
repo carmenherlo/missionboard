@@ -31,6 +31,8 @@
   --primary: var(--md-primary);
   --primary-strong: var(--md-on-primary-container);
   --primary-soft: var(--md-primary-container);
+  --secondary-soft: var(--md-secondary-container); /* chosen option of a segmented control */
+  --on-secondary-soft: var(--md-on-secondary-container);
   --accent: var(--md-accent);
   --accent-soft: var(--md-accent-container);
   --on-accent-soft: var(--md-on-accent-container); /* text on accent-soft (order numbers, ✦) */

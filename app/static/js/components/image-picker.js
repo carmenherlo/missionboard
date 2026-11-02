@@ -55,7 +55,7 @@ export async function imagePicker({ initial, onChange }) {
           if (id === "none") choose({ kind: "none" });
           else render();
         },
-      }, label)));
+      }, tab === id && icon("check"), label)));
   }
 
   function imageButton(item) {

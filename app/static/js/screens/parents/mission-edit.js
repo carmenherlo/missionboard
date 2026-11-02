@@ -78,7 +78,7 @@ export async function viewMissionEdit(missionId) {
   }
 
   // ---------- days ----------
-  const daysBox = h("div", { class: "chips" });
+  const daysBox = h("div", { class: "chips chips--days" });
   const daysError = h("p", { class: "form-error", role: "alert" });
   const daysSummary = h("p", { class: "hint" });
   function renderDays() {
@@ -121,7 +121,7 @@ export async function viewMissionEdit(missionId) {
             if (!value) patch({ schedule: null }).catch(() => {});
             renderSchedule();
           },
-        }, label)));
+        }, withSchedule === value && icon("check"), label)));
     if (!withSchedule) {
       scheduleBox.replaceChildren(modes);
       return;
