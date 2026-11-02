@@ -216,18 +216,37 @@ def test_a_screen_is_logged_with_the_names_of_what_it_shows(client):
     assert event["type"] == "screen_opened" and event["subject"] == "step_edit"
     assert event["child_name"] == "Bea" and event["mission_name"] == "Alunizaje"
     assert event["step_text"] == "Leer un cuento"
-    assert event["description"] == "Abriste Editar paso · «Leer un cuento» de «Alunizaje» de Bea"
+    assert event["description"] == "Abriste Editar paso «Leer un cuento» de «Alunizaje» (Bea)"
+
+
+def test_screens_read_as_their_titles(client):
+    bea = create_child(client)
+    mission = create_mission(client, bea["id"], name="Ducha").json()
+    open_screen(client, screen="child_missions", child_id=bea["id"])
+    open_screen(client, screen="mission_edit", mission_id=mission["id"])
+    open_screen(client, screen="template_apply", mission_id="despegue")
+    assert descriptions(client, limit=3) == [
+        "Abriste Aplicar «Despegue»",
+        "Abriste Editar misión «Ducha» de Bea",
+        "Abriste Misiones de Bea",
+    ]
 
 
 def test_screens_without_the_parent_code(client):
-    assert client.post("/api/events/screen", json={"zone": "child", "screen": "home"}).status_code == 204
+    assert client.post("/api/events/screen", json={"zone": None, "screen": "home"}).status_code == 204
     open_screen(client, screen="template_edit", mission_id="despegue")
     open_screen(client, screen="mission_edit", mission_id="gone")
     assert descriptions(client) == [
         "Abriste Editar misión",
-        "Abriste Editar plantilla · «Despegue»",
+        "Abriste Editar plantilla «Despegue»",
         "Se abrió el inicio",
     ]
+
+
+def test_the_home_screen_belongs_to_nobody(client):
+    client.post("/api/events/screen", json={"zone": None, "screen": "home"})
+    assert latest(client)[0]["zone"] is None
+    assert csv_rows(client)[1][2:4] == ["", "screen_opened"]
 
 
 @pytest.mark.parametrize("body", [

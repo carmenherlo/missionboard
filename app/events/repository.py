@@ -17,7 +17,7 @@ class Event:
 
     at: datetime
     day: date
-    zone: str  # "child" | "parents"
+    zone: str | None  # "child" | "parents" | None (nobody in particular: the home screen)
     type: str
     subject: str | None = None
     action: str | None = None
@@ -38,6 +38,7 @@ def _to_row(event: Event) -> dict:
     row = asdict(event)
     row["at"] = event.at.isoformat(timespec="seconds")
     row["day"] = event.day.isoformat()
+    row["zone"] = event.zone or ""  # the column is NOT NULL: "" is no zone
     return row
 
 
@@ -45,6 +46,7 @@ def _from_row(row) -> Event:
     data = dict(row)
     data["at"] = datetime.fromisoformat(data["at"])
     data["day"] = date.fromisoformat(data["day"])
+    data["zone"] = data["zone"] or None
     return Event(**data)
 
 

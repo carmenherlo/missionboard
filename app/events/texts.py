@@ -6,7 +6,8 @@ log is read, so they can be improved without touching stored events.
 
 DAYS = {"mon": "L", "tue": "M", "wed": "X", "thu": "J", "fri": "V", "sat": "S", "sun": "D"}
 
-ZONES = {"child": "niño", "parents": "padres"}
+# No zone: nobody in particular (the home screen, before a child picks their avatar).
+ZONES = {"child": "niño", "parents": "padres", None: ""}
 
 CSV_HEADER = ["día", "hora", "zona", "tipo", "niño", "misión", "paso", "detalle", "descripción"]
 
@@ -37,24 +38,26 @@ def change_detail(changes: dict) -> str | None:
     return " · ".join(_FIELDS[field](value) for field, value in changes.items()) or None
 
 
+# Each screen as its title reads, with the names it shows; the plain name
+# when one of those no longer exists (the id was not found).
 SCREENS = {
-    "home": "el inicio",
-    "event_log": "Registro de la prueba",
-    "config": "Configurar",
-    "change_code": "Código de padres",
-    "children": "Niños",
-    "child_new": "Añadir niño",
-    "child_edit": "Editar niño",
-    "missions": "Misiones",
-    "child_missions": "Misiones de un niño",
-    "mission_new": "Nueva misión",
-    "mission_edit": "Editar misión",
-    "step_edit": "Editar paso",
-    "templates": "Plantillas",
-    "template_new": "Nueva plantilla",
-    "template_edit": "Editar plantilla",
-    "template_apply": "Aplicar plantilla",
-    "template_step_edit": "Editar paso de plantilla",
+    "home": ("el inicio", None),
+    "event_log": ("Registro de la prueba", None),
+    "config": ("Configurar", None),
+    "change_code": ("Código de padres", None),
+    "children": ("Niños", None),
+    "child_new": ("Añadir niño", None),
+    "child_edit": ("Editar niño", "Editar a {child}"),
+    "missions": ("Misiones", None),
+    "child_missions": ("Misiones de un niño", "Misiones de {child}"),
+    "mission_new": ("Nueva misión", "Nueva misión para {child}"),
+    "mission_edit": ("Editar misión", "Editar misión «{mission}» de {child}"),
+    "step_edit": ("Editar paso", "Editar paso «{step}» de «{mission}» ({child})"),
+    "templates": ("Plantillas", None),
+    "template_new": ("Nueva plantilla", None),
+    "template_edit": ("Editar plantilla", "Editar plantilla «{mission}»"),
+    "template_apply": ("Aplicar plantilla", "Aplicar «{mission}»"),
+    "template_step_edit": ("Editar paso de plantilla", "Editar paso «{step}» de la plantilla «{mission}»"),
 }
 
 # config_changed, by (subject, action). Parents are the only ones who
@@ -84,12 +87,13 @@ _CONFIG = {
 }
 
 
-def _about(event) -> str:
-    """«Leer un cuento» de «Alunizaje» de Bea: what a screen was showing."""
-    parts = [f"«{name}»" for name in (event.step_text, event.mission_name) if name]
-    if event.child_name:
-        parts.append(event.child_name)
-    return " de ".join(parts)
+def _screen(event) -> str:
+    plain, with_names = SCREENS.get(event.subject, (event.subject, None))
+    names = {"child": event.child_name, "mission": event.mission_name, "step": event.step_text}
+    try:
+        return with_names.format_map({k: v for k, v in names.items() if v}) if with_names else plain
+    except KeyError:  # a name it needs is missing
+        return plain
 
 
 def describe(event) -> str:
@@ -97,10 +101,7 @@ def describe(event) -> str:
     if event.type == "parents_entered":
         return "Entraste en la zona de padres"
     if event.type == "screen_opened":
-        screen = SCREENS.get(event.subject, event.subject)
-        sentence = f"Abriste {screen}" if event.zone == "parents" else f"Se abrió {screen}"
-        about = _about(event)
-        return f"{sentence} · {about}" if about else sentence
+        return f"Abriste {_screen(event)}" if event.zone == "parents" else f"Se abrió {_screen(event)}"
     if event.type == "config_changed":
         template = _CONFIG.get((event.subject, event.action), f"{event.subject}: {event.action}")
         sentence = template.format(child=event.child_name, mission=event.mission_name, step=event.step_text)

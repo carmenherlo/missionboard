@@ -21,7 +21,7 @@ ID = r"^[\w-]{1,64}$"
 class ScreenIn(BaseModel):
     """A screen the browser has just opened, with the ids in its address."""
 
-    zone: Literal["child", "parents"]
+    zone: Literal["child", "parents"] | None  # None: the home screen, before anyone is chosen
     screen: str = Field(pattern=r"^[a-z_]{1,40}$")
     child_id: str | None = Field(default=None, pattern=ID)
     mission_id: str | None = Field(default=None, pattern=ID)

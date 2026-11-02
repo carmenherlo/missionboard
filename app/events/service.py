@@ -54,7 +54,7 @@ class EventLog:
             child=child, mission=mission, step=step, detail=texts.change_detail(changes or {}),
         )
 
-    def screen_opened(self, zone: str, screen: str, *, child=None, mission=None, step=None) -> None:
+    def screen_opened(self, zone: str | None, screen: str, *, child=None, mission=None, step=None) -> None:
         self._record(
             zone, "screen_opened", subject=screen, child=child, mission=mission, step=step, detail=screen
         )
@@ -137,7 +137,7 @@ class ScreenLog:
 
     def opened(
         self,
-        zone: str,
+        zone: str | None,
         screen: str,
         child_id: str | None = None,
         mission_id: str | None = None,
