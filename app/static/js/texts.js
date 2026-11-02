@@ -73,6 +73,7 @@ export const t = {
     label: "Volumen",
     voice: "Voz",
     effects: "Sonidos",
+    tapToEnable: "Toca la pantalla para activar el sonido (las rutinas lo necesitan para sonar).",
   },
   codeField: {
     show: "Mostrar código",
@@ -121,6 +122,9 @@ export const t = {
     days: "Días",
     wake: "Suena a las",
     remindEvery: "Avisa cada (minutos)",
+    offsets: "Algún día, más tarde o más temprano (minutos)",
+    offsetsHint: "Ese día se mueve toda la rutina: +15, un cuarto de hora más tarde; −10, diez minutos antes.",
+    offsetOf: (day) => `Minutos de más o de menos el ${day}`,
     wakeHint: (n) => n
       ? `Suena hasta que alguien la para; luego avisa cada ${n} minutos de cuánto falta para la primera parte.`
       : "Suena hasta que alguien la para.",

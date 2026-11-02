@@ -62,7 +62,21 @@ export function onSoundChange(listener) {
 
 // The first tap anywhere starts the audio engine (and the voice), so that a
 // routine ringing later, with nobody touching the tablet, can be heard.
-addEventListener("pointerdown", () => context(), { once: true, capture: true });
+// Until then soundLocked() is true and the screens ask for that tap.
+const unlockListeners = new Set();
+addEventListener("pointerdown", () => {
+  context();
+  for (const listener of unlockListeners) listener();
+  unlockListeners.clear();
+}, { once: true, capture: true });
+
+export function soundLocked() {
+  return !audio || audio.state !== "running";
+}
+
+export function onSoundUnlocked(listener) {
+  unlockListeners.add(listener);
+}
 
 export const sounds = {
   // The alarm: an old phone's "rrring rrring", three times.

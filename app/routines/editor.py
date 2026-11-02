@@ -69,9 +69,11 @@ class RoutinesEditor:
         self._log("created", routine)
         return routine
 
-    def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET) -> Routine:
+    def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
+               offsets=UNSET) -> Routine:
         changes = {k: v for k, v in
-                   {"name": name, "days": days, "wake": wake, "remind_every": remind_every, "goal": goal}.items()
+                   {"name": name, "days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
+                    "offsets": offsets}.items()
                    if v is not UNSET}
         if "days" in changes:
             if not changes["days"]:
@@ -188,15 +190,7 @@ class RoutinesEditor:
             raise NotFoundError("Part not found")
         minute = now.hour * 60 + now.minute
         start = minute_of(routine.wake) if from_part == 0 else routine.timeline()[from_part][1]
-        offset = minute - start if from_part == 0 else minute + 1 - start
-        shift = lambda time: hhmm((minute_of(time) + offset) % (24 * 60))  # noqa: E731
-        doc = routine.to_doc()
-        doc["wake"] = shift(doc["wake"])
-        for part in doc["parts"]:
-            part["at"] = part["at"] and shift(part["at"])
-        if doc.get("goal"):
-            doc["goal"]["at"] = shift(doc["goal"]["at"])
-        return Routine.model_validate(doc)
+        return routine.shifted(minute - start if from_part == 0 else minute + 1 - start)
 
     def tested(self, routine_id: str) -> None:
         self._events.config_changed("routine", "tested", mission=_named(self.get(routine_id)))

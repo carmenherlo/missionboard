@@ -53,6 +53,7 @@ class RoutinePatch(BaseModel):
     wake: str | None = Field(default=None, pattern=TIME)
     remind_every: int | None = Field(default=None, ge=0, le=30)
     goal: GoalIn | None = None
+    offsets: dict[str, int] | None = None
 
     _name = field_validator("name")(_not_blank)
 
@@ -239,7 +240,7 @@ def get_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routines_e
 def update_routine(routine_id: str, body: RoutinePatch, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "days", "wake", "remind_every"):
+    for required in ("name", "days", "wake", "remind_every", "offsets"):
         if changes.get(required, "") is None:
             changes.pop(required)
     if changes.get("goal") is not None:

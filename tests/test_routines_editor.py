@@ -215,3 +215,25 @@ def test_v7_routines_get_each_childs_mission_by_name():
     routine = upgrade(doc)["routines"][0]
     assert routine["kids"] == [] and routine["missions"] == {"b": "m1", "a": None}
     assert "mission" not in routine and routine["parts"][0]["id"] == "manana-1"
+
+
+# ---------- moved on some days ----------
+
+
+def test_a_day_with_everything_later(client, clock):
+    routine = edit(client, "PATCH", offsets={"tue": 15, "wed": 0}).json()
+    assert routine["offsets"] == {"tue": 15}  # 0 means not moved
+    clock.moment = datetime(2026, 11, 3, 6, 40, tzinfo=MADRID)  # Tuesday 6:40: not yet (it rings at 6:45)
+    assert client.get("/api/routines/current").json() is None
+    clock.moment = datetime(2026, 11, 3, 6, 50, tzinfo=MADRID)
+    on = client.get("/api/routines/current").json()
+    assert on["wake"] == "06:45" and on["parts"][0]["start"] == "06:50" and on["goal"]["at"] == "08:00"
+    clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)  # Monday: as usual
+    assert client.get("/api/routines/current").json()["wake"] == "06:30"
+
+
+def test_moved_days_count_for_overlaps_and_must_stay_in_their_day(client):
+    other = client.post("/api/routines", json={"name": "Otra", "wake": "08:00"}, headers=PARENT)
+    assert other.status_code == 201
+    assert edit(client, "PATCH", offsets={"tue": 30}).status_code == 409  # Mañana would end at 8:15 on Tuesday
+    assert edit(client, "PATCH", offsets={"tue": -500}).status_code == 422

@@ -265,3 +265,23 @@
 .clock-face__minute { stroke-width: 4; }
 .clock-face__second { stroke: var(--danger); stroke-width: 1.5; }
 .clock-face__pin { fill: var(--text); }
+
+/* Until the first tap, sound is blocked by the browser: a notice asks for it,
+   over everything (a routine ringing silently would not wake anybody). */
+.sound-notice {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-3);
+  z-index: 60;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 2 * var(--space-3));
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+  box-shadow: var(--shadow-lifted);
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+}

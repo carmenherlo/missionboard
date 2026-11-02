@@ -70,6 +70,8 @@ class Routine(BaseModel):
     missions: dict[str, str | None] = {}  # each child's mission in this routine (by id)
     wake: str | None = Field(default=None, pattern=TIME)  # None: started by hand (R2)
     remind_every: int = Field(default=5, ge=0, le=30)
+    # Some days everything moves: {"tue": 15} rings and goes 15 minutes later on Tuesdays.
+    offsets: dict[str, int] = {}
     parts: tuple[Part, ...] = Field(min_length=1)
     goal: Goal | None = None
 
@@ -82,10 +84,38 @@ class Routine(BaseModel):
             raise ValueError("days must be mon..sun")
         return days
 
+    @field_validator("offsets")
+    @classmethod
+    def known_offsets(cls, offsets):
+        if any(day not in WEEKDAYS or not -180 <= minutes <= 180 for day, minutes in offsets.items()):
+            raise ValueError("offsets: mon..sun, up to 180 minutes either way")
+        return {day: minutes for day, minutes in offsets.items() if minutes}
+
     @model_validator(mode="after")
     def times_add_up(self) -> "Routine":
         self.timeline()  # raises ValueError if they do not
+        for minutes in self.offsets.values():  # moved, it stays within its day
+            if minute_of(self.wake) + minutes < 0 or self.ends + minutes > 24 * 60:
+                raise ValueError(f"{self.id!r} would move out of its day")
         return self
+
+    def shifted(self, minutes: int) -> "Routine":
+        """The same routine with every time moved by `minutes` (wrapping round midnight)."""
+        if not minutes:
+            return self
+        shift = lambda time: hhmm((minute_of(time) + minutes) % (24 * 60))  # noqa: E731
+        doc = self.to_doc()
+        doc["wake"] = doc["wake"] and shift(doc["wake"])
+        doc["offsets"] = {}
+        for part in doc["parts"]:
+            part["at"] = part["at"] and shift(part["at"])
+        if doc.get("goal"):
+            doc["goal"]["at"] = shift(doc["goal"]["at"])
+        return Routine.model_validate(doc)
+
+    def on(self, weekday: str) -> "Routine":
+        """The routine as it goes that day of the week (its offset applied)."""
+        return self.shifted(self.offsets.get(weekday, 0))
 
     def timeline(self) -> list[tuple[Part, int, int]]:
         """Each part with its start and end, in minutes of the day."""
@@ -111,10 +141,14 @@ class Routine(BaseModel):
         return minute_of(self.goal.at) if self.goal else self.timeline()[-1][2]
 
     def overlaps(self, other: "Routine") -> bool:
-        """Both ring on some day and their times cross."""
-        if not set(self.days) & set(other.days) or self.wake is None or other.wake is None:
+        """Both ring on some day and their times cross that day."""
+        if self.wake is None or other.wake is None:
             return False
-        return minute_of(self.wake) < other.ends and minute_of(other.wake) < self.ends
+        for day in set(self.days) & set(other.days):
+            mine, theirs = self.on(day), other.on(day)
+            if minute_of(mine.wake) < theirs.ends and minute_of(theirs.wake) < mine.ends:
+                return True
+        return False
 
     def to_doc(self) -> dict:
         return self.model_dump(mode="json")

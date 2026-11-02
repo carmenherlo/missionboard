@@ -69,7 +69,19 @@ export async function viewRoutineEdit(routineId) {
   const wakeHint = h("p", { class: "hint" });
   const daysBox = h("div", { class: "chips chips--days" });
   const daysSummary = h("p", { class: "hint" });
+  // Some days everything moves: "+15" rings and goes a quarter of an hour later.
+  const offsetsBox = h("div", { class: "offsets" });
+  function renderOffsets() {
+    offsetsBox.replaceChildren(...WEEKDAYS.filter((d) => routine.days.includes(d)).map((day) =>
+      h("label", { class: "offsets__day" }, t.days[day],
+        h("input", {
+          type: "number", step: 5, min: -180, max: 180, value: routine.offsets[day] ?? 0,
+          "aria-label": t.routineEdit.offsetOf(t.dayNames[day]),
+          onchange: (e) => patch({ offsets: { ...routine.offsets, [day]: Number(e.target.value) || 0 } }),
+        }))));
+  }
   function renderRoutine() {
+    renderOffsets();
     wake.value = routine.wake;
     remind.value = routine.remind_every;
     wakeHint.textContent = t.routineEdit.wakeHint(routine.remind_every);
@@ -239,7 +251,9 @@ export async function viewRoutineEdit(routineId) {
             h("div", { class: "times" },
               h("label", { class: "time" }, t.routineEdit.wake, wake),
               h("label", { class: "time" }, t.routineEdit.remindEvery, remind)),
-            wakeHint),
+            wakeHint,
+            h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox,
+              h("span", { class: "hint" }, t.routineEdit.offsetsHint))),
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(partsTitle, partsList, addPart),

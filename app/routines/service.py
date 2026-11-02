@@ -74,9 +74,11 @@ class RoutinesService:
         now = self._clock.now()
         day = app_day(now, settings.day_starts_at)
         minute = now.hour * 60 + now.minute + now.second / 60
-        for routine in self._routines.list():
-            if WEEKDAYS[day.weekday()] not in routine.days or routine.wake is None:
+        weekday = WEEKDAYS[day.weekday()]
+        for stored in self._routines.list():
+            if weekday not in stored.days or stored.wake is None:
                 continue
+            routine = stored.on(weekday)
             if not minute_of(routine.wake) <= minute < routine.ends:
                 continue
             run = self._runs.get(day, routine.id)
