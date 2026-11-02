@@ -89,6 +89,10 @@ class OrderIn(BaseModel):
     ids: list[str]
 
 
+class StartIn(BaseModel):
+    kids: list[str]
+
+
 class NoteIn(BaseModel):
     kind: Literal[NOTES]
     part: int | None = Field(default=None, ge=0)
@@ -131,6 +135,8 @@ def _present(current: Current, libraries: ImageLibraries) -> dict:
         "name": routine.name,
         "day": current.day.isoformat(),
         "now": current.minute,  # minute of the day by the household's clock, with seconds
+        "manual": current.started is not None,  # started by hand: a timer instead of the clock
+        "started": current.started,
         "wake": routine.wake,
         "remind_every": routine.remind_every,
         "parts": [
@@ -158,6 +164,22 @@ def _present(current: Current, libraries: ImageLibraries) -> dict:
             for p in current.people
         ],
     }
+
+
+@router.get("/by-hand")
+def by_hand(routines: RoutinesService = Depends(get_routines_service)):
+    """The routines that can be started by hand today (⏰ on the home screen), with their children."""
+    return [
+        {"id": r.id, "name": r.name, "minutes": r.length,
+         "kids": [{**public_child(c), "colors": avatars.tones(c.color)} for c in kids]}
+        for r, kids in routines.by_hand()
+    ]
+
+
+@router.post("/{routine_id}/start", status_code=204)
+def start(routine_id: str, body: StartIn, routines: RoutinesService = Depends(get_routines_service)) -> None:
+    """Start it by hand with the children who have come home (no code: it is for the family)."""
+    routines.start(routine_id, body.kids)
 
 
 @router.get("/current")
@@ -203,7 +225,8 @@ class Editing:
         conflicts = []
         for child in kids:
             mission = self._missions.get(routine.missions.get(child.id) or "")
-            if mission and mission.schedule and mission.schedule.end and mission.schedule.end < hhmm(routine.ends):
+            if (not routine.manual and mission and mission.schedule and mission.schedule.end
+                    and mission.schedule.end < hhmm(routine.ends)):
                 conflicts.append({"child": child.name, "mission": mission.name, "mission_id": mission.id,
                                   "closes": mission.schedule.end, "ends": hhmm(routine.ends)})
         return {
@@ -211,6 +234,8 @@ class Editing:
             "every_child": not routine.kids,
             "kids": [c.id for c in kids],
             "ends": hhmm(routine.ends),
+            "manual": routine.manual,
+            "minutes": routine.length,
             "parts": [
                 {**part.model_dump(mode="json"), "image_url": self._libraries.url(part.image),
                  "start": hhmm(start), "end": hhmm(end)}
@@ -240,7 +265,7 @@ def get_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routines_e
 def update_routine(routine_id: str, body: RoutinePatch, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "days", "wake", "remind_every", "offsets"):
+    for required in ("name", "days", "remind_every", "offsets"):  # wake: null means "by hand"
         if changes.get(required, "") is None:
             changes.pop(required)
     if changes.get("goal") is not None:

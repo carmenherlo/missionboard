@@ -16,6 +16,10 @@
 // clock. "Cerrar" hides it until its next part; "Finalizar" (parents' code)
 // ends it for today. In the parents' zone it does not cover the screen: a
 // banner says it is on.
+// A routine started by hand (⏰ on the home screen, rutinas-2): no alarm, no goal,
+// no time of day; its parts go one after the other from when it started, with
+// a timer instead of the clock, and it ends once its kids have done their
+// mission ("¡Muy bien!") or its time is up (who still has steps).
 // "Probar ahora" (Configurar → Rutinas) shows a routine the same way, its times
 // moved to now, on this device only: over any screen, nothing logged, and
 // "Cerrar" ends it.
@@ -28,7 +32,7 @@ import { quiet, say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { openMission } from "../screens/child/mission-flow.js";
 import { t } from "../texts.js";
-import { clockFace } from "./clock-face.js";
+import { clockFace, timerFace } from "./clock-face.js";
 import {
   capital, countdownText, hourWords, itIs, left, list, minuteOf, minutesWords, shortTime, tasksLeft,
 } from "./words.js";
@@ -42,6 +46,7 @@ const COUNTDOWN_S = 10; // the last seconds before a part, big on the clock
 const HERALD_S = 16; // seconds before a part ends: "Acaba el aseo. Diez segundos…"
 const AFTER_ZERO_MS = 1000; // after the countdown's last pip, the voice waits this long
 const WHO_IS_LEFT_MS = 9000; // in "firmar", after its announcement: who still has steps
+const DONE_MS = 30_000; // started by hand: "¡Hecho!" (or "¡Se acabó el tiempo!") stays this long
 
 const inParents = () => location.hash.startsWith("#/parents");
 
@@ -51,6 +56,11 @@ let controller = null;
 export async function tryRoutine(routineId, from = 0) {
   const [data] = await Promise.all([api("GET", `/api/routines/${routineId}/trial?from=${from}`), loadAvatars()]);
   controller.trial(data);
+}
+
+// A routine was just started by hand: show it now, without waiting for the next check.
+export function refreshRoutines() {
+  controller?.check();
 }
 
 export function startRoutines() {
@@ -65,7 +75,7 @@ export function startRoutines() {
       return; // no connection now: next time
     }
     if (!data) {
-      if (showing) end();
+      if (showing && !showing.finishing) end(); // started by hand and over: its "¡Hecho!" stays a while
       return;
     }
     if (!showing || showing.data.id !== data.id || showing.data.day !== data.day) {
@@ -133,12 +143,19 @@ export function startRoutines() {
     return showing.data.now + (Date.now() - showing.fetchedAt) / 60_000;
   }
 
-  const parts = () => showing.data.parts.map((p) => ({ ...p, from: minuteOf(p.start), to: minuteOf(p.end) }));
+  // Each part's start and end, in minutes of the day; started by hand, to the second
+  // it was started (the server's times are whole minutes).
+  function parts() {
+    const { data } = showing;
+    const shift = data.manual ? data.started - minuteOf(data.parts[0].start) : 0;
+    return data.parts.map((p) => ({ ...p, from: minuteOf(p.start) + shift, to: minuteOf(p.end) + shift }));
+  }
 
   function phaseAt(time) {
     const { data } = showing;
     const all = parts();
     const goalAt = data.goal && minuteOf(data.goal.at);
+    if (showing.done) return { kind: "done" };
     if (showing.earlyGoal != null && time < goalAt) return { kind: "goal", from: showing.earlyGoal, to: goalAt };
     if (time < all[0].from) return { kind: "wake", from: minuteOf(data.wake), to: all[0].from };
     for (const [index, part] of all.entries()) {
@@ -155,6 +172,7 @@ export function startRoutines() {
     if (!showing) return;
     const time = now();
     if (showing.earlyGoal == null && signedInTheLastPart(time)) showing.earlyGoal = time;
+    if (showing.data.manual && !showing.done && everyoneSigned()) showing.done = "signed"; // it ends now
     const phase = phaseAt(time);
     const key = keyOf(phase);
     if (key !== showing.phaseKey) {
@@ -193,7 +211,8 @@ export function startRoutines() {
     showing.mission?.close(); // a new part: the clock comes back to say it
     if (phase.kind === "part" && before !== null) note("part", { part: phase.index });
     if (phase.kind === "done") {
-      end();
+      if (showing.data.manual && before !== null) finish(counted);
+      else end();
       return;
     }
     if (closed()) return; // hidden until its next part
@@ -212,14 +231,16 @@ export function startRoutines() {
       if (!data.stopped) ring();
     } else if (phase.kind === "part") {
       const { part } = phase;
-      const length = part.to - part.from;
+      const length = Math.round(part.to - part.from);
+      // Started by hand, the time of day does not matter: only how long.
+      const until = data.manual ? "" : ` y acabará a ${hourWords(part.to)}`;
       say([
-        `${capital(itIs(time))}.`,
+        ...(data.manual ? [] : [`${capital(itIs(time))}.`]),
         part.say ?? `Comienza ${part.name}.`,
         ...(part.tasks.length ? [`Las tareas son: ${list(part.tasks).toLowerCase()}.`] : []),
         part.say
           ? `${data.people.length === 1 ? "Tienes" : "Tenéis"} ${minutesWords(length)}.`
-          : `${capital(part.name)} dura ${minutesWords(length)} y acabará a ${hourWords(part.to)}.`,
+          : `${capital(part.name)} dura ${minutesWords(length)}${until}.`,
       ]);
       if (!counted) sounds.ding(); // after a countdown, its zero was the sign
       if (part.check_mission) {
@@ -235,6 +256,25 @@ export function startRoutines() {
         timeToGo(time, counted);
       }
     }
+  }
+
+  // Started by hand, it is over: its kids did their mission, or its time is up.
+  // "¡Hecho!" (or who still has steps) stays a while, then it closes.
+  function finish(counted) {
+    showing.finishing = true;
+    const missing = showing.data.people.filter((p) => p.mission && !p.mission.completed);
+    const done = showing.done === "signed" || missing.length === 0;
+    if (counted) sounds.countdown(true);
+    if (done) {
+      sounds.win();
+      say(showing.done === "signed" ? [...wellDone(), "¡Muy bien!"] : "¡Hecho! ¡Muy bien!");
+    } else {
+      say(["Se ha acabado el tiempo.", ...missing.map((p) => `A ${p.child.name} ${tasksLeft(p.mission)}.`)]);
+    }
+    showing.finished = done ? "done" : "timeUp";
+    note("ended", { early: showing.done === "signed" });
+    const id = showing.data.id;
+    setTimeout(() => showing?.data.id === id && end(), DONE_MS);
   }
 
   // "¡Enhorabuena! Habéis completado con éxito todas vuestras tareas de la misión Despegue."
@@ -406,10 +446,12 @@ export function startRoutines() {
   function render(phase, time) {
     const { view, data } = showing;
     view.layer.dataset.phase = phase.kind;
-    view.time.textContent = capital(itIs(time));
+    // Started by hand, the time of day does not matter: how long is left in total.
+    view.time.textContent = !data.manual ? capital(itIs(time))
+      : phase.kind === "part" ? t.routine.leftInTotal(countdownText((parts().at(-1).to - time) * 60)) : "";
     view.close.textContent = phase.kind === "goal" && !data.trial ? t.routine.finish : t.routine.close;
     view.stopButton.hidden = !showing.ringing;
-    const toGo = countdownText((phase.to - time) * 60);
+    const toGo = phase.kind === "done" ? "" : countdownText((phase.to - time) * 60);
     let image = null;
     let what = "";
     let until = "";
@@ -419,18 +461,22 @@ export function startRoutines() {
     } else if (phase.kind === "part") {
       image = phase.part.image_url;
       what = capital(phase.part.name);
-      until = t.routine.endsAt(hourWords(phase.to), toGo);
+      until = data.manual ? t.routine.endsIn(toGo) : t.routine.endsAt(hourWords(phase.to), toGo);
     } else if (phase.kind === "goal") {
       image = data.goal.image_url;
       what = data.goal.say;
       until = t.routine.startsAt(capital(data.goal.name), hourWords(phase.to), toGo);
+    } else if (showing.finished) {
+      what = showing.finished === "done" ? t.routine.done : t.routine.timeUp;
     }
     view.what.replaceChildren(...[image && h("img", { src: image, alt: "" }), what].filter(Boolean));
     view.until.textContent = until;
-    view.clock.replaceChildren(clockFace(phase, time, parts().map((p) => ({ start: p.from, end: p.to }))));
+    view.clock.replaceChildren(data.manual
+      ? timerFace(phase, time)
+      : clockFace(phase, time, parts().map((p) => ({ start: p.from, end: p.to }))));
     if (String(showing.count ?? "") !== view.count.textContent) {
       view.count.textContent = showing.count ?? "";
-      view.count.hidden = !showing.count;
+      view.count.hidden = !showing.count || data.manual; // the timer counts in its middle already
       view.count.dataset.beat = String((showing.count ?? 0) % 2); // a new number: its jump again (effects.css)
     }
     const tasks = phase.kind === "part" ? phase.part.tasks : [];
@@ -441,7 +487,7 @@ export function startRoutines() {
     // What comes next, with the time each one starts.
     const coming = parts()
       .filter((p, index) => phase.kind === "wake" || (phase.kind === "part" && index > phase.index))
-      .map((p) => `${shortTime(p.from)} ${p.name}`);
+      .map((p) => (data.manual ? p.name : `${shortTime(p.from)} ${p.name}`));
     if (data.goal && (phase.kind === "wake" || phase.kind === "part")) coming.push(`${shortTime(minuteOf(data.goal.at))} ${data.goal.name}`);
     view.next.textContent = coming.length ? t.routine.next(coming) : "";
   }
@@ -524,6 +570,7 @@ export function startRoutines() {
 
   addEventListener("hashchange", () => showing && place());
   controller = {
+    check,
     trial(data) {
       if (showing) end();
       begin(data);

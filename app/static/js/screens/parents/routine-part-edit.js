@@ -68,7 +68,9 @@ export async function viewRoutinePartEdit(routineId, partId) {
       onchange: (e) => Number(e.target.value) >= 1 && patch({ minutes: Number(e.target.value) }),
     });
     const at = h("input", { type: "time", value: part().at ?? part().start, onchange: (e) => e.target.value && patch({ at: e.target.value }) });
-    const tabs = isFirst()
+    const tabs = routine.manual
+      ? h("p", { class: "hint" }, isFirst() ? t.routinePart.firstByHand : t.routinePart.byHand)
+      : isFirst()
       ? h("p", { class: "hint" }, t.routinePart.first)
       : h("div", { class: "tabs" },
         [[false, t.routinePart.afterPrevious], [true, t.routinePart.atTime]].map(([value, label]) =>
@@ -78,9 +80,9 @@ export async function viewRoutinePartEdit(routineId, partId) {
           }, own === value && icon("check"), label)));
     when.replaceChildren(tabs,
       h("div", { class: "times" },
-        (own || isFirst()) && h("label", { class: "time" }, t.routinePart.at, at),
+        !routine.manual && (own || isFirst()) && h("label", { class: "time" }, t.routinePart.at, at),
         h("label", { class: "time" }, t.routinePart.minutes, minutes)),
-      h("p", { class: "hint" }, t.routinePart.starts(part().start, part().end)));
+      !routine.manual && h("p", { class: "hint" }, t.routinePart.starts(part().start, part().end)));
   }
 
   // ---------- what it says ----------

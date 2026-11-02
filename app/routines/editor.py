@@ -79,6 +79,16 @@ class RoutinesEditor:
             if not changes["days"]:
                 raise InvalidError("One day at least")
             changes["days"] = [d for d in WEEKDAYS if d in changes["days"]]
+        if "wake" in changes:
+            current = self.get(routine_id)
+            parts = [_dump(p) for p in current.parts]
+            if changes["wake"] is None:  # started by hand: parts one after the other, no goal
+                for part in parts:
+                    part["at"] = None
+                changes.update(parts=parts, goal=None, offsets={})
+            elif current.manual:  # back to a time: the first part, five minutes after it rings
+                parts[0]["at"] = hhmm((minute_of(changes["wake"]) + NEW_PART_MINUTES) % (24 * 60))
+                changes["parts"] = parts
         routine = self._change(routine_id, changes)
         self._log("changed", routine, {k: v for k, v in changes.items() if k in ("name", "days")})
         return routine
@@ -188,6 +198,8 @@ class RoutinesEditor:
         routine = self.get(routine_id)
         if not 0 <= from_part < len(routine.parts):
             raise NotFoundError("Part not found")
+        if routine.manual:
+            return routine  # it starts when tried, like when started by hand
         minute = now.hour * 60 + now.minute
         start = minute_of(routine.wake) if from_part == 0 else routine.timeline()[from_part][1]
         return routine.shifted(minute - start if from_part == 0 else minute + 1 - start)

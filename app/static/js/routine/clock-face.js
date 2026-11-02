@@ -90,3 +90,32 @@ export function clockFace(phase, now, parts) {
   );
   return svg;
 }
+
+// A routine started by hand: a countdown dial, like a visual timer (the time of
+// day does not matter there). A ring of little bars whose whole turn is the
+// part's time, in four quarters going anticlockwise from 12: turquoise, yellow,
+// orange, red. What has gone goes dark from 12, anticlockwise; at the end only
+// the red near 12 is left. In the middle, the time left of the part.
+const TIMER_BARS = 100;
+
+export function timerFace(phase, now) {
+  const svg = el("svg", { viewBox: "-110 -110 220 220", class: "timer-face", "aria-hidden": "true" });
+  svg.append(el("circle", { class: "timer-face__case", r: 108 }));
+  if (phase.kind !== "part") return svg;
+  const left = Math.max(0, Math.min(1, (phase.to - now) / (phase.to - phase.from)));
+  for (let bar = 0; bar < TIMER_BARS; bar += 1) {
+    const angle = ((bar + 0.5) * 360) / TIMER_BARS; // clockwise from 12
+    const quarter = Math.min(3, Math.floor((360 - angle) / 90)); // anticlockwise from 12
+    const [x1, y1] = point(angle, 62);
+    const [x2, y2] = point(angle, 88);
+    const lit = angle < left * 360;
+    svg.append(el("line", {
+      class: lit ? `timer-face__bar timer-face__bar--${quarter + 1}` : "timer-face__bar", x1, y1, x2, y2,
+    }));
+  }
+  const seconds = Math.max(0, Math.ceil((phase.to - now) * 60));
+  const text = el("text", { class: "timer-face__left", x: 0, y: 2 });
+  text.textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  svg.append(text);
+  return svg;
+}

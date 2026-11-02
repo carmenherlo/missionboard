@@ -95,9 +95,26 @@ class Routine(BaseModel):
     def times_add_up(self) -> "Routine":
         self.timeline()  # raises ValueError if they do not
         for minutes in self.offsets.values():  # moved, it stays within its day
-            if minute_of(self.wake) + minutes < 0 or self.ends + minutes > 24 * 60:
+            if self.manual or minute_of(self.wake) + minutes < 0 or self.ends + minutes > 24 * 60:
                 raise ValueError(f"{self.id!r} would move out of its day")
         return self
+
+    @property
+    def manual(self) -> bool:
+        """Started by hand (no wake-up time): its parts go one after the other from then on."""
+        return self.wake is None
+
+    @property
+    def length(self) -> int:
+        """How long a routine started by hand lasts, in minutes."""
+        return sum(part.minutes for part in self.parts)
+
+    def started_at(self, minute: int) -> "Routine":
+        """A routine started by hand, as if it rang at `minute` with its first part right then."""
+        doc = self.to_doc()
+        doc["wake"] = hhmm(minute % (24 * 60))
+        doc["parts"][0]["at"] = doc["wake"]
+        return Routine.model_validate(doc)
 
     def shifted(self, minutes: int) -> "Routine":
         """The same routine with every time moved by `minutes` (wrapping round midnight)."""
@@ -118,9 +135,16 @@ class Routine(BaseModel):
         return self.shifted(self.offsets.get(weekday, 0))
 
     def timeline(self) -> list[tuple[Part, int, int]]:
-        """Each part with its start and end, in minutes of the day."""
+        """Each part with its start and end, in minutes of the day (started by hand:
+        in minutes from when it starts)."""
         if self.wake is None:
-            raise ValueError(f"{self.id!r} needs a wake-up time (routines by hand come later)")
+            if any(part.at for part in self.parts) or self.goal or self.offsets:
+                raise ValueError(f"{self.id!r} is started by hand: no times of its own, no goal")
+            timed, start = [], 0
+            for part in self.parts:
+                timed.append((part, start, start + part.minutes))
+                start += part.minutes
+            return timed
         if self.parts[0].at is None:
             raise ValueError(f"the first part of {self.id!r} needs a time of its own (at)")
         timed = []
@@ -138,11 +162,12 @@ class Routine(BaseModel):
 
     @property
     def ends(self) -> int:
+        """When it is over, in minutes of the day (started by hand: from when it starts)."""
         return minute_of(self.goal.at) if self.goal else self.timeline()[-1][2]
 
     def overlaps(self, other: "Routine") -> bool:
-        """Both ring on some day and their times cross that day."""
-        if self.wake is None or other.wake is None:
+        """Both ring on some day and their times cross that day (by hand: never)."""
+        if self.manual or other.manual:
             return False
         for day in set(self.days) & set(other.days):
             mine, theirs = self.on(day), other.on(day)
@@ -186,7 +211,7 @@ class RunsRepository:
     """What happened to each routine each day: started, stopped (the alarm),
     closed (until its next part) and finished (for the day)."""
 
-    FIELDS = ("started_at", "stopped_at", "closed_phase", "finished_at")
+    FIELDS = ("started_at", "stopped_at", "closed_phase", "finished_at", "kids")
 
     def __init__(self, data_dir: Path):
         self._data_dir = data_dir
@@ -197,6 +222,11 @@ class RunsRepository:
                 "SELECT * FROM routine_runs WHERE day = ? AND routine_id = ?", (day.isoformat(), routine_id)
             ).fetchone()
         return {name: row[name] if row else None for name in self.FIELDS}
+
+    def clear(self, day: date, routine_id: str) -> None:
+        """Forget today's run (a routine started by hand that ended: it can start again)."""
+        with db.connect(self._data_dir) as conn:
+            conn.execute("DELETE FROM routine_runs WHERE day = ? AND routine_id = ?", (day.isoformat(), routine_id))
 
     def set(self, day: date, routine_id: str, **values) -> None:
         assert set(values) <= set(self.FIELDS)

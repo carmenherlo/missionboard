@@ -95,6 +95,10 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (day, routine_id)
     )
     """,
+    # 5 · A routine started by hand remembers who it is with (JSON list of child ids).
+    """
+    ALTER TABLE routine_runs ADD COLUMN kids TEXT
+    """,
 ]
 
 

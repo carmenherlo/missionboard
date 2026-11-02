@@ -27,6 +27,11 @@ select {
   font: inherit;
 }
 
+/* Hidden means hidden, whatever display a class gives it. */
+[hidden] {
+  display: none !important;
+}
+
 label {
   display: flex;
   flex-direction: column;

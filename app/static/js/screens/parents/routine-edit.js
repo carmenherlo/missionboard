@@ -15,6 +15,7 @@ import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 const LIST_HREF = "#/parents/config/routines";
 const TEXT_SAVE_DELAY_MS = 600;
 const GOAL_AFTER_MINUTES = 10; // a new goal: this long after the last part
+const DEFAULT_WAKE = "07:00"; // back from "by hand" to ringing at a time
 
 // What a refused change means: the times do not add up, or it overlaps another routine.
 export function routineError(err) {
@@ -80,9 +81,26 @@ export async function viewRoutineEdit(routineId) {
           onchange: (e) => patch({ offsets: { ...routine.offsets, [day]: Number(e.target.value) || 0 } }),
         }))));
   }
+  // Rings at a time, or started by hand (⏰ on the home screen).
+  const modeBox = h("div", {});
+  const timed = h("div", { class: "stack stack--tight" });
+  const goalPanel = h("div", {});
+  function renderMode() {
+    const manual = routine.manual;
+    modeBox.replaceChildren(h("div", { class: "tabs" },
+      [[false, t.routineEdit.timed], [true, t.routineEdit.byHand]].map(([value, label]) =>
+        h("button", {
+          type: "button", class: `tab${manual === value ? " tab--on" : ""}`, "aria-pressed": String(manual === value),
+          onclick: () => manual !== value && patch({ wake: value ? null : DEFAULT_WAKE }),
+        }, manual === value && icon("check"), label))),
+    manual && h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes)));
+    timed.hidden = manual;
+    goalPanel.hidden = manual;
+  }
   function renderRoutine() {
+    renderMode();
     renderOffsets();
-    wake.value = routine.wake;
+    wake.value = routine.wake ?? DEFAULT_WAKE;
     remind.value = routine.remind_every;
     wakeHint.textContent = t.routineEdit.wakeHint(routine.remind_every);
     daysSummary.textContent = daysLongText(routine.days);
@@ -136,7 +154,9 @@ export async function viewRoutineEdit(routineId) {
         imageThumb(part.image_url, { size: "sm", label: part.name, suggested: part.image_suggested }),
         h("span", { class: "row__text" }, capital(part.name),
           h("span", { class: "row__detail" },
-            h("span", { class: "pill pill--muted" }, t.routineEdit.partTime(part.start, part.minutes)))),
+            h("span", { class: "pill pill--muted" }, routine.manual
+              ? t.routine.minutes(part.minutes)
+              : t.routineEdit.partTime(part.start, part.minutes)))),
         h("a", {
           class: "icon-button icon-button--ghost", href: `${LIST_HREF}/${routineId}/parts/${part.id}`,
           "aria-label": t.routineEdit.editPartNamed(part.name), title: t.routineEdit.editPartNamed(part.name),
@@ -162,6 +182,7 @@ export async function viewRoutineEdit(routineId) {
   // ---------- the goal ----------
   const goalBox = h("div", { class: "stack stack--tight" });
   function renderGoal() {
+    if (routine.manual) return;
     const withGoal = Boolean(routine.goal);
     const tabs = h("div", { class: "tabs" },
       [[true, t.routineEdit.withGoal], [false, t.routineEdit.noGoal]].map(([value, label]) =>
@@ -229,6 +250,15 @@ export async function viewRoutineEdit(routineId) {
     }));
   }
 
+  timed.append(
+    h("div", { class: "times" },
+      h("label", { class: "time" }, t.routineEdit.wake, wake),
+      h("label", { class: "time" }, t.routineEdit.remindEvery, remind)),
+    wakeHint,
+    h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox,
+      h("span", { class: "hint" }, t.routineEdit.offsetsHint)));
+  goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
+
   function refresh() {
     renderRoutine();
     renderKids();
@@ -248,16 +278,12 @@ export async function viewRoutineEdit(routineId) {
           panel(t.routineEdit.panelRoutine,
             h("label", {}, t.routines.name, nameInput),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.days), daysBox, daysSummary),
-            h("div", { class: "times" },
-              h("label", { class: "time" }, t.routineEdit.wake, wake),
-              h("label", { class: "time" }, t.routineEdit.remindEvery, remind)),
-            wakeHint,
-            h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox,
-              h("span", { class: "hint" }, t.routineEdit.offsetsHint))),
+            modeBox,
+            timed),
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(partsTitle, partsList, addPart),
-          panel(t.routineEdit.panelGoal, goalBox))),
+          goalPanel)),
       footer));
 }
 

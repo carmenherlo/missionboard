@@ -6,19 +6,20 @@ speaks and counts down on its own between checks. A routine rings from its
 wake-up time until its goal, on its days, unless it was finished today.
 """
 
+import json
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
-from app.errors import ConflictError, NotFoundError
+from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS
 from app.routines.repository import Part, Routine, RoutinesRepository, RunsRepository, minute_of
 from app.settings import SettingsRepository
 from app.today.service import DONE, DayService
 
-NOTES = ("started", "stopped", "part", "goal", "closed")
+NOTES = ("started", "stopped", "part", "goal", "closed", "ended")
 
 
 def kids_of(routine: Routine, children: list[Child]) -> list[Child]:
@@ -40,6 +41,7 @@ class Current:
     run: dict  # see RunsRepository
     people: list[Person]
     warn_minutes: int
+    started: float | None = None  # started by hand: the minute of the day it started, with seconds
 
     def warnings(self, part: Part) -> list[int]:
         """When the voice warns before the part ends: its own, or else the default
@@ -69,14 +71,26 @@ class RoutinesService:
         self._events = events
 
     def current(self) -> Current | None:
-        """The routine going on at this moment, if any (finished ones stay away today)."""
+        """The routine going on at this moment, if any: one started by hand (until its
+        time is up), or else one ringing by its time (finished ones stay away today)."""
         settings = self._settings.settings()
         now = self._clock.now()
         day = app_day(now, settings.day_starts_at)
         minute = now.hour * 60 + now.minute + now.second / 60
         weekday = WEEKDAYS[day.weekday()]
         for stored in self._routines.list():
-            if weekday not in stored.days or stored.wake is None:
+            run = self._runs.get(day, stored.id) if stored.manual else None
+            if not run or not run["started_at"]:
+                continue
+            started = datetime.fromisoformat(run["started_at"])
+            start = started.hour * 60 + started.minute + started.second / 60
+            if minute < start + stored.length:
+                kids = json.loads(run["kids"] or "[]")
+                people = [p for p in self.people(stored) if p.child.id in kids]
+                return Current(stored.started_at(int(start)), day, minute, run, people,
+                               settings.routine_warn_minutes, started=start)
+        for stored in self._routines.list():
+            if weekday not in stored.days or stored.manual:
                 continue
             routine = stored.on(weekday)
             if not minute_of(routine.wake) <= minute < routine.ends:
@@ -88,16 +102,49 @@ class RoutinesService:
         return None
 
     def current_for(self, routine: Routine, now) -> Current:
-        """Any routine as if it were going on at `now` ("Probar ahora")."""
+        """Any routine as if it were going on at `now` ("Probar ahora"); one started by
+        hand, as if started now with all its children."""
         settings = self._settings.settings()
         minute = now.hour * 60 + now.minute + now.second / 60
         run = {name: None for name in RunsRepository.FIELDS}
+        started = None
+        if routine.manual:
+            started, routine = minute, routine.started_at(int(minute))
         return Current(routine, app_day(now, settings.day_starts_at), minute, run, self.people(routine),
-                       settings.routine_warn_minutes)
+                       settings.routine_warn_minutes, started=started)
+
+    def by_hand(self) -> list[tuple[Routine, list[Child]]]:
+        """The routines that can be started by hand today, each with its children."""
+        settings = self._settings.settings()
+        weekday = WEEKDAYS[app_day(self._clock.now(), settings.day_starts_at).weekday()]
+        children = self._children.list()
+        return [(r, kids_of(r, children)) for r in self._routines.list() if r.manual and weekday in r.days]
+
+    def start(self, routine_id: str, kids: list[str]) -> None:
+        """Start a routine by hand with the children who have come home."""
+        found = next(((r, c) for r, c in self.by_hand() if r.id == routine_id), None)
+        if found is None:
+            raise NotFoundError("No routine to start by hand today with that id")
+        routine, children = found
+        if not kids or any(k not in {c.id for c in children} for k in kids):
+            raise InvalidError("Choose who has come home, among the routine's children")
+        now = self._clock.now()
+        day = app_day(now, self._settings.settings().day_starts_at)
+        self._runs.clear(day, routine_id)
+        self._runs.set(day, routine_id, started_at=now, kids=json.dumps(kids))
+        self._events.routine_did("routine_started", routine.name)
 
     def note(self, routine_id: str, kind: str, *, part: int | None = None, seconds: int | None = None,
              early: bool = False, phase: str | None = None) -> None:
-        """What the screen tells: it rang, someone stopped it, a part or the goal came, it was closed."""
+        """What the screen tells: it rang, someone stopped it, a part or the goal came, it was
+        closed, or (started by hand) it ended: its time is up then, so it is no longer on."""
+        if kind == "ended":
+            routine = next((r for r in self._routines.list() if r.id == routine_id), None)
+            if routine is None:
+                raise NotFoundError("Routine not found")
+            self._runs.clear(app_day(self._clock.now(), self._settings.settings().day_starts_at), routine_id)
+            self._events.routine_did("routine_ended", routine.name, early=early)
+            return
         current = self._current(routine_id)
         routine, day, run = current.routine, current.day, current.run
         now = self._clock.now()
@@ -118,6 +165,7 @@ class RoutinesService:
         elif kind == "closed":
             self._runs.set(day, routine.id, closed_phase=phase)
             self._events.routine_did("routine_closed", routine.name)
+
 
     def finish(self, routine_id: str) -> None:
         """Done for today: it does not come back until tomorrow (parents only)."""
