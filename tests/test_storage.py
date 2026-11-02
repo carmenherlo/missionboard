@@ -205,7 +205,7 @@ def test_v4_file_moves_the_children_to_the_new_palette(tmp_path):
                           "templates": [], "children": children})
     ConfigStore(tmp_path).migrate()
     doc = read_yaml(tmp_path)
-    assert doc["version"] == 5
+    assert doc["version"] == config_migrations.CURRENT_VERSION
     assert {c["id"]: c["color"] for c in doc["children"]} == {
         "fox": "#e77300",
         "owl": "#244d99",

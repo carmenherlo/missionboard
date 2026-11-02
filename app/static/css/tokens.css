@@ -123,12 +123,26 @@
   /* Stars */
   --stars-text: color-mix(in srgb, var(--accent) 60%, black);
 
+  /* The daily prize (paso-5.html): the accent yellow, like the stars. */
+  --prize-color: var(--accent-vivid);
+  --prize-soft: var(--accent-soft);
+  --prize-strong: var(--stars-text); /* "¡Tu premio!" */
+  --prize-locked-opacity: 0.6; /* while missions are left: in colour, but in the background */
+  --wheel-size: min(440px, 62vh);
+  --wheel-1: #ffd9e5; /* pastel slices, so they do not compete with the child's colour */
+  --wheel-2: #d4f3e3;
+  --wheel-3: #fff0c2;
+  --wheel-4: #dce6ff;
+  --wheel-pointer: var(--text);
+
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 5s; /* "¡Misión cumplida!" closes by itself after this */
   --glow-breath: 3s; /* the glow of the ring in focus, slow */
   --celebration-glow-breath: 2.2s; /* the ring around the avatar in the celebration */
   --star-shine: 2.4s; /* the star won, shining */
   --appear: 220ms; /* panels and messages coming in */
+  --wheel-spin: 4s; /* the wheel turning until it stops on the prize */
+  --prize-glow-breath: 2.4s; /* the prize, unlocked, calling to be opened */
   --confetti-1: #5b4ae6;
   --confetti-2: #ff9f43;
   --confetti-3: #2fb37a;

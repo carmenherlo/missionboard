@@ -15,6 +15,7 @@ from app.images import api as images_api
 from app.images.libraries import LIBRARIES, ImageLibraries, Library
 from app.missions import api as missions_api
 from app.parents import api as parents_api
+from app.prizes import api as prizes_api
 from app.settings import SettingsRepository
 from app.storage import db
 from app.storage.config_store import ConfigStore
@@ -90,6 +91,7 @@ def create_app(
     app.include_router(children_api.router)
     app.include_router(missions_api.router)
     app.include_router(templates_api.router)
+    app.include_router(prizes_api.router)
     app.include_router(images_api.router)
     app.include_router(events_api.router)
     app.include_router(today_api.router)

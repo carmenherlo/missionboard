@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 5
+CURRENT_VERSION = 6
 
 
 class ConfigVersionError(Exception):
@@ -139,11 +139,26 @@ def _v4_to_v5(doc: dict) -> dict:
     return {**doc, "version": 5, "children": [recolor(c) for c in doc.get("children") or []]}
 
 
+# Daily prizes (paso-5.html), with fixed ids like the sample templates.
+_SAMPLE_PRIZES = [
+    {"id": "guerra-de-cojines", "text": "Guerra de cojines", "image": None, "image_suggested": False},
+    {"id": "elegir-la-cena", "text": "Elegir la cena", "image": "fluent/pizza", "image_suggested": False},
+    {"id": "un-cuento-mas", "text": "Un cuento más", "image": "fluent/open-book", "image_suggested": False},
+    {"id": "mas-juego", "text": "15 minutos más de juego", "image": "fluent/joystick", "image_suggested": False},
+]
+
+
+def _v5_to_v6(doc: dict) -> dict:
+    """Add the list of daily prizes, with four samples to edit or delete."""
+    return {**doc, "version": 6, "prizes": copy.deepcopy(_SAMPLE_PRIZES)}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
     3: _v3_to_v4,
     4: _v4_to_v5,
+    5: _v5_to_v6,
 }
 
 

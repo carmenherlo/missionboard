@@ -68,6 +68,24 @@ class DayRepository:
                 )
         return bool(inserted)
 
+    def prize_spins(self, day: date, child_id: str) -> list[dict]:
+        """The prizes the child won today, in order: {"prize_id", "text", "image"}."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT prize_id, prize_text, prize_image FROM prize_spins WHERE day = ? AND child_id = ? ORDER BY id",
+                (day.isoformat(), child_id),
+            ).fetchall()
+        return [{"prize_id": r["prize_id"], "text": r["prize_text"], "image": r["prize_image"]} for r in rows]
+
+    def add_prize_spin(self, day: date, child, prize, at: datetime) -> None:
+        with db.connect(self._data_dir) as conn:
+            conn.execute(
+                "INSERT INTO prize_spins (day, child_id, child_name, prize_id, prize_text, prize_image, at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (day.isoformat(), child.id, child.name, prize.id, prize.text, prize.image,
+                 at.isoformat(timespec="seconds")),
+            )
+
     def stars(self, child_id: str) -> int:
         with db.connect(self._data_dir) as conn:
             return conn.execute(

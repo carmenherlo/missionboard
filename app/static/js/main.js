@@ -11,6 +11,8 @@ import { viewChildrenList } from "./screens/parents/children-list.js";
 import { viewConfigIndex } from "./screens/parents/config-index.js";
 import { viewEventLog } from "./screens/parents/event-log.js";
 import { viewParentsLock } from "./screens/parents/lock.js";
+import { viewPrizeEdit } from "./screens/parents/prize-edit.js";
+import { viewPrizesList } from "./screens/parents/prizes-list.js";
 import { viewMissionEdit, viewTemplateEdit } from "./screens/parents/mission-edit.js";
 import { viewMissionNew } from "./screens/parents/mission-new.js";
 import { viewMissionsHome } from "./screens/parents/missions-home.js";
@@ -46,6 +48,8 @@ const routes = [
   [parentsPath("/missions/child/:child/new"), (ids) => viewMissionNew(ids.child), "parents", "mission_new"],
   [parentsPath("/missions/:mission"), (ids) => viewMissionEdit(ids.mission), "parents", "mission_edit"],
   [parentsPath("/missions/:mission/steps/:step"), (ids) => viewStepEdit(ids.mission, ids.step), "parents", "step_edit"],
+  [parentsPath("/prizes"), () => viewPrizesList(), "parents", "prizes"],
+  [parentsPath("/prizes/:prize"), (ids) => viewPrizeEdit(ids.prize), "parents", "prize_edit"],
   [parentsPath("/templates"), () => viewTemplatesList(), "parents", "templates"],
   [parentsPath("/templates/new"), () => viewTemplateNew(), "parents", "template_new"],
   [parentsPath("/templates/:template"), (ids) => viewTemplateEdit(ids.template), "parents", "template_edit"],

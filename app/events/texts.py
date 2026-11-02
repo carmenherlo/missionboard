@@ -68,6 +68,8 @@ SCREENS = {
     "template_edit": ("Editar plantilla", "Editar plantilla «{mission}»"),
     "template_apply": ("Aplicar plantilla", "Aplicar «{mission}»"),
     "template_step_edit": ("Editar paso de plantilla", "Editar paso «{step}» de la plantilla «{mission}»"),
+    "prizes": ("Premios del día", None),
+    "prize_edit": ("Editar premio", None),
 }
 
 # config_changed, by (subject, action). Parents are the only ones who
@@ -94,6 +96,9 @@ _CONFIG = {
     ("template_step", "deleted"): "Quitaste «{step}» de la plantilla «{mission}»",
     ("template_steps", "reordered"): "Ordenaste los pasos de la plantilla «{mission}»",
     ("parent_code", "changed"): "Cambiaste el código de padres",
+    ("prize", "created"): "Añadiste el premio «{mission}»",
+    ("prize", "changed"): "Cambiaste el premio «{mission}»",
+    ("prize", "deleted"): "Borraste el premio «{mission}»",
 }
 
 
@@ -105,6 +110,9 @@ _CHILD = {
     "mission_completed": "{child} completó «{mission}» · {detail}",
     "step_spoken": "{child} escuchó «{step}»",
     "mission_locked": "{child} tocó «{mission}», que {detail}",
+    "prize_unlocked": "{child} desbloqueó el premio del día",
+    "prize_locked": "{child} tocó el premio, aún bloqueado",
+    "prize_spun": "{child} giró la ruleta · {detail}",
 }
 
 

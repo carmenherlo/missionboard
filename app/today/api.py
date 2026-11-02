@@ -12,6 +12,7 @@ from app.errors import NotFoundError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
+from app.prizes.repository import PrizesRepository
 from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 from app.today.repository import BackgroundStore, DayRepository
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/api", tags=["today"])
 
 STAR_IMAGE = "fluent/star"
 CELEBRATION_STAR_IMAGE = "fluent/glowing-star"
+PRIZE_IMAGE = "fluent/wrapped-gift"
 
 
 class StepIn(BaseModel):
@@ -30,7 +32,7 @@ class StepIn(BaseModel):
 
 class NoteIn(BaseModel):
     kind: Literal[NOTES]
-    mission_id: str = Field(pattern=r"^[\w-]{1,64}$")
+    mission_id: str | None = Field(default=None, pattern=r"^[\w-]{1,64}$")
     step_id: str | None = Field(default=None, pattern=r"^[\w-]{1,64}$")
 
 
@@ -49,7 +51,8 @@ def get_day_service(
     events: EventLog = Depends(get_event_log),
 ) -> DayService:
     return DayService(
-        ChildrenRepository(store), MissionsRepository(store), days, SettingsRepository(store), clock, events
+        ChildrenRepository(store), MissionsRepository(store), days, SettingsRepository(store), clock, events,
+        PrizesRepository(store),
     )
 
 
@@ -100,6 +103,21 @@ class Presenter:
                 }
                 for item in today.missions
             ],
+            "prize": self._prize(today),
+        }
+
+    def _prize(self, today: Today) -> dict | None:
+        prize = today.prize
+        if prize is None:
+            return None
+        return {
+            "state": prize.state,
+            "image_url": self._libraries.url(PRIZE_IMAGE),
+            "spins_left": prize.spins_left,
+            "won": [{**w, "image_url": self._libraries.url(w["image"])} for w in prize.won],
+            "wheel": [
+                {"id": p.id, "text": p.text, "image_url": self._libraries.url(p.image)} for p in prize.prizes
+            ],
         }
 
 
@@ -120,6 +138,13 @@ def set_step(
     """Check or uncheck a step; says whether that completed the mission."""
     result = days.set_step(child_id, mission_id, step_id, body.checked)
     return {"completed": result.completed, "stars_earned": result.stars_earned, "today": present(result.today)}
+
+
+@router.post("/children/{child_id}/today/prize/spin")
+def spin(child_id: str, days: DayService = Depends(get_day_service), present: Presenter = Depends()):
+    """Spin the wheel: says which prize came out; the screen turns the wheel to it."""
+    result = days.spin(child_id)
+    return {"prize_id": result.prize.id, "today": present(result.today)}
 
 
 @router.post("/children/{child_id}/today/notes", status_code=204)

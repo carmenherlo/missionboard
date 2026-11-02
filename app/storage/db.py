@@ -67,6 +67,21 @@ MIGRATIONS: list[str] = [
     );
     CREATE INDEX star_movements_child ON star_movements (child_id)
     """,
+    # 3 · The daily prize: what each child won each day on the wheel, with a
+    # copy of the prize as it was (prizes can be renamed or deleted later).
+    """
+    CREATE TABLE prize_spins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        day TEXT NOT NULL,
+        child_id TEXT NOT NULL,
+        child_name TEXT,
+        prize_id TEXT,
+        prize_text TEXT NOT NULL,
+        prize_image TEXT,
+        at TEXT NOT NULL
+    );
+    CREATE INDEX prize_spins_day ON prize_spins (day, child_id)
+    """,
 ]
 
 

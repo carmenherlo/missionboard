@@ -139,7 +139,8 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-3);
-  max-width: calc(var(--size) + 5rem); /* a long name wraps instead of touching the next one */
+  width: max-content;
+  max-width: calc(var(--size) + 7rem); /* a long name wraps instead of touching the next one */
   border-radius: var(--radius-md);
   background: var(--route-label-bg);
   font-size: var(--text-md);
@@ -182,7 +183,7 @@
 
 .route__message {
   justify-self: center;
-  margin: var(--space-6) 0 0;
+  margin: 7rem 0 0; /* below the names of the route */
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -549,4 +550,122 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+/* ---------- the daily prize at the end of the route ---------- */
+
+.route-node--prize .ring__fill { stroke: var(--prize-color); }
+.route-node--prize .ring__inner { background: var(--prize-soft); }
+
+/* Locked: in colour (it motivates), but small and in the background. */
+.route-node--prize-locked .ring { opacity: var(--prize-locked-opacity); }
+
+.route-node--prize .route-node__tag {
+  background: var(--prize-strong);
+}
+
+.ring-holder {
+  position: relative;
+  display: grid;
+}
+
+.ring__lock {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 20px;
+  box-shadow: var(--shadow-badge);
+}
+
+/* ---------- the wheel ---------- */
+
+.prize-body {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.wheel {
+  position: relative;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+}
+
+.wheel__disc {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: var(--shadow-lifted);
+  transform: rotate(var(--wheel-angle, 0deg));
+}
+
+.wheel__slice { stroke: var(--surface); stroke-width: 2; }
+.wheel__slice--0 { fill: var(--wheel-1); }
+.wheel__slice--1 { fill: var(--wheel-2); }
+.wheel__slice--2 { fill: var(--wheel-3); }
+.wheel__slice--3 { fill: var(--wheel-4); }
+.wheel__rim { fill: none; stroke: var(--surface); stroke-width: 6; }
+
+.wheel__letter {
+  fill: var(--text);
+  font: 800 28px var(--font);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.wheel__pointer {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  width: 44px;
+  height: 40px;
+  transform: translateX(-50%);
+  background: var(--wheel-pointer);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.spin-button {
+  min-height: 72px;
+  padding: 0 var(--space-6);
+  font-size: 2rem;
+}
+
+.prize-won {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-radius: 40px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+  font-size: 2.25rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.prize-won .step-tile {
+  --step-tile-size: 160px;
+}
+
+.prize-body__title {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.prize-body__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 700;
 }

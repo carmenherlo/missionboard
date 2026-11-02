@@ -8,7 +8,13 @@ States of a mission today (paso-4.html, "Las reglas del día"):
 - closed: past its end time without being done. No star.
 The focus (the big one on the route) is the first open mission in route
 order ("¡Ahora!"); if none is open, the next upcoming one, with its time.
+
+The daily prize (paso-5.html) waits at the end of the route: locked until
+every mission of today is done (a closed one means no prize today), then
+unlocked for settings.daily_prize_spins spins, then won (showing what it was).
 """
+
+import secrets
 
 from dataclasses import dataclass, field
 from datetime import date
@@ -18,13 +24,15 @@ from app.clock import Clock, app_day
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, Mission, MissionsRepository
+from app.prizes.repository import Prize, PrizesRepository
 from app.settings import Moment, SettingsRepository
 from app.today.repository import DayRepository
 
 DONE, OPEN, UPCOMING, CLOSED = "done", "open", "upcoming", "closed"
+LOCKED, UNLOCKED, WON = "locked", "unlocked", "won"
 
 # What a child can do on the route that only goes to the event log.
-NOTES = ("mission_opened", "step_spoken", "mission_locked")
+NOTES = ("mission_opened", "step_spoken", "mission_locked", "prize_locked")
 
 
 @dataclass
@@ -36,12 +44,21 @@ class MissionToday:
 
 
 @dataclass
+class PrizeToday:
+    state: str
+    prizes: list[Prize]  # the wheel
+    won: list[dict]  # what came out today: {"prize_id", "text", "image"}
+    spins_left: int
+
+
+@dataclass
 class Today:
     child: Child
     day: date
     moment: Moment
     missions: list[MissionToday]
     stars: int
+    prize: PrizeToday | None = None  # None: no prize at the end of the route
 
     @property
     def focus_is_now(self) -> bool:
@@ -53,6 +70,12 @@ class StepResult:
     today: Today
     completed: bool  # this check completed the mission
     stars_earned: int
+
+
+@dataclass
+class SpinResult:
+    today: Today
+    prize: Prize
 
 
 def current_moment(moments: tuple[Moment, ...], time: str) -> Moment:
@@ -70,6 +93,8 @@ class DayService:
         settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
+        prizes: PrizesRepository,
+        choose=secrets.choice,  # tests pass their own, to know the prize
     ):
         self._children = children
         self._missions = missions
@@ -77,6 +102,8 @@ class DayService:
         self._settings = settings
         self._clock = clock
         self._events = events
+        self._prizes = prizes
+        self._choose = choose
 
     def today(self, child_id: str) -> Today:
         child = self._child(child_id)
@@ -110,7 +137,31 @@ class DayService:
             moment=current_moment(settings.moments, time),
             missions=missions,
             stars=self._days.stars(child.id),
+            prize=self._prize_today(day, child, missions),
         )
+
+    def _prize_today(self, day: date, child: Child, missions: list[MissionToday]) -> PrizeToday | None:
+        spins = self._settings.settings().daily_prize_spins
+        prizes = self._prizes.list()
+        if not self._settings.features().daily_prize or not prizes or not missions or spins == 0:
+            return None
+        won = self._days.prize_spins(day, child.id)
+        spins_left = max(0, spins - len(won))
+        if not all(m.state == DONE for m in missions):
+            state = LOCKED
+        else:
+            state = UNLOCKED if spins_left else WON
+        return PrizeToday(state=state, prizes=prizes, won=won, spins_left=spins_left)
+
+    def spin(self, child_id: str) -> SpinResult:
+        """Spin the wheel: the prize is chosen and kept here; the screen only shows it."""
+        today = self.today(child_id)
+        if today.prize is None or today.prize.state != UNLOCKED:
+            raise ConflictError("The prize is not unlocked")
+        prize = self._choose(today.prize.prizes)
+        self._days.add_prize_spin(today.day, today.child, prize, self._clock.now())
+        self._events.child_did("prize_spun", today.child, prize=prize.text)
+        return SpinResult(self.today(child_id), prize)
 
     def set_step(self, child_id: str, mission_id: str, step_id: str, checked: bool) -> StepResult:
         """Check or uncheck a step. Checking the last one completes the mission (once a day)."""
@@ -142,12 +193,21 @@ class DayService:
                 self._events.child_did("mission_completed", today.child, mission=item.mission, stars=stars)
             else:
                 stars = 0
-        return StepResult(self.today(child_id), completed=checked and all_checked, stars_earned=stars)
+        after = self.today(child_id)
+        if after.prize and after.prize.state == UNLOCKED and (today.prize is None or today.prize.state == LOCKED):
+            self._events.child_did("prize_unlocked", today.child)
+        return StepResult(after, completed=checked and all_checked, stars_earned=stars)
 
-    def note(self, child_id: str, kind: str, mission_id: str, step_id: str | None = None) -> None:
+    def note(self, child_id: str, kind: str, mission_id: str | None = None, step_id: str | None = None) -> None:
         """Something only worth logging: a mission opened, a step listened to,
-        or a mission touched while it is not open."""
+        a mission touched while it is not open, or the prize while locked."""
         today = self.today(child_id)
+        if kind == "prize_locked":
+            if today.prize and today.prize.state == LOCKED:
+                self._events.child_did("prize_locked", today.child)
+            return
+        if mission_id is None:
+            raise NotFoundError("Mission not found today")
         item = self._mission_today(today, mission_id)
         step = next((s for s in item.mission.steps if s.id == step_id), None) if step_id else None
         if step_id and step is None:

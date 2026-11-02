@@ -54,11 +54,19 @@ class EventLog:
             child=child, mission=mission, step=step, detail=texts.change_detail(changes or {}),
         )
 
-    def child_did(self, type_: str, child: Named, *, mission=None, step=None, stars=None, locked=None) -> None:
+    def child_did(
+        self, type_: str, child: Named, *, mission=None, step=None, stars=None, locked=None, prize=None
+    ) -> None:
         """Something a child did on their route: mission_opened, step_checked,
         step_unchecked, mission_completed (with its stars), step_spoken,
-        mission_locked (with why: ("opens", "19:30") or ("closed", "17:00"))."""
-        detail = texts.stars_detail(stars) if stars is not None else texts.locked_detail(locked) if locked else None
+        mission_locked (with why: ("opens", "19:30") or ("closed", "17:00")),
+        prize_unlocked, prize_locked, prize_spun (with the prize's text)."""
+        if stars is not None:
+            detail = texts.stars_detail(stars)
+        elif locked:
+            detail = texts.locked_detail(locked)
+        else:
+            detail = prize
         self._record("child", type_, child=child, mission=mission, step=step, detail=detail)
 
     def screen_opened(self, zone: str | None, screen: str, *, child=None, mission=None, step=None) -> None:

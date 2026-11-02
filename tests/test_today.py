@@ -143,7 +143,8 @@ def test_checking_every_step_completes_the_mission_and_gives_its_star(client, be
     assert last["completed"] is True and last["stars_earned"] == 1
     assert last["today"]["missions"][0]["state"] == "done"
     assert last["today"]["stars"] == 1
-    assert descriptions(client, limit=3)[:3] == [
+    assert descriptions(client, limit=4) == [
+        "Bea desbloqueó el premio del día",  # it was the only mission of today
         "Bea completó «Despegue» · +1 estrella",
         "Bea marcó «Dos» en «Despegue»",
         "Bea marcó «Uno» en «Despegue»",

@@ -9,6 +9,7 @@ import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { showCelebration } from "./celebration.js";
 import { missionSheet } from "./mission-sheet.js";
+import { prizeSheet } from "./prize-sheet.js";
 import { routeView } from "./route.js";
 
 const REFRESH_MS = 60_000; // missions open and close with the time: look again every minute
@@ -20,11 +21,12 @@ export async function viewChildToday(childId) {
   let day = first;
   let openId = null; // the mission whose panel is open
   let celebrating = false;
+  let prizeOpen = false; // the wheel draws itself while open: no redrawing under it
   let busy = false; // one step at a time
 
   const screen = h("main", { class: "child-screen" });
   const note = (kind, mission, step) =>
-    api("POST", `${base}/notes`, { json: { kind, mission_id: mission.id, step_id: step?.id } }).catch(() => {});
+    api("POST", `${base}/notes`, { json: { kind, mission_id: mission?.id, step_id: step?.id } }).catch(() => {});
 
   function draw() {
     // The child's colour and its tones: the only styles passed from code (see tokens.css).
@@ -44,7 +46,7 @@ export async function viewChildToday(childId) {
           h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
       day.missions.length
-        ? routeView(day, { onOpen: openMission, onLocked: showLocked })
+        ? routeView(day, { onOpen: openMission, onLocked: showLocked, onPrize: openPrize, onPrizeLocked: showPrizeLocked })
         : h("section", { class: "route route__empty" },
             avatar(day.child, { size: "hero" }), t.child.noMissions),
       mission && missionSheet(day, mission, { onToggle: toggle, onSpeak: listen, onClose: closeMission }));
@@ -90,15 +92,35 @@ export async function viewChildToday(childId) {
     note("step_spoken", day.missions.find((m) => m.id === openId), step);
   }
 
+  function openPrize() {
+    prizeOpen = true;
+    screen.append(prizeSheet(day, {
+      spinUrl: `${base}/prize/spin`,
+      onDay: (next) => { day = next; },
+      onClose: () => {
+        prizeOpen = false;
+        draw();
+      },
+    }));
+  }
+
+  function showPrizeLocked() {
+    note("prize_locked");
+    toast(t.child.prizeLocked);
+  }
+
   function showLocked(mission) {
     note("mission_locked", mission);
-    const text = mission.state === "upcoming"
+    toast(mission.state === "upcoming"
       ? t.child.opensAt(mission.schedule.start)
-      : t.child.closedAt(mission.schedule.end);
+      : t.child.closedAt(mission.schedule.end));
+  }
+
+  function toast(text) {
     screen.querySelector(".child-toast")?.remove();
-    const toast = h("p", { class: "child-toast", role: "status" }, text);
-    screen.append(toast);
-    setTimeout(() => toast.remove(), TOAST_MS);
+    const message = h("p", { class: "child-toast", role: "status" }, text);
+    screen.append(message);
+    setTimeout(() => message.remove(), TOAST_MS);
   }
 
   async function refresh() {
@@ -112,7 +134,7 @@ export async function viewChildToday(childId) {
   const route = location.hash;
   const timer = setInterval(() => {
     if (location.hash !== route) return clearInterval(timer);
-    if (!openId && !celebrating) refresh().catch(() => {});
+    if (!openId && !celebrating && !prizeOpen) refresh().catch(() => {});
   }, REFRESH_MS);
 
   draw();
