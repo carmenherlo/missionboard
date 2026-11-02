@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 7
+CURRENT_VERSION = 8
 
 
 class ConfigVersionError(Exception):
@@ -195,6 +195,25 @@ def _v6_to_v7(doc: dict) -> dict:
     return {**doc, "version": 7, "routines": copy.deepcopy(_SAMPLE_ROUTINES)}
 
 
+def _v7_to_v8(doc: dict) -> dict:
+    """Routines get their children and each child's mission by id (the mission
+    with the routine's mission name, if they have one), and their parts an id."""
+    children = [c["id"] for c in doc.get("children") or []]
+    routines = []
+    for routine in copy.deepcopy(doc.get("routines") or []):
+        kids = routine.get("kids") or []  # empty: every child, also the ones added later
+        name = routine.pop("mission", None)
+        missions = {}
+        for kid in kids or children:
+            found = next((m["id"] for m in doc.get("missions") or []
+                          if m.get("child_id") == kid and m.get("name") == name), None)
+            missions[kid] = found
+        for index, part in enumerate(routine.get("parts") or []):
+            part.setdefault("id", f"{routine['id']}-{index + 1}")
+        routines.append({**routine, "kids": list(kids), "missions": missions})
+    return {**doc, "version": 8, "routines": routines}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
@@ -202,6 +221,7 @@ _MIGRATIONS = {
     4: _v4_to_v5,
     5: _v5_to_v6,
     6: _v6_to_v7,
+    7: _v7_to_v8,
 }
 
 

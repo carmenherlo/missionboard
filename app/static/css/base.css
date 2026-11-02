@@ -37,7 +37,9 @@ label {
 input[type="text"],
 input[type="password"],
 input[type="search"],
-input[type="time"] {
+input[type="time"],
+input[type="number"],
+select {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--outline);
@@ -47,7 +49,15 @@ input[type="time"] {
   font-weight: 500;
 }
 
-input:focus-visible {
+input[type="checkbox"] {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  accent-color: var(--primary);
+}
+
+input:focus-visible,
+select:focus-visible {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary);

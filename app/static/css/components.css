@@ -471,6 +471,10 @@
   padding: 0 var(--space-2);
 }
 
+.time input[type="number"] {
+  width: 5.5rem;
+}
+
 .save-status {
   color: var(--muted);
   font-size: var(--text-sm);
@@ -958,4 +962,26 @@
 
 .kid-card--selected .kid-card__check {
   visibility: visible;
+}
+
+/* A warning that does not block (a child's mission closing before the routine ends). */
+.notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+  font-weight: 600;
+}
+
+.notice a {
+  color: inherit;
+  font-weight: 800;
+}
+
+/* A checkbox with its label on one line ("firmar"). */
+.toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
 }

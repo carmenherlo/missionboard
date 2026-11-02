@@ -16,6 +16,9 @@
 // clock. "Cerrar" hides it until its next part; "Finalizar" (parents' code)
 // ends it for today. In the parents' zone it does not cover the screen: a
 // banner says it is on.
+// "Probar ahora" (Configurar → Rutinas) shows a routine the same way, its times
+// moved to now, on this device only: over any screen, nothing logged, and
+// "Cerrar" ends it.
 import { api } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
 import { codeField } from "../components/code-input.js";
@@ -42,10 +45,19 @@ const WHO_IS_LEFT_MS = 9000; // in "firmar", after its announcement: who still h
 
 const inParents = () => location.hash.startsWith("#/parents");
 
+let controller = null;
+
+// "Probar ahora": the routine from its start (or from its part `from`), now.
+export async function tryRoutine(routineId, from = 0) {
+  const [data] = await Promise.all([api("GET", `/api/routines/${routineId}/trial?from=${from}`), loadAvatars()]);
+  controller.trial(data);
+}
+
 export function startRoutines() {
   let showing = null;
 
   async function check() {
+    if (showing?.data.trial) return; // a trial goes on until it is closed
     let data;
     try {
       data = await api("GET", "/api/routines/current");
@@ -109,8 +121,10 @@ export function startRoutines() {
     showing = null;
   }
 
-  const note = (kind, extra = {}) =>
+  const note = (kind, extra = {}) => {
+    if (showing.data.trial) return; // a trial is not the real thing: nothing to log
     api("POST", `/api/routines/${showing.data.id}/notes`, { json: { kind, ...extra } }).catch(() => {});
+  };
 
   // ---------- where it is ----------
 
@@ -384,15 +398,16 @@ export function startRoutines() {
   // Hidden while closed until its next part; in the parents' zone, only a banner.
   function place() {
     const { layer, banner } = showing.view;
-    layer.hidden = closed() || inParents();
-    banner.hidden = closed() || !inParents();
+    const trial = Boolean(showing.data.trial);
+    layer.hidden = closed() || (inParents() && !trial);
+    banner.hidden = trial || closed() || !inParents();
   }
 
   function render(phase, time) {
     const { view, data } = showing;
     view.layer.dataset.phase = phase.kind;
     view.time.textContent = capital(itIs(time));
-    view.close.textContent = phase.kind === "goal" ? t.routine.finish : t.routine.close;
+    view.close.textContent = phase.kind === "goal" && !data.trial ? t.routine.finish : t.routine.close;
     view.stopButton.hidden = !showing.ringing;
     const toGo = countdownText((phase.to - time) * 60);
     let image = null;
@@ -467,6 +482,10 @@ export function startRoutines() {
   // ---------- closing ----------
 
   function closeOrFinish() {
+    if (showing.data.trial) {
+      end();
+      return;
+    }
     if (showing.phaseKey === "goal") {
       askCode();
       return;
@@ -504,6 +523,12 @@ export function startRoutines() {
   }
 
   addEventListener("hashchange", () => showing && place());
+  controller = {
+    trial(data) {
+      if (showing) end();
+      begin(data);
+    },
+  };
   check();
   setInterval(check, CHECK_MS);
 }

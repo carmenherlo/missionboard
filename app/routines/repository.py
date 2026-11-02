@@ -33,8 +33,10 @@ class Part(BaseModel):
 
     model_config = ConfigDict(extra="ignore", frozen=True)
 
+    id: str = Field(pattern=r"^[\w-]{1,64}$")
     name: str = Field(min_length=1, max_length=60)  # with its article, as it is said: "el aseo"
     image: str | None = None
+    image_suggested: bool = False
     at: str | None = Field(default=None, pattern=TIME)
     minutes: int = Field(ge=1, le=180)
     say: str | None = None  # a sentence of its own instead of "Comienza el aseo."
@@ -64,10 +66,10 @@ class Routine(BaseModel):
     id: str = Field(pattern=r"^[\w-]{1,64}$")
     name: str = Field(min_length=1, max_length=40)
     days: tuple[str, ...] = tuple(WEEKDAYS)
-    kids: tuple[str, ...] = ()  # child ids; empty: every child
+    kids: tuple[str, ...] = ()  # child ids; empty: every child, also the ones added later
+    missions: dict[str, str | None] = {}  # each child's mission in this routine (by id)
     wake: str | None = Field(default=None, pattern=TIME)  # None: started by hand (R2)
     remind_every: int = Field(default=5, ge=0, le=30)
-    mission: str | None = None  # each child's mission with this name (until R3 links one each)
     parts: tuple[Part, ...] = Field(min_length=1)
     goal: Goal | None = None
 
@@ -108,6 +110,15 @@ class Routine(BaseModel):
     def ends(self) -> int:
         return minute_of(self.goal.at) if self.goal else self.timeline()[-1][2]
 
+    def overlaps(self, other: "Routine") -> bool:
+        """Both ring on some day and their times cross."""
+        if not set(self.days) & set(other.days) or self.wake is None or other.wake is None:
+            return False
+        return minute_of(self.wake) < other.ends and minute_of(other.wake) < self.ends
+
+    def to_doc(self) -> dict:
+        return self.model_dump(mode="json")
+
 
 class RoutinesRepository:
     """The `routines` list of config.yaml."""
@@ -115,8 +126,26 @@ class RoutinesRepository:
     def __init__(self, store: ConfigStore):
         self._store = store
 
+    def atomic(self):
+        return self._store.edit()
+
     def list(self) -> list[Routine]:
         return [Routine.model_validate(entry) for entry in self._store.load().get("routines") or []]
+
+    def get(self, routine_id: str) -> Routine | None:
+        return next((r for r in self.list() if r.id == routine_id), None)
+
+    def add(self, routine: Routine) -> None:
+        with self._store.edit() as doc:
+            doc.setdefault("routines", []).append(routine.to_doc())
+
+    def update(self, routine: Routine) -> None:
+        with self._store.edit() as doc:
+            doc["routines"] = [routine.to_doc() if r["id"] == routine.id else r for r in doc["routines"]]
+
+    def remove(self, routine_id: str) -> None:
+        with self._store.edit() as doc:
+            doc["routines"] = [r for r in doc["routines"] if r["id"] != routine_id]
 
 
 class RunsRepository:

@@ -76,6 +76,7 @@ def test_each_child_with_their_mission_of_the_routine(client):
     for text in ("Vestirse", "Desayunar"):
         add_step(client, despegue["id"], text)
     despegue = client.get(f"/api/missions/{despegue['id']}").json()
+    client.put(f"/api/routines/manana/missions/{bea['id']}", json={"mission_id": despegue["id"]}, headers=PARENT)
     check(client, bea, despegue, 0)
     people = current(client)["people"]
     assert [p["child"]["name"] for p in people] == ["Bea", "Alex"]
@@ -83,7 +84,7 @@ def test_each_child_with_their_mission_of_the_routine(client):
         "id": despegue["id"], "name": "Despegue", "done": 1, "total": 2, "completed": False,
     }
     assert people[0]["colors"]["color"] == bea["color"]
-    assert people[1]["mission"] is None  # Alex has no "Despegue" today
+    assert people[1]["mission"] is None  # Alex has no mission in this routine
     check(client, bea, despegue, 1)
     assert current(client)["people"][0]["mission"]["completed"] is True
 

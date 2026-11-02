@@ -21,6 +21,11 @@ from app.today.service import DONE, DayService
 NOTES = ("started", "stopped", "part", "goal", "closed")
 
 
+def kids_of(routine: Routine, children: list[Child]) -> list[Child]:
+    """The routine's children, in the family's order (none listed: every child)."""
+    return [c for c in children if not routine.kids or c.id in routine.kids]
+
+
 @dataclass
 class Person:
     child: Child
@@ -77,8 +82,16 @@ class RoutinesService:
             run = self._runs.get(day, routine.id)
             if run["finished_at"]:
                 continue
-            return Current(routine, day, minute, run, self._people(routine), settings.routine_warn_minutes)
+            return Current(routine, day, minute, run, self.people(routine), settings.routine_warn_minutes)
         return None
+
+    def current_for(self, routine: Routine, now) -> Current:
+        """Any routine as if it were going on at `now` ("Probar ahora")."""
+        settings = self._settings.settings()
+        minute = now.hour * 60 + now.minute + now.second / 60
+        run = {name: None for name in RunsRepository.FIELDS}
+        return Current(routine, app_day(now, settings.day_starts_at), minute, run, self.people(routine),
+                       settings.routine_warn_minutes)
 
     def note(self, routine_id: str, kind: str, *, part: int | None = None, seconds: int | None = None,
              early: bool = False, phase: str | None = None) -> None:
@@ -116,15 +129,13 @@ class RoutinesService:
             raise ConflictError("That routine is not going on now")
         return current
 
-    def _people(self, routine: Routine) -> list[Person]:
+    def people(self, routine: Routine) -> list[Person]:
         """The routine's children, each with their mission of the routine today."""
-        children = self._children.list()
-        if routine.kids:
-            children = [c for c in children if c.id in routine.kids]
         people = []
-        for child in children:
+        for child in kids_of(routine, self._children.list()):
             today = self._days.today(child.id)
-            item = next((m for m in today.missions if m.mission.name == routine.mission), None)
+            mission_id = routine.missions.get(child.id)
+            item = next((m for m in today.missions if m.mission.id == mission_id), None)
             mission = None
             if item:
                 total = len(item.mission.steps)

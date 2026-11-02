@@ -12,7 +12,10 @@ from app.deps import get_config_store, get_event_log, get_image_libraries, get_p
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.api import get_missions_service
+from app.missions.repository import MissionsRepository
 from app.missions.service import MissionsService
+from app.routines.editor import RoutinesEditor
+from app.routines.repository import RoutinesRepository
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 
@@ -39,8 +42,12 @@ def get_children_service(
     photos: PhotoStore = Depends(get_photo_store),
     missions: MissionsService = Depends(get_missions_service),
     events: EventLog = Depends(get_event_log),
+    libraries: ImageLibraries = Depends(get_image_libraries),
 ) -> ChildrenService:
-    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions])
+    routines = RoutinesEditor(
+        RoutinesRepository(store), ChildrenRepository(store), MissionsRepository(store), libraries, photos, events
+    )
+    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions, routines])
 
 
 def public_child(child: Child) -> dict:
