@@ -20,9 +20,10 @@
 // no time of day; its parts go one after the other from when it started, with
 // a timer instead of the clock, and it ends once its kids have done their
 // mission ("¡Muy bien!") or its time is up (who still has steps).
-// "Probar ahora" (Configurar → Rutinas) shows a routine the same way, its times
-// moved to now, on this device only: over any screen, nothing logged, and
-// "Cerrar" ends it.
+// "Probar ahora" (Configurar → Rutinas) shows a routine the same way, at its own
+// times, on this device only: over any screen, nothing logged, and "Cerrar"
+// ends it. Its clock can go faster (×10, ×20) or jump to just before the next
+// part ("Siguiente"); the real routine always goes at the household's time.
 import { api } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
 import { codeField } from "../components/code-input.js";
@@ -47,6 +48,8 @@ const HERALD_S = 16; // seconds before a part ends: "Acaba el aseo. Diez segundo
 const AFTER_ZERO_MS = 1000; // after the countdown's last pip, the voice waits this long
 const WHO_IS_LEFT_MS = 9000; // in "firmar", after its announcement: who still has steps
 const DONE_MS = 30_000; // started by hand: "¡Hecho!" (or "¡Se acabó el tiempo!") stays this long
+const TRIAL_SPEEDS = [1, 10, 20]; // "Probar ahora": how fast its clock can go
+const TRIAL_JUMP_LEAD_S = 20; // "Siguiente" lands this long before the next part (its countdown is heard)
 
 const inParents = () => location.hash.startsWith("#/parents");
 
@@ -129,6 +132,7 @@ export function startRoutines() {
     showing = {
       data,
       fetchedAt: Date.now(),
+      speed: 1, // only a trial goes faster
       view,
       phaseKey: null,
       ringing: false,
@@ -145,6 +149,7 @@ export function startRoutines() {
       ticker: setInterval(tick, TICK_MS),
     };
     document.body.append(view.layer, view.banner);
+    renderTrialTools();
     note("started");
     renderPeople();
     tick();
@@ -175,7 +180,32 @@ export function startRoutines() {
 
   // Minute of the day by the household's clock, with seconds.
   function now() {
-    return showing.data.now + (Date.now() - showing.fetchedAt) / 60_000;
+    return showing.data.now + ((Date.now() - showing.fetchedAt) / 60_000) * showing.speed;
+  }
+
+  // ---------- "Probar ahora": faster, or to the next part ----------
+
+  // The clock goes on from where it is, at the new speed.
+  function setSpeed(speed) {
+    pretend(now());
+    showing.speed = speed;
+    renderTrialTools();
+  }
+
+  // Just before the next part (or the goal, or the end): its countdown and announcement are heard.
+  function jump() {
+    const time = now();
+    const phase = phaseAt(time);
+    if (phase.kind === "done") return;
+    pretend(Math.max(time, phase.to - TRIAL_JUMP_LEAD_S / 60));
+    stopRinging();
+    quiet();
+    tick();
+  }
+
+  function pretend(time) {
+    showing.data.now = time;
+    showing.fetchedAt = Date.now();
   }
 
   // Each part's start and end, in minutes of the day; started by hand, to the second
@@ -458,16 +488,33 @@ export function startRoutines() {
     const finish = h("div", { class: "routine__finish" });
     const people = h("ul", { class: "routine__people" });
     const over = h("div", {}); // a kid's mission, over the clock
+    const trialTools = h("div", { class: "routine__trial" });
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
         h("header", { class: "routine__top" }, time, h("span", { class: "child-bar__spacer" }), soundButton(), close),
+        trialTools,
         what, until, h("div", { class: "routine__dial" }, clock, count), stopButton, tasks, next, finish),
       h("aside", { class: "routine__side" }, people),
       over);
     const banner = h("button", {
       type: "button", class: "routine-banner", onclick: () => { location.hash = "#/"; },
     }, t.routine.banner);
-    return { layer, banner, time, close, stopButton, what, until, clock, count, tasks, next, finish, people, over };
+    return { layer, banner, time, close, stopButton, what, until, clock, count, tasks, next, finish, people, over,
+      trialTools };
+  }
+
+  function renderTrialTools() {
+    const { view, data } = showing;
+    view.trialTools.hidden = !data.trial;
+    if (!data.trial) return;
+    view.trialTools.replaceChildren(
+      h("span", { class: "routine__trial-label" }, t.routine.trialLabel),
+      h("div", { class: "tabs routine__speeds", role: "group", "aria-label": t.routine.speed },
+        ...TRIAL_SPEEDS.map((speed) => h("button", {
+          type: "button", class: `tab${speed === showing.speed ? " tab--on" : ""}`,
+          "aria-pressed": String(speed === showing.speed), onclick: () => setSpeed(speed),
+        }, `×${speed}`))),
+      h("button", { type: "button", class: "btn", onclick: jump }, t.routine.nextPart));
   }
 
   // Hidden while closed until its next part; in the parents' zone, only a banner.

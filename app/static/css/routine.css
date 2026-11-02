@@ -36,6 +36,27 @@
   align-self: stretch;
 }
 
+/* "Probar ahora": speed and "Siguiente", only in a trial */
+.routine__trial {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: stretch;
+}
+
+.routine__trial-label {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.routine__speeds .tab {
+  min-width: 56px;
+}
+
 .routine__time {
   font-size: var(--text-xl);
   font-weight: 800;

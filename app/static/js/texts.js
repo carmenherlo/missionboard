@@ -77,6 +77,9 @@ export const t = {
     start: "Empezar",
     minutes: (n) => `${n} min`,
     chooseKids: "Toca a los que han llegado.",
+    trialLabel: "Prueba",
+    speed: "Velocidad",
+    nextPart: "Siguiente",
   },
   sound: {
     label: "Volumen",
