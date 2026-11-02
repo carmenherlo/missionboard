@@ -115,13 +115,13 @@ export async function viewRoutineEdit(routineId) {
   const goalPanel = h("div", {});
   function renderMode() {
     const manual = routine.manual;
-    modeBox.replaceChildren(h("div", { class: "tabs" },
+    modeBox.replaceChildren(...[h("div", { class: "tabs" },
       [[false, t.routineEdit.timed], [true, t.routineEdit.byHand]].map(([value, label]) =>
         h("button", {
           type: "button", class: `tab${manual === value ? " tab--on" : ""}`, "aria-pressed": String(manual === value),
           onclick: () => manual !== value && patch({ wake: value ? null : DEFAULT_WAKE }),
         }, manual === value && icon("check"), label))),
-    manual && h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes)));
+    manual && h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes))].filter(Boolean));
     timed.hidden = manual;
     goalPanel.hidden = manual;
   }

@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 8
+CURRENT_VERSION = 9
 
 
 class ConfigVersionError(Exception):
@@ -214,6 +214,20 @@ def _v7_to_v8(doc: dict) -> dict:
     return {**doc, "version": 8, "routines": routines}
 
 
+# The shop (step 6): what the stars buy, the same for every child.
+_SAMPLE_SHOP = [
+    {"id": "elegir-postre", "text": "Elegir el postre", "image": "fluent/ice-cream", "image_suggested": False,
+     "price": 3},
+    {"id": "globo", "text": "Un globo", "image": "fluent/balloon", "image_suggested": False, "price": 5},
+    {"id": "peluche", "text": "Un peluche", "image": "fluent/teddy-bear", "image_suggested": False, "price": 20},
+]
+
+
+def _v8_to_v9(doc: dict) -> dict:
+    """Add the shop, with three samples to edit or delete."""
+    return {**doc, "version": 9, "shop": copy.deepcopy(_SAMPLE_SHOP)}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
@@ -222,6 +236,7 @@ _MIGRATIONS = {
     5: _v5_to_v6,
     6: _v6_to_v7,
     7: _v7_to_v8,
+    8: _v8_to_v9,
 }
 
 

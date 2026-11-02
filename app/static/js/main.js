@@ -16,6 +16,8 @@ import { viewRoutineEdit } from "./screens/parents/routine-edit.js";
 import { viewRoutineNew } from "./screens/parents/routine-new.js";
 import { viewRoutinePartEdit } from "./screens/parents/routine-part-edit.js";
 import { viewRoutinesList } from "./screens/parents/routines-list.js";
+import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
+import { viewShopList } from "./screens/parents/shop-list.js";
 import { viewPrizesList } from "./screens/parents/prizes-list.js";
 import { viewMissionEdit, viewTemplateEdit } from "./screens/parents/mission-edit.js";
 import { viewMissionNew } from "./screens/parents/mission-new.js";
@@ -59,6 +61,8 @@ const routes = [
   [parentsPath("/routines/:routine"), (ids) => viewRoutineEdit(ids.routine), "parents", "routine_edit"],
   [parentsPath("/routines/:routine/parts/:part"),
     (ids) => viewRoutinePartEdit(ids.routine, ids.part), "parents", "routine_part_edit"],
+  [parentsPath("/shop"), () => viewShopList(), "parents", "shop"],
+  [parentsPath("/shop/:item"), (ids) => viewShopItemEdit(ids.item), "parents", "shop_item_edit"],
   [parentsPath("/prizes"), () => viewPrizesList(), "parents", "prizes"],
   [parentsPath("/prizes/:prize"), (ids) => viewPrizeEdit(ids.prize), "parents", "prize_edit"],
   [parentsPath("/templates"), () => viewTemplatesList(), "parents", "templates"],

@@ -9,6 +9,7 @@ export function viewConfigIndex() {
     { href: "#/parents/config/missions", iconName: "missions", label: t.config.missions },
     { href: "#/parents/config/routines", iconName: "clock", label: t.config.routines },
     { href: "#/parents/config/prizes", iconName: "prize", label: t.config.prizes },
+    { href: "#/parents/config/shop", iconName: "shop", label: t.config.shop },
     { href: "#/parents/config/code", iconName: "parentCode", label: t.config.parentCode },
     { href: "#/parents/config/log", iconName: "history", label: t.config.eventLog },
   ];

@@ -99,6 +99,23 @@ MIGRATIONS: list[str] = [
     """
     ALTER TABLE routine_runs ADD COLUMN kids TEXT
     """,
+    # 6 · The shop: what each child bought, with a copy of the item as it was;
+    # delivered_at is set once a parent hands it over (step 7).
+    """
+    CREATE TABLE purchases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        day TEXT NOT NULL,
+        child_id TEXT NOT NULL,
+        child_name TEXT,
+        item_id TEXT,
+        item_text TEXT NOT NULL,
+        item_image TEXT,
+        price INTEGER NOT NULL,
+        at TEXT NOT NULL,
+        delivered_at TEXT
+    );
+    CREATE INDEX purchases_child ON purchases (child_id)
+    """,
 ]
 
 

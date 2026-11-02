@@ -30,6 +30,7 @@ _FIELDS = {
     "avatar": lambda value: f"avatar: {value}",
     "color": lambda value: f"color: {value}",
     "order": lambda value: "orden: " + ", ".join(value),
+    "price": lambda value: f"precio: {value} {'estrella' if value == 1 else 'estrellas'}",
 }
 
 
@@ -41,7 +42,8 @@ def change_detail(changes: dict) -> str | None:
 # Each screen as its title reads, with the names it shows; the plain name
 # when one of those no longer exists (the id was not found).
 def stars_detail(stars: int) -> str:
-    return f"+{stars} {'estrella' if stars == 1 else 'estrellas'}"
+    """ "+1 estrella", "-5 estrellas" """
+    return f"{stars:+d} {'estrella' if abs(stars) == 1 else 'estrellas'}"
 
 
 def locked_detail(locked: tuple[str, str]) -> str:
@@ -91,6 +93,8 @@ SCREENS = {
     "template_step_edit": ("Editar paso de plantilla", "Editar paso «{step}» de la plantilla «{mission}»"),
     "prizes": ("Premios del día", None),
     "routines": ("Rutinas", None),
+    "shop": ("Tienda", None),
+    "shop_item_edit": ("Editar artículo de la tienda", None),
     "routine_new": ("Nueva rutina", None),
     "routine_edit": ("Editar rutina", None),
     "routine_part_edit": ("Editar parte de rutina", None),
@@ -128,6 +132,9 @@ _CONFIG = {
     ("routine_part", "created"): "Añadiste «{step}» a la rutina «{mission}»",
     ("routine_part", "changed"): "Cambiaste «{step}» de la rutina «{mission}»",
     ("routine_part", "deleted"): "Quitaste «{step}» de la rutina «{mission}»",
+    ("shop_item", "created"): "Añadiste «{mission}» a la tienda",
+    ("shop_item", "changed"): "Cambiaste «{mission}» de la tienda",
+    ("shop_item", "deleted"): "Quitaste «{mission}» de la tienda",
     ("prize", "created"): "Añadiste el premio «{mission}»",
     ("prize", "changed"): "Cambiaste el premio «{mission}»",
     ("prize", "deleted"): "Borraste el premio «{mission}»",
@@ -145,6 +152,7 @@ _CHILD = {
     "prize_unlocked": "{child} desbloqueó el premio del día",
     "prize_locked": "{child} tocó el premio, aún bloqueado",
     "prize_spun": "{child} giró la ruleta · {detail}",
+    "purchase": "{child} compró «{mission}» · {detail}",
 }
 
 

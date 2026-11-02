@@ -18,6 +18,8 @@ from app.missions import api as missions_api
 from app.parents import api as parents_api
 from app.prizes import api as prizes_api
 from app.routines import api as routines_api
+from app.shop import api as shop_api
+from app.shop.repository import PurchasesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
 from app.storage import db
@@ -83,6 +85,7 @@ def create_app(
     app.state.day_repository = DayRepository(data_dir)
     app.state.background_store = BackgroundStore(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
+    app.state.purchases_repository = PurchasesRepository(data_dir)
     # The natural voice (app/voice/): its model in data/voices/ or where
     # MISSIONBOARD_VOICE_MODEL says (the Docker image brings it).
     model = Path(os.environ.get("MISSIONBOARD_VOICE_MODEL", data_dir / "voices" / MODEL_NAME))
@@ -109,6 +112,7 @@ def create_app(
     app.include_router(today_api.router)
     app.include_router(routines_api.router)
     app.include_router(voice_api.router)
+    app.include_router(shop_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():

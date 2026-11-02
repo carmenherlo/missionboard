@@ -129,6 +129,10 @@
   justify-content: flex-start;
 }
 
+.form-actions--center {
+  justify-content: center;
+}
+
 /* ---------- home ---------- */
 
 .home {

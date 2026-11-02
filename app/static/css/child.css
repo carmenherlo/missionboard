@@ -673,3 +673,54 @@
 .child-colors {
   display: contents; /* only carries the child's colour to what it holds */
 }
+
+/* ---------- Mis estrellas: the shop ---------- */
+
+.stars--button {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.stars-body {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.stars--big {
+  margin: 0;
+}
+
+.stars-body .step-grid {
+  width: 100%;
+  padding: 0;
+}
+
+.step-card--locked .step-card__toggle {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--stars-text);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.price img {
+  width: 28px;
+  height: 28px;
+}
+
+.purchases {
+  width: 100%;
+}
+
+.purchases h3 {
+  margin: 0 0 var(--space-2);
+}

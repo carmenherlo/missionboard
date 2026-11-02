@@ -8,6 +8,7 @@ import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { openMission as openMissionOver } from "./mission-flow.js";
 import { prizeSheet } from "./prize-sheet.js";
+import { openStars } from "./stars-sheet.js";
 import { routeView } from "./route.js";
 
 const REFRESH_MS = 60_000; // missions open and close with the time: look again every minute
@@ -36,8 +37,18 @@ export async function viewChildToday(childId) {
         avatar(day.child, { size: "child" }),
         h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
         h("span", { class: "child-bar__spacer" }),
-        h("span", { class: "stars", "aria-label": t.child.stars(day.stars) },
-          h("img", { src: day.star_url, alt: "" }), String(day.stars)),
+        h("button", {
+          type: "button", class: "stars stars--button", "aria-label": `${t.child.stars(day.stars)} · ${t.shop.openShop}`,
+          onclick: () => {
+            overlay = true;
+            openStars(screen, childId, {
+              onClose: async () => {
+                overlay = false;
+                await refresh();
+              },
+            });
+          },
+        }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
       day.missions.length
         ? routeView(day, { onOpen: openMission, onLocked: showLocked, onPrize: openPrize, onPrizeLocked: showPrizeLocked })
