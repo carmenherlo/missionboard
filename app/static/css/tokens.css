@@ -90,4 +90,50 @@
   --icon-button: 56px;
   --control-height: 52px;
   --page-width: 1000px;
+
+  /* ---------- The child's screens (paso-3.5.html, model 2) ----------
+     Their colour comes from the child: the screen sets --child-color (rings,
+     ✓, borders), --child-soft (tone 90: fills), --child-strong (tone 40: text
+     on light) and --on-child (what goes on the vivid colour). */
+
+  /* The route: the mission in focus is much bigger; the farther, the smaller. */
+  --route-focus-size: min(330px, 26vw); /* the mission of "¡Ahora!" */
+  --route-near-size: min(135px, 11vw); /* its neighbours */
+  --route-far-size: min(105px, 8.5vw); /* the rest */
+  --route-link-width: 6px; /* the thin grey line that joins them */
+  --route-walked: color-mix(in srgb, var(--muted) 45%, white); /* the line up to the focus */
+  --route-label-bg: rgb(255 255 255 / 0.85); /* names over the illustration need a pill */
+  --child-avatar-size: 112px; /* the child's avatar at the top: "this is your screen" */
+
+  /* Background: the illustration of the moment of the day under two veils. */
+  --scene-veil-white: rgb(255 255 255 / 0.45); /* so it does not compete with the route */
+  --scene-veil-child: 28%; /* the child's colour over it: whose screen it is */
+  --scene-plain: white; /* without an illustration: the child's colour over this */
+
+  /* The mission: a panel over the route, which stays behind, darker. */
+  --sheet-backdrop: rgb(20 20 40 / 0.35);
+  --sheet-tint: 10%; /* child's colour over white: still their zone, lighter than a done step */
+  --sheet-opacity: 90%;
+  --sheet-blur: 18px; /* if it stutters on the tablet: 0 (and --sheet-opacity: 100%) */
+  --shadow-sheet: 0 24px 60px rgb(0 0 0 / 0.3);
+  --step-tile-size: 120px;
+  --step-check-size: 56px;
+  --shadow-badge: 0 3px 10px rgb(0 0 0 / 0.15);
+
+  /* Stars */
+  --stars-text: color-mix(in srgb, var(--accent) 60%, black);
+
+  /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
+  --celebration-duration: 5s; /* "¡Misión cumplida!" closes by itself after this */
+  --glow-breath: 3s; /* the glow of the ring in focus, slow */
+  --celebration-glow-breath: 2.2s; /* the ring around the avatar in the celebration */
+  --star-shine: 2.4s; /* the star won, shining */
+  --appear: 220ms; /* panels and messages coming in */
+  --confetti-1: #5b4ae6;
+  --confetti-2: #ff9f43;
+  --confetti-3: #2fb37a;
+  --confetti-4: #ff6fb5;
+  --confetti-5: #4fa3ff;
+  --confetti-6: #ffd43b;
+  --confetti-star: #ffc93c;
 }

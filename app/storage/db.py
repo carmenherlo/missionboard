@@ -32,6 +32,41 @@ MIGRATIONS: list[str] = [
     );
     CREATE INDEX events_day ON events (day)
     """,
+    # 2 · A child's day: the steps checked and the missions completed, per
+    # app day (a new day starts empty), and every star won or spent as a
+    # movement of their piggy bank (the balance is the sum).
+    """
+    CREATE TABLE step_checks (
+        day TEXT NOT NULL,
+        child_id TEXT NOT NULL,
+        mission_id TEXT NOT NULL,
+        step_id TEXT NOT NULL,
+        at TEXT NOT NULL,
+        PRIMARY KEY (day, child_id, mission_id, step_id)
+    );
+    CREATE TABLE mission_completions (
+        day TEXT NOT NULL,
+        child_id TEXT NOT NULL,
+        mission_id TEXT NOT NULL,
+        child_name TEXT,
+        mission_name TEXT,
+        stars INTEGER NOT NULL,
+        at TEXT NOT NULL,
+        PRIMARY KEY (day, child_id, mission_id)
+    );
+    CREATE TABLE star_movements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        child_id TEXT NOT NULL,
+        child_name TEXT,
+        amount INTEGER NOT NULL,
+        reason TEXT NOT NULL,
+        mission_id TEXT,
+        mission_name TEXT,
+        day TEXT NOT NULL,
+        at TEXT NOT NULL
+    );
+    CREATE INDEX star_movements_child ON star_movements (child_id)
+    """,
 ]
 
 

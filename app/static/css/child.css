@@ -1,0 +1,552 @@
+/* =====================================================================
+   The child's screens: route, mission and celebration (paso-3.5.html,
+   model 2). Only layout and look; everything that moves is in
+   effects.css. Sizes and colours come from tokens.css.
+   ===================================================================== */
+
+.child-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--text);
+}
+
+/* ---------- background: illustration + white veil + the child's colour ---------- */
+
+.child-scene {
+  position: absolute;
+  inset: 0;
+  background: var(--scene-plain);
+}
+
+.child-scene__picture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.child-scene__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(color-mix(in srgb, var(--child-color) var(--scene-veil-child), transparent),
+      color-mix(in srgb, var(--child-color) var(--scene-veil-child), transparent)),
+    linear-gradient(var(--scene-veil-white), var(--scene-veil-white));
+}
+
+/* ---------- top bar ---------- */
+
+.child-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  /* the 🏠 stays at the same corner as on every screen: room for it on the right */
+  padding: var(--space-3) calc(var(--icon-button) + 2rem) var(--space-3) var(--space-4);
+}
+
+.child-bar__title {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 800;
+}
+
+.child-bar__spacer {
+  flex: 1;
+}
+
+.avatar--child {
+  --size: var(--child-avatar-size);
+}
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 64px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--stars-text);
+  font-size: 1.875rem;
+  font-weight: 800;
+}
+
+.stars img {
+  width: 40px;
+  height: 40px;
+}
+
+/* ---------- the route ---------- */
+
+.route {
+  position: relative;
+  flex: 1;
+  display: grid;
+  align-content: center;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+}
+
+.route__line {
+  display: flex;
+  align-items: center;
+}
+
+/* Each tram of the line is longer the nearer it is to the mission in focus. */
+.route__link {
+  flex: 1 1 0;
+  min-width: var(--space-5); /* room for the names below */
+  height: var(--route-link-width);
+  margin: 0 var(--space-1);
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.route__link--near { flex-grow: 3; }
+.route__link--mid { flex-grow: 2; }
+.route__link--walked { background: var(--route-walked); }
+
+.route-node {
+  --size: var(--route-far-size);
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--size);
+  height: var(--route-focus-size); /* the same box for all: the names fall on one line */
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.route-node--near { --size: var(--route-near-size); }
+.route-node--focus { --size: var(--route-focus-size); }
+
+.route-node__label {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  max-width: calc(var(--size) + 5rem); /* a long name wraps instead of touching the next one */
+  border-radius: var(--radius-md);
+  background: var(--route-label-bg);
+  font-size: var(--text-md);
+  font-weight: 800;
+  text-align: center;
+}
+
+.route-node--near .route-node__label {
+  font-size: var(--text-lg);
+}
+
+.route-node--focus .route-node__label {
+  font-size: var(--text-xl);
+  white-space: nowrap;
+}
+
+.route-node__detail {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-md);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.route-node__tag {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--child-strong);
+  color: var(--on-primary);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.route__message {
+  justify-self: center;
+  margin: var(--space-6) 0 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.route__empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.avatar--hero {
+  --size: 200px;
+}
+
+/* ---------- ring: the mission's picture, filled with the steps done ---------- */
+
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+}
+
+.ring > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+
+.ring__track {
+  fill: var(--surface);
+  stroke: var(--line);
+  stroke-width: 6;
+}
+
+.ring__fill,
+.ring__glow {
+  fill: none;
+  stroke: var(--child-color);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.ring__glow {
+  display: none; /* shown and animated in effects.css */
+  stroke-width: 10;
+}
+
+.ring__inner {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+}
+
+.ring__inner img {
+  width: 72%;
+  height: 72%;
+}
+
+.ring__letter {
+  color: var(--child-strong);
+  font-size: calc(var(--size) * 0.4);
+  font-weight: 800;
+}
+
+.ring__star {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-badge);
+}
+
+.ring__star img {
+  width: 34px;
+  height: 34px;
+}
+
+/* Done: in the background, softer. Pending, upcoming and closed: grey. */
+.route-node--done .ring__fill { stroke: var(--child-soft); }
+.route-node--done .ring__inner img,
+.route-node--done .ring__star img { opacity: 0.75; filter: saturate(0.6); }
+.route-node--open:not(.route-node--focus) .ring__inner img,
+.route-node--upcoming .ring__inner img { opacity: 0.45; filter: grayscale(1); }
+.route-node--closed .ring__inner img,
+.route-node--closed .ring__letter { opacity: 0.3; filter: grayscale(1); }
+.route-node--closed .ring__track { fill: var(--container); }
+
+/* ---------- toast: "Se abre a las 19:30" ---------- */
+
+.child-toast {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-5);
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+/* ---------- the mission: a screen inside the screen ---------- */
+
+.mission-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20; /* over the corner button: the panel is closed with its ✕ */
+  display: flex;
+  padding: var(--space-5);
+  background: var(--sheet-backdrop);
+}
+
+.mission-sheet {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+  border-radius: 40px;
+  background: color-mix(in srgb, color-mix(in srgb, var(--child-color) var(--sheet-tint), var(--surface)) var(--sheet-opacity), transparent);
+  backdrop-filter: blur(var(--sheet-blur));
+  box-shadow: var(--shadow-sheet);
+}
+
+.mission-sheet__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.mission-sheet__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.mission-sheet__close {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.mission-sheet__close:active {
+  background: var(--line);
+}
+
+.progress {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.progress__dot {
+  width: 40px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--line);
+}
+
+.progress__dot--on {
+  background: var(--child-color);
+}
+
+.progress__count {
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.step-grid--many {
+  --step-tile-size: 88px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.step-card {
+  position: relative;
+}
+
+.step-card__toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  border: 0;
+  border-radius: 32px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.step-card__text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.step-tile {
+  display: grid;
+  place-items: center;
+  width: var(--step-tile-size);
+  height: var(--step-tile-size);
+  border-radius: calc(var(--step-tile-size) * 0.25);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  overflow: hidden;
+}
+
+.step-tile img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+}
+
+.step-tile__letter {
+  color: var(--child-strong);
+  font-size: calc(var(--step-tile-size) * 0.48);
+  font-weight: 800;
+}
+
+/* Done: the light tone of the child's colour and a vivid border (the
+   background is tinted with their colour too, so the fill alone would vanish). */
+.step-card--done .step-card__toggle {
+  background: var(--child-soft);
+  box-shadow: inset 0 0 0 5px var(--child-color);
+}
+
+.step-card--done .step-tile {
+  background: var(--surface);
+}
+
+.step-card__check {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  display: none;
+  place-items: center;
+  width: var(--step-check-size);
+  height: var(--step-check-size);
+  border-radius: 50%;
+  background: var(--child-color);
+  color: var(--on-child);
+  font-size: calc(var(--step-check-size) * 0.6);
+  box-shadow: 0 0 0 4px var(--surface);
+  pointer-events: none;
+}
+
+.step-card--done .step-card__check {
+  display: grid;
+}
+
+.step-card__speak {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-size: 28px;
+  cursor: pointer;
+}
+
+/* ---------- ¡Misión cumplida! ---------- */
+
+.celebration-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  background: radial-gradient(circle at 50% 50%,
+    color-mix(in srgb, var(--accent-soft) 70%, transparent) 0, transparent 70%),
+    color-mix(in srgb, var(--child-color) 18%, var(--surface));
+  cursor: pointer;
+}
+
+.celebration__title {
+  position: relative;
+  margin: 0;
+  font-size: 4.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.celebration__hero {
+  position: relative;
+  --size: 340px;
+}
+
+.celebration__hero .ring__inner {
+  background: color-mix(in srgb, var(--child-color) 22%, var(--surface));
+  overflow: hidden;
+}
+
+.celebration__hero .ring__inner img {
+  width: 66%;
+  height: 66%;
+}
+
+.celebration__hero .ring__inner img.avatar__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.celebration__star {
+  position: absolute;
+  right: -70px;
+  top: -60px;
+  width: 190px;
+}
+
+.celebration .stars {
+  height: 74px;
+  font-size: 2.25rem;
+}
+
+.celebration .stars img {
+  width: 46px;
+  height: 46px;
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}

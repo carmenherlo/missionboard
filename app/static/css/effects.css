@@ -1,0 +1,77 @@
+/* =====================================================================
+   Effects of the child's screens: everything that moves or glows.
+   Nothing here is needed for the screens to work: without this file
+   they look still and do the same. Timings and colours in tokens.css
+   (section "Effects"); the confetti is drawn by static/js/effects/.
+   "Reduce motion" on the tablet turns them all off (end of the file).
+   ===================================================================== */
+
+/* The ring in focus: only the part filled (the progress) glows, slowly: "you are here". */
+.route-node--focus.route-node--open .ring__glow {
+  display: block;
+  filter: blur(3px);
+  animation: glow-breath var(--glow-breath) ease-in-out infinite;
+}
+
+@keyframes glow-breath {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.85; }
+}
+
+.route-node--focus > .ring > svg {
+  filter: drop-shadow(0 12px 20px color-mix(in srgb, var(--text) 14%, transparent));
+}
+
+/* The mission panel and the messages come in softly. */
+.mission-layer,
+.child-toast {
+  animation: appear var(--appear) ease-out;
+}
+
+.mission-sheet {
+  animation: rise var(--appear) ease-out;
+}
+
+@keyframes appear {
+  from { opacity: 0; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+}
+
+/* Celebration: the ring around the avatar breathes, the star won shines. */
+.celebration-layer {
+  animation: appear var(--appear) ease-out;
+}
+
+.celebration__hero .ring > svg {
+  animation: celebration-glow var(--celebration-glow-breath) ease-in-out infinite;
+}
+
+@keyframes celebration-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--child-color) 70%, transparent))
+      drop-shadow(0 0 14px color-mix(in srgb, var(--child-color) 35%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--child-color) 90%, transparent))
+      drop-shadow(0 0 32px color-mix(in srgb, var(--child-color) 60%, transparent));
+  }
+}
+
+.celebration__star {
+  animation: star-shine var(--star-shine) ease-in-out infinite;
+}
+
+@keyframes star-shine {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--confetti-star)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
+  .celebration__hero .ring > svg, .celebration__star, .ring__glow {
+    animation: none !important;
+  }
+}

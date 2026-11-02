@@ -10,7 +10,7 @@ export async function viewHome() {
   const grid = children.length
     ? h("section", { class: "children" },
         children.map((child) =>
-          h("button", { class: "child-card", type: "button" },
+          h("a", { class: "child-card", href: `#/child/${child.id}` },
             avatar(child, { size: "lg" }),
             h("span", { class: "child-card__name" }, child.name))))
     : h("p", { class: "empty" }, t.home.empty);

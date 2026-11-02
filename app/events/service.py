@@ -1,10 +1,10 @@
 import csv
 import io
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Protocol
 
 from app.children.repository import ChildrenRepository
-from app.clock import Clock, today
+from app.clock import Clock, app_day, today
 from app.events import texts
 from app.events.repository import Event, EventsRepository
 from app.missions.repository import MissionList
@@ -54,6 +54,13 @@ class EventLog:
             child=child, mission=mission, step=step, detail=texts.change_detail(changes or {}),
         )
 
+    def child_did(self, type_: str, child: Named, *, mission=None, step=None, stars=None, locked=None) -> None:
+        """Something a child did on their route: mission_opened, step_checked,
+        step_unchecked, mission_completed (with its stars), step_spoken,
+        mission_locked (with why: ("opens", "19:30") or ("closed", "17:00"))."""
+        detail = texts.stars_detail(stars) if stars is not None else texts.locked_detail(locked) if locked else None
+        self._record("child", type_, child=child, mission=mission, step=step, detail=detail)
+
     def screen_opened(self, zone: str | None, screen: str, *, child=None, mission=None, step=None) -> None:
         self._record(
             zone, "screen_opened", subject=screen, child=child, mission=mission, step=step, detail=screen
@@ -76,9 +83,7 @@ class EventLog:
         ))
 
     def day_of(self, moment: datetime) -> date:
-        """The app's day: it starts at day_starts_at, so 00:30 may still be yesterday."""
-        hours, minutes = map(int, self._settings.settings().day_starts_at.split(":"))
-        return (moment - timedelta(hours=hours, minutes=minutes)).date()
+        return app_day(moment, self._settings.settings().day_starts_at)
 
     # ---------- reading ----------
 

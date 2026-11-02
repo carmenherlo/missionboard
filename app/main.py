@@ -20,6 +20,8 @@ from app.storage import db
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 from app.templates import api as templates_api
+from app.today import api as today_api
+from app.today.repository import BackgroundStore, DayRepository
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
@@ -70,6 +72,8 @@ def create_app(
     app.state.photo_store = PhotoStore(data_dir)
     app.state.clock = clock or SystemClock()
     app.state.events_repository = EventsRepository(data_dir)
+    app.state.day_repository = DayRepository(data_dir)
+    app.state.background_store = BackgroundStore(data_dir)
     app.state.image_libraries = ImageLibraries(LIBRARIES if libraries is None else libraries)
 
     @app.exception_handler(errors.DomainError)
@@ -88,6 +92,7 @@ def create_app(
     app.include_router(templates_api.router)
     app.include_router(images_api.router)
     app.include_router(events_api.router)
+    app.include_router(today_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():

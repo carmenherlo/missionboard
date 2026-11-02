@@ -2,6 +2,7 @@
 
 import { api, errorMessage, session } from "./api.js";
 import { h, render } from "./dom.js";
+import { viewChildToday } from "./screens/child/today.js";
 import { viewHome } from "./screens/home.js";
 import { viewChangeCode } from "./screens/parents/change-code.js";
 import { viewChildMissions } from "./screens/parents/child-missions.js";
@@ -32,6 +33,7 @@ const parentsPath = (path) =>
   new RegExp(`^#/parents/config${path.replace(/:(\w+)/g, "(?<$1>[\\w-]+)")}$`);
 const routes = [
   [/^#?\/?$/, () => viewHome(), null, "home"],
+  [/^#\/child\/(?<child>[\w-]+)$/, (ids) => viewChildToday(ids.child), "child", "child_today"],
   [/^#\/parents\/?$/, () => { location.hash = "#/parents/config"; }, "parents"],
   [parentsPath(""), () => viewConfigIndex(), "parents", "config"],
   [parentsPath("/code"), () => viewChangeCode(), "parents", "change_code"],

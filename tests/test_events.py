@@ -57,7 +57,7 @@ def csv_rows(client):
 
 def test_the_database_gets_the_event_log(client, data_dir):
     with db.connect(data_dir) as conn:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 1
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == len(db.MIGRATIONS)
         assert conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
 
 

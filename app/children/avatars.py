@@ -44,4 +44,16 @@ PRESETS = [
 ]
 
 PALETTE_COLORS = {entry["color"] for entry in PALETTE}
+_BY_COLOR = {entry["color"]: entry for entry in PALETTE}
+
+
+def tones(color: str) -> dict:
+    """The child's colour with its tones (fills, text, what goes on top).
+
+    A colour outside the palette (written by hand) uses itself for every tone.
+    """
+    entry = _BY_COLOR.get(color)
+    if entry is None:
+        return {"color": color, "strong": color, "soft": color, "on": "#ffffff"}
+    return {key: entry[key] for key in ("color", "strong", "soft", "on")}
 PRESETS_BY_ID = {preset["id"]: preset for preset in PRESETS}

@@ -43,7 +43,8 @@ def get_children_service(
     return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions])
 
 
-def _public(child: Child) -> dict:
+def public_child(child: Child) -> dict:
+    """A child as the screens get it: with the address of their photo."""
     return {
         **asdict(child),
         "photo_url": f"/api/children/{child.id}/photo?v={child.photo}" if child.photo else None,
@@ -58,19 +59,19 @@ def list_avatars(libraries: ImageLibraries = Depends(get_image_libraries)):
 
 @router.get("/children")
 def list_children(children: ChildrenService = Depends(get_children_service)):
-    return [_public(child) for child in children.list()]
+    return [public_child(child) for child in children.list()]
 
 
 @router.post("/children", status_code=201, dependencies=[Depends(require_parent)])
 def create_child(body: ChildIn, children: ChildrenService = Depends(get_children_service)):
-    return _public(children.create(ChildData(**body.model_dump())))
+    return public_child(children.create(ChildData(**body.model_dump())))
 
 
 @router.put("/children/{child_id}", dependencies=[Depends(require_parent)])
 def update_child(
     child_id: str, body: ChildIn, children: ChildrenService = Depends(get_children_service)
 ):
-    return _public(children.update(child_id, ChildData(**body.model_dump())))
+    return public_child(children.update(child_id, ChildData(**body.model_dump())))
 
 
 @router.delete("/children/{child_id}", status_code=204, dependencies=[Depends(require_parent)])
@@ -87,7 +88,7 @@ async def upload_photo(
 ):
     """Upload the raw image as the request body (no multipart needed)."""
     media_type = content_type.split(";")[0].strip().lower()
-    return _public(children.set_photo(child_id, await request.body(), media_type))
+    return public_child(children.set_photo(child_id, await request.body(), media_type))
 
 
 @router.get("/children/{child_id}/photo")
