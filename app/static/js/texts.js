@@ -179,6 +179,7 @@ export const t = {
     byHand: "Se lanza a mano",
     byHandHint: (n) => `Se empieza con el botón del despertador del inicio, eligiendo quién ha llegado. Sus partes van seguidas desde entonces (${n} minutos en total) y acaba cuando esos niños completan su misión, o al acabarse el tiempo.`,
     offsets: "Algún día, más tarde o más temprano (minutos)",
+    movedDay: (day, rings, ends) => `El ${day.toLowerCase()} suena a las ${rings} y acaba a las ${ends}.`,
     offsetsHint: "Ese día se mueve toda la rutina: +15, un cuarto de hora más tarde; −10, diez minutos antes.",
     offsetOf: (day) => `Minutos de más o de menos el ${day}`,
     wakeHint: (n) => n

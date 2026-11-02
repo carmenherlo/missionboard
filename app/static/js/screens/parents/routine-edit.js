@@ -73,7 +73,12 @@ export async function viewRoutineEdit(routineId) {
   const daysSummary = h("p", { class: "hint" });
   // Some days everything moves: "+15" rings and goes a quarter of an hour later.
   const offsetsBox = h("div", { class: "offsets" });
+  const offsetsTimes = h("ul", { class: "offsets__times" }); // each moved day, its times: no sums to do
   function renderOffsets() {
+    offsetsTimes.replaceChildren(...WEEKDAYS
+      .filter((d) => routine.days.includes(d) && routine.offsets[d] && routine.wake)
+      .map((day) => h("li", {}, t.routineEdit.movedDay(t.dayNames[day],
+        movedTime(routine.wake, routine.offsets[day]), movedTime(routine.ends, routine.offsets[day])))));
     offsetsBox.replaceChildren(...WEEKDAYS.filter((d) => routine.days.includes(d)).map((day) =>
       h("label", { class: "offsets__day" }, t.days[day],
         h("input", {
@@ -348,7 +353,7 @@ export async function viewRoutineEdit(routineId) {
       h("label", { class: "time" }, t.routineEdit.wake, wake),
       h("label", { class: "time" }, t.routineEdit.remindEvery, remind)),
     wakeHint,
-    h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox,
+    h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox, offsetsTimes,
       h("span", { class: "hint" }, t.routineEdit.offsetsHint)),
     h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.notices), noticesList, addNotice,
       h("span", { class: "hint" }, t.routineEdit.noticesHint)));
@@ -384,4 +389,11 @@ export async function viewRoutineEdit(routineId) {
 
 export function capital(text) {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// "06:30" moved 45 minutes: "7:15".
+function movedTime(time, minutes) {
+  const [hours, mins] = time.split(":").map(Number);
+  const moved = (((hours * 60 + mins + minutes) % 1440) + 1440) % 1440;
+  return `${Math.floor(moved / 60)}:${String(moved % 60).padStart(2, "0")}`;
 }
