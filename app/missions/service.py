@@ -99,6 +99,30 @@ class MissionEditor:
         self._drop_replaced_photo(old.image, mission.image)
         return mission
 
+    def _copy(self, source: Mission, child_id: str | None, name: str | None = None) -> Mission:
+        """An independent copy: new ids, and its own copy of every uploaded photo."""
+        mission_id = _new_id()
+        return replace(
+            source,
+            id=mission_id,
+            child_id=child_id,
+            name=name or source.name,
+            days=list(source.days),
+            schedule=replace(source.schedule) if source.schedule else None,
+            image=self._copy_image(source.image, mission_id),
+            steps=[
+                replace(step, id=_new_id(), image=self._copy_image(step.image, mission_id))
+                for step in source.steps
+            ],
+        )
+
+    def _copy_image(self, ref: str | None, prefix: str) -> str | None:
+        filename = photo_filename(ref)
+        if filename is None:
+            return ref  # library images are shared: they are only a reference
+        copied = self._photos.copy(filename, prefix)
+        return photo_ref(copied) if copied else None
+
     # ---------- steps ----------
 
     def add_step(self, mission_id: str, text: str) -> Mission:

@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 3
+CURRENT_VERSION = 4
 
 
 class ConfigVersionError(Exception):
@@ -50,9 +50,61 @@ def _v2_to_v3(doc: dict) -> dict:
     return {**doc, "version": 3, "missions": doc.get("missions") or []}
 
 
+def _sample_template(id: str, name: str, image: str, days: list[str], steps: list[tuple]) -> dict:
+    return {
+        "id": id,
+        "name": name,
+        "image": image,
+        "image_suggested": False,
+        "days": days,
+        "schedule": None,
+        "steps": [
+            {"id": f"{id}-{n}", "text": text, "image": step_image, "image_suggested": False}
+            for n, (text, step_image) in enumerate(steps, start=1)
+        ],
+    }
+
+
+_WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"]
+_ALL_DAYS = _WEEKDAYS + ["sat", "sun"]
+
+# Fixed ids: a fresh install builds this document on every read until the
+# first save, so random ids would change between two requests.
+_SAMPLE_TEMPLATES = [
+    _sample_template("despegue", "Despegue", "fluent/rocket", _WEEKDAYS, [
+        ("Hacer la cama", "fluent/bed"),
+        ("Vestirse", "fluent/t-shirt"),
+        ("Desayunar", "fluent/bowl-with-spoon"),
+        ("Lavarse los dientes", "fluent/toothbrush"),
+        ("Peinarse", None),
+        ("Preparar la mochila", "fluent/backpack"),
+    ]),
+    _sample_template("aterrizaje", "Aterrizaje", "fluent/airplane-arrival", _WEEKDAYS, [
+        ("Quitarse los zapatos", "fluent/running-shoe"),
+        ("Lavarse las manos", "fluent/soap"),
+        ("Merendar", "fluent/green-apple"),
+        ("Hacer los deberes", "fluent/books"),
+    ]),
+    _sample_template("alunizaje", "Alunizaje", "fluent/crescent-moon", _ALL_DAYS, [
+        ("Ducharse", "fluent/shower"),
+        ("Ponerse el pijama", None),
+        ("Lavarse los dientes", "fluent/toothbrush"),
+        ("Leer un cuento", "fluent/open-book"),
+        ("A la cama", "fluent/bed"),
+    ]),
+]
+
+
+def _v3_to_v4(doc: dict) -> dict:
+    """Add the templates list, with three samples to start from."""
+    templates = doc.get("templates")
+    return {**doc, "version": 4, "templates": templates if templates is not None else copy.deepcopy(_SAMPLE_TEMPLATES)}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
+    3: _v3_to_v4,
 }
 
 

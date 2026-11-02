@@ -165,7 +165,24 @@ def test_v2_file_gets_missions(tmp_path):
     write_yaml(tmp_path, {**V1_FILE, "version": 2, "settings": {}, "features": {}})
     ConfigStore(tmp_path).migrate()
     doc = read_yaml(tmp_path)
-    assert doc["version"] == 3
+    assert doc["version"] == config_migrations.CURRENT_VERSION
     assert doc["missions"] == []
     assert doc["children"] == V1_FILE["children"]
     assert (tmp_path / "config.yaml.v2.bak").is_file()
+
+
+def test_v3_file_gets_the_sample_templates(tmp_path):
+    mission = {"id": "m1", "child_id": "4ca2bf6b", "name": "Despegue", "steps": []}
+    write_yaml(tmp_path, {**V1_FILE, "version": 3, "settings": {}, "features": {}, "missions": [mission]})
+    ConfigStore(tmp_path).migrate()
+    doc = read_yaml(tmp_path)
+    assert doc["version"] == 4
+    assert doc["missions"] == [mission]
+    assert [t["name"] for t in doc["templates"]] == ["Despegue", "Aterrizaje", "Alunizaje"]
+    assert all("child_id" not in t for t in doc["templates"])
+    assert [s["text"] for s in doc["templates"][0]["steps"]][:3] == ["Hacer la cama", "Vestirse", "Desayunar"]
+    assert (tmp_path / "config.yaml.v3.bak").is_file()
+
+
+def test_new_install_starts_with_the_sample_templates():
+    assert [t["name"] for t in config_migrations.initial()["templates"]] == ["Despegue", "Aterrizaje", "Alunizaje"]

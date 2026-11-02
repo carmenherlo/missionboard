@@ -1,20 +1,22 @@
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { h, render } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
+// The children (each one's missions) and, below, the templates: always shown,
+// even with one child or none, so templates can be prepared at any time.
 export async function viewMissionsHome() {
-  const [children] = await Promise.all([api("GET", "/api/children"), loadAvatars()]);
-  // With one child there is nothing to choose: go straight to their missions.
-  if (children.length === 1) {
-    location.replace(`#/parents/config/missions/child/${children[0].id}`);
-    return;
-  }
+  const [children, templates] = await Promise.all([
+    api("GET", "/api/children"),
+    api("GET", "/api/templates"),
+    loadAvatars(),
+  ]);
   const counts = await Promise.all(
     children.map((c) => api("GET", `/api/children/${c.id}/missions`).then((m) => m.length)));
 
-  const content = children.length
+  const kids = children.length
     ? [
         h("p", { class: "hint" }, t.missions.whose),
         h("div", { class: "kid-cards" },
@@ -32,5 +34,13 @@ export async function viewMissionsHome() {
   render(
     parentsHeader(t.missions.title, { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
-      ...content));
+      ...kids,
+      h("div", { class: "stack stack--tight section-gap" },
+        h("a", { class: "row row--link", href: "#/parents/config/templates" },
+          h("span", { class: "row__icon" }, icon("templates")),
+          h("span", { class: "row__name" }, t.missions.templates,
+            h("span", { class: "row__detail" },
+              h("span", { class: "pill pill--muted" }, t.templates.count(templates.length)))),
+          h("span", { class: "row__chevron" }, icon("next"))),
+        h("p", { class: "hint" }, t.missions.templatesHint))));
 }

@@ -9,10 +9,13 @@ import { viewChildForm } from "./screens/parents/child-form.js";
 import { viewChildrenList } from "./screens/parents/children-list.js";
 import { viewConfigIndex } from "./screens/parents/config-index.js";
 import { viewParentsLock } from "./screens/parents/lock.js";
-import { viewMissionEdit } from "./screens/parents/mission-edit.js";
+import { viewMissionEdit, viewTemplateEdit } from "./screens/parents/mission-edit.js";
 import { viewMissionNew } from "./screens/parents/mission-new.js";
 import { viewMissionsHome } from "./screens/parents/missions-home.js";
-import { viewStepEdit } from "./screens/parents/step-edit.js";
+import { viewStepEdit, viewTemplateStepEdit } from "./screens/parents/step-edit.js";
+import { viewTemplateApply } from "./screens/parents/template-apply.js";
+import { viewTemplateNew } from "./screens/parents/template-new.js";
+import { viewTemplatesList } from "./screens/parents/templates-list.js";
 import { t } from "./texts.js";
 
 // ?theme=<name> loads app/static/css/themes/<name>.css instead of the default one.
@@ -35,6 +38,11 @@ const routes = [
   [/^#\/parents\/config\/missions\/child\/([\w-]+)\/new$/, (m) => viewMissionNew(m[1]), true],
   [/^#\/parents\/config\/missions\/([\w-]+)$/, (m) => viewMissionEdit(m[1]), true],
   [/^#\/parents\/config\/missions\/([\w-]+)\/steps\/([\w-]+)$/, (m) => viewStepEdit(m[1], m[2]), true],
+  [/^#\/parents\/config\/templates$/, () => viewTemplatesList(), true],
+  [/^#\/parents\/config\/templates\/new$/, () => viewTemplateNew(), true],
+  [/^#\/parents\/config\/templates\/([\w-]+)$/, (m) => viewTemplateEdit(m[1]), true],
+  [/^#\/parents\/config\/templates\/([\w-]+)\/apply(\?from=editor)?$/, (m) => viewTemplateApply(m[1], Boolean(m[2])), true],
+  [/^#\/parents\/config\/templates\/([\w-]+)\/steps\/([\w-]+)$/, (m) => viewTemplateStepEdit(m[1], m[2]), true],
 ];
 
 async function route() {

@@ -54,6 +54,15 @@
   gap: var(--space-3);
 }
 
+.stack--tight {
+  gap: var(--space-1);
+}
+
+/* Space before a second section of a page (e.g. Templates below the children) */
+.section-gap {
+  margin-top: var(--space-3);
+}
+
 .columns {
   display: grid;
   gap: var(--space-4);
@@ -99,6 +108,8 @@
 
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
 }

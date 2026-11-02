@@ -1,5 +1,10 @@
 // Every text the user sees, in one place.
 
+// "Bea", "Bea y Alex", "Bea, Alex y Leo"
+function joinNames(names) {
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0];
+}
+
 export const t = {
   common: {
     cancel: "Cancelar",
@@ -72,6 +77,38 @@ export const t = {
     count: (n) => (n === 0 ? "sin misiones" : n === 1 ? "1 misión" : `${n} misiones`),
     noChildren: "Todavía no hay niños. Primero añade uno.",
     addChild: "Añadir niño",
+    templates: "Plantillas",
+    templatesHint: "Misiones generales que luego aplicas a uno o varios niños y ajustas a cada uno.",
+  },
+  templates: {
+    title: "Plantillas",
+    back: "Plantillas",
+    count: (n) => (n === 0 ? "ninguna" : n === 1 ? "1 plantilla" : `${n} plantillas`),
+    hint: "Misiones generales que luego aplicas a uno o varios niños y ajustas a cada uno.",
+    empty: "Aún no hay plantillas. Crea una aquí o, desde la misión de un niño, con «Guardar como plantilla».",
+    add: "Nueva plantilla",
+    apply: "Aplicar",
+    applyNamed: (name) => `Aplicar «${name}» a niños`,
+    editNamed: (name) => `Editar la plantilla «${name}»`,
+    newTitle: "Nueva plantilla",
+    missingName: "Escribe el nombre de la plantilla.",
+    badge: "Plantilla",
+    notice: "Cambiar esta plantilla no cambia las misiones que ya creaste con ella.",
+    delete: "Borrar plantilla",
+    confirmDelete: (name) => `¿Borrar la plantilla «${name}»?`,
+    confirmDeleteDetail: "Las misiones que ya creaste con ella no cambian.",
+    applyToChildren: "Aplicar a niños",
+  },
+  templateApply: {
+    title: (name) => `Aplicar «${name}»`,
+    hint: "Elige a quién. Cada niño recibe su propia copia al final de su ruta, y luego puedes ajustarla en sus misiones.",
+    alreadyHas: (name) => `ya tiene «${name}»`,
+    chosen: "Elegido",
+    submit: (names) => (names.length === 0 ? "Elige al menos un niño"
+      : names.length === 1 ? `Aplicar a ${names[0]}` : `Aplicar a ${names.length} niños`),
+    noChildren: "Primero añade un niño.",
+    done: (name, names) => `✓ «${name}» aplicada a ${joinNames(names)}.`,
+    doneHint: "Está al final de la ruta de cada uno. Ajústala a cada niño en sus misiones.",
   },
   childMissions: {
     title: (name) => `Misiones de ${name}`,
@@ -100,6 +137,11 @@ export const t = {
     image: "Imagen (opcional)",
     submit: "Crear y añadir pasos",
     missingName: "Escribe el nombre de la misión.",
+    fromScratch: "Desde cero",
+    fromTemplate: "O partiendo de una plantilla",
+    fromTemplateHint: (name) => `${name} recibe una copia con sus pasos, que luego puedes ajustar.`,
+    use: "Usar",
+    useNamed: (name) => `Usar la plantilla «${name}»`,
   },
   missionEdit: {
     panelMission: "Misión",
@@ -133,6 +175,9 @@ export const t = {
     confirmDeleteDetail: "Desaparece de su ruta. Las estrellas que ya ganó con ella se conservan.",
     confirmYes: "Sí, borrar",
     missingName: "Escribe el nombre de la misión.",
+    saveAsTemplate: "Guardar como plantilla",
+    savedAsTemplate: (name) => `✓ Guardada como plantilla «${name}»`,
+    seeTemplates: "Ver plantillas",
   },
   stepEdit: {
     title: "Editar paso",
@@ -140,6 +185,7 @@ export const t = {
     textHint: "Lo que lee el niño: una palabra o una frase corta (hasta 60 letras).",
     image: "Imagen",
     preview: (name) => `Así lo verá ${name}`,
+    previewTemplate: "Así lo verá el niño",
     delete: "Borrar paso",
     confirmDelete: (text) => `¿Borrar el paso «${text}»?`,
     confirmYes: "Sí, borrar",

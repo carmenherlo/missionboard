@@ -1,4 +1,4 @@
-import { api } from "../../api.js";
+import { api, errorMessage } from "../../api.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
@@ -13,14 +13,66 @@ import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const NAME_SAVE_DELAY_MS = 600;
 
-// Every change is saved on the spot; "Listo" just goes back.
 export async function viewMissionEdit(missionId) {
-  let mission = await api("GET", `/api/missions/${missionId}`);
-  const children = await api("GET", "/api/children");
+  const [mission, children] = await Promise.all([
+    api("GET", `/api/missions/${missionId}`),
+    api("GET", "/api/children"),
+  ]);
   const child = children.find((c) => c.id === mission.child_id);
-  const listHref = `#/parents/config/missions/child/${mission.child_id}`;
+  missionEditor(mission, {
+    apiUrl: `/api/missions/${missionId}`,
+    editHref: `#/parents/config/missions/${missionId}`,
+    back: { href: `#/parents/config/missions/child/${mission.child_id}`, label: t.childMissions.title(child.name) },
+    deleteLabel: t.missionEdit.delete,
+    confirmDelete: (name) => ({ message: t.missionEdit.confirmDelete(name, child.name), detail: t.missionEdit.confirmDeleteDetail }),
+    action: saveAsTemplateAction(missionId),
+  });
+}
+
+// A template is edited like a mission, with a reminder that it is nobody's.
+export async function viewTemplateEdit(templateId) {
+  const template = await api("GET", `/api/templates/${templateId}`);
+  const editHref = `#/parents/config/templates/${templateId}`;
+  missionEditor(template, {
+    apiUrl: `/api/templates/${templateId}`,
+    editHref,
+    back: { href: "#/parents/config/templates", label: t.templates.title },
+    badge: t.templates.badge,
+    notice: t.templates.notice,
+    deleteLabel: t.templates.delete,
+    confirmDelete: (name) => ({ message: t.templates.confirmDelete(name), detail: t.templates.confirmDeleteDetail }),
+    action: h("a", { class: "btn", href: `${editHref}/apply?from=editor` }, t.templates.applyToChildren),
+  });
+}
+
+// "Guardar como plantilla": once saved, says so with a way to the templates.
+function saveAsTemplateAction(missionId) {
+  const box = h("span", { class: "form-actions" });
+  const button = h("button", {
+    type: "button", class: "btn",
+    onclick: async () => {
+      button.disabled = true;
+      try {
+        const template = await api("POST", `/api/missions/${missionId}/template`);
+        box.replaceChildren(
+          h("span", { class: "form-success", role: "status" }, t.missionEdit.savedAsTemplate(template.name)),
+          h("a", { class: "btn", href: "#/parents/config/templates" }, t.missionEdit.seeTemplates));
+      } catch (err) {
+        button.disabled = false;
+        box.replaceChildren(h("span", { class: "form-error", role: "alert" }, errorMessage(err)), button);
+      }
+    },
+  }, icon("templates"), t.missionEdit.saveAsTemplate);
+  box.append(button);
+  return box;
+}
+
+// The editor of a mission or a template. Every change is saved on the spot;
+// "Listo" just goes back.
+function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteLabel, confirmDelete, action }) {
   const status = saveStatus();
-  const missionUrl = `/api/missions/${missionId}`;
+  const missionUrl = apiUrl;
+  const listHref = back.href;
 
   const titleName = h("span", {}, mission.name);
   function save(request) {
@@ -163,7 +215,7 @@ export async function viewMissionEdit(missionId) {
         imageThumb(step.image_url, { size: "sm", label: step.text, suggested: step.image_suggested }),
         h("span", { class: "row__text" }, step.text),
         h("a", {
-          class: "icon-button icon-button--ghost", href: `#/parents/config/missions/${missionId}/steps/${step.id}`,
+          class: "icon-button icon-button--ghost", href: `${editHref}/steps/${step.id}`,
           "aria-label": t.missionEdit.editStepNamed(step.text), title: t.missionEdit.editStep,
         }, icon("edit")))));
     stepsEmpty.hidden = mission.steps.length > 0;
@@ -191,13 +243,12 @@ export async function viewMissionEdit(missionId) {
   const footer = h("div", { class: "page-footer" });
   function renderFooter() {
     footer.replaceChildren(
-      h("button", { type: "button", class: "link-danger", onclick: showConfirm }, t.missionEdit.delete),
-      h("a", { class: "btn btn--primary", href: listHref }, t.common.done));
+      h("button", { type: "button", class: "link-danger", onclick: showConfirm }, deleteLabel),
+      h("div", { class: "form-actions" }, action, h("a", { class: "btn btn--primary", href: listHref }, t.common.done)));
   }
   function showConfirm() {
     footer.replaceChildren(confirmBar({
-      message: t.missionEdit.confirmDelete(mission.name, child.name),
-      detail: t.missionEdit.confirmDeleteDetail,
+      ...confirmDelete(mission.name),
       confirmLabel: t.missionEdit.confirmYes,
       onCancel: renderFooter,
       onConfirm: async () => {
@@ -214,9 +265,10 @@ export async function viewMissionEdit(missionId) {
   renderFooter();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, titleName, status.element),
-        { href: listHref, label: t.childMissions.title(child.name) }),
+    parentsHeader(h("span", { class: "title-line" },
+      badge && h("span", { class: "pill pill--title" }, badge), titleName, status.element), back),
     h("main", { class: "page" },
+      notice && h("p", { class: "hint" }, notice),
       h("div", { class: "columns" },
         h("div", { class: "stack" },
           panel(t.missionEdit.panelMission,

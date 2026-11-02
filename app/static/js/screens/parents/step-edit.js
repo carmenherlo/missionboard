@@ -10,20 +10,36 @@ import { parentsHeader } from "./common.js";
 
 const TEXT_SAVE_DELAY_MS = 600;
 
-// Like the mission editor: every change is saved on the spot.
 export async function viewStepEdit(missionId, stepId) {
   const [mission, children] = await Promise.all([
     api("GET", `/api/missions/${missionId}`),
     api("GET", "/api/children"),
   ]);
+  const child = children.find((c) => c.id === mission.child_id);
+  await stepEditor(mission, stepId, {
+    apiUrl: `/api/missions/${missionId}`,
+    missionHref: `#/parents/config/missions/${missionId}`,
+    previewLabel: t.stepEdit.preview(child.name),
+  });
+}
+
+export async function viewTemplateStepEdit(templateId, stepId) {
+  const template = await api("GET", `/api/templates/${templateId}`);
+  await stepEditor(template, stepId, {
+    apiUrl: `/api/templates/${templateId}`,
+    missionHref: `#/parents/config/templates/${templateId}`,
+    previewLabel: t.stepEdit.previewTemplate,
+  });
+}
+
+// Like the mission editor: every change is saved on the spot.
+async function stepEditor(mission, stepId, { apiUrl, missionHref, previewLabel }) {
   let step = mission.steps.find((s) => s.id === stepId);
-  const missionHref = `#/parents/config/missions/${missionId}`;
   if (!step) {
     location.replace(missionHref);
     return;
   }
-  const child = children.find((c) => c.id === mission.child_id);
-  const stepUrl = `/api/missions/${missionId}/steps/${stepId}`;
+  const stepUrl = `${apiUrl}/steps/${stepId}`;
   const status = saveStatus();
 
   function save(request) {
@@ -37,7 +53,7 @@ export async function viewStepEdit(missionId, stepId) {
   const previewImage = h("span", {});
   const previewText = h("strong", { class: "step-preview__text" }, step.text);
   const preview = h("div", { class: "step-preview" },
-    h("span", { class: "hint" }, t.stepEdit.preview(child.name)), previewImage, previewText);
+    h("span", { class: "hint" }, previewLabel), previewImage, previewText);
   function showPreview(url) {
     previewImage.replaceChildren(url ? imageThumb(url, { size: "xl" }) : "");
     preview.classList.toggle("step-preview--text-only", !url);

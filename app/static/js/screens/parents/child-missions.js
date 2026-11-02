@@ -15,10 +15,7 @@ export async function viewChildMissions(childId) {
     loadAvatars(),
   ]);
   const child = children.find((c) => c.id === childId);
-  // With one child, "← Misiones" would bounce straight back here.
-  const back = children.length > 1
-    ? { href: "#/parents/config/missions", label: t.childMissions.back }
-    : { href: "#/parents/config", label: t.config.back };
+  const back = { href: "#/parents/config/missions", label: t.childMissions.back };
   const error = h("p", { class: "form-error", role: "alert" });
 
   // The order number follows the route, so it is redrawn after dragging.

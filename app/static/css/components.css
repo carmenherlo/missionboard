@@ -209,6 +209,10 @@
   font-weight: 700;
 }
 
+.row__name--md {
+  font-size: var(--text-md);
+}
+
 .row__detail {
   display: flex;
   flex-wrap: wrap;
@@ -316,6 +320,12 @@
   color: var(--primary-strong);
   font-size: var(--text-sm);
   font-weight: 600;
+}
+
+/* "Plantilla" before the name in the top bar */
+.pill--title {
+  padding: 4px 14px;
+  font-size: var(--text-md);
 }
 
 .pill--muted {
@@ -864,4 +874,30 @@
 
 .swatch--selected {
   border-color: var(--primary);
+}
+
+/* A child card that is chosen by tapping it (apply a template): ring and ✓ */
+.kid-card--choice {
+  position: relative;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.kid-card__check {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  --icon-button: 40px;
+  border-radius: 50%;
+  font-size: 22px;
+  visibility: hidden;
+}
+
+.kid-card--selected {
+  box-shadow: 0 0 0 3px var(--primary);
+}
+
+.kid-card--selected .kid-card__check {
+  visibility: visible;
 }

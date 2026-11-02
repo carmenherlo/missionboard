@@ -17,6 +17,13 @@ class PhotoStore:
         (self.directory / filename).write_bytes(data)
         return filename
 
+    def copy(self, filename: str, prefix: str) -> str | None:
+        """A copy of a stored image under a new name; None if it is missing."""
+        source = self.path(filename)
+        if source is None:
+            return None
+        return self.save(source.read_bytes(), prefix=prefix, extension=source.suffix)
+
     def delete(self, filename: str | None) -> None:
         if filename:
             (self.directory / filename).unlink(missing_ok=True)

@@ -17,6 +17,7 @@ from app.settings import SettingsRepository
 from app.storage import db
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
+from app.templates import api as templates_api
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
@@ -81,6 +82,7 @@ def create_app(
     app.include_router(parents_api.router)
     app.include_router(children_api.router)
     app.include_router(missions_api.router)
+    app.include_router(templates_api.router)
     app.include_router(images_api.router)
 
     @app.get("/", include_in_schema=False)
