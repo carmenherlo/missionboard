@@ -7,8 +7,16 @@ from typing import Protocol
 from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.errors import ConflictError, InvalidError, NotFoundError
+from app.events.service import EventLog
 from app.images.photos import validate_photo
 from app.storage.photo_store import PhotoStore
+
+
+def _avatar_label(child: Child) -> str:
+    """How the event log names an avatar: the animal, or "foto"."""
+    if child.avatar_type == "photo":
+        return "foto"
+    return avatars.PRESETS_BY_ID[child.preset]["label"].lower()
 
 
 @dataclass
@@ -34,10 +42,12 @@ class ChildrenService:
         self,
         children: ChildrenRepository,
         photos: PhotoStore,
+        events: EventLog,
         dependents: Iterable[ChildDependent] = (),
     ):
         self._children = children
         self._photos = photos
+        self._events = events
         self._dependents = list(dependents)
 
     def list(self) -> list[Child]:
@@ -61,6 +71,7 @@ class ChildrenService:
                 color=color,
             )
             self._children.add(child)
+        self._events.config_changed("child", "created", child=child)
         return child
 
     def update(self, child_id: str, data: ChildData) -> Child:
@@ -78,6 +89,15 @@ class ChildrenService:
             self._children.update(child)
         if child.photo is None:
             self._photos.delete(old.photo)
+        changes = {}
+        if child.name != old.name:
+            changes["name"] = child.name
+        if (child.avatar_type, child.preset) != (old.avatar_type, old.preset):
+            changes["avatar"] = _avatar_label(child)
+        if child.color != old.color:
+            changes["color"] = child.color
+        if changes:
+            self._events.config_changed("child", "changed", child=child, changes=changes)
         return child
 
     def delete(self, child_id: str) -> None:
@@ -91,6 +111,7 @@ class ChildrenService:
                 photos += dependent.remove_child_data(child_id)
         for filename in photos:
             self._photos.delete(filename)
+        self._events.config_changed("child", "deleted", child=child)
 
     def set_photo(self, child_id: str, data: bytes, media_type: str) -> Child:
         extension = validate_photo(data, media_type)
@@ -100,6 +121,7 @@ class ChildrenService:
             child = replace(old, avatar_type="photo", preset=None, photo=filename)
             self._children.update(child)
         self._photos.delete(old.photo)
+        self._events.config_changed("child", "changed", child=child, changes={"avatar": "foto nueva"})
         return child
 
     def photo_path(self, child_id: str) -> Path:

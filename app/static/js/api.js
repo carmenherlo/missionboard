@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function api(method, path, { json, body, contentType } = {}) {
+async function request(method, path, { json, body, contentType } = {}) {
   const headers = {};
   if (session.parentCode) headers["X-Parent-Code"] = session.parentCode;
   if (json !== undefined) {
@@ -26,7 +26,20 @@ export async function api(method, path, { json, body, contentType } = {}) {
     const payload = await res.json().catch(() => ({}));
     throw new ApiError(res.status, typeof payload.detail === "string" ? payload.detail : null);
   }
+  return res;
+}
+
+export async function api(method, path, options) {
+  const res = await request(method, path, options);
   return res.status === 204 ? null : res.json();
+}
+
+// A file to download, with the name the server gives it. Fetched here (not
+// with a plain link) so the parent code goes along.
+export async function apiFile(path) {
+  const res = await request("GET", path);
+  const filename = res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1];
+  return { blob: await res.blob(), filename };
 }
 
 export function errorMessage(err) {

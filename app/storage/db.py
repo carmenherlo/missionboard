@@ -8,8 +8,31 @@ DB_FILENAME = "missionboard.db"
 
 # Schema migrations, applied in order. The schema version is the number
 # applied so far (stored in PRAGMA user_version). Never edit or reorder
-# an entry once released: add a new one instead.
-MIGRATIONS: list[str] = []
+# an entry once released: add a new one instead. No trailing "--" comments:
+# migrate() appends the version bump after each script.
+MIGRATIONS: list[str] = [
+    # 1 · The event log: what happens in the app, with a copy of the names
+    # at that moment (history must not depend on the configuration).
+    """
+    CREATE TABLE events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        at TEXT NOT NULL,
+        day TEXT NOT NULL,
+        zone TEXT NOT NULL,
+        type TEXT NOT NULL,
+        subject TEXT,
+        action TEXT,
+        child_id TEXT,
+        child_name TEXT,
+        mission_id TEXT,
+        mission_name TEXT,
+        step_id TEXT,
+        step_text TEXT,
+        detail TEXT
+    );
+    CREATE INDEX events_day ON events (day)
+    """,
+]
 
 
 class SchemaVersionError(Exception):

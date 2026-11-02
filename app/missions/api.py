@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, Header, Request
 from pydantic import BaseModel, Field, field_validator
 
 from app.children.repository import ChildrenRepository
-from app.deps import get_config_store, get_image_libraries, get_photo_store, require_parent
+from app.deps import get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import Mission, MissionsRepository, Schedule
 from app.missions.service import MissionEditor, MissionsService
@@ -69,8 +70,9 @@ def get_missions_service(
     store: ConfigStore = Depends(get_config_store),
     libraries: ImageLibraries = Depends(get_image_libraries),
     photos: PhotoStore = Depends(get_photo_store),
+    events: EventLog = Depends(get_event_log),
 ) -> MissionsService:
-    return MissionsService(MissionsRepository(store), ChildrenRepository(store), libraries, photos)
+    return MissionsService(MissionsRepository(store), ChildrenRepository(store), libraries, photos, events)
 
 
 def _changes(body: BaseModel, required: set[str] = frozenset()) -> dict:

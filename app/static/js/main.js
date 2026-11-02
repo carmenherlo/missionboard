@@ -1,6 +1,6 @@
 // Entry point: maps each URL hash to its screen.
 
-import { errorMessage, session } from "./api.js";
+import { api, errorMessage, session } from "./api.js";
 import { h, render } from "./dom.js";
 import { viewHome } from "./screens/home.js";
 import { viewChangeCode } from "./screens/parents/change-code.js";
@@ -8,6 +8,7 @@ import { viewChildMissions } from "./screens/parents/child-missions.js";
 import { viewChildForm } from "./screens/parents/child-form.js";
 import { viewChildrenList } from "./screens/parents/children-list.js";
 import { viewConfigIndex } from "./screens/parents/config-index.js";
+import { viewEventLog } from "./screens/parents/event-log.js";
 import { viewParentsLock } from "./screens/parents/lock.js";
 import { viewMissionEdit, viewTemplateEdit } from "./screens/parents/mission-edit.js";
 import { viewMissionNew } from "./screens/parents/mission-new.js";
@@ -24,35 +25,54 @@ if (theme && /^[\w-]+$/.test(theme)) {
   document.getElementById("theme").href = `/static/css/themes/${theme}.css`;
 }
 
-// [pattern, screen, parentsOnly]
+// [pattern, view, parentsOnly, screen]. screen is the name the event log
+// gives the screen; ":name" in a parents' path is an id it shows.
+const parentsPath = (path) =>
+  new RegExp(`^#/parents/config${path.replace(/:(\w+)/g, "(?<$1>[\\w-]+)")}$`);
 const routes = [
-  [/^#?\/?$/, () => viewHome()],
+  [/^#?\/?$/, () => viewHome(), false, "home"],
   [/^#\/parents\/?$/, () => { location.hash = "#/parents/config"; }, true],
-  [/^#\/parents\/config$/, () => viewConfigIndex(), true],
-  [/^#\/parents\/config\/code$/, () => viewChangeCode(), true],
-  [/^#\/parents\/config\/children$/, () => viewChildrenList(), true],
-  [/^#\/parents\/config\/children\/new$/, () => viewChildForm(null), true],
-  [/^#\/parents\/config\/children\/([\w-]+)$/, (m) => viewChildForm(m[1]), true],
-  [/^#\/parents\/config\/missions$/, () => viewMissionsHome(), true],
-  [/^#\/parents\/config\/missions\/child\/([\w-]+)$/, (m) => viewChildMissions(m[1]), true],
-  [/^#\/parents\/config\/missions\/child\/([\w-]+)\/new$/, (m) => viewMissionNew(m[1]), true],
-  [/^#\/parents\/config\/missions\/([\w-]+)$/, (m) => viewMissionEdit(m[1]), true],
-  [/^#\/parents\/config\/missions\/([\w-]+)\/steps\/([\w-]+)$/, (m) => viewStepEdit(m[1], m[2]), true],
-  [/^#\/parents\/config\/templates$/, () => viewTemplatesList(), true],
-  [/^#\/parents\/config\/templates\/new$/, () => viewTemplateNew(), true],
-  [/^#\/parents\/config\/templates\/([\w-]+)$/, (m) => viewTemplateEdit(m[1]), true],
-  [/^#\/parents\/config\/templates\/([\w-]+)\/apply(\?from=editor)?$/, (m) => viewTemplateApply(m[1], Boolean(m[2])), true],
-  [/^#\/parents\/config\/templates\/([\w-]+)\/steps\/([\w-]+)$/, (m) => viewTemplateStepEdit(m[1], m[2]), true],
+  [parentsPath(""), () => viewConfigIndex(), true, "config"],
+  [parentsPath("/code"), () => viewChangeCode(), true, "change_code"],
+  [parentsPath("/log"), () => viewEventLog(), true, "event_log"],
+  [parentsPath("/children"), () => viewChildrenList(), true, "children"],
+  [parentsPath("/children/new"), () => viewChildForm(null), true, "child_new"],
+  [parentsPath("/children/:child"), (ids) => viewChildForm(ids.child), true, "child_edit"],
+  [parentsPath("/missions"), () => viewMissionsHome(), true, "missions"],
+  [parentsPath("/missions/child/:child"), (ids) => viewChildMissions(ids.child), true, "child_missions"],
+  [parentsPath("/missions/child/:child/new"), (ids) => viewMissionNew(ids.child), true, "mission_new"],
+  [parentsPath("/missions/:mission"), (ids) => viewMissionEdit(ids.mission), true, "mission_edit"],
+  [parentsPath("/missions/:mission/steps/:step"), (ids) => viewStepEdit(ids.mission, ids.step), true, "step_edit"],
+  [parentsPath("/templates"), () => viewTemplatesList(), true, "templates"],
+  [parentsPath("/templates/new"), () => viewTemplateNew(), true, "template_new"],
+  [parentsPath("/templates/:template"), (ids) => viewTemplateEdit(ids.template), true, "template_edit"],
+  [parentsPath("/templates/:template/apply(?<fromEditor>\\?from=editor)?"),
+    (ids) => viewTemplateApply(ids.template, Boolean(ids.fromEditor)), true, "template_apply"],
+  [parentsPath("/templates/:template/steps/:step"),
+    (ids) => viewTemplateStepEdit(ids.template, ids.step), true, "template_step_edit"],
 ];
+
+// Fire and forget: the log must never get in the way of a screen.
+function logScreen(screen, parentsOnly, ids = {}) {
+  const json = {
+    zone: parentsOnly ? "parents" : "child",
+    screen,
+    child_id: ids.child,
+    mission_id: ids.mission ?? ids.template, // a template is shown where a mission would be
+    step_id: ids.step,
+  };
+  api("POST", "/api/events/screen", { json }).catch(() => {});
+}
 
 async function route() {
   const hash = location.hash;
-  for (const [pattern, view, parentsOnly] of routes) {
+  for (const [pattern, view, parentsOnly, screen] of routes) {
     const match = hash.match(pattern);
     if (!match) continue;
     if (parentsOnly && !session.parentCode) return viewParentsLock(route);
     try {
-      await view(match);
+      await view(match.groups ?? {});
+      if (screen) logScreen(screen, parentsOnly, match.groups);
     } catch (err) {
       render(h("main", { class: "page page--center" },
         h("p", { class: "form-error" }, errorMessage(err)),

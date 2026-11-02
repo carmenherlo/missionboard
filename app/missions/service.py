@@ -4,6 +4,7 @@ from dataclasses import replace
 
 from app.children.repository import ChildrenRepository
 from app.errors import InvalidError, NotFoundError
+from app.events.service import EventLog
 from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
 from app.missions.repository import WEEKDAYS, Mission, MissionList, MissionsRepository, Schedule, Step
@@ -44,11 +45,16 @@ class MissionEditor:
     """Edits one mission and its steps: what a child's mission and a template share."""
 
     not_found = "Mission not found"
+    # What the event log calls the item, one of its steps, and their order.
+    subject, step_subject, steps_subject = "mission", "step", "steps"
 
-    def __init__(self, missions: MissionList, libraries: ImageLibraries, photos: PhotoStore):
+    def __init__(
+        self, missions: MissionList, libraries: ImageLibraries, photos: PhotoStore, events: EventLog
+    ):
         self._missions = missions
         self._libraries = libraries
         self._photos = photos
+        self._events = events
 
     def get(self, mission_id: str) -> Mission:
         mission = self._missions.get(mission_id)
@@ -80,6 +86,13 @@ class MissionEditor:
                 mission.schedule = _check_schedule(schedule)
             self._missions.update(mission)
         self._drop_replaced_photo(old.image, mission.image)
+        changes = {
+            field: getattr(mission, field)
+            for field in ("name", "image", "days", "schedule")
+            if getattr(mission, field) != getattr(old, field)
+        }
+        if changes:
+            self._log("changed", mission, changes=changes)
         return mission
 
     def delete(self, mission_id: str) -> None:
@@ -88,6 +101,7 @@ class MissionEditor:
             self._missions.remove(mission_id)
         for filename in self._photos_of(mission):
             self._photos.delete(filename)
+        self._log("deleted", mission)
 
     def set_photo(self, mission_id: str, data: bytes, media_type: str) -> Mission:
         extension = validate_photo(data, media_type)
@@ -97,6 +111,7 @@ class MissionEditor:
             mission = replace(old, image=photo_ref(filename), image_suggested=False)
             self._missions.update(mission)
         self._drop_replaced_photo(old.image, mission.image)
+        self._log("changed", mission, changes={"image": mission.image})
         return mission
 
     def _copy(self, source: Mission, child_id: str | None, name: str | None = None) -> Mission:
@@ -129,22 +144,29 @@ class MissionEditor:
         with self._missions.atomic():
             mission = self.get(mission_id)
             image, suggested = self._suggest(text)
-            mission.steps.append(Step(id=_new_id(), text=text, image=image, image_suggested=suggested))
+            step = Step(id=_new_id(), text=text, image=image, image_suggested=suggested)
+            mission.steps.append(step)
             self._missions.update(mission)
+        self._log("created", mission, step=step)
         return mission
 
     def update_step(self, mission_id: str, step_id: str, *, text=UNSET, image=UNSET) -> Mission:
         with self._missions.atomic():
             mission = self.get(mission_id)
             step = self._find_step(mission, step_id)
-            old_image = step.image
+            old = replace(step)
             if text is not UNSET:
                 step.text = text
             if image is not UNSET:
-                step.image = self._check_new_image(old_image, image)
+                step.image = self._check_new_image(old.image, image)
                 step.image_suggested = False
             self._missions.update(mission)
-        self._drop_replaced_photo(old_image, step.image)
+        self._drop_replaced_photo(old.image, step.image)
+        changes = {
+            field: getattr(step, field) for field in ("text", "image") if getattr(step, field) != getattr(old, field)
+        }
+        if changes:
+            self._log("changed", mission, step=step, changes=changes)
         return mission
 
     def delete_step(self, mission_id: str, step_id: str) -> Mission:
@@ -154,15 +176,20 @@ class MissionEditor:
             mission.steps.remove(step)
             self._missions.update(mission)
         self._photos.delete(photo_filename(step.image))
+        self._log("deleted", mission, step=step)
         return mission
 
     def reorder_steps(self, mission_id: str, step_ids: list[str]) -> Mission:
         with self._missions.atomic():
             mission = self.get(mission_id)
-            _check_order([s.id for s in mission.steps], step_ids)
+            old_ids = [s.id for s in mission.steps]
+            _check_order(old_ids, step_ids)
             by_id = {s.id: s for s in mission.steps}
             mission.steps = [by_id[step_id] for step_id in step_ids]
             self._missions.update(mission)
+        if step_ids != old_ids:
+            order = [s.text for s in mission.steps]
+            self._log("reordered", mission, subject=self.steps_subject, changes={"order": order})
         return mission
 
     def set_step_photo(self, mission_id: str, step_id: str, data: bytes, media_type: str) -> Mission:
@@ -176,9 +203,21 @@ class MissionEditor:
             step.image_suggested = False
             self._missions.update(mission)
         self._drop_replaced_photo(old_image, step.image)
+        self._log("changed", mission, step=step, changes={"image": step.image})
         return mission
 
     # ---------- helpers ----------
+
+    def _log(self, action: str, mission: Mission, *, step: Step | None = None, subject=None, changes=None):
+        if subject is None:
+            subject = self.step_subject if step else self.subject
+        self._events.config_changed(
+            subject, action, child=self._child_of(mission), mission=mission, step=step, changes=changes
+        )
+
+    def _child_of(self, mission: Mission):
+        """The child a mission belongs to, for the event log (none for a template)."""
+        return None
 
     @staticmethod
     def _find_step(mission: Mission, step_id: str) -> Step:
@@ -222,8 +261,9 @@ class MissionsService(MissionEditor):
         children: ChildrenRepository,
         libraries: ImageLibraries,
         photos: PhotoStore,
+        events: EventLog,
     ):
-        super().__init__(missions, libraries, photos)
+        super().__init__(missions, libraries, photos, events)
         self._children = children
 
     def list_for_child(self, child_id: str) -> list[Mission]:
@@ -235,6 +275,7 @@ class MissionsService(MissionEditor):
             self._check_child(child_id)
             mission = self._new(child_id, name, image)
             self._missions.add(mission)
+        self._log("created", mission)
         return mission
 
     def reorder(self, child_id: str, mission_ids: list[str]) -> list[Mission]:
@@ -242,13 +283,22 @@ class MissionsService(MissionEditor):
             current = [m.id for m in self.list_for_child(child_id)]
             _check_order(current, mission_ids)
             self._missions.reorder_child(child_id, mission_ids)
-        return self._missions.list_for_child(child_id)
+        missions = self._missions.list_for_child(child_id)
+        if mission_ids != current:
+            self._events.config_changed(
+                "missions", "reordered", child=self._children.get(child_id),
+                changes={"order": [m.name for m in missions]},
+            )
+        return missions
 
     # ---------- ChildDependent ----------
 
     def remove_child_data(self, child_id: str) -> list[str]:
         removed = self._missions.remove_for_child(child_id)
         return [filename for mission in removed for filename in self._photos_of(mission)]
+
+    def _child_of(self, mission: Mission):
+        return self._children.get(mission.child_id)
 
     def _check_child(self, child_id: str) -> None:
         if self._children.get(child_id) is None:

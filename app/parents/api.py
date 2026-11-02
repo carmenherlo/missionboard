@@ -18,7 +18,7 @@ class ChangeCodeRequest(BaseModel):
 
 @router.post("/unlock", status_code=204)
 def unlock(body: UnlockRequest, parents: ParentsService = Depends(get_parents_service)) -> None:
-    if not parents.is_valid_code(body.code):
+    if not parents.unlock(body.code):
         raise HTTPException(status_code=401, detail="Invalid parent code")
 
 

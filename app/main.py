@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from app import errors
 from app.children import api as children_api
 from app.clock import Clock, SystemClock
+from app.events import api as events_api
+from app.events.repository import EventsRepository
 from app.images import api as images_api
 from app.images.libraries import LIBRARIES, ImageLibraries, Library
 from app.missions import api as missions_api
@@ -67,6 +69,7 @@ def create_app(
     app.state.config_store = config_store
     app.state.photo_store = PhotoStore(data_dir)
     app.state.clock = clock or SystemClock()
+    app.state.events_repository = EventsRepository(data_dir)
     app.state.image_libraries = ImageLibraries(LIBRARIES if libraries is None else libraries)
 
     @app.exception_handler(errors.DomainError)
@@ -84,6 +87,7 @@ def create_app(
     app.include_router(missions_api.router)
     app.include_router(templates_api.router)
     app.include_router(images_api.router)
+    app.include_router(events_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():

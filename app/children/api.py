@@ -8,7 +8,8 @@ from pydantic import BaseModel, Field, field_validator
 from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.children.service import ChildData, ChildrenService
-from app.deps import get_config_store, get_image_libraries, get_photo_store, require_parent
+from app.deps import get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.api import get_missions_service
 from app.missions.service import MissionsService
@@ -37,8 +38,9 @@ def get_children_service(
     store: ConfigStore = Depends(get_config_store),
     photos: PhotoStore = Depends(get_photo_store),
     missions: MissionsService = Depends(get_missions_service),
+    events: EventLog = Depends(get_event_log),
 ) -> ChildrenService:
-    return ChildrenService(ChildrenRepository(store), photos, dependents=[missions])
+    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions])
 
 
 def _public(child: Child) -> dict:

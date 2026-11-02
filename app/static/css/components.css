@@ -108,6 +108,12 @@
   width: 100%;
 }
 
+/* Material 3: a disabled button keeps its shape, with its colour faded. */
+.btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
 .link-danger {
   padding: var(--space-1) 0;
   border: 0;
@@ -200,6 +206,20 @@
   background: var(--primary-soft);
   color: var(--primary);
   font-size: 28px;
+}
+
+.row__icon--sm {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+}
+
+.row__time {
+  flex: none;
+  width: 5.75rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
 
 .row__name {

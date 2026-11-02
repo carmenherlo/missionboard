@@ -1,5 +1,6 @@
 from app.children.repository import ChildrenRepository
 from app.errors import InvalidError, NotFoundError
+from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import Mission, MissionsRepository
 from app.missions.service import MissionEditor
@@ -28,6 +29,7 @@ class TemplatesService(MissionEditor):
     """
 
     not_found = "Template not found"
+    subject, step_subject, steps_subject = "template", "template_step", "template_steps"
 
     def __init__(
         self,
@@ -36,8 +38,9 @@ class TemplatesService(MissionEditor):
         children: ChildrenRepository,
         libraries: ImageLibraries,
         photos: PhotoStore,
+        events: EventLog,
     ):
-        super().__init__(templates, libraries, photos)
+        super().__init__(templates, libraries, photos, events)
         self._child_missions = missions
         self._children = children
 
@@ -48,6 +51,7 @@ class TemplatesService(MissionEditor):
         with self._missions.atomic():
             template = self._new(None, name, image)
             self._missions.add(template)
+        self._log("created", template)
         return template
 
     def apply(self, template_id: str, child_ids: list[str]) -> list[Mission]:
@@ -56,12 +60,14 @@ class TemplatesService(MissionEditor):
             raise InvalidError("Choose one or more children, each once")
         with self._missions.atomic():
             template = self.get(template_id)
-            for child_id in child_ids:
-                if self._children.get(child_id) is None:
-                    raise NotFoundError("Child not found")
+            children = [self._children.get(child_id) for child_id in child_ids]
+            if None in children:
+                raise NotFoundError("Child not found")
             copies = [self._copy(template, child_id) for child_id in child_ids]
             for mission in copies:
                 self._child_missions.add(mission)
+        for child, mission in zip(children, copies):
+            self._events.config_changed("mission", "created_from_template", child=child, mission=mission)
         return copies
 
     def save_mission(self, mission_id: str) -> Mission:
@@ -73,4 +79,7 @@ class TemplatesService(MissionEditor):
             taken = {t.name for t in self._missions.list_all()}
             template = self._copy(mission, None, name=_unique_name(mission.name, taken))
             self._missions.add(template)
+        self._events.config_changed(
+            "template", "created_from_mission", child=self._children.get(mission.child_id), mission=template
+        )
         return template

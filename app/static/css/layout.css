@@ -125,6 +125,10 @@
   gap: var(--space-2);
 }
 
+.form-actions--start {
+  justify-content: flex-start;
+}
+
 /* ---------- home ---------- */
 
 .home {

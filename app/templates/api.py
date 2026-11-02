@@ -2,7 +2,14 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.children.repository import ChildrenRepository
-from app.deps import get_config_store, get_image_libraries, get_photo_store, require_parent
+from app.deps import (
+    get_config_store,
+    get_event_log,
+    get_image_libraries,
+    get_photo_store,
+    require_parent,
+)
+from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.api import MissionCreate, Presenter, add_editing_routes
 from app.missions.repository import MissionsRepository
@@ -23,9 +30,15 @@ def get_templates_service(
     store: ConfigStore = Depends(get_config_store),
     libraries: ImageLibraries = Depends(get_image_libraries),
     photos: PhotoStore = Depends(get_photo_store),
+    events: EventLog = Depends(get_event_log),
 ) -> TemplatesService:
     return TemplatesService(
-        TemplatesRepository(store), MissionsRepository(store), ChildrenRepository(store), libraries, photos
+        TemplatesRepository(store),
+        MissionsRepository(store),
+        ChildrenRepository(store),
+        libraries,
+        photos,
+        events,
     )
 
 
