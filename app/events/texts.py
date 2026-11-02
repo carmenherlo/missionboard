@@ -49,6 +49,26 @@ def locked_detail(locked: tuple[str, str]) -> str:
     return f"se abre a las {time}" if why == "opens" else f"se cerró a las {time}"
 
 
+def routine_detail(*, seconds=None, part=None, early=False) -> str | None:
+    if seconds is not None:
+        return f"a los {seconds} s"
+    if part:
+        return part
+    if early:
+        return "antes de hora: todos habían firmado"
+    return None
+
+
+_ROUTINE = {
+    "routine_started": "Sonó la rutina «{routine}»",
+    "routine_stopped": "Pararon la rutina «{routine}»",
+    "routine_part": "Rutina «{routine}»: empieza {detail}",
+    "routine_goal": "Rutina «{routine}»: llega la meta",
+    "routine_closed": "Cerraron la rutina «{routine}»",
+    "routine_finished": "Finalizaron la rutina «{routine}» por hoy",
+}
+
+
 SCREENS = {
     "home": ("el inicio", None),
     "child_today": ("la ruta de un niño", "la ruta de {child}"),
@@ -131,6 +151,11 @@ def describe(event) -> str:
         return "Entraste en la zona de padres"
     if event.type == "screen_opened":
         return f"Abriste {_screen(event)}" if event.zone == "parents" else f"Se abrió {_screen(event)}"
+    if event.type in _ROUTINE:
+        sentence = _ROUTINE[event.type].format(routine=event.subject, detail=event.detail)
+        if event.detail and "{detail}" not in _ROUTINE[event.type]:
+            sentence = f"{sentence} · {event.detail}"
+        return sentence
     if event.type in _CHILD:
         return _CHILD[event.type].format(
             child=event.child_name, mission=event.mission_name, step=event.step_text, detail=event.detail

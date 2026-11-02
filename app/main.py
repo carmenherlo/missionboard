@@ -16,6 +16,8 @@ from app.images.libraries import LIBRARIES, ImageLibraries, Library
 from app.missions import api as missions_api
 from app.parents import api as parents_api
 from app.prizes import api as prizes_api
+from app.routines import api as routines_api
+from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
 from app.storage import db
 from app.storage.config_store import ConfigStore
@@ -66,6 +68,7 @@ def create_app(
         settings = SettingsRepository(config_store)
         settings.settings()
         settings.features()
+        RoutinesRepository(config_store).list()  # and if a routine's times do not add up
         yield
 
     app = FastAPI(title="missionboard", lifespan=lifespan)
@@ -75,6 +78,7 @@ def create_app(
     app.state.events_repository = EventsRepository(data_dir)
     app.state.day_repository = DayRepository(data_dir)
     app.state.background_store = BackgroundStore(data_dir)
+    app.state.runs_repository = RunsRepository(data_dir)
     app.state.image_libraries = ImageLibraries(LIBRARIES if libraries is None else libraries)
 
     @app.exception_handler(errors.DomainError)
@@ -95,6 +99,7 @@ def create_app(
     app.include_router(images_api.router)
     app.include_router(events_api.router)
     app.include_router(today_api.router)
+    app.include_router(routines_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():

@@ -82,6 +82,19 @@ MIGRATIONS: list[str] = [
     );
     CREATE INDEX prize_spins_day ON prize_spins (day, child_id)
     """,
+    # 4 · Routines: what happened to each routine each day, so it does not
+    # ring again once stopped, closed or finished (on any device).
+    """
+    CREATE TABLE routine_runs (
+        day TEXT NOT NULL,
+        routine_id TEXT NOT NULL,
+        started_at TEXT,
+        stopped_at TEXT,
+        closed_phase TEXT,
+        finished_at TEXT,
+        PRIMARY KEY (day, routine_id)
+    )
+    """,
 ]
 
 

@@ -1,0 +1,267 @@
+/* =====================================================================
+   The routine going on (rutinas-1.html): a full-screen layer over any
+   screen, with the clock, what is happening and the kids on a side.
+   Colours and sizes in tokens.css ("Routines"); the jump of the countdown
+   numbers is in effects.css.
+   ===================================================================== */
+
+.routine-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: 1fr var(--routine-side-width);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.routine-layer[hidden] {
+  display: none;
+}
+
+.routine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow: auto;
+}
+
+.routine__top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: stretch;
+}
+
+.routine__time {
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.routine__what {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.routine__what img {
+  width: 64px;
+  height: 64px;
+}
+
+.routine__until {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.routine__dial {
+  position: relative;
+  width: var(--clock-size);
+  height: var(--clock-size);
+}
+
+.routine__clock,
+.routine__clock svg {
+  width: 100%;
+  height: 100%;
+}
+
+.routine__count {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  font-size: calc(var(--clock-size) * 0.42);
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.routine__count[hidden] {
+  display: none;
+}
+
+.routine__stop {
+  min-height: 72px;
+  padding: 0 var(--space-6);
+  font-size: 2rem;
+}
+
+.routine__stop[hidden] {
+  display: none;
+}
+
+.routine__tasks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routine__task {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.routine__next {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+  text-align: center;
+}
+
+.routine__code {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--container);
+}
+
+/* ---------- the kids on a side ---------- */
+
+.routine__side {
+  overflow: auto;
+  padding: var(--space-3) var(--space-2);
+  background: var(--container);
+}
+
+.routine__people {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routine-kid {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.routine-kid:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.routine-kid__name {
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.routine-kid__progress {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.routine-kid--done {
+  background: var(--child-soft);
+}
+
+.routine-kid--done .routine-kid__progress {
+  color: var(--child-strong);
+}
+
+/* ---------- in the parents' zone: only a banner ---------- */
+
+.routine-banner {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-3);
+  z-index: 50;
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font: inherit;
+  font-weight: 800;
+  box-shadow: var(--shadow-lifted);
+  cursor: pointer;
+}
+
+.routine-banner[hidden] {
+  display: none;
+}
+
+/* ---------- the volume ---------- */
+
+.sound-control {
+  position: relative;
+}
+
+.sound-panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 220px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+}
+
+.sound-panel[hidden] {
+  display: none;
+}
+
+.sound-panel__row {
+  display: grid;
+  gap: var(--space-1);
+  font-weight: 700;
+}
+
+/* ---------- the clock face ---------- */
+
+.clock-face__dial { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.clock-face__stretch--1 { fill: var(--stretch-1); }
+.clock-face__stretch--2 { fill: var(--stretch-2); }
+.clock-face__stretch--3 { fill: var(--stretch-3); }
+.clock-face__stretch--4 { fill: var(--stretch-4); }
+.clock-face__waiting { fill: var(--waiting); }
+.clock-face__gone { fill: var(--clock-gone); }
+.clock-face__coming { fill: none; stroke-width: 5; stroke-linecap: round; }
+.clock-face__coming--1 { stroke: var(--coming-1); }
+.clock-face__coming--2 { stroke: var(--coming-2); }
+.clock-face__number {
+  fill: var(--text);
+  font: 800 15px var(--font);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.clock-face__tick { stroke: var(--muted); stroke-width: 1.2; }
+.clock-face__hour,
+.clock-face__minute { stroke: var(--text); stroke-linecap: round; }
+.clock-face__hour { stroke-width: 6; }
+.clock-face__minute { stroke-width: 4; }
+.clock-face__second { stroke: var(--danger); stroke-width: 1.5; }
+.clock-face__pin { fill: var(--text); }

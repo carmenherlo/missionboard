@@ -89,10 +89,17 @@
   animation: rise var(--appear) ease-out;
 }
 
+/* A routine's countdown: each new number jumps in (routine.js alternates data-beat). */
+.routine__count[data-beat="0"] { animation: beat-0 500ms ease-out; }
+.routine__count[data-beat="1"] { animation: beat-1 500ms ease-out; }
+
+@keyframes beat-0 { from { transform: scale(1.35); opacity: 0.4; } }
+@keyframes beat-1 { from { transform: scale(1.35); opacity: 0.4; } }
+
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .ring__glow,
-  .route-node--prize-unlocked .ring > svg, .prize-won {
+  .route-node--prize-unlocked .ring > svg, .prize-won, .routine__count {
     animation: none !important;
   }
   .wheel__disc {

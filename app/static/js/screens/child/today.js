@@ -4,11 +4,9 @@
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { cornerButton } from "../../components/corner-button.js";
-import { speak } from "../../components/speech.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
-import { showCelebration } from "./celebration.js";
-import { missionSheet } from "./mission-sheet.js";
+import { openMission as openMissionOver } from "./mission-flow.js";
 import { prizeSheet } from "./prize-sheet.js";
 import { routeView } from "./route.js";
 
@@ -19,10 +17,7 @@ export async function viewChildToday(childId) {
   const base = `/api/children/${childId}/today`;
   const [first] = await Promise.all([api("GET", base), loadAvatars()]);
   let day = first;
-  let openId = null; // the mission whose panel is open
-  let celebrating = false;
-  let prizeOpen = false; // the wheel draws itself while open: no redrawing under it
-  let busy = false; // one step at a time
+  let overlay = false; // a mission, its celebration or the wheel is open: no redrawing under it
 
   const screen = h("main", { class: "child-screen" });
   const note = (kind, mission, step) =>
@@ -33,7 +28,6 @@ export async function viewChildToday(childId) {
     const { color, soft, strong, on } = day.colors;
     screen.setAttribute("style",
       `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`);
-    const mission = day.missions.find((m) => m.id === openId);
     screen.replaceChildren(
       h("div", { class: "child-scene", "aria-hidden": "true" },
         day.background_url && h("img", { class: "child-scene__picture", src: day.background_url, alt: "" }),
@@ -48,57 +42,29 @@ export async function viewChildToday(childId) {
       day.missions.length
         ? routeView(day, { onOpen: openMission, onLocked: showLocked, onPrize: openPrize, onPrizeLocked: showPrizeLocked })
         : h("section", { class: "route route__empty" },
-            avatar(day.child, { size: "hero" }), t.child.noMissions),
-      mission && missionSheet(day, mission, { onToggle: toggle, onSpeak: listen, onClose: closeMission }));
+            avatar(day.child, { size: "hero" }), t.child.noMissions));
   }
 
   function openMission(mission) {
-    openId = mission.id;
-    note("mission_opened", mission);
-    draw();
-  }
-
-  function closeMission() {
-    openId = null;
-    draw();
-  }
-
-  async function toggle(step) {
-    if (busy) return;
-    busy = true;
-    const mission = day.missions.find((m) => m.id === openId);
-    try {
-      const result = await api("PUT", `${base}/missions/${mission.id}/steps/${step.id}`,
-        { json: { checked: !step.checked } });
-      day = result.today;
-      if (result.completed) {
-        openId = null;
-        celebrating = true;
+    overlay = true;
+    openMissionOver(screen, childId, mission.id, {
+      day,
+      onDay: (next) => { day = next; },
+      onClose: (next) => {
+        day = next;
+        overlay = false;
         draw();
-        showCelebration(screen, day, result.stars_earned, () => { celebrating = false; });
-      } else {
-        draw();
-      }
-    } catch {
-      // The mission closed meanwhile, or the connection failed: show how things are now.
-      await refresh();
-    } finally {
-      busy = false;
-    }
-  }
-
-  function listen(step) {
-    speak(step.text);
-    note("step_spoken", day.missions.find((m) => m.id === openId), step);
+      },
+    });
   }
 
   function openPrize() {
-    prizeOpen = true;
+    overlay = true;
     screen.append(prizeSheet(day, {
       spinUrl: `${base}/prize/spin`,
       onDay: (next) => { day = next; },
       onClose: () => {
-        prizeOpen = false;
+        overlay = false;
         draw();
       },
     }));
@@ -125,7 +91,6 @@ export async function viewChildToday(childId) {
 
   async function refresh() {
     day = await api("GET", base);
-    if (!day.missions.some((m) => m.id === openId)) openId = null;
     draw();
   }
 
@@ -134,7 +99,7 @@ export async function viewChildToday(childId) {
   const route = location.hash;
   const timer = setInterval(() => {
     if (location.hash !== route) return clearInterval(timer);
-    if (!openId && !celebrating && !prizeOpen) refresh().catch(() => {});
+    if (!overlay) refresh().catch(() => {});
   }, REFRESH_MS);
 
   draw();

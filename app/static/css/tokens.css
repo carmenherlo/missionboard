@@ -135,6 +135,20 @@
   --wheel-4: #dce6ff;
   --wheel-pointer: var(--text);
 
+  /* ---------- Routines (rutinas-1.html) ----------
+     The clock: a part's stretch in four quarters as it runs out, from the old app,
+     where they help the kids see how much time is left. */
+  --stretch-1: #3bb273; /* green: plenty */
+  --stretch-2: #3a86ff; /* blue */
+  --stretch-3: #ff9f1c; /* orange */
+  --stretch-4: #e5484d; /* red: it is ending */
+  --waiting: #ffd166; /* until the first part, and until the goal */
+  --coming-1: #9fb3ff; /* the parts still to come, around the dial */
+  --coming-2: #d5ddff;
+  --clock-gone: rgb(255 255 255 / 0.7); /* what has gone by of the stretch, faded */
+  --clock-size: min(46vh, 420px);
+  --routine-side-width: 200px;
+
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 5s; /* "¡Misión cumplida!" closes by itself after this */
   --glow-breath: 3s; /* the glow of the ring in focus, slow */

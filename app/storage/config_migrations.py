@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 6
+CURRENT_VERSION = 7
 
 
 class ConfigVersionError(Exception):
@@ -153,12 +153,55 @@ def _v5_to_v6(doc: dict) -> dict:
     return {**doc, "version": 6, "prizes": copy.deepcopy(_SAMPLE_PRIZES)}
 
 
+# The morning routine as it was in the old app (an earlier version,
+# data/alarms/alarms.yaml, tested at home), for every child. "warnings": the
+# minutes before a part ends when the voice warns; None takes the default
+# (settings.routine_warn_minutes). The breakfast had a 5-minute warning too.
+def _part(name, image, minutes, *, at=None, say=None, tasks=(), warnings=None, check_mission=False):
+    return {
+        "name": name, "image": image, "at": at, "minutes": minutes, "say": say,
+        "tasks": list(tasks), "warnings": warnings, "check_mission": check_mission,
+    }
+
+
+_SAMPLE_ROUTINES = [
+    {
+        "id": "manana",
+        "name": "Mañana",
+        "days": ["mon", "tue", "wed", "thu", "fri"],
+        "kids": [],  # empty: every child
+        "wake": "06:30",
+        "remind_every": 5,
+        "mission": "Despegue",  # each child's mission with this name
+        "parts": [
+            _part("la preparación del desayuno", "fluent/cooking", 10, at="06:35", say="Es hora de hacer el desayuno."),
+            _part("el desayuno", "fluent/bowl-with-spoon", 15, at="06:45", warnings=[5, 1]),
+            _part("el aseo", "fluent/toothbrush", 5, tasks=["Lavarse los dientes", "Lavarse la cara"]),
+            _part("vestirse", "fluent/t-shirt", 7, say="Es hora de vestirse y hacer la cama."),
+            _part("peinarse y acicalarse", "fluent/woman-getting-haircut", 7,
+                  say="Es hora de peinarse y acicalarse.", tasks=["Peinarse", "Echarse colonia", "Ponerse el reloj"]),
+            _part("prepararse para salir", "fluent/coat", 6, say="Es hora de prepararse para salir.",
+                  tasks=["Abrigo, chal y gorro", "Calzado", "Mochila"]),
+            _part("firmar las tareas", "fluent/writing-hand", 5, at="07:30",
+                  say="No olvidéis firmar vuestras tareas antes de iros.", check_mission=True),
+        ],
+        "goal": {"name": "vuestra clase", "image": "fluent/school", "at": "07:45", "say": "¡Es hora de irse al cole!"},
+    },
+]
+
+
+def _v6_to_v7(doc: dict) -> dict:
+    """Add the routines, starting with the morning one of the old app."""
+    return {**doc, "version": 7, "routines": copy.deepcopy(_SAMPLE_ROUTINES)}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
     3: _v3_to_v4,
     4: _v4_to_v5,
     5: _v5_to_v6,
+    6: _v6_to_v7,
 }
 
 

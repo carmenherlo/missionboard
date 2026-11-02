@@ -20,6 +20,7 @@ import { viewStepEdit, viewTemplateStepEdit } from "./screens/parents/step-edit.
 import { viewTemplateApply } from "./screens/parents/template-apply.js";
 import { viewTemplateNew } from "./screens/parents/template-new.js";
 import { viewTemplatesList } from "./screens/parents/templates-list.js";
+import { startRoutines } from "./routine/routine.js";
 import { t } from "./texts.js";
 
 // ?theme=<name> loads app/static/css/themes/<name>.css instead of the default one.
@@ -92,3 +93,4 @@ async function route() {
 
 window.addEventListener("hashchange", route);
 route();
+startRoutines(); // the routine going on, over any screen (rutinas-1.html)

@@ -13,7 +13,7 @@ from app.storage.config_store import ConfigStore
 TIME = r"^([01]\d|2[0-3]):[0-5]\d$"
 
 
-def _time_from_yaml_number(value):
+def time_from_yaml_number(value):
     # YAML 1.1 reads an unquoted 4:30 as 270 (base 60); turn it back into "04:30".
     if isinstance(value, int) and not isinstance(value, bool):
         return f"{value // 60:02d}:{value % 60:02d}"
@@ -32,7 +32,7 @@ class Moment(BaseModel):
     name: str = Field(pattern=r"^[a-z0-9-]{1,30}$")
     start: str = Field(pattern=TIME)
 
-    _start = field_validator("start", mode="before")(_time_from_yaml_number)
+    _start = field_validator("start", mode="before")(time_from_yaml_number)
 
 
 DEFAULT_MOMENTS = (
@@ -51,8 +51,11 @@ class Settings(BaseModel):
     daily_prize_spins: int = Field(default=1, ge=0)
     day_starts_at: str = Field(default="00:00", pattern=TIME)
     moments: tuple[Moment, ...] = DEFAULT_MOMENTS
+    # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
+    # (in parts longer than this, so it does not clash with the 10-second countdown).
+    routine_warn_minutes: int = Field(default=1, ge=0, le=30)
 
-    _day_starts_at = field_validator("day_starts_at", mode="before")(_time_from_yaml_number)
+    _day_starts_at = field_validator("day_starts_at", mode="before")(time_from_yaml_number)
 
     @field_validator("moments")
     @classmethod

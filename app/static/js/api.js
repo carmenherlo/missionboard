@@ -12,9 +12,11 @@ export class ApiError extends Error {
   }
 }
 
-async function request(method, path, { json, body, contentType } = {}) {
+// parentCode: one typed just for this request (e.g. finishing a routine), instead of the session's.
+async function request(method, path, { json, body, contentType, parentCode } = {}) {
   const headers = {};
-  if (session.parentCode) headers["X-Parent-Code"] = session.parentCode;
+  const code = parentCode ?? session.parentCode;
+  if (code) headers["X-Parent-Code"] = code;
   if (json !== undefined) {
     headers["Content-Type"] = "application/json";
     body = JSON.stringify(json);

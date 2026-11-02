@@ -669,3 +669,7 @@
   font-size: var(--text-lg);
   font-weight: 700;
 }
+
+.child-colors {
+  display: contents; /* only carries the child's colour to what it holds */
+}
