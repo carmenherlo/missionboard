@@ -39,6 +39,7 @@ const PATHS = {
   plus: ["M12 5v14", "M5 12h14"],
   check: ["M5 12.5l4.5 4.5L19 7"],
   close: ["M6 6l12 12", "M18 6 6 18"],
+  trash: ["M4 7h16", "M9 7V4h6v3", "M6 7l1 13h10l1-13", "M10 11v6M14 11v6"],
   fullscreen: ["M4 9V4h5", "M15 4h5v5", "M20 15v5h-5", "M9 20H4v-5"],
   fullscreenExit: ["M9 4v5H4", "M20 9h-5V4", "M15 20v-5h5", "M4 15h5v5"],
   speaker: ["M4 9h4l5-4v14l-5-4H4z", "M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"],

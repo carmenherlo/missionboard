@@ -185,16 +185,24 @@ class RoutinesEditor:
         return routine
 
     def delete_part(self, routine_id: str, part_id: str) -> Routine:
+        return self.delete_parts(routine_id, [part_id])
+
+    def delete_parts(self, routine_id: str, part_ids: list[str]) -> Routine:
+        """Remove one or several parts at once (one part at least must stay)."""
         routine = self.get(routine_id)
-        part = self._find_part(routine, part_id)
-        if len(routine.parts) == 1:
+        gone = [self._find_part(routine, part_id) for part_id in dict.fromkeys(part_ids)]
+        if not gone:
+            raise InvalidError("Choose the parts to remove")
+        if len(gone) >= len(routine.parts):
             raise InvalidError("A routine needs one part at least")
-        parts = [_dump(p) for p in routine.parts if p.id != part_id]
-        if parts[0]["at"] is None:  # the new first one keeps its time
-            parts[0]["at"] = hhmm(dict((p.id, s) for p, s, _ in routine.timeline())[parts[0]["id"]])
+        starts = {p.id: s for p, s, _ in routine.timeline()}
+        parts = [_dump(p) for p in routine.parts if p.id not in {g.id for g in gone}]
+        if parts[0]["at"] is None and not routine.manual:  # the new first one keeps its time
+            parts[0]["at"] = hhmm(starts[parts[0]["id"]])
         routine = self._change(routine_id, {"parts": parts})
-        self._photos.delete(photo_filename(part.image))
-        self._log("deleted", routine, part=part.name)
+        for part in gone:
+            self._photos.delete(photo_filename(part.image))
+            self._log("deleted", routine, part=part.name)
         return routine
 
     def reorder_parts(self, routine_id: str, part_ids: list[str]) -> Routine:

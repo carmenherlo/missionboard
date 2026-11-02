@@ -275,3 +275,13 @@ def test_import_the_steps_of_a_mission_or_template(client):
     assert client.post(url, json={"mission_id": "nope"}, headers=PARENT).status_code == 404
     # Past the goal of the morning routine: refused, nothing changes
     assert edit(client, "POST", "/parts/import", mission_id="aterrizaje").status_code == 422
+
+
+def test_remove_several_parts_at_once(client):
+    routine = edit(client, "POST", "/parts/delete", ids=["manana-1", "manana-3", "manana-4"]).json()
+    assert [p["name"] for p in routine["parts"]][:2] == ["el desayuno", "peinarse y acicalarse"]
+    assert routine["parts"][0]["start"] == "06:45"
+    assert edit(client, "POST", "/parts/delete", ids=[]).status_code == 422
+    everything = [p["id"] for p in routine["parts"]]
+    assert edit(client, "POST", "/parts/delete", ids=everything).status_code == 422  # one must stay
+    assert edit(client, "POST", "/parts/delete", ids=["nope"]).status_code == 404

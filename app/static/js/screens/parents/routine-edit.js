@@ -175,11 +175,51 @@ export async function viewRoutineEdit(routineId) {
   sortable(partsList, {
     onEnd: (ids) => save(api("PUT", `${url}/parts/order`, { json: { ids } })).catch(() => {}),
   });
+  // "Seleccionar": a box on each part instead of its handle, and one bin for all
+  // the chosen ones (after importing, the new parts come chosen: easy to drop).
+  let selected = null; // null: not selecting; else the chosen part ids
+  const partsTools = h("div", { class: "form-actions form-actions--start" });
+  function renderPartsTools() {
+    if (!selected) {
+      partsTools.replaceChildren(h("button", {
+        type: "button", class: "btn", onclick: () => { selected = new Set(); renderParts(); },
+      }, icon("check"), t.routineEdit.select));
+      return;
+    }
+    const count = selected.size;
+    partsTools.replaceChildren(
+      h("button", {
+        type: "button", class: "btn btn--danger", disabled: count === 0,
+        onclick: () => partsTools.replaceChildren(confirmBar({
+          message: t.routineEdit.confirmDeleteParts(count),
+          confirmLabel: t.routineEdit.confirmYes,
+          onCancel: renderPartsTools,
+          onConfirm: async () => {
+            await save(api("POST", `${url}/parts/delete`, { json: { ids: [...selected] } }));
+            selected = null;
+            renderParts();
+          },
+        })),
+      }, icon("trash"), t.routineEdit.deleteSelected(count)),
+      h("button", { type: "button", class: "btn", onclick: () => { selected = null; renderParts(); } }, t.common.cancel));
+  }
   function renderParts() {
     partsTitle.textContent = t.routineEdit.panelParts(routine.parts.length);
+    if (selected) selected = new Set([...selected].filter((id) => routine.parts.some((p) => p.id === id)));
+    renderPartsTools();
     partsList.replaceChildren(...routine.parts.map((part) =>
-      h("li", { class: "row row--sortable row--compact", "data-id": part.id },
-        h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
+      h("li", {
+        class: `row row--sortable row--compact${selected ? " row--selectable" : ""}`, "data-id": part.id,
+        onclick: selected && ((e) => {
+          if (e.target.closest("a")) return;
+          if (selected.has(part.id)) selected.delete(part.id);
+          else selected.add(part.id);
+          renderParts();
+        }),
+      },
+        selected
+          ? h("input", { type: "checkbox", checked: selected.has(part.id), "aria-label": part.name, tabindex: -1 })
+          : h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
         imageThumb(part.image_url, { size: "sm", label: part.name, suggested: part.image_suggested }),
         h("span", { class: "row__text" }, capital(part.name),
           h("span", { class: "row__detail" },
@@ -189,6 +229,7 @@ export async function viewRoutineEdit(routineId) {
         h("a", {
           class: "icon-button icon-button--ghost", href: `${LIST_HREF}/${routineId}/parts/${part.id}`,
           "aria-label": t.routineEdit.editPartNamed(part.name), title: t.routineEdit.editPartNamed(part.name),
+          hidden: Boolean(selected),
         }, icon("edit")))));
   }
   const newPart = h("input", { type: "text", maxlength: 60, placeholder: t.routineEdit.newPart });
@@ -218,8 +259,17 @@ export async function viewRoutineEdit(routineId) {
   const importParts = h("div", { class: "form-actions form-actions--start" }, importSelect,
     h("button", {
       type: "button", class: "btn",
-      onclick: () => importSelect.value && save(api("POST", `${url}/parts/import`, { json: { mission_id: importSelect.value } }))
-        .then(() => { importSelect.value = ""; }).catch(() => {}),
+      onclick: () => {
+        if (!importSelect.value) return;
+        const before = new Set(routine.parts.map((p) => p.id));
+        save(api("POST", `${url}/parts/import`, { json: { mission_id: importSelect.value } }))
+          .then(() => {
+            importSelect.value = "";
+            // The new parts come chosen: if some are not wanted, one tap on the bin.
+            selected = new Set(routine.parts.map((p) => p.id).filter((id) => !before.has(id)));
+            renderParts();
+          }).catch(() => {});
+      },
     }, t.routineEdit.import));
 
   // ---------- the goal ----------
@@ -327,7 +377,7 @@ export async function viewRoutineEdit(routineId) {
             timed),
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
-          panel(partsTitle, partsList, addPart, importParts),
+          panel(partsTitle, partsTools, partsList, addPart, importParts),
           goalPanel)),
       footer));
 }

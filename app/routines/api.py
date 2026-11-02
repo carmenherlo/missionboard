@@ -106,6 +106,10 @@ class ImportIn(BaseModel):
     mission_id: str
 
 
+class PartsIn(BaseModel):
+    ids: list[str]
+
+
 class NoteIn(BaseModel):
     kind: Literal[NOTES]
     part: int | None = Field(default=None, ge=0)
@@ -324,6 +328,13 @@ def add_part(routine_id: str, body: PartCreate, editor: RoutinesEditor = Depends
 def import_parts(routine_id: str, body: ImportIn, editor: RoutinesEditor = Depends(get_routines_editor),
                  store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
     return present(editor.import_parts(routine_id, body.mission_id, TemplatesRepository(store)))
+
+
+@router.post("/{routine_id}/parts/delete", dependencies=parent_only)
+def delete_parts(routine_id: str, body: PartsIn, editor: RoutinesEditor = Depends(get_routines_editor),
+                 present: Editing = Depends()):
+    """Remove several parts at once (the ones chosen in "Seleccionar")."""
+    return present(editor.delete_parts(routine_id, body.ids))
 
 
 @router.put("/{routine_id}/parts/order", dependencies=parent_only)
