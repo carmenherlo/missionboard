@@ -867,6 +867,11 @@
   cursor: pointer;
 }
 
+/* In the avatar picker, each animal's ring in its colour, thick enough to read the colour. */
+.choice .avatar {
+  border-width: 4px;
+}
+
 .choice--selected {
   border-color: var(--primary);
 }

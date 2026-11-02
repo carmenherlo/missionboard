@@ -31,16 +31,26 @@ PICKER_COLUMNS = [["orange", "red"], ["yellow"], ["green", "turquoise"], ["blue"
 
 _COLOR = {entry["id"]: entry["color"] for entry in PALETTE}
 
-# Each animal with its natural colour.
+# Each animal with its natural colour: two or three per colour, so there is
+# plenty to choose from (to be replaced by the family's own drawings). In the
+# picker's rainbow order. An animal is only for one child; a colour may repeat.
+_ANIMALS = [
+    ("orange", [("fox", "Zorro", "fox"), ("tiger", "Tigre", "tiger-face"), ("hamster", "Hámster", "hamster")]),
+    ("red", [("ladybug", "Mariquita", "lady-beetle"), ("crab", "Cangrejo", "crab")]),
+    ("yellow", [("lion", "León", "lion"), ("chick", "Pollito", "baby-chick"), ("bee", "Abeja", "honeybee")]),
+    ("green", [("dinosaur", "Dinosaurio", "t-rex"), ("frog", "Rana", "frog"), ("turtle", "Tortuga", "turtle")]),
+    ("turquoise", [("fish", "Pez tropical", "tropical-fish")]),
+    ("blue", [("dolphin", "Delfín", "dolphin"), ("whale", "Ballena", "spouting-whale"),
+              ("butterfly", "Mariposa", "butterfly")]),
+    ("dark-blue", [("owl", "Búho", "owl"), ("penguin", "Pingüino", "penguin")]),
+    ("lilac", [("unicorn", "Unicornio", "unicorn"), ("jellyfish", "Medusa", "jellyfish")]),
+    ("pink", [("octopus", "Pulpo", "octopus"), ("pig", "Cerdito", "pig-face"), ("flamingo", "Flamenco", "flamingo")]),
+]
+
 PRESETS = [
-    {"id": "unicorn", "label": "Unicornio", "image": "fluent/unicorn", "color": _COLOR["lilac"]},
-    {"id": "dinosaur", "label": "Dinosaurio", "image": "fluent/t-rex", "color": _COLOR["green"]},
-    {"id": "dolphin", "label": "Delfín", "image": "fluent/dolphin", "color": _COLOR["blue"]},
-    {"id": "fox", "label": "Zorro", "image": "fluent/fox", "color": _COLOR["orange"]},
-    {"id": "lion", "label": "León", "image": "fluent/lion", "color": _COLOR["yellow"]},
-    {"id": "octopus", "label": "Pulpo", "image": "fluent/octopus", "color": _COLOR["pink"]},
-    {"id": "ladybug", "label": "Mariquita", "image": "fluent/lady-beetle", "color": _COLOR["red"]},
-    {"id": "owl", "label": "Búho", "image": "fluent/owl", "color": _COLOR["dark-blue"]},
+    {"id": preset_id, "label": label, "image": f"fluent/{image}", "color": _COLOR[colour]}
+    for colour, animals in _ANIMALS
+    for preset_id, label, image in animals
 ]
 
 PALETTE_COLORS = {entry["color"] for entry in PALETTE}

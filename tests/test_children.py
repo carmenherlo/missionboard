@@ -38,7 +38,8 @@ def test_palette_and_picker(client):
     ids = [entry["id"] for entry in body["palette"]]
     assert ids[:6] == ["yellow", "lilac", "green", "orange", "pink", "blue"]  # suggestion order
     assert sorted(i for column in body["picker_columns"] for i in column) == sorted(ids)
-    assert len({p["color"] for p in body["presets"]}) == len(body["presets"])  # each animal its own colour
+    assert {p["color"] for p in body["presets"]} == {e["color"] for e in body["palette"]}  # every colour has an animal
+    assert len({p["id"] for p in body["presets"]}) == len(body["presets"]) >= 20
     assert all({"color", "strong", "soft", "on", "label"} <= entry.keys() for entry in body["palette"])
 
 
