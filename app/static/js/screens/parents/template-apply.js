@@ -19,11 +19,11 @@ export async function viewTemplateApply(templateId, fromEditor = false) {
     children.map((c) => api("GET", `/api/children/${c.id}/missions`)));
   const listHref = "#/parents/config/templates";
   const backHref = fromEditor ? `${listHref}/${templateId}` : listHref;
-  const header = parentsHeader(t.templateApply.title(template.name),
+  const header = () => parentsHeader(t.templateApply.title(template.name),
     { href: backHref, label: fromEditor ? template.name : t.templates.title });
 
   if (!children.length) {
-    render(header, h("main", { class: "page" },
+    render(header(), h("main", { class: "page" },
       h("p", { class: "empty" }, t.templateApply.noChildren),
       h("a", { class: "btn btn--primary", href: "#/parents/config/children/new" }, t.missions.addChild)));
     return;
@@ -68,7 +68,7 @@ export async function viewTemplateApply(templateId, fromEditor = false) {
       error.textContent = errorMessage(err);
       return;
     }
-    render(header, h("main", { class: "page" },
+    render(header(), h("main", { class: "page" },
       panel(null,
         h("p", { class: "form-success" }, t.templateApply.done(template.name, applied.map((c) => c.name))),
         h("p", { class: "hint" }, t.templateApply.doneHint),
@@ -82,7 +82,7 @@ export async function viewTemplateApply(templateId, fromEditor = false) {
   }
 
   renderSubmit();
-  render(header, h("main", { class: "page" },
+  render(header(), h("main", { class: "page" },
     h("p", { class: "hint" }, t.templateApply.hint),
     cards,
     error,

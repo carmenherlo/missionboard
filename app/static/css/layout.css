@@ -1,6 +1,6 @@
 /* Page structure: bars, columns, stacks. Tokens only. */
 
-/* ---------- parents screens: top bar + centred column ---------- */
+/* ---------- parents screens: top bar, title and centred column ---------- */
 
 .top-bar {
   display: flex;
@@ -11,9 +11,20 @@
   background: var(--bg);
 }
 
-.top-bar__title {
+/* The screen's title, heading the page column (below the bar) */
+.page-title {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.page-title__text {
   min-width: 0;
   font-size: var(--text-xl);
+}
+
+.page-title + .page {
+  padding-top: var(--space-3);
 }
 
 .title-line,
