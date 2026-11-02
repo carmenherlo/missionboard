@@ -1,6 +1,6 @@
 import { api, session } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
-import { cornerButton } from "../components/corner-button.js";
+import { parentsCornerButton } from "../components/corner-button.js";
 import { fullscreenButton } from "../components/fullscreen-button.js";
 import { h, render } from "../dom.js";
 import { icon } from "../icons.js";
@@ -27,7 +27,7 @@ export async function viewHome() {
           type: "button", class: "icon-button", "aria-label": t.routine.startByHand, title: t.routine.startByHand,
           onclick: () => openChooser(byHand),
         }, icon("alarm"))),
-      cornerButton("#/parents", "settings", t.home.parentsLabel),
+      parentsCornerButton("#/parents", t.home.parentsLabel),
       h("h1", { class: "home__title" }, t.home.title),
       grid));
 }
