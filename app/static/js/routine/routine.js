@@ -23,7 +23,8 @@
 // "Probar ahora" (Configurar → Rutinas) shows a routine the same way, at its own
 // times, on this device only: over any screen, nothing logged, and "Cerrar"
 // ends it. Its clock can go faster (×10, ×20) or jump to just before the next
-// part ("Siguiente"), and "Transcripción" lists what the voice said, at which
+// part ("Siguiente"); dragging round the clock moves its time (as the minute
+// hand would go), and "Transcripción" lists what the voice said, at which
 // time of the trial; the real routine always goes at the household's time.
 import { api } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
@@ -215,6 +216,36 @@ export function startRoutines() {
     stopRinging();
     quiet();
     tick();
+  }
+
+  // Dragging round the clock: the minute pointed at, the nearest one to now (so
+  // going past 12 goes on to the next hour), within the routine.
+  function dragTo(event) {
+    const box = showing.view.clock.getBoundingClientRect();
+    const angle = Math.atan2(event.clientX - (box.left + box.width / 2), (box.top + box.height / 2) - event.clientY);
+    const pointed = ((angle / (2 * Math.PI)) * 60 + 60) % 60;
+    const time = now();
+    let target = Math.floor(time / 60) * 60 + pointed;
+    if (target - time > 30) target -= 60;
+    if (time - target > 30) target += 60;
+    const { data } = showing;
+    const last = data.goal ? minuteOf(data.goal.at) : parts().at(-1).to;
+    pretend(Math.min(Math.max(target, minuteOf(data.wake)), last - 1 / 60));
+    stopRinging();
+    tick();
+  }
+
+  function dragging(dial) {
+    let held = false;
+    dial.addEventListener("pointerdown", (event) => {
+      if (!showing?.data.trial || showing.data.manual) return;
+      held = true;
+      dial.setPointerCapture(event.pointerId);
+      quiet();
+      dragTo(event);
+    });
+    dial.addEventListener("pointermove", (event) => held && dragTo(event));
+    for (const kind of ["pointerup", "pointercancel"]) dial.addEventListener(kind, () => { held = false; });
   }
 
   function pretend(time) {
@@ -504,11 +535,13 @@ export function startRoutines() {
     const over = h("div", {}); // a kid's mission, over the clock
     const trialTools = h("div", { class: "routine__trial" });
     const transcript = h("ol", { class: "routine__transcript", "aria-live": "polite" });
+    const dial = h("div", { class: "routine__dial" }, clock, count);
+    dragging(dial);
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
         h("header", { class: "routine__top" }, time, h("span", { class: "child-bar__spacer" }), soundButton(), close),
-        trialTools, transcript,
-        what, until, h("div", { class: "routine__dial" }, clock, count), stopButton, tasks, next, finish),
+        trialTools,
+        what, until, dial, stopButton, tasks, next, transcript, finish),
       h("aside", { class: "routine__side" }, people),
       over);
     const banner = h("button", {
@@ -521,6 +554,7 @@ export function startRoutines() {
   function renderTrialTools() {
     const { view, data } = showing;
     view.trialTools.hidden = !data.trial;
+    view.layer.classList.toggle("routine-layer--trial", Boolean(data.trial) && !data.manual);
     if (!data.trial) return;
     view.trialTools.replaceChildren(
       h("span", { class: "routine__trial-label" }, t.routine.trialLabel),
@@ -534,7 +568,8 @@ export function startRoutines() {
         type: "button", class: "btn routine__trial-toggle",
         "aria-pressed": String(showing.transcriptOpen),
         onclick: () => { showing.transcriptOpen = !showing.transcriptOpen; renderTrialTools(); },
-      }, t.routine.transcript));
+      }, t.routine.transcript),
+      data.manual ? "" : h("span", { class: "routine__trial-hint" }, t.routine.dragHint));
     renderTranscript();
   }
 

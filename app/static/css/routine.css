@@ -82,6 +82,18 @@
   color: var(--muted);
 }
 
+.routine__trial-hint {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* "Probar ahora": the clock is dragged round to move the time */
+.routine-layer--trial .routine__dial {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
 .routine__trial-toggle[aria-pressed="true"] {
   background: var(--secondary-soft);
   color: var(--on-secondary-soft);

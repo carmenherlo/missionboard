@@ -80,6 +80,7 @@ export const t = {
     trialLabel: "Prueba",
     speed: "Velocidad",
     nextPart: "Siguiente",
+    dragHint: "Arrastra el reloj para mover la hora",
     transcript: "Transcripción",
     transcriptEmpty: "Aquí saldrá lo que diga la voz, con la hora de la prueba.",
   },
