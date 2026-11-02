@@ -322,6 +322,7 @@ export function startRoutines() {
     if (phase.kind === "part" && before !== null) note("part", { part: phase.index });
     if (phase.kind === "done") {
       if (showing.data.manual && before !== null) finish(counted);
+      else if (showing.data.goal && before?.startsWith("part-")) goalAtTheEnd(time, counted);
       else end();
       return;
     }
@@ -383,6 +384,19 @@ export function startRoutines() {
     }
     showing.finished = done ? "done" : "timeUp";
     note("ended", { early: showing.done === "signed" });
+    const id = showing.data.id;
+    setTimeout(() => showing?.data.id === id && end(), DONE_MS);
+  }
+
+  // The goal at the very time the last part ends (nothing in between): its words,
+  // on screen a while, then it closes.
+  function goalAtTheEnd(time, counted) {
+    showing.finishing = true;
+    showing.finished = "goal";
+    note("goal", { early: false });
+    if (counted) sounds.countdown(true);
+    else sounds.ding();
+    say([`${capital(itIs(time))}.`, showing.data.goal.say]);
     const id = showing.data.id;
     setTimeout(() => showing?.data.id === id && end(), DONE_MS);
   }
@@ -615,6 +629,9 @@ export function startRoutines() {
       image = data.goal.image_url;
       what = data.goal.say;
       until = t.routine.startsAt(capital(data.goal.name), hourWords(phase.to), toGo);
+    } else if (showing.finished === "goal") {
+      image = data.goal.image_url;
+      what = data.goal.say;
     } else if (showing.finished) {
       what = showing.finished === "done" ? t.routine.done : t.routine.timeUp;
     }
