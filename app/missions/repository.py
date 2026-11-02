@@ -21,10 +21,13 @@ class Schedule:
 
 @dataclass
 class Mission:
-    """A mission of one child. Its position in the child's list is the order of their route."""
+    """A mission of one child. Its position in the child's list is the order of their route.
+
+    A template has the same shape, without a child (child_id is None).
+    """
 
     id: str
-    child_id: str
+    child_id: str | None
     name: str
     image: str | None = None
     image_suggested: bool = False
@@ -34,14 +37,17 @@ class Mission:
 
 
 def _to_doc(mission: Mission) -> dict:
-    return asdict(mission)
+    doc = asdict(mission)
+    if mission.child_id is None:
+        del doc["child_id"]
+    return doc
 
 
 def _from_doc(entry: dict) -> Mission:
     schedule = entry.get("schedule")
     return Mission(
         id=entry["id"],
-        child_id=entry["child_id"],
+        child_id=entry.get("child_id"),
         name=entry["name"],
         image=entry.get("image"),
         image_suggested=bool(entry.get("image_suggested", False)),
@@ -55,7 +61,11 @@ def _from_doc(entry: dict) -> Mission:
     )
 
 
-class MissionsRepository:
+class MissionList:
+    """Missions kept in one list of config.yaml (its `section`), found by id."""
+
+    section = "missions"
+
     def __init__(self, store: ConfigStore):
         self._store = store
 
@@ -64,27 +74,31 @@ class MissionsRepository:
         return self._store.edit()
 
     def _all(self) -> list[Mission]:
-        return [_from_doc(entry) for entry in self._store.load()["missions"]]
-
-    def list_for_child(self, child_id: str) -> list[Mission]:
-        return [m for m in self._all() if m.child_id == child_id]
+        return [_from_doc(entry) for entry in self._store.load()[self.section]]
 
     def get(self, mission_id: str) -> Mission | None:
         return next((m for m in self._all() if m.id == mission_id), None)
 
     def add(self, mission: Mission) -> None:
         with self._store.edit() as doc:
-            doc["missions"].append(_to_doc(mission))
+            doc[self.section].append(_to_doc(mission))
 
     def update(self, mission: Mission) -> None:
         with self._store.edit() as doc:
-            doc["missions"] = [
-                _to_doc(mission) if entry["id"] == mission.id else entry for entry in doc["missions"]
+            doc[self.section] = [
+                _to_doc(mission) if entry["id"] == mission.id else entry for entry in doc[self.section]
             ]
 
     def remove(self, mission_id: str) -> None:
         with self._store.edit() as doc:
-            doc["missions"] = [entry for entry in doc["missions"] if entry["id"] != mission_id]
+            doc[self.section] = [entry for entry in doc[self.section] if entry["id"] != mission_id]
+
+
+class MissionsRepository(MissionList):
+    """The children's missions."""
+
+    def list_for_child(self, child_id: str) -> list[Mission]:
+        return [m for m in self._all() if m.child_id == child_id]
 
     def remove_for_child(self, child_id: str) -> list[Mission]:
         with self._store.edit() as doc:

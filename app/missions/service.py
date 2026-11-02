@@ -6,7 +6,7 @@ from app.children.repository import ChildrenRepository
 from app.errors import InvalidError, NotFoundError
 from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
-from app.missions.repository import WEEKDAYS, Mission, MissionsRepository, Schedule, Step
+from app.missions.repository import WEEKDAYS, Mission, MissionList, MissionsRepository, Schedule, Step
 from app.storage.photo_store import PhotoStore
 
 TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -40,40 +40,29 @@ def _check_order(current: list[str], requested: list[str]) -> None:
         raise InvalidError("The order must list every item exactly once")
 
 
-class MissionsService:
-    def __init__(
-        self,
-        missions: MissionsRepository,
-        children: ChildrenRepository,
-        libraries: ImageLibraries,
-        photos: PhotoStore,
-    ):
+class MissionEditor:
+    """Edits one mission and its steps: what a child's mission and a template share."""
+
+    not_found = "Mission not found"
+
+    def __init__(self, missions: MissionList, libraries: ImageLibraries, photos: PhotoStore):
         self._missions = missions
-        self._children = children
         self._libraries = libraries
         self._photos = photos
-
-    # ---------- missions ----------
-
-    def list_for_child(self, child_id: str) -> list[Mission]:
-        self._check_child(child_id)
-        return self._missions.list_for_child(child_id)
 
     def get(self, mission_id: str) -> Mission:
         mission = self._missions.get(mission_id)
         if mission is None:
-            raise NotFoundError("Mission not found")
+            raise NotFoundError(self.not_found)
         return mission
 
-    def create(self, child_id: str, name: str, image: str | None = None) -> Mission:
-        with self._missions.atomic():
-            self._check_child(child_id)
-            mission = Mission(id=_new_id(), child_id=child_id, name=name)
-            if image is not None:
-                mission.image = self._check_library_image(image)
-            else:
-                mission.image, mission.image_suggested = self._suggest(name)
-            self._missions.add(mission)
+    def _new(self, child_id: str | None, name: str, image: str | None) -> Mission:
+        """A new mission with nothing but its name and image (suggested if none is given)."""
+        mission = Mission(id=_new_id(), child_id=child_id, name=name)
+        if image is not None:
+            mission.image = self._check_library_image(image)
+        else:
+            mission.image, mission.image_suggested = self._suggest(name)
         return mission
 
     def update(self, mission_id: str, *, name=UNSET, image=UNSET, days=UNSET, schedule=UNSET) -> Mission:
@@ -99,13 +88,6 @@ class MissionsService:
             self._missions.remove(mission_id)
         for filename in self._photos_of(mission):
             self._photos.delete(filename)
-
-    def reorder(self, child_id: str, mission_ids: list[str]) -> list[Mission]:
-        with self._missions.atomic():
-            current = [m.id for m in self.list_for_child(child_id)]
-            _check_order(current, mission_ids)
-            self._missions.reorder_child(child_id, mission_ids)
-        return self._missions.list_for_child(child_id)
 
     def set_photo(self, mission_id: str, data: bytes, media_type: str) -> Mission:
         extension = validate_photo(data, media_type)
@@ -172,17 +154,7 @@ class MissionsService:
         self._drop_replaced_photo(old_image, step.image)
         return mission
 
-    # ---------- ChildDependent ----------
-
-    def remove_child_data(self, child_id: str) -> list[str]:
-        removed = self._missions.remove_for_child(child_id)
-        return [filename for mission in removed for filename in self._photos_of(mission)]
-
     # ---------- helpers ----------
-
-    def _check_child(self, child_id: str) -> None:
-        if self._children.get(child_id) is None:
-            raise NotFoundError("Child not found")
 
     @staticmethod
     def _find_step(mission: Mission, step_id: str) -> Step:
@@ -215,3 +187,45 @@ class MissionsService:
     def _photos_of(mission: Mission) -> list[str]:
         refs = [mission.image] + [step.image for step in mission.steps]
         return [filename for ref in refs if (filename := photo_filename(ref))]
+
+
+class MissionsService(MissionEditor):
+    """The missions of each child: their route, in order."""
+
+    def __init__(
+        self,
+        missions: MissionsRepository,
+        children: ChildrenRepository,
+        libraries: ImageLibraries,
+        photos: PhotoStore,
+    ):
+        super().__init__(missions, libraries, photos)
+        self._children = children
+
+    def list_for_child(self, child_id: str) -> list[Mission]:
+        self._check_child(child_id)
+        return self._missions.list_for_child(child_id)
+
+    def create(self, child_id: str, name: str, image: str | None = None) -> Mission:
+        with self._missions.atomic():
+            self._check_child(child_id)
+            mission = self._new(child_id, name, image)
+            self._missions.add(mission)
+        return mission
+
+    def reorder(self, child_id: str, mission_ids: list[str]) -> list[Mission]:
+        with self._missions.atomic():
+            current = [m.id for m in self.list_for_child(child_id)]
+            _check_order(current, mission_ids)
+            self._missions.reorder_child(child_id, mission_ids)
+        return self._missions.list_for_child(child_id)
+
+    # ---------- ChildDependent ----------
+
+    def remove_child_data(self, child_id: str) -> list[str]:
+        removed = self._missions.remove_for_child(child_id)
+        return [filename for mission in removed for filename in self._photos_of(mission)]
+
+    def _check_child(self, child_id: str) -> None:
+        if self._children.get(child_id) is None:
+            raise NotFoundError("Child not found")
