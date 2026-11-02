@@ -27,7 +27,8 @@ export function routineError(err) {
 // Like Editar misión: panels that save every change on the spot.
 export async function viewRoutineEdit(routineId) {
   const url = `/api/routines/${routineId}`;
-  const [first, children] = await Promise.all([api("GET", url), api("GET", "/api/children"), loadAvatars()]);
+  const [first, children, templates] = await Promise.all([
+    api("GET", url), api("GET", "/api/children"), api("GET", "/api/templates"), loadAvatars()]);
   let routine = first;
   const missionsOf = Object.fromEntries(await Promise.all(
     children.map(async (c) => [c.id, await api("GET", `/api/children/${c.id}/missions`)])));
@@ -81,6 +82,33 @@ export async function viewRoutineEdit(routineId) {
           onchange: (e) => patch({ offsets: { ...routine.offsets, [day]: Number(e.target.value) || 0 } }),
         }))));
   }
+  // Notices before it rings: "20 min antes · Es hora de despertar a los niños".
+  const noticesList = h("ul", { class: "rows" });
+  function renderNotices() {
+    noticesList.replaceChildren(...routine.notices.map((notice, index) =>
+      h("li", { class: "row row--compact" },
+        h("span", { class: "row__text" }, notice.say,
+          h("span", { class: "row__detail" }, h("span", { class: "pill pill--muted" }, t.routineEdit.noticeBefore(notice.minutes)))),
+        h("button", {
+          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routineEdit.removeNotice,
+          onclick: () => patch({ notices: routine.notices.filter((_, i) => i !== index) }),
+        }, icon("close")))));
+  }
+  const noticeMinutes = h("input", { type: "number", min: 1, max: 180, value: 20, "aria-label": t.routineEdit.noticeMinutes });
+  const noticeSay = h("input", { type: "text", maxlength: 200, placeholder: t.routineEdit.noticePlaceholder });
+  const addNotice = h("form", {
+    class: "row row--add", novalidate: true,
+    onsubmit: async (event) => {
+      event.preventDefault();
+      const say = noticeSay.value.trim();
+      const minutes = Number(noticeMinutes.value);
+      if (!say || !(minutes >= 1)) return;
+      const notices = [...routine.notices, { minutes, say }].sort((a, b) => b.minutes - a.minutes);
+      await patch({ notices });
+      noticeSay.value = "";
+    },
+  }, noticeMinutes, noticeSay, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routineEdit.addNotice));
+
   // Rings at a time, or started by hand (⏰ on the home screen).
   const modeBox = h("div", {});
   const timed = h("div", { class: "stack stack--tight" });
@@ -100,6 +128,7 @@ export async function viewRoutineEdit(routineId) {
   function renderRoutine() {
     renderMode();
     renderOffsets();
+    renderNotices();
     wake.value = routine.wake ?? DEFAULT_WAKE;
     remind.value = routine.remind_every;
     wakeHint.textContent = t.routineEdit.wakeHint(routine.remind_every);
@@ -179,6 +208,20 @@ export async function viewRoutineEdit(routineId) {
     },
   }, newPart, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routineEdit.addPart));
 
+  // The steps of a mission or template as parts: a copy to start from.
+  const importSelect = h("select", { "aria-label": t.routineEdit.importFrom },
+    h("option", { value: "" }, t.routineEdit.importFrom),
+    children.map((child) => missionsOf[child.id].length > 0 && h("optgroup", { label: child.name },
+      missionsOf[child.id].map((m) => h("option", { value: m.id }, m.name)))),
+    templates.length > 0 && h("optgroup", { label: t.templates.title },
+      templates.map((m) => h("option", { value: m.id }, m.name))));
+  const importParts = h("div", { class: "form-actions form-actions--start" }, importSelect,
+    h("button", {
+      type: "button", class: "btn",
+      onclick: () => importSelect.value && save(api("POST", `${url}/parts/import`, { json: { mission_id: importSelect.value } }))
+        .then(() => { importSelect.value = ""; }).catch(() => {}),
+    }, t.routineEdit.import));
+
   // ---------- the goal ----------
   const goalBox = h("div", { class: "stack stack--tight" });
   function renderGoal() {
@@ -256,7 +299,9 @@ export async function viewRoutineEdit(routineId) {
       h("label", { class: "time" }, t.routineEdit.remindEvery, remind)),
     wakeHint,
     h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox,
-      h("span", { class: "hint" }, t.routineEdit.offsetsHint)));
+      h("span", { class: "hint" }, t.routineEdit.offsetsHint)),
+    h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.notices), noticesList, addNotice,
+      h("span", { class: "hint" }, t.routineEdit.noticesHint)));
   goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
   function refresh() {
@@ -282,7 +327,7 @@ export async function viewRoutineEdit(routineId) {
             timed),
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
-          panel(partsTitle, partsList, addPart),
+          panel(partsTitle, partsList, addPart, importParts),
           goalPanel)),
       footer));
 }

@@ -1007,3 +1007,10 @@
   padding: 0 var(--space-1);
   text-align: center;
 }
+
+.row--add input[type="number"] {
+  flex: none;
+  width: 4.5rem;
+  min-height: 40px;
+  text-align: center;
+}

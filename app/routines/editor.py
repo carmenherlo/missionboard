@@ -18,6 +18,7 @@ from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
 from app.images.rules import ImageRules
 from app.missions.repository import WEEKDAYS, MissionsRepository
+from app.templates.repository import TemplatesRepository
 from app.routines.repository import Part, Routine, RoutinesRepository, hhmm, minute_of
 from app.storage.photo_store import PhotoStore
 
@@ -70,10 +71,10 @@ class RoutinesEditor:
         return routine
 
     def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
-               offsets=UNSET) -> Routine:
+               offsets=UNSET, notices=UNSET) -> Routine:
         changes = {k: v for k, v in
                    {"name": name, "days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
-                    "offsets": offsets}.items()
+                    "offsets": offsets, "notices": notices}.items()
                    if v is not UNSET}
         if "days" in changes:
             if not changes["days"]:
@@ -85,7 +86,7 @@ class RoutinesEditor:
             if changes["wake"] is None:  # started by hand: parts one after the other, no goal
                 for part in parts:
                     part["at"] = None
-                changes.update(parts=parts, goal=None, offsets={})
+                changes.update(parts=parts, goal=None, offsets={}, notices=[])
             elif current.manual:  # back to a time: the first part, five minutes after it rings
                 parts[0]["at"] = hhmm((minute_of(changes["wake"]) + NEW_PART_MINUTES) % (24 * 60))
                 changes["parts"] = parts
@@ -131,6 +132,26 @@ class RoutinesEditor:
         routine = self.get(routine_id)
         routine = self._change(routine_id, {"parts": [*map(_dump, routine.parts), part]})
         self._log("created", routine, part=part["name"])
+        return routine
+
+    def import_parts(self, routine_id: str, mission_id: str, templates: TemplatesRepository) -> Routine:
+        """The steps of a mission (or template) as new parts at the end, five minutes each:
+        a copy to start from, not linked (as in the proposal, section 5)."""
+        mission = self._missions.get(mission_id) or templates.get(mission_id)
+        if mission is None:
+            raise NotFoundError("Mission not found")
+        routine = self.get(routine_id)
+        new = []
+        for step in mission.steps:
+            image = step.image
+            filename = photo_filename(image)
+            if filename:  # its own copy of an uploaded photo
+                copied = self._photos.copy(filename, routine_id)
+                image = photo_ref(copied) if copied else None
+            name = step.text[:1].lower() + step.text[1:]  # said inside sentences: "Comienza lavarse…"
+            new.append({"id": _new_id(), "name": name[:60], "image": image, "minutes": NEW_PART_MINUTES})
+        routine = self._change(routine_id, {"parts": [*map(_dump, routine.parts), *new]})
+        self._log("changed", routine)
         return routine
 
     def update_part(self, routine_id: str, part_id: str, **fields) -> Routine:

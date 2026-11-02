@@ -237,3 +237,40 @@ def test_moved_days_count_for_overlaps_and_must_stay_in_their_day(client):
     assert other.status_code == 201
     assert edit(client, "PATCH", offsets={"tue": 30}).status_code == 409  # Mañana would end at 8:15 on Tuesday
     assert edit(client, "PATCH", offsets={"tue": -500}).status_code == 422
+
+
+# ---------- notices before it rings ----------
+
+
+def test_notices_before_it_rings(client, clock):
+    notices = [{"minutes": 20, "say": "Es hora de despertar a los niños."}, {"minutes": 5, "say": "Cinco minutos."}]
+    routine = edit(client, "PATCH", notices=notices).json()
+    assert routine["notices"] == notices
+    clock.moment = datetime(2026, 11, 2, 5, 0, tzinfo=MADRID)
+    assert client.get("/api/routines/notices").json()["notices"] == [
+        {"routine": "manana", "at": 6 * 60 + 10, "say": "Es hora de despertar a los niños."},
+        {"routine": "manana", "at": 6 * 60 + 25, "say": "Cinco minutos."},
+    ]
+    edit(client, "PATCH", offsets={"tue": 15})
+    clock.moment = datetime(2026, 11, 3, 5, 0, tzinfo=MADRID)  # Tuesday: they move with it
+    assert client.get("/api/routines/notices").json()["notices"][0]["at"] == 6 * 60 + 25
+    assert edit(client, "PATCH", notices=[{"minutes": 0, "say": "x"}]).status_code == 422
+
+
+# ---------- parts from a mission ----------
+
+
+def test_import_the_steps_of_a_mission_or_template(client):
+    new = client.post("/api/routines", json={"name": "Tarde", "wake": "17:00"}, headers=PARENT).json()
+    url = f"/api/routines/{new['id']}/parts/import"
+    routine = client.post(url, json={"mission_id": "aterrizaje"}, headers=PARENT).json()  # a sample template
+    names = [p["name"] for p in routine["parts"]][1:]
+    assert names == ["quitarse los zapatos", "lavarse las manos", "merendar", "hacer los deberes"]
+    assert routine["parts"][1]["image"] == "fluent/running-shoe" and routine["parts"][1]["minutes"] == 5
+    bea = create_child(client)
+    mission = create_mission(client, bea["id"], name="Noche").json()
+    add_step(client, mission["id"], "Pijama")
+    assert client.post(url, json={"mission_id": mission["id"]}, headers=PARENT).json()["parts"][-1]["name"] == "pijama"
+    assert client.post(url, json={"mission_id": "nope"}, headers=PARENT).status_code == 404
+    # Past the goal of the morning routine: refused, nothing changes
+    assert edit(client, "POST", "/parts/import", mission_id="aterrizaje").status_code == 422

@@ -14,6 +14,7 @@ from app.routines.editor import RoutinesEditor
 from app.routines.repository import TIME, Routine, RoutinesRepository, RunsRepository, hhmm
 from app.routines.service import NOTES, Current, RoutinesService, kids_of
 from app.storage.photo_store import PhotoStore
+from app.templates.repository import TemplatesRepository
 from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 from app.today.api import get_day_service
@@ -47,6 +48,13 @@ class GoalIn(BaseModel):
     _name = field_validator("name")(_not_blank)
 
 
+class NoticeIn(BaseModel):
+    minutes: int = Field(ge=1, le=180)
+    say: str = Field(max_length=200)
+
+    _say = field_validator("say")(_not_blank)
+
+
 class RoutinePatch(BaseModel):
     name: str | None = Field(default=None, max_length=40)
     days: list[str] | None = None
@@ -54,6 +62,7 @@ class RoutinePatch(BaseModel):
     remind_every: int | None = Field(default=None, ge=0, le=30)
     goal: GoalIn | None = None
     offsets: dict[str, int] | None = None
+    notices: list[NoticeIn] | None = None
 
     _name = field_validator("name")(_not_blank)
 
@@ -91,6 +100,10 @@ class OrderIn(BaseModel):
 
 class StartIn(BaseModel):
     kids: list[str]
+
+
+class ImportIn(BaseModel):
+    mission_id: str
 
 
 class NoteIn(BaseModel):
@@ -164,6 +177,15 @@ def _present(current: Current, libraries: ImageLibraries) -> dict:
             for p in current.people
         ],
     }
+
+
+@router.get("/notices")
+def notices(routines: RoutinesService = Depends(get_routines_service), clock=Depends(get_clock)):
+    """Today's notices before the routines ring, and the household's time: the screen
+    says each one at its minute."""
+    now = clock.now()
+    return {"now": now.hour * 60 + now.minute + now.second / 60, "day": now.date().isoformat(),
+            "notices": routines.notices()}
 
 
 @router.get("/by-hand")
@@ -265,11 +287,13 @@ def get_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routines_e
 def update_routine(routine_id: str, body: RoutinePatch, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "days", "remind_every", "offsets"):  # wake: null means "by hand"
+    for required in ("name", "days", "remind_every", "offsets", "notices"):  # wake: null means "by hand"
         if changes.get(required, "") is None:
             changes.pop(required)
     if changes.get("goal") is not None:
         changes["goal"] = changes["goal"].model_dump()
+    if "notices" in changes:
+        changes["notices"] = [n.model_dump() for n in changes["notices"]]
     return present(editor.update(routine_id, **changes))
 
 
@@ -294,6 +318,12 @@ def set_mission(routine_id: str, child_id: str, body: MissionIn,
 def add_part(routine_id: str, body: PartCreate, editor: RoutinesEditor = Depends(get_routines_editor),
              present: Editing = Depends()):
     return present(editor.add_part(routine_id, body.name))
+
+
+@router.post("/{routine_id}/parts/import", dependencies=parent_only)
+def import_parts(routine_id: str, body: ImportIn, editor: RoutinesEditor = Depends(get_routines_editor),
+                 store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
+    return present(editor.import_parts(routine_id, body.mission_id, TemplatesRepository(store)))
 
 
 @router.put("/{routine_id}/parts/order", dependencies=parent_only)

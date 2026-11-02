@@ -113,6 +113,20 @@ class RoutinesService:
         return Current(routine, app_day(now, settings.day_starts_at), minute, run, self.people(routine),
                        settings.routine_warn_minutes, started=started)
 
+    def notices(self) -> list[dict]:
+        """Today's notices before the routines ring: {"routine", "at" (minute of the day), "say"}."""
+        settings = self._settings.settings()
+        day = app_day(self._clock.now(), settings.day_starts_at)
+        weekday = WEEKDAYS[day.weekday()]
+        found = []
+        for stored in self._routines.list():
+            if stored.manual or weekday not in stored.days or self._runs.get(day, stored.id)["finished_at"]:
+                continue
+            routine = stored.on(weekday)
+            for notice in routine.notices:
+                found.append({"routine": routine.id, "at": minute_of(routine.wake) - notice.minutes, "say": notice.say})
+        return found
+
     def by_hand(self) -> list[tuple[Routine, list[Child]]]:
         """The routines that can be started by hand today, each with its children."""
         settings = self._settings.settings()

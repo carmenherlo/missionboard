@@ -60,6 +60,15 @@ class Goal(BaseModel):
     _at = field_validator("at", mode="before")(time_from_yaml_number)
 
 
+class Notice(BaseModel):
+    """Said before the routine rings: "Es hora de despertar a los niños", 20 minutes before."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    minutes: int = Field(ge=1, le=180)
+    say: str = Field(min_length=1, max_length=200)
+
+
 class Routine(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -72,6 +81,7 @@ class Routine(BaseModel):
     remind_every: int = Field(default=5, ge=0, le=30)
     # Some days everything moves: {"tue": 15} rings and goes 15 minutes later on Tuesdays.
     offsets: dict[str, int] = {}
+    notices: tuple[Notice, ...] = ()  # said before it rings (not by hand)
     parts: tuple[Part, ...] = Field(min_length=1)
     goal: Goal | None = None
 
@@ -138,7 +148,7 @@ class Routine(BaseModel):
         """Each part with its start and end, in minutes of the day (started by hand:
         in minutes from when it starts)."""
         if self.wake is None:
-            if any(part.at for part in self.parts) or self.goal or self.offsets:
+            if any(part.at for part in self.parts) or self.goal or self.offsets or self.notices:
                 raise ValueError(f"{self.id!r} is started by hand: no times of its own, no goal")
             timed, start = [], 0
             for part in self.parts:
