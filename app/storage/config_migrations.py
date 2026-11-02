@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 4
+CURRENT_VERSION = 5
 
 
 class ConfigVersionError(Exception):
@@ -101,10 +101,49 @@ def _v3_to_v4(doc: dict) -> dict:
     return {**doc, "version": 4, "templates": templates if templates is not None else copy.deepcopy(_SAMPLE_TEMPLATES)}
 
 
+# The children's palette of paso-3.5 (23/10/2026): each animal takes its
+# natural colour; a photo child, the new colour closest (OKLab) to its old one.
+# Brown was a tie between turquoise and red: red, as brown is warm.
+_V5_PRESET_COLORS = {
+    "unicorn": "#9471e7",
+    "dinosaur": "#4da33d",
+    "dolphin": "#2193d6",
+    "fox": "#e77300",
+    "lion": "#f6d700",
+    "octopus": "#e865a3",
+    "ladybug": "#d3372f",
+    "owl": "#244d99",
+}
+_V5_OLD_TO_NEW = {
+    "#9d4edd": "#9471e7",  # morado → lila
+    "#52b788": "#4da33d",  # verde → verde
+    "#4895ef": "#2193d6",  # azul → azul
+    "#f8961e": "#e77300",  # naranja → naranja
+    "#f9c74f": "#f6d700",  # amarillo → amarillo
+    "#f72585": "#e865a3",  # rosa → rosa
+    "#e63946": "#d3372f",  # rojo → rojo
+    "#8d6e63": "#d3372f",  # marrón → rojo
+}
+
+
+def _v4_to_v5(doc: dict) -> dict:
+    """Move every child to the new palette of colours a child can name."""
+    def recolor(child: dict) -> dict:
+        color = child.get("color")
+        if child.get("avatar_type") == "preset" and child.get("preset") in _V5_PRESET_COLORS:
+            color = _V5_PRESET_COLORS[child["preset"]]
+        else:
+            color = _V5_OLD_TO_NEW.get(str(color).lower(), color)
+        return {**child, "color": color}
+
+    return {**doc, "version": 5, "children": [recolor(c) for c in doc.get("children") or []]}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
     3: _v3_to_v4,
+    4: _v4_to_v5,
 }
 
 

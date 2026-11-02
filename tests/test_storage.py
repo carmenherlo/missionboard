@@ -33,7 +33,7 @@ def test_v1_file_is_upgraded_and_backed_up(tmp_path):
     doc = read_yaml(tmp_path)
     assert doc["version"] == config_migrations.CURRENT_VERSION
     assert doc["parents"] == V1_FILE["parents"]
-    assert doc["children"] == V1_FILE["children"]
+    assert doc["children"] == [{**V1_FILE["children"][0], "color": "#9471e7"}]  # the unicorn is lilac since v5
     assert doc["settings"]["stars_per_mission"] == 1
     assert doc["features"]["games"] is False
     assert yaml.safe_load((tmp_path / "config.yaml.v1.bak").read_text()) == V1_FILE
@@ -167,7 +167,7 @@ def test_v2_file_gets_missions(tmp_path):
     doc = read_yaml(tmp_path)
     assert doc["version"] == config_migrations.CURRENT_VERSION
     assert doc["missions"] == []
-    assert doc["children"] == V1_FILE["children"]
+    assert [c["id"] for c in doc["children"]] == ["4ca2bf6b"]
     assert (tmp_path / "config.yaml.v2.bak").is_file()
 
 
@@ -176,7 +176,7 @@ def test_v3_file_gets_the_sample_templates(tmp_path):
     write_yaml(tmp_path, {**V1_FILE, "version": 3, "settings": {}, "features": {}, "missions": [mission]})
     ConfigStore(tmp_path).migrate()
     doc = read_yaml(tmp_path)
-    assert doc["version"] == 4
+    assert doc["version"] == config_migrations.CURRENT_VERSION
     assert doc["missions"] == [mission]
     assert [t["name"] for t in doc["templates"]] == ["Despegue", "Aterrizaje", "Alunizaje"]
     assert all("child_id" not in t for t in doc["templates"])
@@ -186,3 +186,33 @@ def test_v3_file_gets_the_sample_templates(tmp_path):
 
 def test_new_install_starts_with_the_sample_templates():
     assert [t["name"] for t in config_migrations.initial()["templates"]] == ["Despegue", "Aterrizaje", "Alunizaje"]
+
+
+def test_v4_file_moves_the_children_to_the_new_palette(tmp_path):
+    def child(id, color, preset=None):
+        avatar = {"avatar_type": "preset", "preset": preset} if preset else {"avatar_type": "photo", "preset": None}
+        return {"id": id, "name": id, "photo": None, "color": color, **avatar}
+
+    children = [
+        child("fox", "#f8961e", preset="fox"),
+        child("owl", "#8d6e63", preset="owl"),
+        child("lion-was-edited", "#e63946", preset="lion"),  # an animal always takes its own colour
+        child("photo-purple", "#9d4edd"),
+        child("photo-brown", "#8D6E63"),
+        child("photo-unknown", "#123456"),  # not from the old palette: left as it was
+    ]
+    write_yaml(tmp_path, {**V1_FILE, "version": 4, "settings": {}, "features": {}, "missions": [],
+                          "templates": [], "children": children})
+    ConfigStore(tmp_path).migrate()
+    doc = read_yaml(tmp_path)
+    assert doc["version"] == 5
+    assert {c["id"]: c["color"] for c in doc["children"]} == {
+        "fox": "#e77300",
+        "owl": "#244d99",
+        "lion-was-edited": "#f6d700",
+        "photo-purple": "#9471e7",
+        "photo-brown": "#d3372f",
+        "photo-unknown": "#123456",
+    }
+    assert [c["name"] for c in doc["children"]] == [c["name"] for c in children]
+    assert (tmp_path / "config.yaml.v4.bak").is_file()

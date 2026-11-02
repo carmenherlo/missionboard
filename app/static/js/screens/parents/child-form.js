@@ -1,5 +1,6 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
+import { colorPicker, suggestedColor } from "../../components/color-picker.js";
 import { saveStatus } from "../../components/save-status.js";
 import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
@@ -22,7 +23,9 @@ export async function viewChildForm(childId) {
   }
 
   // Presets are exclusive to one child; colours may repeat.
-  const usedPresets = new Set(children.filter((c) => c.id !== childId).map((c) => c.preset));
+  const siblings = children.filter((c) => c.id !== childId);
+  const usedPresets = new Set(siblings.map((c) => c.preset));
+  const suggested = suggestedColor(catalog.palette, siblings);
   const form = {
     name: existing?.name ?? "",
     avatar_type: existing?.avatar_type ?? null,
@@ -79,6 +82,7 @@ export async function viewChildForm(childId) {
     if (form.photoPreview) URL.revokeObjectURL(form.photoPreview);
     form.avatar_type = "photo";
     form.preset = null;
+    form.color ??= suggested; // a new child starts with the suggested colour, already chosen
     form.photoFile = file;
     form.photoPreview = URL.createObjectURL(file);
     refreshAll();
@@ -129,16 +133,15 @@ export async function viewChildForm(childId) {
     if (form.avatar_type === "photo") {
       sections.push(
         h("h2", {}, t.childForm.chooseColor),
-        h("div", { class: "swatches" },
-          catalog.palette.map(({ color, label }) =>
-            h("button", {
-              type: "button",
-              class: `swatch${form.color === color ? " swatch--selected" : ""}`,
-              style: `--swatch: ${color}`,
-              title: label,
-              "aria-label": label,
-              onclick: () => chooseColor(color),
-            }))));
+        colorPicker({
+          palette: catalog.palette,
+          columns: catalog.picker_columns,
+          chosen: form.color,
+          suggested,
+          siblings,
+          onChoose: chooseColor,
+        }),
+        h("p", { class: "hint" }, t.childForm.colorHint));
     }
     picker.replaceChildren(...sections);
   }

@@ -33,6 +33,15 @@ def test_avatars_catalog(client):
         assert client.get(preset["image_url"]).status_code == 200, preset["id"]
 
 
+def test_palette_and_picker(client):
+    body = client.get("/api/avatars").json()
+    ids = [entry["id"] for entry in body["palette"]]
+    assert ids[:6] == ["yellow", "lilac", "green", "orange", "pink", "blue"]  # suggestion order
+    assert sorted(i for column in body["picker_columns"] for i in column) == sorted(ids)
+    assert len({p["color"] for p in body["presets"]}) == len(body["presets"])  # each animal its own colour
+    assert all({"color", "strong", "soft", "on", "label"} <= entry.keys() for entry in body["palette"])
+
+
 def test_list_is_empty_without_config(client):
     assert client.get("/api/children").json() == []
 

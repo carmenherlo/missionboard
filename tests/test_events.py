@@ -162,7 +162,7 @@ def test_children_and_their_avatar(client):
     upload(client, f"/api/children/{bea['id']}/photo")
     assert descriptions(client) == [
         "Cambiaste a Beatriz · avatar: foto nueva",
-        "Cambiaste a Beatriz · nombre: Beatriz · avatar: zorro · color: #f8961e",
+        "Cambiaste a Beatriz · nombre: Beatriz · avatar: zorro · color: #e77300",
         "Añadiste a Bea",
     ]
 
