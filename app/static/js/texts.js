@@ -80,6 +80,8 @@ export const t = {
     trialLabel: "Prueba",
     speed: "Velocidad",
     nextPart: "Siguiente",
+    transcript: "Transcripción",
+    transcriptEmpty: "Aquí saldrá lo que diga la voz, con la hora de la prueba.",
   },
   sound: {
     label: "Volumen",

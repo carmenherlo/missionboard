@@ -23,13 +23,14 @@
 // "Probar ahora" (Configurar → Rutinas) shows a routine the same way, at its own
 // times, on this device only: over any screen, nothing logged, and "Cerrar"
 // ends it. Its clock can go faster (×10, ×20) or jump to just before the next
-// part ("Siguiente"); the real routine always goes at the household's time.
+// part ("Siguiente"), and "Transcripción" lists what the voice said, at which
+// time of the trial; the real routine always goes at the household's time.
 import { api } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
 import { codeField } from "../components/code-input.js";
 import { soundButton } from "../components/sound-panel.js";
 import { sounds } from "../components/sound.js";
-import { quiet, say } from "../components/speech.js";
+import { onSay, quiet, say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { openMission } from "../screens/child/mission-flow.js";
 import { t } from "../texts.js";
@@ -52,6 +53,13 @@ const TRIAL_SPEEDS = [1, 10, 20]; // "Probar ahora": how fast its clock can go
 const TRIAL_JUMP_LEAD_S = 20; // "Siguiente" lands this long before the next part (its countdown is heard)
 
 const inParents = () => location.hash.startsWith("#/parents");
+
+// A minute of the day as "6:35:20" (the transcript of a trial).
+function secondsTime(minute) {
+  const seconds = Math.floor(minute * 60) % (24 * 3600);
+  const two = (n) => String(n).padStart(2, "0");
+  return `${Math.floor(seconds / 3600)}:${two(Math.floor(seconds / 60) % 60)}:${two(seconds % 60)}`;
+}
 
 let controller = null;
 
@@ -133,6 +141,11 @@ export function startRoutines() {
       data,
       fetchedAt: Date.now(),
       speed: 1, // only a trial goes faster
+      transcript: [], // a trial: what was said, { time, text }
+      transcriptOpen: false,
+      stopListening: data.trial
+        ? onSay((sentences) => { showing.transcript.push({ time: now(), text: sentences.join(" ") }); renderTranscript(); })
+        : null,
       view,
       phaseKey: null,
       ringing: false,
@@ -162,6 +175,7 @@ export function startRoutines() {
   }
 
   function end() {
+    showing.stopListening?.();
     stopRinging();
     quiet();
     clearInterval(showing.ticker);
@@ -489,10 +503,11 @@ export function startRoutines() {
     const people = h("ul", { class: "routine__people" });
     const over = h("div", {}); // a kid's mission, over the clock
     const trialTools = h("div", { class: "routine__trial" });
+    const transcript = h("ol", { class: "routine__transcript", "aria-live": "polite" });
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
         h("header", { class: "routine__top" }, time, h("span", { class: "child-bar__spacer" }), soundButton(), close),
-        trialTools,
+        trialTools, transcript,
         what, until, h("div", { class: "routine__dial" }, clock, count), stopButton, tasks, next, finish),
       h("aside", { class: "routine__side" }, people),
       over);
@@ -500,7 +515,7 @@ export function startRoutines() {
       type: "button", class: "routine-banner", onclick: () => { location.hash = "#/"; },
     }, t.routine.banner);
     return { layer, banner, time, close, stopButton, what, until, clock, count, tasks, next, finish, people, over,
-      trialTools };
+      trialTools, transcript };
   }
 
   function renderTrialTools() {
@@ -514,7 +529,24 @@ export function startRoutines() {
           type: "button", class: `tab${speed === showing.speed ? " tab--on" : ""}`,
           "aria-pressed": String(speed === showing.speed), onclick: () => setSpeed(speed),
         }, `×${speed}`))),
-      h("button", { type: "button", class: "btn", onclick: jump }, t.routine.nextPart));
+      h("button", { type: "button", class: "btn", onclick: jump }, t.routine.nextPart),
+      h("button", {
+        type: "button", class: "btn routine__trial-toggle",
+        "aria-pressed": String(showing.transcriptOpen),
+        onclick: () => { showing.transcriptOpen = !showing.transcriptOpen; renderTrialTools(); },
+      }, t.routine.transcript));
+    renderTranscript();
+  }
+
+  function renderTranscript() {
+    const { view } = showing;
+    view.transcript.hidden = !showing.transcriptOpen;
+    if (!showing.transcriptOpen) return;
+    view.transcript.replaceChildren(...(showing.transcript.length
+      ? showing.transcript.map(({ time, text }) => h("li", {},
+        h("span", { class: "routine__transcript-time" }, secondsTime(time)), text))
+      : [h("li", { class: "routine__transcript-empty" }, t.routine.transcriptEmpty)]));
+    view.transcript.scrollTop = view.transcript.scrollHeight; // the latest, in sight
   }
 
   // Hidden while closed until its next part; in the parents' zone, only a banner.

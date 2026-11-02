@@ -1,4 +1,5 @@
-// Says things aloud. Everything the app says goes through here.
+// Says things aloud. Everything the app says goes through here (and onSay()
+// hears it, even with the voice off).
 //  · The natural voice (Piper, the woman's voice the family chose in the old
 //    app) is made on the server (GET /api/voice) and played here.
 //  · Without it (no model on the server, or a sentence that fails), the
@@ -14,6 +15,7 @@ let tabletVoice = null;
 let natural = false; // the server's voice is there
 let saying = 0; // which say() is the latest: an older one stops
 let playing = null; // the sentence being played by the natural voice
+const listeners = new Set(); // who wants to know what is said ("Probar ahora": its transcript)
 
 function pickTabletVoice() {
   const voices = globalThis.speechSynthesis?.getVoices() ?? [];
@@ -39,6 +41,7 @@ export function say(text) {
   const parts = [text].flat()
     .map((part) => part.replace(/\p{Extended_Pictographic}|️/gu, "").replace(/\s+/g, " ").trim())
     .filter(Boolean);
+  if (parts.length) listeners.forEach((listener) => listener(parts));
   if (!parts.length || isOff("voice")) return;
   const turn = saying;
   if (natural) sayNaturally(parts, turn);
@@ -75,6 +78,12 @@ function sayWithTablet(parts) {
     utterance.volume = Math.min(1, volume("voice"));
     speechSynthesis.speak(utterance);
   }
+}
+
+// listener(sentences) for everything said from now on; returns how to stop.
+export function onSay(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 export function quiet() {
