@@ -7,6 +7,7 @@ from app.errors import InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
+from app.images.rules import ImageRules
 from app.missions.repository import WEEKDAYS, Mission, MissionList, MissionsRepository, Schedule, Step
 from app.storage.photo_store import PhotoStore
 
@@ -52,8 +53,8 @@ class MissionEditor:
         self, missions: MissionList, libraries: ImageLibraries, photos: PhotoStore, events: EventLog
     ):
         self._missions = missions
-        self._libraries = libraries
         self._photos = photos
+        self._images = ImageRules(libraries, photos)
         self._events = events
 
     def get(self, mission_id: str) -> Mission:
@@ -66,9 +67,9 @@ class MissionEditor:
         """A new mission with nothing but its name and image (suggested if none is given)."""
         mission = Mission(id=_new_id(), child_id=child_id, name=name)
         if image is not None:
-            mission.image = self._check_library_image(image)
+            mission.image = self._images.check_library_image(image)
         else:
-            mission.image, mission.image_suggested = self._suggest(name)
+            mission.image, mission.image_suggested = self._images.suggest(name)
         return mission
 
     def update(self, mission_id: str, *, name=UNSET, image=UNSET, days=UNSET, schedule=UNSET) -> Mission:
@@ -78,14 +79,14 @@ class MissionEditor:
             if name is not UNSET:
                 mission.name = name
             if image is not UNSET:
-                mission.image = self._check_new_image(old.image, image)
+                mission.image = self._images.check_new_image(old.image, image)
                 mission.image_suggested = False
             if days is not UNSET:
                 mission.days = _check_days(days)
             if schedule is not UNSET:
                 mission.schedule = _check_schedule(schedule)
             self._missions.update(mission)
-        self._drop_replaced_photo(old.image, mission.image)
+        self._images.drop_replaced_photo(old.image, mission.image)
         changes = {
             field: getattr(mission, field)
             for field in ("name", "image", "days", "schedule")
@@ -110,7 +111,7 @@ class MissionEditor:
             filename = self._photos.save(data, prefix=mission_id, extension=extension)
             mission = replace(old, image=photo_ref(filename), image_suggested=False)
             self._missions.update(mission)
-        self._drop_replaced_photo(old.image, mission.image)
+        self._images.drop_replaced_photo(old.image, mission.image)
         self._log("changed", mission, changes={"image": mission.image})
         return mission
 
@@ -143,7 +144,7 @@ class MissionEditor:
     def add_step(self, mission_id: str, text: str) -> Mission:
         with self._missions.atomic():
             mission = self.get(mission_id)
-            image, suggested = self._suggest(text)
+            image, suggested = self._images.suggest(text)
             step = Step(id=_new_id(), text=text, image=image, image_suggested=suggested)
             mission.steps.append(step)
             self._missions.update(mission)
@@ -158,10 +159,10 @@ class MissionEditor:
             if text is not UNSET:
                 step.text = text
             if image is not UNSET:
-                step.image = self._check_new_image(old.image, image)
+                step.image = self._images.check_new_image(old.image, image)
                 step.image_suggested = False
             self._missions.update(mission)
-        self._drop_replaced_photo(old.image, step.image)
+        self._images.drop_replaced_photo(old.image, step.image)
         changes = {
             field: getattr(step, field) for field in ("text", "image") if getattr(step, field) != getattr(old, field)
         }
@@ -202,7 +203,7 @@ class MissionEditor:
             step.image = photo_ref(filename)
             step.image_suggested = False
             self._missions.update(mission)
-        self._drop_replaced_photo(old_image, step.image)
+        self._images.drop_replaced_photo(old_image, step.image)
         self._log("changed", mission, step=step, changes={"image": step.image})
         return mission
 
@@ -225,26 +226,6 @@ class MissionEditor:
         if step is None:
             raise NotFoundError("Step not found")
         return step
-
-    def _suggest(self, text: str) -> tuple[str | None, bool]:
-        """An image picked from the text, marked as suggested; (None, False) if none fits."""
-        ref = self._libraries.suggest(text)
-        return ref, ref is not None
-
-    def _check_library_image(self, image: str | None) -> str | None:
-        if image is not None and not self._libraries.exists(image):
-            raise InvalidError("Unknown image")
-        return image
-
-    def _check_new_image(self, current: str | None, image: str | None) -> str | None:
-        # Photos are set by uploading; keeping the current one is the only other way to name one.
-        if image is not None and image == current:
-            return image
-        return self._check_library_image(image)
-
-    def _drop_replaced_photo(self, old: str | None, new: str | None) -> None:
-        if old != new:
-            self._photos.delete(photo_filename(old))
 
     @staticmethod
     def _photos_of(mission: Mission) -> list[str]:
