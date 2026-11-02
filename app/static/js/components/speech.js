@@ -1,27 +1,35 @@
-// Says things aloud with the tablet's own voice, in Spanish. Everything the
-// app says goes through here, so changing the voice (to Piper, the natural
-// woman's voice of the old app, before going to production) is changing
-// only this file. If the tablet has no Spanish voice, canSpeak() is false and
-// the screens hide the 🔊. Its volume is the "voice" channel of sound.js.
+// Says things aloud. Everything the app says goes through here.
+//  · The natural voice (Piper, the woman's voice the family chose in the old
+//    app) is made on the server (GET /api/voice) and played here.
+//  · Without it (no model on the server, or a sentence that fails), the
+//    tablet's own Spanish voice reads instead.
+// If neither is there, canSpeak() is false and the screens hide the 🔊.
+// Its volume is the "voice" channel of sound.js.
+import { api } from "../api.js";
 import { isOff, volume } from "./sound.js";
 
-let voice = null;
-let saying = 0; // which say() is the latest: an older one stops
+const PAUSE_MS = 350; // between the sentences of one say()
 
-function pickVoice() {
+let tabletVoice = null;
+let natural = false; // the server's voice is there
+let saying = 0; // which say() is the latest: an older one stops
+let playing = null; // the sentence being played by the natural voice
+
+function pickTabletVoice() {
   const voices = globalThis.speechSynthesis?.getVoices() ?? [];
-  voice = voices.find((v) => v.lang.toLowerCase().startsWith("es-es"))
+  tabletVoice = voices.find((v) => v.lang.toLowerCase().startsWith("es-es"))
     ?? voices.find((v) => v.lang.toLowerCase().startsWith("es"))
     ?? null;
 }
 
 if (globalThis.speechSynthesis) {
-  pickVoice();
-  speechSynthesis.addEventListener("voiceschanged", pickVoice);
+  pickTabletVoice();
+  speechSynthesis.addEventListener("voiceschanged", pickTabletVoice);
 }
+api("GET", "/api/voice/status").then((status) => { natural = status.available; }).catch(() => {});
 
 export function canSpeak() {
-  return voice !== null;
+  return natural || tabletVoice !== null;
 }
 
 // A text, or a list of sentences said one after the other. Whatever was being
@@ -31,19 +39,48 @@ export function say(text) {
   const parts = [text].flat()
     .map((part) => part.replace(/\p{Extended_Pictographic}|️/gu, "").replace(/\s+/g, " ").trim())
     .filter(Boolean);
-  if (!voice || !parts.length || isOff("voice")) return;
+  if (!parts.length || isOff("voice")) return;
   const turn = saying;
+  if (natural) sayNaturally(parts, turn);
+  else sayWithTablet(parts);
+}
+
+async function sayNaturally(parts, turn) {
+  // All of them asked for at once: the next one is ready when the last ends.
+  const sounds = parts.map((part) => new Audio(`/api/voice?text=${encodeURIComponent(part)}`));
+  for (const [index, sound] of sounds.entries()) {
+    if (turn !== saying) return;
+    sound.volume = Math.min(1, volume("voice"));
+    playing = sound;
+    try {
+      await new Promise((resolve, reject) => {
+        sound.addEventListener("ended", resolve, { once: true });
+        sound.addEventListener("error", reject, { once: true });
+        sound.play().catch(reject);
+      });
+    } catch {
+      if (turn === saying) sayWithTablet(parts.slice(index)); // the rest, with the tablet's voice
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
+  }
+}
+
+function sayWithTablet(parts) {
+  if (!tabletVoice) return;
   for (const part of parts) {
     const utterance = new SpeechSynthesisUtterance(part);
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
+    utterance.voice = tabletVoice;
+    utterance.lang = tabletVoice.lang;
     utterance.volume = Math.min(1, volume("voice"));
-    if (turn === saying) speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utterance);
   }
 }
 
 export function quiet() {
   saying += 1;
+  playing?.pause();
+  playing = null;
   globalThis.speechSynthesis?.cancel();
 }
 

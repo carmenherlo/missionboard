@@ -1,4 +1,5 @@
 import os
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -23,6 +24,8 @@ from app.storage import db
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 from app.templates import api as templates_api
+from app.voice import api as voice_api
+from app.voice.service import MODEL_NAME, Voice
 from app.today import api as today_api
 from app.today.repository import BackgroundStore, DayRepository
 
@@ -69,6 +72,7 @@ def create_app(
         settings.settings()
         settings.features()
         RoutinesRepository(config_store).list()  # and if a routine's times do not add up
+        threading.Thread(target=app.state.voice.load, daemon=True).start()  # it takes a moment
         yield
 
     app = FastAPI(title="missionboard", lifespan=lifespan)
@@ -79,6 +83,10 @@ def create_app(
     app.state.day_repository = DayRepository(data_dir)
     app.state.background_store = BackgroundStore(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
+    # The natural voice (app/voice/): its model in data/voices/ or where
+    # MISSIONBOARD_VOICE_MODEL says (the Docker image brings it).
+    model = Path(os.environ.get("MISSIONBOARD_VOICE_MODEL", data_dir / "voices" / MODEL_NAME))
+    app.state.voice = Voice(model, data_dir / "voice-cache")
     app.state.image_libraries = ImageLibraries(LIBRARIES if libraries is None else libraries)
 
     @app.exception_handler(errors.DomainError)
@@ -100,6 +108,7 @@ def create_app(
     app.include_router(events_api.router)
     app.include_router(today_api.router)
     app.include_router(routines_api.router)
+    app.include_router(voice_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():
