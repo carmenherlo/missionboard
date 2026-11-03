@@ -46,6 +46,8 @@ const RING_AGAIN_MS = 14_000; // while nobody stops it: ring, speak, and again
 const VOICE_AFTER_RING_MS = 5200; // the voice after the "rrring"
 const GOAL_REMINDERS = [5, 1]; // minutes before the goal
 const COUNTDOWN_S = 10; // the last seconds before a part, big on the clock
+const HURRY_S = 60; // a part's last minute: the second hand ticks twice as fast
+const TICK_AHEAD_S = 0.5; // the tic-tac is booked this far ahead, so it keeps an even beat
 const HERALD_S = 16; // seconds before a part ends: "Acaba el aseo. Diez segundos…"
 const AFTER_ZERO_MS = 1000; // after the countdown's last pip, the voice waits this long
 const WHO_IS_LEFT_MS = 9000; // in "firmar", after its announcement: who still has steps
@@ -294,6 +296,7 @@ export function startRoutines() {
     }
     if (!closed()) {
       remind(phase, time);
+      tickTock(phase, time);
       countDown(phase, time, key);
     }
     place();
@@ -488,6 +491,25 @@ export function startRoutines() {
         sounds.ding();
         say(untilGoal(time));
       }
+    }
+  }
+
+  // The second hand, heard, so nobody forgets the routine is on: a tic-tac each
+  // second while a part runs, twice as fast in its last minute; in the last ten
+  // seconds the countdown's pips take over. Not in a trial sped up.
+  function tickTock(phase, time) {
+    if (phase.kind !== "part" || showing.speed !== 1) {
+      showing.nextBeat = null;
+      return;
+    }
+    const second = time * 60;
+    const end = phase.to * 60 - COUNTDOWN_S;
+    if (showing.nextBeat == null || showing.nextBeat < second - 1) showing.nextBeat = Math.ceil(second);
+    while (showing.nextBeat < second + TICK_AHEAD_S && showing.nextBeat <= end) {
+      const beat = showing.nextBeat;
+      showing.beats = (showing.beats ?? 0) + 1;
+      if (beat >= second - 0.05) sounds.tick(Math.max(0, beat - second), showing.beats % 2 === 0);
+      showing.nextBeat = beat + (phase.to * 60 - beat <= HURRY_S ? 0.5 : 1);
     }
   }
 

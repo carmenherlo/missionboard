@@ -89,6 +89,7 @@ export const t = {
     label: "Volumen",
     voice: "Voz",
     effects: "Sonidos",
+    ticking: "Secundero",
     tapToEnable: "Toca la pantalla para activar el sonido (las rutinas lo necesitan para sonar).",
   },
   codeField: {

@@ -2,20 +2,25 @@
 // works offline. Ported from the old app (an earlier version, sounds.js),
 // where they were tested at home with the morning routine.
 //
-// Two channels, voice and effects, each with its level and an on/off switch,
+// Three channels, voice, effects and the ticking second hand, each with its level and an on/off switch,
 // remembered on this device (the sound panel changes them). Browsers only
 // allow sound after a tap: the first tap anywhere starts the audio engine.
 
 const KEY = "missionboard.sound";
 const USUAL_LEVEL = 0.8;
-const LOUDNESS = { voice: 1, effects: 0.75 };
+const LOUDNESS = { voice: 1, effects: 0.75, ticking: 0.75 };
+const USUAL_TICKING = 0.5; // under the voice, not over it
 
 let audio = null;
 let settings = read();
 const listeners = new Set();
 
 function read() {
-  const fresh = { voice: { level: USUAL_LEVEL, off: false }, effects: { level: USUAL_LEVEL, off: false } };
+  const fresh = {
+    voice: { level: USUAL_LEVEL, off: false },
+    effects: { level: USUAL_LEVEL, off: false },
+    ticking: { level: USUAL_TICKING, off: false },
+  };
   try {
     return { ...fresh, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
   } catch {
@@ -110,6 +115,13 @@ export const sounds = {
     });
   },
 
+  // The second hand, heard: a soft wooden "tic" (or "tac", lower), `delay` seconds from now.
+  tick(delay, tac = false) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: tac ? 1400 : 1900, length: 0.035, type: "triangle", volume: 0.6 });
+    }, "ticking");
+  },
+
   // Well done: a fanfare.
   win() {
     play((ctx, out, now) => {
@@ -125,12 +137,12 @@ export const sounds = {
 
 // ---------- building blocks ----------
 
-function play(draw) {
-  if (isOff("effects")) return;
+function play(draw, channel = "effects") {
+  if (isOff(channel)) return;
   const ctx = context();
   if (!ctx) return; // no Web Audio: silent
   const output = ctx.createGain();
-  output.gain.value = volume("effects");
+  output.gain.value = volume(channel);
   output.connect(ctx.destination);
   draw(ctx, output, ctx.currentTime + 0.01);
 }
