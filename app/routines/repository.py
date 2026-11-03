@@ -8,6 +8,7 @@ it was tested at home.
 
 from datetime import date, datetime
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -79,6 +80,10 @@ class Routine(BaseModel):
     missions: dict[str, str | None] = {}  # each child's mission in this routine (by id)
     wake: str | None = Field(default=None, pattern=TIME)  # None: started by hand (R2)
     remind_every: int = Field(default=5, ge=0, le=30)
+    # Which time stays put when the parts change: "start" (Empieza a las), or "end"
+    # (Termina a las: the goal's time; the parts go one after the other up to it).
+    anchor: Literal["start", "end"] = "start"
+    alarm: bool = True  # the "rrring" (before or at its first part); off: a ding, for bedtime
     # Some days everything moves: {"tue": 15} rings and goes 15 minutes later on Tuesdays.
     offsets: dict[str, int] = {}
     notices: tuple[Notice, ...] = ()  # said before it rings (not by hand)
@@ -148,7 +153,7 @@ class Routine(BaseModel):
         """Each part with its start and end, in minutes of the day (started by hand:
         in minutes from when it starts)."""
         if self.wake is None:
-            if any(part.at for part in self.parts) or self.goal or self.offsets or self.notices:
+            if any(part.at for part in self.parts) or self.goal or self.offsets or self.notices or self.anchor == "end":
                 raise ValueError(f"{self.id!r} is started by hand: no times of its own, no goal")
             timed, start = [], 0
             for part in self.parts:
@@ -168,7 +173,21 @@ class Routine(BaseModel):
             previous_end = end
         if self.goal and minute_of(self.goal.at) < previous_end:
             raise ValueError(f"the goal of {self.id!r} is before the routine ends")
+        if self.anchor == "end" and (
+            not self.goal or any(part.at for part in self.parts[1:]) or minute_of(self.goal.at) != previous_end
+        ):
+            raise ValueError(f"{self.id!r} ends at its goal: its parts go one after the other up to it")
         return timed
+
+    @property
+    def starts(self) -> int:
+        """When its first part starts, in minutes of the day."""
+        return self.timeline()[0][1]
+
+    @property
+    def alarm_before(self) -> int:
+        """How many minutes before its first part it rings."""
+        return (self.starts - minute_of(self.wake)) % (24 * 60)
 
     @property
     def ends(self) -> int:

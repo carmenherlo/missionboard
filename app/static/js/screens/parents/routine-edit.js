@@ -63,7 +63,22 @@ export async function viewRoutineEdit(routineId) {
     nameTimer = setTimeout(saveName, TEXT_SAVE_DELAY_MS);
   });
   nameInput.addEventListener("blur", saveName);
-  const wake = h("input", { type: "time", value: routine.wake, onchange: (e) => e.target.value && patch({ wake: e.target.value }) });
+  // "Empieza a las" or "Termina a las": the time that stays put when the parts change.
+  const anchorBox = h("div", {});
+  const whenLabel = h("span", {});
+  const when = h("input", {
+    type: "time",
+    onchange: (e) => e.target.value && patch(routine.anchor === "end" ? { ends: e.target.value } : { starts: e.target.value }),
+  });
+  const whenHint = h("p", { class: "hint" });
+  // The alarm: on or off (a bedtime routine), and how long before the first part.
+  const alarmOn = h("input", { type: "checkbox", onchange: (e) => patch({ alarm: e.target.checked }) });
+  const alarmBefore = h("input", {
+    type: "number", min: 0, max: 60,
+    onchange: (e) => patch({ alarm_before: Math.min(60, Math.max(0, Number(e.target.value) || 0)) }),
+  });
+  const alarmBeforeRow = h("div", { class: "times" });
+  const alarmHint = h("p", { class: "hint" });
   const remind = h("input", {
     type: "number", min: 0, max: 30, value: routine.remind_every,
     onchange: (e) => patch({ remind_every: Number(e.target.value) }),
@@ -76,9 +91,9 @@ export async function viewRoutineEdit(routineId) {
   const offsetsTimes = h("ul", { class: "offsets__times" }); // each moved day, its times: no sums to do
   function renderOffsets() {
     offsetsTimes.replaceChildren(...WEEKDAYS
-      .filter((d) => routine.days.includes(d) && routine.offsets[d] && routine.wake)
+      .filter((d) => routine.days.includes(d) && routine.offsets[d] && !routine.manual)
       .map((day) => h("li", {}, t.routineEdit.movedDay(t.dayNames[day],
-        movedTime(routine.wake, routine.offsets[day]), movedTime(routine.ends, routine.offsets[day])))));
+        movedTime(routine.starts, routine.offsets[day]), movedTime(routine.ends, routine.offsets[day])))));
     offsetsBox.replaceChildren(...WEEKDAYS.filter((d) => routine.days.includes(d)).map((day) =>
       h("label", { class: "offsets__day" }, t.days[day],
         h("input", {
@@ -130,11 +145,37 @@ export async function viewRoutineEdit(routineId) {
     timed.hidden = manual;
     goalPanel.hidden = manual;
   }
+  function renderWhen() {
+    const ending = routine.anchor === "end";
+    anchorBox.replaceChildren(h("div", { class: "tabs" },
+      [["start", t.routineEdit.anchorStart], ["end", t.routineEdit.anchorEnd]].map(([value, label]) =>
+        h("button", {
+          type: "button", class: `tab${routine.anchor === value ? " tab--on" : ""}`,
+          "aria-pressed": String(routine.anchor === value),
+          onclick: () => routine.anchor !== value && patch({ anchor: value }),
+        }, routine.anchor === value && icon("check"), label))));
+    whenLabel.textContent = ending ? t.routineEdit.anchorEnd : t.routineEdit.anchorStart;
+    when.value = ending ? routine.ends : routine.starts;
+    const length = lengthText(minuteOf(routine.ends) - minuteOf(routine.starts));
+    whenHint.textContent = ending
+      ? t.routineEdit.endsHint(shortTime(routine.starts), length)
+      : t.routineEdit.startsHint(shortTime(routine.ends), length);
+    alarmOn.checked = routine.alarm;
+    alarmBefore.value = routine.alarm_before;
+    const before = routine.alarm && routine.alarm_before > 0; // a while ringing before: reminders too
+    alarmBeforeRow.replaceChildren(...[
+      routine.alarm && h("label", { class: "time" }, t.routineEdit.alarmBefore, alarmBefore),
+      before && h("label", { class: "time" }, t.routineEdit.remindEvery, remind)].filter(Boolean));
+    alarmHint.textContent = routine.alarm
+      ? t.routineEdit.alarmHint(shortTime(routine.wake), routine.alarm_before, capital(routine.parts[0].name))
+      : t.routineEdit.noAlarmHint;
+    wakeHint.hidden = !before;
+  }
   function renderRoutine() {
     renderMode();
     renderOffsets();
     renderNotices();
-    wake.value = routine.wake ?? DEFAULT_WAKE;
+    if (!routine.manual) renderWhen();
     remind.value = routine.remind_every;
     wakeHint.textContent = t.routineEdit.wakeHint(routine.remind_every);
     daysSummary.textContent = daysLongText(routine.days);
@@ -175,6 +216,28 @@ export async function viewRoutineEdit(routineId) {
   }
 
   // ---------- the parts, in order ----------
+  // Between two cards that do not move, like Scratch's blocks: the alarm opens the
+  // routine and the goal closes it. The pin marks the time that stays put.
+  const alarmCard = h("div", {});
+  const goalCard = h("div", {});
+  function renderCards() {
+    const pin = h("span", { "aria-label": t.routineEdit.pinned, title: t.routineEdit.pinned }, icon("pin"));
+    alarmCard.hidden = routine.manual;
+    goalCard.hidden = routine.manual || !routine.goal;
+    if (routine.manual) return;
+    alarmCard.className = `routine-card routine-card--alarm${routine.alarm ? "" : " routine-card--off"}`;
+    alarmCard.replaceChildren(icon("alarm"),
+      h("span", { class: "routine-card__text" }, routine.alarm ? t.routineEdit.alarmCard : t.routineEdit.noAlarmCard,
+        routine.alarm && h("span", { class: "routine-card__detail" }, t.routineEdit.alarmCardBefore(routine.alarm_before))),
+      h("span", { class: "routine-card__time" }, routine.anchor === "start" && pin,
+        shortTime(routine.alarm ? routine.wake : routine.starts)));
+    if (!routine.goal) return;
+    goalCard.className = "routine-card routine-card--goal";
+    goalCard.replaceChildren(icon("flag"),
+      h("span", { class: "routine-card__text" }, capital(routine.goal.name),
+        h("span", { class: "routine-card__detail" }, `"${routine.goal.say}"`)),
+      h("span", { class: "routine-card__time" }, routine.anchor === "end" && pin, shortTime(routine.goal.at)));
+  }
   const partsTitle = h("span", {});
   const partsList = h("ul", { class: "rows" });
   sortable(partsList, {
@@ -210,6 +273,7 @@ export async function viewRoutineEdit(routineId) {
   }
   function renderParts() {
     partsTitle.textContent = t.routineEdit.panelParts(routine.parts.length);
+    renderCards();
     if (selected) selected = new Set([...selected].filter((id) => routine.parts.some((p) => p.id === id)));
     renderPartsTools();
     partsList.replaceChildren(...routine.parts.map((part) =>
@@ -296,6 +360,7 @@ export async function viewRoutineEdit(routineId) {
       return;
     }
     const goal = routine.goal;
+    const ending = routine.anchor === "end"; // its time is "Termina a las", and it is a must
     const name = h("input", { type: "text", maxlength: 60, value: goal.name });
     const at = h("input", { type: "time", value: goal.at });
     const say = h("input", { type: "text", maxlength: 200, value: goal.say });
@@ -306,10 +371,11 @@ export async function viewRoutineEdit(routineId) {
       }
     };
     for (const input of [name, at, say]) input.addEventListener("change", saveGoal);
-    goalBox.replaceChildren(tabs,
-      h("div", { class: "times" }, h("label", {}, t.routineEdit.goalName, name), h("label", { class: "time" }, t.routineEdit.goalAt, at)),
+    goalBox.replaceChildren(...[!ending && tabs,
+      h("div", { class: "times" }, h("label", {}, t.routineEdit.goalName, name),
+        !ending && h("label", { class: "time" }, t.routineEdit.goalAt, at)),
       h("label", {}, t.routineEdit.goalSay, say),
-      h("p", { class: "hint" }, t.routineEdit.goalHint));
+      h("p", { class: "hint" }, ending ? t.routineEdit.goalIsTheEnd : t.routineEdit.goalHint)].filter(Boolean));
   }
   function newGoal() {
     const last = routine.parts.at(-1).end;
@@ -349,9 +415,12 @@ export async function viewRoutineEdit(routineId) {
   }
 
   timed.append(
-    h("div", { class: "times" },
-      h("label", { class: "time" }, t.routineEdit.wake, wake),
-      h("label", { class: "time" }, t.routineEdit.remindEvery, remind)),
+    anchorBox,
+    h("div", { class: "times" }, h("label", { class: "time" }, whenLabel, when)),
+    whenHint,
+    h("label", { class: "toggle" }, alarmOn, t.routineEdit.alarm),
+    alarmBeforeRow,
+    alarmHint,
     wakeHint,
     h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox, offsetsTimes,
       h("span", { class: "hint" }, t.routineEdit.offsetsHint)),
@@ -382,13 +451,32 @@ export async function viewRoutineEdit(routineId) {
             timed),
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
-          panel(partsTitle, partsTools, partsList, addPart, importParts),
+          panel(partsTitle, partsTools, h("div", { class: "stack stack--tight" }, alarmCard, partsList, goalCard),
+            addPart, importParts),
           goalPanel)),
       footer));
 }
 
 export function capital(text) {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// "06:30" → 390.
+function minuteOf(time) {
+  const [hours, mins] = time.split(":").map(Number);
+  return hours * 60 + mins;
+}
+
+// "06:30" → "6:30".
+function shortTime(time) {
+  return movedTime(time, 0);
+}
+
+// 75 → "1 h 15 min".
+function lengthText(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return [hours && `${hours} h`, (rest || !hours) && `${rest} min`].filter(Boolean).join(" ");
 }
 
 // "06:30" moved 45 minutes: "7:15".

@@ -17,8 +17,9 @@ export async function viewRoutinesList() {
       h("span", { class: "row__name" }, routine.name,
         h("span", { class: "row__detail" },
           h("span", { class: "pill" }, daysText(routine.days)),
-          h("span", { class: "pill" }, routine.manual ? t.routines.byHand(routine.minutes) : t.routines.rings(routine.wake)),
-          h("span", { class: "pill" }, t.routines.parts(routine.parts.length, routine.goal?.at)),
+          h("span", { class: "pill" }, routine.manual
+            ? t.routines.byHand(routine.minutes) : t.routines.when(routine.starts, routine.ends, routine.alarm)),
+          h("span", { class: "pill" }, t.routines.parts(routine.parts.length)),
           routine.every_child && h("span", { class: "pill" }, t.routines.everyone))),
       h("span", { class: "row__actions" },
         h("button", {

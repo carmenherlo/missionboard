@@ -72,6 +72,8 @@ export async function viewRoutinePartEdit(routineId, partId) {
       ? h("p", { class: "hint" }, isFirst() ? t.routinePart.firstByHand : t.routinePart.byHand)
       : isFirst()
       ? h("p", { class: "hint" }, t.routinePart.first)
+      : routine.anchor === "end"
+      ? h("p", { class: "hint" }, t.routinePart.chained)
       : h("div", { class: "tabs" },
         [[false, t.routinePart.afterPrevious], [true, t.routinePart.atTime]].map(([value, label]) =>
           h("button", {
@@ -80,7 +82,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
           }, own === value && icon("check"), label)));
     when.replaceChildren(tabs,
       h("div", { class: "times" },
-        !routine.manual && (own || isFirst()) && h("label", { class: "time" }, t.routinePart.at, at),
+        !routine.manual && own && !isFirst() && h("label", { class: "time" }, t.routinePart.at, at),
         h("label", { class: "time" }, t.routinePart.minutes, minutes)),
       !routine.manual && h("p", { class: "hint" }, t.routinePart.starts(part().start, part().end)));
   }

@@ -1,7 +1,7 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, Query, Request
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.children import avatars
 from app.children.api import public_child
@@ -10,7 +10,7 @@ from app.deps import get_clock, get_config_store, get_event_log, get_image_libra
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
-from app.routines.editor import RoutinesEditor
+from app.routines.editor import TIMING, RoutinesEditor
 from app.routines.repository import TIME, Routine, RoutinesRepository, RunsRepository, hhmm
 from app.routines.service import NOTES, Current, RoutinesService, kids_of
 from app.storage.photo_store import PhotoStore
@@ -34,10 +34,22 @@ def _not_blank(value):
 
 
 class RoutineCreate(BaseModel):
+    """Rings at `wake` (its first part 5 minutes later), starts at `starts`, or ends at `ends` (its goal)."""
+
     name: str = Field(max_length=40)
-    wake: str = Field(pattern=TIME)
+    wake: str | None = Field(default=None, pattern=TIME)
+    starts: str | None = Field(default=None, pattern=TIME)
+    ends: str | None = Field(default=None, pattern=TIME)
+    goal: str | None = Field(default=None, max_length=60)
 
     _name = field_validator("name")(_not_blank)
+    _goal = field_validator("goal")(_not_blank)
+
+    @model_validator(mode="after")
+    def one_time(self) -> "RoutineCreate":
+        if sum(time is not None for time in (self.wake, self.starts, self.ends)) != 1:
+            raise ValueError("One time: wake, starts or ends")
+        return self
 
 
 class GoalIn(BaseModel):
@@ -63,6 +75,11 @@ class RoutinePatch(BaseModel):
     goal: GoalIn | None = None
     offsets: dict[str, int] | None = None
     notices: list[NoticeIn] | None = None
+    anchor: Literal["start", "end"] | None = None  # "Empieza a las" or "Termina a las"
+    starts: str | None = Field(default=None, pattern=TIME)
+    ends: str | None = Field(default=None, pattern=TIME)
+    alarm: bool | None = None
+    alarm_before: int | None = Field(default=None, ge=0, le=60)
 
     _name = field_validator("name")(_not_blank)
 
@@ -156,6 +173,7 @@ def _present(current: Current, libraries: ImageLibraries) -> dict:
         "started": current.started,
         "wake": routine.wake,
         "remind_every": routine.remind_every,
+        "alarm": routine.alarm,
         "parts": [
             {
                 "name": part.name,
@@ -260,6 +278,8 @@ class Editing:
             "every_child": not routine.kids,
             "kids": [c.id for c in kids],
             "ends": hhmm(routine.ends),
+            "starts": None if routine.manual else hhmm(routine.starts),
+            "alarm_before": None if routine.manual else routine.alarm_before,
             "manual": routine.manual,
             "minutes": routine.length,
             "parts": [
@@ -279,7 +299,7 @@ def list_routines(editor: RoutinesEditor = Depends(get_routines_editor), present
 @router.post("", status_code=201, dependencies=parent_only)
 def create_routine(body: RoutineCreate, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
-    return present(editor.create(body.name, body.wake))
+    return present(editor.create(body.name, body.wake, starts=body.starts, ends=body.ends, goal=body.goal))
 
 
 @router.get("/{routine_id}")
@@ -291,7 +311,7 @@ def get_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routines_e
 def update_routine(routine_id: str, body: RoutinePatch, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "days", "remind_every", "offsets", "notices"):  # wake: null means "by hand"
+    for required in ("name", "days", "remind_every", "offsets", "notices", *TIMING):  # wake: null means "by hand"
         if changes.get(required, "") is None:
             changes.pop(required)
     if changes.get("goal") is not None:

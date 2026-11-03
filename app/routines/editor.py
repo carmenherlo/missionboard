@@ -25,6 +25,7 @@ UNSET = object()
 TRIAL_LEAD_SECONDS = 20  # "Probar desde aquí" starts this long before the part
 NEW_ROUTINE_DAYS = WEEKDAYS[:5]
 NEW_PART_MINUTES = 5
+TIMING = ("anchor", "starts", "ends", "alarm", "alarm_before")
 
 
 def _new_id() -> str:
@@ -57,25 +58,38 @@ class RoutinesEditor:
             raise NotFoundError("Routine not found")
         return routine
 
-    def create(self, name: str, wake: str) -> Routine:
-        """A new routine with one part, five minutes after it rings: the rest is edited."""
-        start = minute_of(wake) + NEW_PART_MINUTES
-        first = self._new_part("la primera parte", at=hhmm(start % (24 * 60)))
+    def create(self, name: str, wake: str | None = None, *, starts: str | None = None, ends: str | None = None,
+               goal: str | None = None) -> Routine:
+        """A new routine with one part, the rest is edited: it rings at `wake` and the part
+        starts five minutes later; or it starts at `starts` (ringing then); or it ends at
+        `ends`, at its goal (named `goal`), and its parts go backwards from there."""
+        doc = {"id": _new_id(), "name": name, "days": NEW_ROUTINE_DAYS}
+        if ends:
+            goal = goal or "la meta"
+            doc |= {"anchor": "end", "wake": ends, "parts": [self._new_part("la primera parte", at=ends)],
+                    "goal": {"name": goal, "at": ends, "say": f"¡{goal[:1].upper()}{goal[1:]}!"}}
+        elif starts:
+            doc |= {"wake": starts, "parts": [self._new_part("la primera parte", at=starts)]}
+        else:
+            start = hhmm((minute_of(wake) + NEW_PART_MINUTES) % (24 * 60))
+            doc |= {"wake": wake, "parts": [self._new_part("la primera parte", at=start)]}
         with self._routines.atomic():
-            routine = self._valid(
-                {"id": _new_id(), "name": name, "days": NEW_ROUTINE_DAYS, "wake": wake, "parts": [first]},
-                check_others=True,
-            )
+            routine = self._valid(doc, check_others=True)
             self._routines.add(routine)
         self._log("created", routine)
         return routine
 
     def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
-               offsets=UNSET, notices=UNSET) -> Routine:
+               offsets=UNSET, notices=UNSET, **timing) -> Routine:
+        """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`."""
         changes = {k: v for k, v in
                    {"name": name, "days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
                     "offsets": offsets, "notices": notices}.items()
                    if v is not UNSET}
+        if set(timing) - set(TIMING):
+            raise TypeError(f"unknown: {set(timing) - set(TIMING)}")
+        if timing:
+            changes.update(self._retimed(self.get(routine_id), **timing))
         if "days" in changes:
             if not changes["days"]:
                 raise InvalidError("One day at least")
@@ -86,13 +100,47 @@ class RoutinesEditor:
             if changes["wake"] is None:  # started by hand: parts one after the other, no goal
                 for part in parts:
                     part["at"] = None
-                changes.update(parts=parts, goal=None, offsets={}, notices=[])
+                changes.update(parts=parts, goal=None, offsets={}, notices=[], anchor="start")
             elif current.manual:  # back to a time: the first part, five minutes after it rings
                 parts[0]["at"] = hhmm((minute_of(changes["wake"]) + NEW_PART_MINUTES) % (24 * 60))
                 changes["parts"] = parts
         routine = self._change(routine_id, changes)
         self._log("changed", routine, {k: v for k, v in changes.items() if k in ("name", "days")})
         return routine
+
+    def _retimed(self, routine: Routine, anchor=None, starts=None, ends=None, alarm=None, alarm_before=None) -> dict:
+        """The changes for "Empieza / Termina a las" (`anchor`), its time (`starts` or `ends`,
+        the goal's) and the alarm (on or off, and how many minutes before the first part)."""
+        if routine.manual:
+            raise InvalidError("Started by hand: it has no times")
+        parts = [_dump(p) for p in routine.parts]
+        goal = routine.goal and routine.goal.model_dump(mode="json")
+        start, lead = routine.starts, routine.alarm_before if routine.alarm else 0
+        changes = {}
+        if anchor == "end" and routine.anchor != "end":
+            # One part after the other up to the goal, whose time is kept (the parts move to it).
+            for part in parts[1:]:
+                part["at"] = None
+            end = routine.timeline()[-1][2]
+            goal = goal or {"name": "el final", "at": hhmm(end), "say": "¡Rutina terminada!"}
+            changes["goal"] = goal
+        if anchor:
+            changes["anchor"] = anchor
+        if starts:
+            start = minute_of(starts)
+        if ends:
+            if not goal:
+                raise InvalidError("No goal to end at")
+            goal["at"] = ends
+            changes["goal"] = goal
+        if alarm is not None:
+            changes["alarm"] = alarm
+            if not alarm:
+                lead = 0  # no ring: it opens when the first part starts
+        if alarm_before is not None:
+            lead = alarm_before
+        parts[0]["at"] = hhmm(start % (24 * 60))
+        return changes | {"parts": parts, "wake": hhmm((start - lead) % (24 * 60))}
 
     def delete(self, routine_id: str) -> None:
         with self._routines.atomic():
@@ -157,6 +205,8 @@ class RoutinesEditor:
     def update_part(self, routine_id: str, part_id: str, **fields) -> Routine:
         routine = self.get(routine_id)
         old = self._find_part(routine, part_id)
+        if routine.anchor == "end" and fields.get("at"):
+            raise InvalidError("It ends at a time: its parts go one after the other")
         if "image" in fields:
             fields["image"] = self._images.check_new_image(old.image, fields["image"])
             fields["image_suggested"] = False
@@ -253,7 +303,7 @@ class RoutinesEditor:
 
     def _valid(self, doc: dict, check_others: bool) -> Routine:
         try:
-            routine = Routine.model_validate(doc)
+            routine = Routine.model_validate(_settled(doc))
         except ValidationError as err:
             raise InvalidError("The times do not add up") from err
         if check_others:
@@ -284,6 +334,22 @@ class RoutinesEditor:
                 missions = {k: v for k, v in routine.missions.items() if k != child_id}
                 self._routines.update(Routine.model_validate({**routine.to_doc(), "kids": kids, "missions": missions}))
         return []
+
+
+def _settled(doc: dict) -> dict:
+    """A routine that ends at a time ("Termina a las"): its parts one after the other,
+    the last ending at its goal; the first part (and when it rings, as many minutes
+    before as it was) moves to fit. Any other routine, as it is."""
+    if doc.get("anchor") != "end" or doc.get("wake") is None or not doc.get("goal"):
+        return doc
+    parts = [{**part, "at": None} for part in doc["parts"]]
+    first_at = doc["parts"][0].get("at")
+    lead = (minute_of(first_at) - minute_of(doc["wake"])) % (24 * 60) if first_at else 0
+    start = minute_of(doc["goal"]["at"]) - sum(part["minutes"] for part in parts)
+    if start < 0:
+        return doc  # it would start the day before: refused as it is
+    parts[0]["at"] = hhmm(start)
+    return {**doc, "parts": parts, "wake": hhmm((start - lead) % (24 * 60))}
 
 
 def _dump(part: Part) -> dict:

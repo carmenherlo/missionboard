@@ -1039,3 +1039,49 @@
 .row--selectable {
   cursor: pointer;
 }
+
+/* The cards at both ends of a routine's parts (rutinas-4.html, section 0), like
+   Scratch's blocks: the alarm opens it, the goal closes it. They do not move. */
+.routine-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-weight: 700;
+}
+
+.routine-card__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.routine-card__detail {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.routine-card__time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.routine-card--alarm {
+  background: var(--alarm-card);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm);
+}
+
+.routine-card--off {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px dashed var(--line);
+}
+
+.routine-card--goal {
+  background: var(--success-soft);
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-lg) var(--radius-lg);
+}

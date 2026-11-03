@@ -143,6 +143,7 @@
   --stretch-3: #ff9f1c; /* orange */
   --stretch-4: #e5484d; /* red: it is ending */
   --waiting: #ffd166; /* until the first part, and until the goal */
+  --alarm-card: #ffe9a8; /* the editor's alarm card: the waiting yellow, soft (rutinas-4.html) */
   --coming-1: #9fb3ff; /* the parts still to come, around the dial */
   --coming-2: #d5ddff;
   --clock-gone: rgb(255 255 255 / 0.7); /* what has gone by of the stretch, faded */

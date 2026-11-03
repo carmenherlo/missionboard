@@ -285,3 +285,70 @@ def test_remove_several_parts_at_once(client):
     everything = [p["id"] for p in routine["parts"]]
     assert edit(client, "POST", "/parts/delete", ids=everything).status_code == 422  # one must stay
     assert edit(client, "POST", "/parts/delete", ids=["nope"]).status_code == 404
+
+
+# ---------- "Empieza a las" or "Termina a las", and the alarm ----------
+
+
+def test_a_new_routine_that_ends_at_a_time(client):
+    body = {"name": "Noche", "ends": "20:30", "goal": "a la cama"}
+    routine = client.post("/api/routines", json=body, headers=PARENT).json()
+    assert routine["anchor"] == "end" and routine["goal"]["say"] == "¡A la cama!"
+    assert parts(routine) == [("la primera parte", "20:25", "20:30")]
+    assert routine["wake"] == "20:25" and routine["alarm_before"] == 0
+    # Another part: the end stays, the start moves back
+    routine = client.post(f"/api/routines/{routine['id']}/parts", json={"name": "el pijama"}, headers=PARENT).json()
+    assert parts(routine) == [("la primera parte", "20:20", "20:25"), ("el pijama", "20:25", "20:30")]
+    assert routine["starts"] == "20:20" and routine["ends"] == "20:30"
+
+
+def test_a_new_routine_needs_one_time(client):
+    for body in ({"name": "X"}, {"name": "X", "starts": "20:00", "ends": "21:00"}):
+        assert client.post("/api/routines", json=body, headers=PARENT).status_code == 422
+
+
+def test_ending_at_its_goal_keeps_that_time(client):
+    routine = edit(client, "PATCH", anchor="end").json()
+    # The goal stays at 7:45: the parts move up to it, one after the other (the gap before
+    # "firmar", at its own time, goes), and it still rings 5 minutes before
+    assert routine["goal"]["at"] == "07:45" and routine["parts"][-1]["end"] == "07:45"
+    assert routine["starts"] == "06:50" and routine["wake"] == "06:45" and routine["alarm_before"] == 5
+    first = routine["parts"][0]["id"]
+    routine = edit(client, "PATCH", f"/parts/{first}", minutes=15).json()  # 5 more minutes
+    assert routine["starts"] == "06:45" and routine["wake"] == "06:40" and routine["ends"] == "07:45"
+    routine = edit(client, "PATCH", ends="08:00").json()
+    assert routine["starts"] == "07:00" and routine["goal"]["at"] == "08:00"
+    # One after the other: no part at its own time, and the goal is a must
+    second = routine["parts"][1]["id"]
+    assert edit(client, "PATCH", f"/parts/{second}", at="07:20").status_code == 422
+    assert edit(client, "PATCH", goal=None).status_code == 422
+
+
+def test_ending_at_a_time_without_a_goal_gets_one(client):
+    edit(client, "PATCH", goal=None)
+    routine = edit(client, "PATCH", anchor="end").json()
+    assert routine["goal"]["name"] == "el final" and routine["goal"]["at"] == "07:35"
+
+
+def test_starts_at_and_the_alarm(client):
+    routine = edit(client, "PATCH", starts="06:30").json()
+    assert routine["starts"] == "06:30" and routine["wake"] == "06:25"  # still 5 minutes before
+    routine = edit(client, "PATCH", alarm_before=0).json()
+    assert routine["wake"] == "06:30" and routine["alarm"] is True
+    routine = edit(client, "PATCH", alarm_before=10).json()
+    assert routine["wake"] == "06:20"
+    routine = edit(client, "PATCH", alarm=False).json()
+    assert routine["alarm"] is False and routine["wake"] == "06:30"  # no ring: it opens at its first part
+
+
+def test_the_screen_knows_if_it_rings(client, clock):
+    edit(client, "PATCH", alarm=False)
+    clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
+    assert client.get("/api/routines/current").json()["alarm"] is False
+
+
+def test_by_hand_it_neither_starts_nor_ends_at_a_time(client):
+    edit(client, "PATCH", anchor="end")
+    routine = edit(client, "PATCH", wake=None).json()
+    assert routine["manual"] is True and routine["anchor"] == "start"
+    assert edit(client, "PATCH", anchor="end").status_code == 422

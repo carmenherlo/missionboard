@@ -342,21 +342,31 @@ export function startRoutines() {
   function announce(phase, time, counted) {
     const { data } = showing;
     if (phase.kind === "wake") {
-      if (!data.stopped) ring();
+      if (!data.stopped && data.alarm) ring();
     } else if (phase.kind === "part") {
       const { part } = phase;
+      // It rings right as its first part starts (no while before): the "rrring" once, then the voice.
+      const ringFirst = phase.index === 0 && !data.manual && data.alarm && !data.stopped
+        && minuteOf(data.wake) === part.from && time - part.from < 1;
       const length = Math.round(part.to - part.from);
       // Started by hand, the time of day does not matter: only how long.
       const until = data.manual ? "" : ` y acabará a ${hourWords(part.to)}`;
-      say([
+      const sentences = [
         ...(data.manual ? [] : [`${capital(itIs(time))}.`]),
         part.say ?? `Comienza ${part.name}.`,
         ...(part.tasks.length ? [`Las tareas son: ${list(part.tasks).toLowerCase()}.`] : []),
         part.say
           ? `${data.people.length === 1 ? "Tienes" : "Tenéis"} ${minutesWords(length)}.`
           : `${capital(part.name)} dura ${minutesWords(length)}${until}.`,
-      ]);
-      if (!counted) sounds.ding(); // after a countdown, its zero was the sign
+      ];
+      if (ringFirst) {
+        sounds.alarm();
+        const key = showing.phaseKey;
+        setTimeout(() => showing?.phaseKey === key && say(sentences), VOICE_AFTER_RING_MS);
+      } else {
+        say(sentences);
+        if (!counted) sounds.ding(); // after a countdown, its zero was the sign
+      }
       if (part.check_mission) {
         const key = showing.phaseKey;
         setTimeout(() => showing?.phaseKey === key && whoIsLeft(true), WHO_IS_LEFT_MS);
