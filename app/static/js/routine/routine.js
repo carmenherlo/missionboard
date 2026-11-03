@@ -35,6 +35,7 @@ import { onSay, quiet, say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { openMission } from "../screens/child/mission-flow.js";
 import { t } from "../texts.js";
+import { tokenMs } from "../effects/motion.js";
 import { clockFace, timerFace } from "./clock-face.js";
 import {
   capital, countdownText, hourWords, itIs, left, list, minuteOf, minutesWords, shortTime, tasksLeft,
@@ -54,6 +55,7 @@ const WHO_IS_LEFT_MS = 9000; // in "firmar", after its announcement: who still h
 const DONE_MS = 30_000; // started by hand: "¡Hecho!" (or "¡Se acabó el tiempo!") stays this long
 const TRIAL_SPEEDS = [1, 10, 20]; // "Probar ahora": how fast its clock can go
 const TRIAL_JUMP_LEAD_S = 20; // "Siguiente" lands this long before the next part (its countdown is heard)
+const HOLD_HINT_MS = 2500; // a quick tap on "Cerrar": "Mantén pulsado para cerrar", this long
 
 const inParents = () => location.hash.startsWith("#/parents");
 
@@ -162,6 +164,7 @@ export function startRoutines() {
       goalReminded: Infinity,
       allSigned: false,
       mission: null, // a kid's mission open over the clock: { close }
+      holdHintUntil: 0, // a quick tap on "Cerrar": until then, it says to hold it
       ticker: setInterval(tick, TICK_MS),
     };
     document.body.append(view.layer, view.banner);
@@ -567,7 +570,8 @@ export function startRoutines() {
 
   function buildView() {
     const time = h("span", { class: "routine__time" });
-    const close = h("button", { type: "button", class: "btn", onclick: () => closeOrFinish() });
+    const close = h("button", { type: "button", class: "btn routine__close" });
+    holdToClose(close);
     const stopButton = h("button", { type: "button", class: "btn btn--primary routine__stop", onclick: stop },
       t.routine.stop);
     const what = h("h2", { class: "routine__what" });
@@ -644,7 +648,8 @@ export function startRoutines() {
     // Started by hand, the time of day does not matter: how long is left in total.
     view.time.textContent = !data.manual ? capital(itIs(time))
       : phase.kind === "part" ? t.routine.leftInTotal(countdownText((parts().at(-1).to - time) * 60)) : "";
-    view.close.textContent = phase.kind === "goal" && !data.trial ? t.routine.finish : t.routine.close;
+    view.close.textContent = phase.kind === "goal" && !data.trial ? t.routine.finish
+      : Date.now() < showing.holdHintUntil ? t.routine.holdToClose : t.routine.close;
     view.stopButton.hidden = !showing.ringing;
     const toGo = phase.kind === "done" ? "" : countdownText((phase.to - time) * 60);
     let image = null;
@@ -724,6 +729,38 @@ export function startRoutines() {
   }
 
   // ---------- closing ----------
+
+  // "Cerrar" is held a moment: a kid's tap by mistake hid the routine (03/11).
+  // A trial and "Finalizar" (which asks for the code) still go with one tap,
+  // and so does the keyboard.
+  function holdToClose(button) {
+    let timer = null;
+    const needsHold = () => !showing.data.trial && showing.phaseKey !== "goal";
+    const release = () => {
+      clearTimeout(timer);
+      timer = null;
+      button.classList.remove("routine__close--holding");
+    };
+    button.addEventListener("pointerdown", () => {
+      if (!needsHold()) return;
+      button.classList.add("routine__close--holding");
+      timer = setTimeout(() => {
+        release();
+        closeOrFinish();
+      }, tokenMs("--hold-to-close", 1200));
+    });
+    for (const type of ["pointerup", "pointerleave", "pointercancel"]) {
+      button.addEventListener(type, () => {
+        if (!timer) return;
+        release();
+        showing.holdHintUntil = Date.now() + HOLD_HINT_MS;
+        tick();
+      });
+    }
+    button.addEventListener("click", (event) => {
+      if (!needsHold() || event.detail === 0) closeOrFinish();
+    });
+  }
 
   function closeOrFinish() {
     if (showing.data.trial) {

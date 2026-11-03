@@ -96,6 +96,13 @@
 @keyframes beat-0 { from { transform: scale(1.35); opacity: 0.4; } }
 @keyframes beat-1 { from { transform: scale(1.35); opacity: 0.4; } }
 
+/* "Cerrar", held: it fills up until it closes. */
+.routine__close--holding {
+  background: linear-gradient(var(--primary-soft), var(--primary-soft)) left / 0% 100% no-repeat, var(--surface);
+  animation: hold-fill var(--hold-to-close) linear forwards;
+}
+@keyframes hold-fill { to { background-size: 100% 100%, auto; } }
+
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .ring__glow,

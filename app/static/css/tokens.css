@@ -158,6 +158,7 @@
   --timer-case: #11141b;
   --timer-text: white;
   --routine-side-width: 200px;
+  --hold-to-close: 1.2s; /* "Cerrar" closes only when held this long (a quick tap by mistake does not) */
 
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 5s; /* "¡Misión cumplida!" closes by itself after this */
