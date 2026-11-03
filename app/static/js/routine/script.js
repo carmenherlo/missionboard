@@ -34,9 +34,10 @@ export function partStart(part, { time, minutes, ends, manual, kids }) {
 
 export const partWarning = (part, n) => `${left(n)} para que acabe ${part.name}.`;
 
-// Sixteen seconds before a part ends, then the ten-second countdown.
+// Sixteen seconds before a part ends, then the ten-second countdown. Not "Acaba el
+// aseo" first: it has not ended yet (03/11). The last one, the routine's own sentence.
 export function partHerald(part, isLast, routine) {
-  return [`Acaba ${part.name}.`, isLast ? lastCountdown(routine) : "Diez segundos para la nueva tarea."];
+  return isLast ? lastCountdown(routine) : `Diez segundos para que acabe ${part.name}.`;
 }
 
 export const lastCountdown = (routine) => routine.last_countdown ?? USUAL.lastCountdown;

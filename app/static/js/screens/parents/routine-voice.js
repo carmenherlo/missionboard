@@ -175,14 +175,13 @@ function scriptOf(routine, { patchRoutine, patchPart, routineHref }) {
     for (const n of (part.warnings ?? (minutes > 2 ? [USUAL_WARNING] : [])).filter((w) => w < minutes).sort((a, b) => b - a)) {
       lines.push(auto(to - n, script.partWarning(part, n)));
     }
-    const [ends, coming] = script.partHerald(part, last, routine);
-    lines.push(auto(to - HERALD_S / 60, ends));
+    const herald = script.partHerald(part, last, routine);
     lines.push(last
-      ? own(to - HERALD_S / 60, coming, {
+      ? own(to - HERALD_S / 60, herald, {
         value: routine.last_countdown, usual: script.USUAL.lastCountdown, label: t.routineVoice.lastLabel,
         save: (value) => patchRoutine({ last_countdown: value }),
       })
-      : auto(to - HERALD_S / 60, coming));
+      : auto(to - HERALD_S / 60, herald));
     if (last && manual) {
       lines.push(auto(to, t.routineVoice.byHandDone), auto(to, t.routineVoice.byHandTimeUp));
     }
