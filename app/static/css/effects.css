@@ -6,16 +6,52 @@
    "Reduce motion" on the tablet turns them all off (end of the file).
    ===================================================================== */
 
-/* The ring in focus: only the part filled (the progress) glows, slowly: "you are here". */
-.route-node--focus.route-node--open .ring__glow {
-  display: block;
-  filter: blur(3px);
-  animation: glow-breath var(--glow-breath) ease-in-out infinite;
+/* "Latido" (from an earlier game): a light in its colour behind, growing and fading, on what
+   waits for the child: the mission of "¡Ahora!", the prize unlocked, and in a routine's
+   "firmar", whoever still has steps. The pictures are transparent: it shows through. */
+.route-node--focus.route-node--open .ring::before,
+.route-node--prize-unlocked .ring::before,
+.routine-kid--waiting .avatar-fx::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    color-mix(in srgb, var(--halo-color, var(--child-color)) var(--heartbeat-strength), transparent) 55%, transparent);
+  animation: heartbeat var(--heartbeat) ease-in-out infinite alternate;
+  pointer-events: none;
 }
 
-@keyframes glow-breath {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.85; }
+.route-node--prize-unlocked .ring {
+  --halo-color: var(--prize-color);
+}
+
+@keyframes heartbeat {
+  from { opacity: 0.35; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.1); }
+}
+
+/* "Resplandor" (from an earlier game): a reflection goes once round the ring, like a gold ring
+   turned in the light: the child's avatar when their screen opens, and the celebration. */
+.fx-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(transparent 0deg, var(--shine-light) 40deg, transparent 95deg,
+    transparent 180deg, var(--shine-light-soft) 220deg, transparent 275deg);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - var(--shine-band)), black calc(100% - var(--shine-band) + 1px));
+  mask: radial-gradient(closest-side, transparent calc(100% - var(--shine-band)), black calc(100% - var(--shine-band) + 1px));
+  filter: drop-shadow(0 0 6px var(--shine-light));
+  opacity: 0;
+  pointer-events: none;
+  animation: shine var(--shine) ease-in-out 0.3s both;
+}
+
+@keyframes shine {
+  0% { opacity: 0; transform: rotate(0deg); }
+  20%, 80% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(360deg); }
 }
 
 .route-node--focus > .ring > svg {
@@ -75,15 +111,6 @@
   50% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--confetti-star)); }
 }
 
-/* The prize, unlocked: its ring glows in the prize's yellow, calling to be opened. */
-.route-node--prize-unlocked .ring > svg {
-  animation: prize-glow var(--prize-glow-breath) ease-in-out infinite;
-}
-
-@keyframes prize-glow {
-  0%, 100% { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--prize-color) 50%, transparent)); }
-  50% { filter: drop-shadow(0 0 24px color-mix(in srgb, var(--prize-color) 90%, transparent)); }
-}
 
 /* The wheel turns fast and slows down until it stops on the prize
    (the angle is set by static/js/effects/spin.js). */
@@ -111,9 +138,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
-  .celebration__hero .ring > svg, .celebration__star, .ring__glow,
-  .route-node--prize-unlocked .ring > svg, .prize-won, .routine__count {
+  .celebration__hero .ring > svg, .celebration__star, .prize-won, .routine__count,
+  .ring::before, .avatar-fx::before, .fx-shine::after {
     animation: none !important;
+  }
+  .fx-shine::after {
+    display: none;
   }
   .wheel__disc {
     transition: none;

@@ -105,14 +105,13 @@
   --route-label-bg: rgb(255 255 255 / 0.85); /* names over the illustration need a pill */
   --child-avatar-size: 112px; /* the child's avatar at the top: "this is your screen" */
 
-  /* Background: the illustration of the moment of the day under two veils. */
+  /* Background: the illustration of the moment of the day under a white veil (no tint of
+     the child's colour since 03/11: the ring of their avatar says whose screen it is). */
   --scene-veil-white: rgb(255 255 255 / 0.45); /* so it does not compete with the route */
-  --scene-veil-child: 28%; /* the child's colour over it: whose screen it is */
-  --scene-plain: white; /* without an illustration: the child's colour over this */
+  --scene-plain: white; /* without an illustration */
 
   /* The mission: a panel over the route, which stays behind, darker. */
   --sheet-backdrop: rgb(20 20 40 / 0.35);
-  --sheet-tint: 10%; /* child's colour over white: still their zone, lighter than a done step */
   --sheet-opacity: 90%;
   --sheet-blur: 18px; /* if it stutters on the tablet: 0 (and --sheet-opacity: 100%) */
   --shadow-sheet: 0 24px 60px rgb(0 0 0 / 0.3);
@@ -168,12 +167,16 @@
 
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 5s; /* "¡Misión cumplida!" closes by itself after this */
-  --glow-breath: 3s; /* the glow of the ring in focus, slow */
+  --heartbeat: 1.1s; /* "latido" (from an earlier game): a light in its colour behind, growing and fading */
+  --heartbeat-strength: 60%; /* how much of the colour that light has */
+  --shine: 1.4s; /* "resplandor": a reflection going once round a ring */
+  --shine-light: rgb(255 252 235 / 1);
+  --shine-light-soft: rgb(255 248 220 / 0.6);
+  --shine-band: 12%; /* how much of the ring's width the reflection covers */
   --celebration-glow-breath: 2.2s; /* the ring around the avatar in the celebration */
   --star-shine: 2.4s; /* the star won, shining */
   --appear: 220ms; /* panels and messages coming in */
   --wheel-spin: 4s; /* the wheel turning until it stops on the prize */
-  --prize-glow-breath: 2.4s; /* the prize, unlocked, calling to be opened */
   --confetti-1: #5b4ae6;
   --confetti-2: #ff9f43;
   --confetti-3: #2fb37a;

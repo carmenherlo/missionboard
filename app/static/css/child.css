@@ -13,7 +13,7 @@
   color: var(--text);
 }
 
-/* ---------- background: illustration + white veil + the child's colour ---------- */
+/* ---------- background: illustration + white veil ---------- */
 
 .child-scene {
   position: absolute;
@@ -32,10 +32,7 @@
 .child-scene__veil {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(color-mix(in srgb, var(--child-color) var(--scene-veil-child), transparent),
-      color-mix(in srgb, var(--child-color) var(--scene-veil-child), transparent)),
-    linear-gradient(var(--scene-veil-white), var(--scene-veil-white));
+  background: var(--scene-veil-white);
 }
 
 /* ---------- top bar ---------- */
@@ -224,7 +221,7 @@
 }
 
 .ring__track {
-  fill: var(--surface);
+  fill: none; /* transparent: the picture floats inside its ring (as in an earlier game) */
   stroke: var(--line);
   stroke-width: 6;
 }
@@ -285,10 +282,9 @@
 .route-node--done .ring__inner img,
 .route-node--done .ring__star img { opacity: 0.75; filter: saturate(0.6); }
 .route-node--open:not(.route-node--focus) .ring__inner img,
-.route-node--upcoming .ring__inner img { opacity: 0.45; filter: grayscale(1); }
+.route-node--upcoming .ring__inner img { opacity: 0.8; filter: grayscale(1); } /* transparent, over the picture: not fainter */
 .route-node--closed .ring__inner img,
-.route-node--closed .ring__letter { opacity: 0.3; filter: grayscale(1); }
-.route-node--closed .ring__track { fill: var(--container); }
+.route-node--closed .ring__letter { opacity: 0.55; filter: grayscale(1); }
 
 /* ---------- toast: "Se abre a las 19:30" ---------- */
 
@@ -322,7 +318,7 @@
   flex: 1;
   overflow: auto;
   border-radius: 40px;
-  background: color-mix(in srgb, color-mix(in srgb, var(--child-color) var(--sheet-tint), var(--surface)) var(--sheet-opacity), transparent);
+  background: color-mix(in srgb, var(--surface) var(--sheet-opacity), transparent);
   backdrop-filter: blur(var(--sheet-blur));
   box-shadow: var(--shadow-sheet);
 }
@@ -417,7 +413,7 @@
   width: var(--step-tile-size);
   height: var(--step-tile-size);
   border-radius: calc(var(--step-tile-size) * 0.25);
-  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  background: none; /* transparent, like the missions' pictures */
   overflow: hidden;
 }
 
@@ -438,10 +434,6 @@
 .step-card--done .step-card__toggle {
   background: var(--child-soft);
   box-shadow: inset 0 0 0 5px var(--child-color);
-}
-
-.step-card--done .step-tile {
-  background: var(--surface);
 }
 
 .step-card__check {
@@ -494,7 +486,7 @@
   gap: var(--space-4);
   background: radial-gradient(circle at 50% 50%,
     color-mix(in srgb, var(--accent-soft) 70%, transparent) 0, transparent 70%),
-    color-mix(in srgb, var(--child-color) 18%, var(--surface));
+    var(--surface);
   cursor: pointer;
 }
 
@@ -512,7 +504,6 @@
 }
 
 .celebration__hero .ring__inner {
-  background: color-mix(in srgb, var(--child-color) 22%, var(--surface));
   overflow: hidden;
 }
 

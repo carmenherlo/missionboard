@@ -34,7 +34,7 @@ export async function viewChildToday(childId) {
         day.background_url && h("img", { class: "child-scene__picture", src: day.background_url, alt: "" }),
         h("div", { class: "child-scene__veil" })),
       h("header", { class: "child-bar" },
-        avatar(day.child, { size: "child" }),
+        avatar(day.child, { size: "child", fx: "shine" }),
         h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
         h("span", { class: "child-bar__spacer" }),
         h("button", {

@@ -364,6 +364,7 @@ export function startRoutines() {
     showing.warned = new Set();
     showing.allSigned = false;
     showing.mission?.close(); // a new part: the clock comes back to say it
+    renderPeople(); // "firmar" or not: who beats
     if (phase.kind === "part" && before !== null) note("part", { part: phase.index });
     if (phase.kind === "done") {
       if (showing.data.manual && before !== null) finish(counted);
@@ -734,18 +735,22 @@ export function startRoutines() {
   // The kids on a side: their avatar in a ring that closes as their mission goes, and 3/7.
   function renderPeople() {
     const { view, data } = showing;
+    const index = showing.phaseKey?.startsWith("part-") ? Number(showing.phaseKey.slice(5)) : -1;
+    const signing = Boolean(parts()[index]?.check_mission);
     view.people.replaceChildren(...data.people.map((person) => {
       const { mission } = person;
       const { color, soft, strong, on } = person.colors;
+      // "firmar": whoever has not finished their mission yet beats (effects.css).
+      const waiting = signing && mission && !mission.completed;
       return h("li", {},
         h("button", {
           type: "button",
-          class: `routine-kid${mission?.completed ? " routine-kid--done" : ""}`,
+          class: `routine-kid${mission?.completed ? " routine-kid--done" : ""}${waiting ? " routine-kid--waiting" : ""}`,
           style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
           disabled: !mission,
           onclick: () => openKid(person),
         },
-          avatar(person.child, { size: "md" }),
+          avatar(person.child, { size: "md", fx: "halo" }),
           h("span", { class: "routine-kid__name" }, person.child.name),
           h("span", { class: "routine-kid__progress" },
             !mission ? "" : mission.completed ? t.routine.allDone : `${mission.done}/${mission.total}`)));

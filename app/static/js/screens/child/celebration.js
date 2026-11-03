@@ -18,7 +18,7 @@ export function showCelebration(container, day, starsEarned, onClose) {
   const layer = h("div", { class: "celebration-layer celebration", role: "status", onclick: close },
     h("h2", { class: "celebration__title" }, t.child.missionDone),
     h("div", { class: "celebration__hero" },
-      ring(1, avatarPicture(day.child)),
+      ring(1, avatarPicture(day.child), { className: "fx-shine" }),
       h("img", { class: "celebration__star", src: day.celebration_star_url, alt: "" })),
     starsEarned > 0 && h("span", { class: "stars" },
       h("img", { src: day.star_url, alt: "" }), t.child.starsWon(starsEarned, day.stars)));
