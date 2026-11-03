@@ -16,6 +16,7 @@ const LIST_HREF = "#/parents/config/routines";
 const TEXT_SAVE_DELAY_MS = 600;
 const GOAL_AFTER_MINUTES = 10; // a new goal: this long after the last part
 const DEFAULT_WAKE = "07:00"; // back from "by hand" to ringing at a time
+const ALARM_BEFORE_CHOICES = [0, 5, 10, 15, 20, 30]; // the API takes 0–60
 
 // What a refused change means: the times do not add up, or it overlaps another routine.
 export function routineError(err) {
@@ -73,17 +74,14 @@ export async function viewRoutineEdit(routineId) {
   const whenHint = h("p", { class: "hint" });
   // The alarm: on or off (a bedtime routine), and how long before the first part.
   const alarmOn = h("input", { type: "checkbox", onchange: (e) => patch({ alarm: e.target.checked }) });
-  const alarmBefore = h("input", {
-    type: "number", min: 0, max: 60,
-    onchange: (e) => patch({ alarm_before: Math.min(60, Math.max(0, Number(e.target.value) || 0)) }),
-  });
+  // In words, not a bare number: "0 minutos antes" read as nothing at all.
+  const alarmBefore = h("select", { onchange: (e) => patch({ alarm_before: Number(e.target.value) }) });
   const alarmBeforeRow = h("div", { class: "times" });
-  const alarmHint = h("p", { class: "hint" });
+  const alarmHint = h("p", { class: "hint" }); // only what the fields above do not say
   const remind = h("input", {
     type: "number", min: 0, max: 30, value: routine.remind_every,
     onchange: (e) => patch({ remind_every: Number(e.target.value) }),
   });
-  const wakeHint = h("p", { class: "hint" });
   const daysBox = h("div", { class: "chips chips--days" });
   const daysSummary = h("p", { class: "hint" });
   // Some days everything moves: "+15" rings and goes a quarter of an hour later.
@@ -92,7 +90,7 @@ export async function viewRoutineEdit(routineId) {
   function renderOffsets() {
     offsetsTimes.replaceChildren(...WEEKDAYS
       .filter((d) => routine.days.includes(d) && routine.offsets[d] && !routine.manual)
-      .map((day) => h("li", {}, t.routineEdit.movedDay(t.dayNames[day],
+      .map((day) => h("li", { class: "hint" }, t.routineEdit.movedDay(t.dayNames[day],
         movedTime(routine.starts, routine.offsets[day]), movedTime(routine.ends, routine.offsets[day])))));
     offsetsBox.replaceChildren(...WEEKDAYS.filter((d) => routine.days.includes(d)).map((day) =>
       h("label", { class: "offsets__day" }, t.days[day],
@@ -161,15 +159,17 @@ export async function viewRoutineEdit(routineId) {
       ? t.routineEdit.endsHint(shortTime(routine.starts), length)
       : t.routineEdit.startsHint(shortTime(routine.ends), length);
     alarmOn.checked = routine.alarm;
+    const choices = [...new Set([...ALARM_BEFORE_CHOICES, routine.alarm_before])].sort((a, b) => a - b);
+    alarmBefore.replaceChildren(...choices.map((n) =>
+      h("option", { value: n }, t.routineEdit.alarmBeforeChoice(n))));
     alarmBefore.value = routine.alarm_before;
     const before = routine.alarm && routine.alarm_before > 0; // a while ringing before: reminders too
     alarmBeforeRow.replaceChildren(...[
       routine.alarm && h("label", { class: "time" }, t.routineEdit.alarmBefore, alarmBefore),
       before && h("label", { class: "time" }, t.routineEdit.remindEvery, remind)].filter(Boolean));
-    alarmHint.textContent = routine.alarm
-      ? t.routineEdit.alarmHint(shortTime(routine.wake), routine.alarm_before, capital(routine.parts[0].name))
-      : t.routineEdit.noAlarmHint;
-    wakeHint.hidden = !before;
+    alarmHint.hidden = routine.alarm && !before;
+    alarmHint.textContent = !routine.alarm ? t.routineEdit.noAlarmHint
+      : before ? t.routineEdit.alarmHint(shortTime(routine.wake), routine.remind_every) : "";
   }
   function renderRoutine() {
     renderMode();
@@ -177,7 +177,6 @@ export async function viewRoutineEdit(routineId) {
     renderNotices();
     if (!routine.manual) renderWhen();
     remind.value = routine.remind_every;
-    wakeHint.textContent = t.routineEdit.wakeHint(routine.remind_every);
     daysSummary.textContent = daysLongText(routine.days);
     daysBox.replaceChildren(...WEEKDAYS.map((day) => {
       const on = routine.days.includes(day);
@@ -421,7 +420,6 @@ export async function viewRoutineEdit(routineId) {
     h("label", { class: "toggle" }, alarmOn, t.routineEdit.alarm),
     alarmBeforeRow,
     alarmHint,
-    wakeHint,
     h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox, offsetsTimes,
       h("span", { class: "hint" }, t.routineEdit.offsetsHint)),
     h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.notices), noticesList, addNotice,
