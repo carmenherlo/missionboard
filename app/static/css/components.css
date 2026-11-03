@@ -1085,3 +1085,70 @@
   background: var(--success-soft);
   border-radius: var(--radius-sm) var(--radius-sm) var(--radius-lg) var(--radius-lg);
 }
+
+/* "Lo que dice la voz" (rutinas-5): one line per sentence, with its time. The
+   parents' own sentences on white; what the voice says by itself, muted. */
+.voice-line {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.voice-line--auto,
+.voice-line--sound {
+  background: none;
+}
+
+.voice-line__time {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.voice-line__text {
+  font-weight: 600;
+}
+
+.voice-line--auto .voice-line__text,
+.voice-line--sound .voice-line__text {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.voice-line__tag {
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--container);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.voice-line__tag--mine {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.voice-line--editing {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  outline: 2px solid var(--primary);
+}
+
+.voice-line--editing .pill {
+  align-self: flex-start;
+}
+
+/* Editar parte: what the voice will say when it starts (changed in "Lo que dice la voz"). */
+.voice-preview {
+  margin: 0;
+  font-weight: 600;
+}

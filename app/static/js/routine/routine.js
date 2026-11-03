@@ -37,8 +37,9 @@ import { openMission } from "../screens/child/mission-flow.js";
 import { t } from "../texts.js";
 import { tokenMs } from "../effects/motion.js";
 import { clockFace, timerFace } from "./clock-face.js";
+import * as script from "./script.js";
 import {
-  capital, countdownText, hourWords, itIs, left, list, minuteOf, minutesWords, shortTime, tasksLeft,
+  capital, countdownText, hourWords, itIs, minuteOf, shortTime, tasksLeft,
 } from "./words.js";
 
 const CHECK_MS = 20_000; // how often it asks the server (and how the kids' missions go)
@@ -351,17 +352,10 @@ export function startRoutines() {
       // It rings right as its first part starts (no while before): the "rrring" once, then the voice.
       const ringFirst = phase.index === 0 && !data.manual && data.alarm && !data.stopped
         && minuteOf(data.wake) === part.from && time - part.from < 1;
-      const length = Math.round(part.to - part.from);
       // Started by hand, the time of day does not matter: only how long.
-      const until = data.manual ? "" : ` y acabará a ${hourWords(part.to)}`;
-      const sentences = [
-        ...(data.manual ? [] : [`${capital(itIs(time))}.`]),
-        part.say ?? `Comienza ${part.name}.`,
-        ...(part.tasks.length ? [`Las tareas son: ${list(part.tasks).toLowerCase()}.`] : []),
-        part.say
-          ? `${data.people.length === 1 ? "Tienes" : "Tenéis"} ${minutesWords(length)}.`
-          : `${capital(part.name)} dura ${minutesWords(length)}${until}.`,
-      ];
+      const sentences = script.partStart(part, {
+        time, minutes: Math.round(part.to - part.from), ends: part.to, manual: data.manual, kids: data.people.length,
+      });
       if (ringFirst) {
         sounds.alarm();
         const key = showing.phaseKey;
@@ -378,7 +372,7 @@ export function startRoutines() {
       note("goal", { early: showing.earlyGoal != null });
       if (showing.earlyGoal != null) {
         sounds.win();
-        say([...wellDone(), untilGoal(time), "¡Ya podéis salir de casa!", "¡Que tengáis un buen día!"]);
+        say(script.earlyGoal(data, wellDone(), minutesToGoal(time)));
       } else {
         timeToGo(time, counted);
       }
@@ -412,7 +406,7 @@ export function startRoutines() {
     note("goal", { early: false });
     if (counted) sounds.countdown(true);
     else sounds.ding();
-    say([`${capital(itIs(time))}.`, showing.data.goal.say]);
+    say(script.goalReached(showing.data, time, 0));
     const id = showing.data.id;
     setTimeout(() => showing?.data.id === id && end(), DONE_MS);
   }
@@ -420,22 +414,17 @@ export function startRoutines() {
   // "¡Enhorabuena! Habéis completado con éxito todas vuestras tareas de la misión Despegue."
   function wellDone() {
     const kids = showing.data.people.filter((p) => p.mission);
-    const mission = kids[0]?.mission.name;
-    return kids.length === 1
-      ? [`¡Enhorabuena, ${kids[0].child.name}!`, `Has completado con éxito todas tus tareas de la misión ${mission}.`]
-      : ["¡Enhorabuena!", `Habéis completado con éxito todas vuestras tareas de la misión ${mission}.`];
+    return script.wellDone(kids.map((p) => p.child.name), kids[0]?.mission.name);
   }
 
   function timeToGo(time, counted) {
     if (!counted) sounds.ding();
     const late = minuteOf(showing.data.goal.at) - time < 1; // opened in its last seconds
-    say([`${capital(itIs(time))}.`, ...(late ? [] : [untilGoal(time)]), showing.data.goal.say]);
+    say(script.goalReached(showing.data, time, late ? 0 : minutesToGoal(time)));
   }
 
-  // "Quedan 10 minutos para que empiece vuestra clase."
-  function untilGoal(time) {
-    const goal = showing.data.goal;
-    return `${left(Math.round(minuteOf(goal.at) - time))} para que empiece ${goal.name}.`;
+  function minutesToGoal(time) {
+    return Math.round(minuteOf(showing.data.goal.at) - time);
   }
 
   // "rrring", the voice, and again, until somebody taps "Parar".
@@ -448,8 +437,7 @@ export function startRoutines() {
       setTimeout(() => {
         if (!showing?.ringing) return;
         const time = now();
-        say(["¡Buenos días!", `${capital(itIs(time))}.`,
-          `${left(Math.round(first.from - time))} para que comience ${first.name}.`]);
+        say(script.wakeUp(showing.data, first, time, Math.round(first.from - time)));
       }, VOICE_AFTER_RING_MS);
       showing.ringTimer = setTimeout(once, RING_AGAIN_MS);
     };
@@ -479,7 +467,7 @@ export function startRoutines() {
       if (minutesLeft > 0 && minutesLeft % data.remind_every === 0 && whole !== showing.remindedAt && time - whole < 0.05) {
         showing.remindedAt = whole;
         sounds.ding();
-        say(`${left(minutesLeft)} para que comience ${parts()[0].name}.`);
+        say(script.untilFirst(parts()[0], minutesLeft));
       }
     } else if (phase.kind === "part") {
       // Before it ends: "Queda un minuto para que acabe el aseo." Each one once, on its
@@ -489,7 +477,7 @@ export function startRoutines() {
       if (due) {
         showing.warned.add(due);
         sounds.ding();
-        say(`${left(due)} para que acabe ${phase.part.name}.`);
+        say(script.partWarning(phase.part, due));
       }
     } else if (phase.kind === "goal") {
       const usual = parts().at(-1).to; // when it would have come
@@ -502,7 +490,7 @@ export function startRoutines() {
       if (due) {
         showing.goalReminded = due;
         sounds.ding();
-        say(untilGoal(time));
+        say(script.untilGoal(minutesToGoal(time)));
       }
     }
   }
@@ -544,11 +532,9 @@ export function startRoutines() {
     stopRinging(); // the ring would cover it
     const all = parts();
     if (phase.kind === "wake") {
-      say(`Diez segundos para que comience ${all[0].name}.`);
-    } else if (phase.index + 1 < all.length) {
-      say([`Acaba ${phase.part.name}.`, "Diez segundos para la nueva tarea."]);
+      say(script.firstHerald(all[0]));
     } else {
-      say([`Acaba ${phase.part.name}.`, showing.data.goal ? "Diez segundos para salir." : "Diez segundos."]);
+      say(script.partHerald(phase.part, phase.index + 1 === all.length, showing.data));
     }
   }
 
@@ -656,7 +642,7 @@ export function startRoutines() {
     let what = "";
     let until = "";
     if (phase.kind === "wake") {
-      what = t.routine.goodMorning;
+      what = data.greeting || t.routine.soon;
       until = t.routine.startsAt(capital(parts()[0].name), hourWords(phase.to), toGo);
     } else if (phase.kind === "part") {
       image = phase.part.image_url;
@@ -665,7 +651,7 @@ export function startRoutines() {
     } else if (phase.kind === "goal") {
       image = data.goal.image_url;
       what = data.goal.say;
-      until = t.routine.startsAt(capital(data.goal.name), hourWords(phase.to), toGo);
+      until = t.routine.goalAt(hourWords(phase.to), toGo);
     } else if (showing.finished === "goal") {
       image = data.goal.image_url;
       what = data.goal.say;
@@ -691,7 +677,7 @@ export function startRoutines() {
     const coming = parts()
       .filter((p, index) => phase.kind === "wake" || (phase.kind === "part" && index > phase.index))
       .map((p) => (data.manual ? p.name : `${shortTime(p.from)} ${p.name}`));
-    if (data.goal && (phase.kind === "wake" || phase.kind === "part")) coming.push(`${shortTime(minuteOf(data.goal.at))} ${data.goal.name}`);
+    if (data.goal && (phase.kind === "wake" || phase.kind === "part")) coming.push(`${shortTime(minuteOf(data.goal.at))} ${t.routine.goal}`);
     view.next.textContent = coming.length ? t.routine.next(coming) : "";
   }
 

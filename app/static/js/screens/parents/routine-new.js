@@ -13,11 +13,9 @@ export function viewRoutineNew() {
   let ending = true;
   const name = h("input", { type: "text", maxlength: 40, placeholder: t.routines.namePlaceholder });
   const time = h("input", { type: "time", value: "07:30" });
-  const goal = h("input", { type: "text", maxlength: 60, placeholder: t.routines.goalPlaceholder });
   const error = h("p", { class: "form-error", role: "alert" });
   const anchor = h("div", {});
   const timeLabel = h("span", {});
-  const goalField = h("label", {}, t.routines.goal, goal, h("span", { class: "hint" }, t.routines.goalNameHint));
   const hint = h("p", { class: "hint" });
 
   function renderAnchor() {
@@ -28,7 +26,6 @@ export function viewRoutineNew() {
           onclick: () => { ending = value; renderAnchor(); },
         }, ending === value && icon("check"), label))));
     timeLabel.textContent = ending ? t.routineEdit.anchorEnd : t.routineEdit.anchorStart;
-    goalField.hidden = !ending;
     hint.textContent = ending ? t.routines.newEndsHint : t.routines.newStartsHint;
   }
 
@@ -45,7 +42,7 @@ export function viewRoutineNew() {
       return;
     }
     const json = ending
-      ? { name: name.value.trim(), ends: time.value, goal: goal.value.trim() || null }
+      ? { name: name.value.trim(), ends: time.value }
       : { name: name.value.trim(), starts: time.value };
     try {
       const routine = await api("POST", "/api/routines", { json });
@@ -63,7 +60,7 @@ export function viewRoutineNew() {
         panel(null,
           h("label", {}, t.routines.name, name),
           anchor,
-          h("div", { class: "times" }, h("label", { class: "time" }, timeLabel, time), goalField),
+          h("div", { class: "times" }, h("label", { class: "time" }, timeLabel, time)),
           hint),
         error,
         h("div", { class: "form-actions" },

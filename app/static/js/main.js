@@ -15,6 +15,7 @@ import { viewPrizeEdit } from "./screens/parents/prize-edit.js";
 import { viewRoutineEdit } from "./screens/parents/routine-edit.js";
 import { viewRoutineNew } from "./screens/parents/routine-new.js";
 import { viewRoutinePartEdit } from "./screens/parents/routine-part-edit.js";
+import { viewRoutineVoice } from "./screens/parents/routine-voice.js";
 import { viewRoutinesList } from "./screens/parents/routines-list.js";
 import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
@@ -59,6 +60,9 @@ const routes = [
   [parentsPath("/routines"), () => viewRoutinesList(), "parents", "routines"],
   [parentsPath("/routines/new"), () => viewRoutineNew(), "parents", "routine_new"],
   [parentsPath("/routines/:routine"), (ids) => viewRoutineEdit(ids.routine), "parents", "routine_edit"],
+  [parentsPath("/routines/:routine/voice"), (ids) => viewRoutineVoice(ids.routine), "parents", "routine_voice"],
+  [parentsPath("/routines/:routine/voice/:part"),
+    (ids) => viewRoutineVoice(ids.routine, ids.part), "parents", "routine_voice"],
   [parentsPath("/routines/:routine/parts/:part"),
     (ids) => viewRoutinePartEdit(ids.routine, ids.part), "parents", "routine_part_edit"],
   [parentsPath("/shop"), () => viewShopList(), "parents", "shop"],

@@ -58,16 +58,15 @@ class RoutinesEditor:
             raise NotFoundError("Routine not found")
         return routine
 
-    def create(self, name: str, wake: str | None = None, *, starts: str | None = None, ends: str | None = None,
-               goal: str | None = None) -> Routine:
+    def create(self, name: str, wake: str | None = None, *, starts: str | None = None,
+               ends: str | None = None) -> Routine:
         """A new routine with one part, the rest is edited: it rings at `wake` and the part
         starts five minutes later; or it starts at `starts` (ringing then); or it ends at
-        `ends`, at its goal (named `goal`), and its parts go backwards from there."""
+        `ends`, at its goal, and its parts go backwards from there."""
         doc = {"id": _new_id(), "name": name, "days": NEW_ROUTINE_DAYS}
         if ends:
-            goal = goal or "la meta"
             doc |= {"anchor": "end", "wake": ends, "parts": [self._new_part("la primera parte", at=ends)],
-                    "goal": {"name": goal, "at": ends, "say": f"¡{goal[:1].upper()}{goal[1:]}!"}}
+                    "goal": {"at": ends}}
         elif starts:
             doc |= {"wake": starts, "parts": [self._new_part("la primera parte", at=starts)]}
         else:
@@ -80,11 +79,14 @@ class RoutinesEditor:
         return routine
 
     def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
-               offsets=UNSET, notices=UNSET, **timing) -> Routine:
-        """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`."""
+               offsets=UNSET, notices=UNSET, greeting=UNSET, last_countdown=UNSET, early_goal=UNSET,
+               **timing) -> Routine:
+        """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`. The
+        sentences (greeting, last_countdown, early_goal): None goes back to the usual one."""
         changes = {k: v for k, v in
                    {"name": name, "days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
-                    "offsets": offsets, "notices": notices}.items()
+                    "offsets": offsets, "notices": notices, "greeting": greeting,
+                    "last_countdown": last_countdown, "early_goal": early_goal}.items()
                    if v is not UNSET}
         if set(timing) - set(TIMING):
             raise TypeError(f"unknown: {set(timing) - set(TIMING)}")
@@ -122,7 +124,7 @@ class RoutinesEditor:
             for part in parts[1:]:
                 part["at"] = None
             end = routine.timeline()[-1][2]
-            goal = goal or {"name": "el final", "at": hhmm(end), "say": "¡Rutina terminada!"}
+            goal = goal or {"at": hhmm(end)}
             changes["goal"] = goal
         if anchor:
             changes["anchor"] = anchor

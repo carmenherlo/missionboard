@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 9
+CURRENT_VERSION = 10
 
 
 class ConfigVersionError(Exception):
@@ -228,6 +228,23 @@ def _v8_to_v9(doc: dict) -> dict:
     return {**doc, "version": 9, "shop": copy.deepcopy(_SAMPLE_SHOP)}
 
 
+def _v9_to_v10(doc: dict) -> dict:
+    """The goal loses its name (the voice says "para terminar"), and the sentences
+    the code used to say become the routine's own, so they sound the same as before."""
+    routines = []
+    for routine in copy.deepcopy(doc.get("routines") or []):
+        goal = routine.get("goal")
+        if goal:
+            goal.pop("name", None)
+        if routine.get("wake") is not None:
+            routine.setdefault("greeting", "¡Buenos días!")
+        routine.setdefault("last_countdown", "Diez segundos para salir." if goal else "Diez segundos.")
+        if goal:
+            routine.setdefault("early_goal", "¡Ya podéis salir de casa! ¡Que tengáis un buen día!")
+        routines.append(routine)
+    return {**doc, "version": 10, "routines": routines}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
@@ -237,6 +254,7 @@ _MIGRATIONS = {
     6: _v6_to_v7,
     7: _v7_to_v8,
     8: _v8_to_v9,
+    9: _v9_to_v10,
 }
 
 

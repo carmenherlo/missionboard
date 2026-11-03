@@ -208,7 +208,7 @@ export async function viewRoutineEdit(routineId) {
     if (!routine.goal) return;
     goalCard.className = "routine-card routine-card--goal";
     goalCard.replaceChildren(icon("flag"),
-      h("span", { class: "routine-card__text" }, capital(routine.goal.name),
+      h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
         h("span", { class: "routine-card__detail" }, `"${routine.goal.say}"`)),
       h("span", { class: "routine-card__time" }, routine.anchor === "end" && pin, shortTime(routine.goal.at)));
   }
@@ -335,30 +335,21 @@ export async function viewRoutineEdit(routineId) {
     }
     const goal = routine.goal;
     const ending = routine.anchor === "end"; // its time is "Termina a las", and it is a must
-    const name = h("input", { type: "text", maxlength: 60, value: goal.name });
-    const at = h("input", { type: "time", value: goal.at });
-    const say = h("input", { type: "text", maxlength: 200, value: goal.say });
-    const saveGoal = () => {
-      const next = { name: name.value.trim(), at: at.value, say: say.value.trim() || goal.say };
-      if (next.name && next.at && JSON.stringify(next) !== JSON.stringify({ name: goal.name, at: goal.at, say: goal.say })) {
-        patch({ goal: next });
-      }
-    };
-    for (const input of [name, at, say]) input.addEventListener("change", saveGoal);
-    const nameHint = h("span", { class: "hint" }, t.routineEdit.goalNameHint(goal.name));
-    name.addEventListener("input", () => { nameHint.textContent = t.routineEdit.goalNameHint(name.value.trim()); });
+    // Only its time: what the voice says there is in "Lo que dice la voz" (rutinas-5).
+    const at = h("input", {
+      type: "time", value: goal.at,
+      onchange: () => at.value && at.value !== goal.at && patch({ goal: { ...goal, at: at.value } }),
+    });
     goalBox.replaceChildren(...[!ending && tabs,
-      h("label", {}, t.routineEdit.goalName, name, nameHint),
-      ending ? h("p", { class: "hint" }, t.routineEdit.goalIsTheEnd)
-        : h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.goalAt, at)),
-      h("label", {}, t.routineEdit.goalSay, say)].filter(Boolean));
+      ending ? h("p", { class: "hint" }, t.routineEdit.goalIsTheEnd(shortTime(goal.at)))
+        : h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.goalAt, at))].filter(Boolean));
   }
   function newGoal() {
     const last = routine.parts.at(-1).end;
     const [hh, mm] = last.split(":").map(Number);
     const minute = (hh * 60 + mm + GOAL_AFTER_MINUTES) % (24 * 60);
     const at = `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
-    return { name: "la salida", at, say: "¡A salir de casa!" };
+    return { at };
   }
 
   // ---------- a child's mission closing before the routine ends ----------
@@ -375,6 +366,7 @@ export async function viewRoutineEdit(routineId) {
     footer.replaceChildren(
       h("button", { type: "button", class: "link-danger", onclick: showConfirm }, t.routineEdit.delete),
       h("div", { class: "form-actions" },
+        h("a", { class: "btn", href: `${LIST_HREF}/${routineId}/voice` }, icon("speaker"), t.routineEdit.voice),
         h("button", { type: "button", class: "btn", onclick: () => tryRoutine(routineId) }, t.routines.tryNow),
         h("a", { class: "btn btn--primary", href: LIST_HREF }, t.common.done)));
   }

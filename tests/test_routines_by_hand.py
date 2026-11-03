@@ -48,7 +48,7 @@ def test_a_routine_by_hand_has_no_times_of_its_own(client, landing):
                                                                           (None, "00:03", "00:07")]
     assert landing["minutes"] == 7
     url = f"/api/routines/{landing['id']}"
-    assert client.patch(url, json={"goal": {"name": "x", "at": "18:00"}}, headers=PARENT).status_code == 422
+    assert client.patch(url, json={"goal": {"at": "18:00"}}, headers=PARENT).status_code == 422
     # Back to a time: the first part five minutes after it rings
     back = client.patch(url, json={"wake": "18:00"}, headers=PARENT).json()
     assert back["manual"] is False and back["parts"][0]["start"] == "18:05"

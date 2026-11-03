@@ -6,6 +6,8 @@ import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
+import * as script from "../../routine/script.js";
+import { minuteOf } from "../../routine/words.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { capital, routineError } from "./routine-edit.js";
@@ -60,8 +62,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
 
   // ---------- name and when ----------
   const nameInput = textInput(part().name, (name) => name && name !== part().name && patch({ name }), { maxlength: 60 });
-  const nameHint = h("span", { class: "hint" }, t.routinePart.nameHint(part().name));
-  nameInput.addEventListener("input", () => { nameHint.textContent = t.routinePart.nameHint(nameInput.value.trim()); });
+  const nameHint = h("span", { class: "hint" }, t.routinePart.nameHint);
   const when = h("div", { class: "stack stack--tight" });
   function renderWhen() {
     const own = Boolean(part().at);
@@ -89,25 +90,13 @@ export async function viewRoutinePartEdit(routineId, partId) {
       !routine.manual && h("p", { class: "hint" }, t.routinePart.starts(part().start, part().end)));
   }
 
-  // ---------- what it says ----------
-  const says = h("div", { class: "stack stack--tight" });
-  let ownSentence = Boolean(part().say);
+  // ---------- what it says: seen here, changed in "Lo que dice la voz" (rutinas-5) ----------
+  const says = h("p", { class: "voice-preview" });
   function renderSays() {
-    const tabs = h("div", { class: "tabs" },
-      [[false, t.routinePart.usual], [true, t.routinePart.own]].map(([value, label]) =>
-        h("button", {
-          type: "button", class: `tab${ownSentence === value ? " tab--on" : ""}`, "aria-pressed": String(ownSentence === value),
-          onclick: () => {
-            if (ownSentence === value) return;
-            ownSentence = value;
-            if (!value) patch({ say: null });
-            renderSays();
-          },
-        }, ownSentence === value && icon("check"), label)));
-    says.replaceChildren(tabs, ownSentence
-      ? textInput(part().say, (say) => say && say !== part().say && patch({ say }),
-        { maxlength: 200, placeholder: t.routinePart.ownPlaceholder })
-      : h("p", { class: "hint" }, t.routinePart.usualHint(part().name)));
+    const p = part();
+    says.textContent = `«${[script.partOpening(p), script.tasksSentence(p),
+      script.partLength(p, { minutes: p.minutes, ends: minuteOf(p.end), manual: routine.manual, kids: routine.kids.length }),
+    ].filter(Boolean).join(" ")}»`;
   }
 
   const tasksList = h("ul", { class: "rows" });
@@ -188,12 +177,12 @@ export async function viewRoutinePartEdit(routineId, partId) {
   function refresh() {
     if (!part()) return;
     renderWhen();
+    renderSays();
     renderTasks();
     renderWarnings();
     checkMission.checked = part().check_mission;
   }
   refresh();
-  renderSays();
   renderFooter();
 
   render(
@@ -207,6 +196,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
             when),
           panel(t.routinePart.panelSay,
             says,
+            h("a", { class: "btn", href: `${routineHref}/voice/${partId}` }, icon("speaker"), t.routinePart.changeSay),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.tasks), tasksList, addTask),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.warnings), warnings,
               h("span", { class: "hint" }, t.routinePart.warningsHint)),

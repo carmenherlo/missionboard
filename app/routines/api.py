@@ -40,10 +40,8 @@ class RoutineCreate(BaseModel):
     wake: str | None = Field(default=None, pattern=TIME)
     starts: str | None = Field(default=None, pattern=TIME)
     ends: str | None = Field(default=None, pattern=TIME)
-    goal: str | None = Field(default=None, max_length=60)
 
     _name = field_validator("name")(_not_blank)
-    _goal = field_validator("goal")(_not_blank)
 
     @model_validator(mode="after")
     def one_time(self) -> "RoutineCreate":
@@ -53,11 +51,16 @@ class RoutineCreate(BaseModel):
 
 
 class GoalIn(BaseModel):
-    name: str = Field(max_length=60)
+    image: str | None = None
     at: str = Field(pattern=TIME)
-    say: str = Field(default="¡A salir de casa!", max_length=200)
+    say: str = Field(default="¡Rutina terminada!", max_length=200)
 
-    _name = field_validator("name")(_not_blank)
+    _say = field_validator("say")(_not_blank)
+
+
+def _blank_is_usual(value: str | None) -> str | None:
+    """A routine's own sentence: left empty, the usual one again."""
+    return (value or "").strip() or None
 
 
 class NoticeIn(BaseModel):
@@ -80,8 +83,12 @@ class RoutinePatch(BaseModel):
     ends: str | None = Field(default=None, pattern=TIME)
     alarm: bool | None = None
     alarm_before: int | None = Field(default=None, ge=0, le=60)
+    greeting: str | None = Field(default=None, max_length=200)  # null or empty: the usual one
+    last_countdown: str | None = Field(default=None, max_length=200)
+    early_goal: str | None = Field(default=None, max_length=200)
 
     _name = field_validator("name")(_not_blank)
+    _sentences = field_validator("greeting", "last_countdown", "early_goal")(_blank_is_usual)
 
 
 class KidsIn(BaseModel):
@@ -188,9 +195,11 @@ def _present(current: Current, libraries: ImageLibraries) -> dict:
             for part, start, end in routine.timeline()
         ],
         "goal": routine.goal and {
-            "name": routine.goal.name, "image_url": libraries.url(routine.goal.image),
-            "at": routine.goal.at, "say": routine.goal.say,
+            "image_url": libraries.url(routine.goal.image), "at": routine.goal.at, "say": routine.goal.say,
         },
+        "greeting": routine.greeting,
+        "last_countdown": routine.last_countdown,
+        "early_goal": routine.early_goal,
         "ends": hhmm(routine.ends),
         "stopped": bool(current.run["stopped_at"]),
         "closed_phase": current.run["closed_phase"],
@@ -299,7 +308,7 @@ def list_routines(editor: RoutinesEditor = Depends(get_routines_editor), present
 @router.post("", status_code=201, dependencies=parent_only)
 def create_routine(body: RoutineCreate, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
-    return present(editor.create(body.name, body.wake, starts=body.starts, ends=body.ends, goal=body.goal))
+    return present(editor.create(body.name, body.wake, starts=body.starts, ends=body.ends))
 
 
 @router.get("/{routine_id}")

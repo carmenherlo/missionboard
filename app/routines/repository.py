@@ -49,14 +49,14 @@ class Part(BaseModel):
 
 
 class Goal(BaseModel):
-    """What the routine leads to: "vuestra clase", at 07:45."""
+    """Where the routine ends, at 07:45: "¡Es hora de irse al cole!". No name since
+    rutinas-5 (the voice says "Quedan cinco minutos para terminar")."""
 
     model_config = ConfigDict(extra="ignore", frozen=True)
 
-    name: str = Field(min_length=1, max_length=60)
     image: str | None = None
     at: str = Field(pattern=TIME)
-    say: str = "¡A salir de casa!"
+    say: str = "¡Rutina terminada!"
 
     _at = field_validator("at", mode="before")(time_from_yaml_number)
 
@@ -89,6 +89,10 @@ class Routine(BaseModel):
     notices: tuple[Notice, ...] = ()  # said before it rings (not by hand)
     parts: tuple[Part, ...] = Field(min_length=1)
     goal: Goal | None = None
+    # Sentences of its own (rutinas-5, "Lo que dice la voz"); None: the usual one (texts.js).
+    greeting: str | None = Field(default=None, max_length=200)  # the alarm, ringing before the first part
+    last_countdown: str | None = Field(default=None, max_length=200)  # ten seconds before the last part ends
+    early_goal: str | None = Field(default=None, max_length=200)  # everyone signed before the goal
 
     _wake = field_validator("wake", mode="before")(time_from_yaml_number)
 

@@ -82,13 +82,13 @@ def test_changes_need_the_parent_code(client):
 def test_name_days_wake_and_goal(client, data_dir):
     routine = edit(client, "PATCH", name="Cole", days=["fri", "mon"], wake="06:20", remind_every=10).json()
     assert routine["name"] == "Cole" and routine["days"] == ["mon", "fri"] and routine["wake"] == "06:20"
-    goal = {"name": "el autobús", "at": "07:50", "say": "¡Al autobús!"}
+    goal = {"at": "07:50", "say": "¡Al autobús!"}
     assert edit(client, "PATCH", goal=goal).json()["goal"] == {**goal, "image": None}
     assert edit(client, "PATCH", goal=None).json()["ends"] == "07:35"
     assert saved(data_dir)["routines"][0]["name"] == "Cole"
 
 
-@pytest.mark.parametrize("body", [{"wake": "06:40"}, {"goal": {"name": "x", "at": "07:30"}}, {"days": []}])
+@pytest.mark.parametrize("body", [{"wake": "06:40"}, {"goal": {"at": "07:30"}}, {"days": []}])
 def test_times_that_do_not_add_up_are_refused(client, body):
     assert edit(client, "PATCH", **body).status_code == 422
     assert client.get(URL).json()["wake"] == "06:30"
@@ -291,9 +291,9 @@ def test_remove_several_parts_at_once(client):
 
 
 def test_a_new_routine_that_ends_at_a_time(client):
-    body = {"name": "Noche", "ends": "20:30", "goal": "a la cama"}
+    body = {"name": "Noche", "ends": "20:30"}
     routine = client.post("/api/routines", json=body, headers=PARENT).json()
-    assert routine["anchor"] == "end" and routine["goal"]["say"] == "¡A la cama!"
+    assert routine["anchor"] == "end" and routine["goal"] == {"image": None, "at": "20:30", "say": "¡Rutina terminada!"}
     assert parts(routine) == [("la primera parte", "20:25", "20:30")]
     assert routine["wake"] == "20:25" and routine["alarm_before"] == 0
     # Another part: the end stays, the start moves back
@@ -327,7 +327,7 @@ def test_ending_at_its_goal_keeps_that_time(client):
 def test_ending_at_a_time_without_a_goal_gets_one(client):
     edit(client, "PATCH", goal=None)
     routine = edit(client, "PATCH", anchor="end").json()
-    assert routine["goal"]["name"] == "el final" and routine["goal"]["at"] == "07:35"
+    assert routine["goal"] == {"image": None, "at": "07:35", "say": "¡Rutina terminada!"}
 
 
 def test_starts_at_and_the_alarm(client):
@@ -352,3 +352,29 @@ def test_by_hand_it_neither_starts_nor_ends_at_a_time(client):
     routine = edit(client, "PATCH", wake=None).json()
     assert routine["manual"] is True and routine["anchor"] == "start"
     assert edit(client, "PATCH", anchor="end").status_code == 422
+
+
+# ---------- "Lo que dice la voz" (rutinas-5) ----------
+
+
+def test_v9_routines_keep_what_they_said():
+    doc = {"version": 9, "routines": [
+        {"id": "manana", "wake": "06:30", "parts": [], "goal": {"name": "vuestra clase", "at": "07:45", "say": "¡Al cole!"}},
+        {"id": "deberes", "wake": None, "parts": []},
+    ]}
+    morning, by_hand = upgrade(doc)["routines"]
+    assert morning["goal"] == {"at": "07:45", "say": "¡Al cole!"}
+    assert morning["greeting"] == "¡Buenos días!" and morning["last_countdown"] == "Diez segundos para salir."
+    assert morning["early_goal"] == "¡Ya podéis salir de casa! ¡Que tengáis un buen día!"
+    assert "greeting" not in by_hand and by_hand["last_countdown"] == "Diez segundos."
+    assert "early_goal" not in by_hand
+
+
+def test_the_routines_own_sentences(client, clock):
+    routine = edit(client, "PATCH", greeting="¡Arriba!", last_countdown="  ", early_goal="¡Bien!").json()
+    assert routine["greeting"] == "¡Arriba!" and routine["early_goal"] == "¡Bien!"
+    assert routine["last_countdown"] is None  # empty: the usual one
+    clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
+    on = client.get("/api/routines/current").json()
+    assert on["greeting"] == "¡Arriba!" and on["early_goal"] == "¡Bien!" and "name" not in on["goal"]
+    assert edit(client, "PATCH", greeting=None).json()["greeting"] is None
