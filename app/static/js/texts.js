@@ -68,6 +68,7 @@ export const t = {
     next: (items) => `Después: ${items.join(" · ")}`,
     allDone: "✓ ¡Todo!",
     banner: "Rutina en marcha · Abrir",
+    reopen: "Volver a la rutina",
     leftInTotal: (left) => `Quedan ${left} en total`,
     endsIn: (left) => `Quedan ${left}`,
     done: "¡Hecho! ¡Muy bien!",

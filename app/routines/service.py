@@ -19,7 +19,7 @@ from app.routines.repository import Part, Routine, RoutinesRepository, RunsRepos
 from app.settings import SettingsRepository
 from app.today.service import DONE, DayService
 
-NOTES = ("started", "stopped", "part", "goal", "closed", "ended")
+NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
 
 
 def kids_of(routine: Routine, children: list[Child]) -> list[Child]:
@@ -179,6 +179,9 @@ class RoutinesService:
         elif kind == "closed":
             self._runs.set(day, routine.id, closed_phase=phase)
             self._events.routine_did("routine_closed", routine.name)
+        elif kind == "reopened":  # "Volver a la rutina": it shows again before its next part
+            self._runs.set(day, routine.id, closed_phase=None)
+            self._events.routine_did("routine_reopened", routine.name)
 
 
     def finish(self, routine_id: str) -> None:

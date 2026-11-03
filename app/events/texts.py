@@ -67,6 +67,7 @@ _ROUTINE = {
     "routine_part": "Rutina «{routine}»: empieza {detail}",
     "routine_goal": "Rutina «{routine}»: llega la meta",
     "routine_closed": "Cerraron la rutina «{routine}»",
+    "routine_reopened": "Volvieron a la rutina «{routine}»",
     "routine_finished": "Finalizaron la rutina «{routine}» por hoy",
     "routine_ended": "Acabó la rutina «{routine}»",
 }

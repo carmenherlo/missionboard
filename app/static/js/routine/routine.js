@@ -558,9 +558,8 @@ export function startRoutines() {
         what, until, dial, stopButton, tasks, next, transcript, finish),
       h("aside", { class: "routine__side" }, people),
       over);
-    const banner = h("button", {
-      type: "button", class: "routine-banner", onclick: () => { location.hash = "#/"; },
-    }, t.routine.banner);
+    // In the parents' zone, or once closed: a button to go back to it.
+    const banner = h("button", { type: "button", class: "routine-banner", onclick: () => reopen() });
     return { layer, banner, time, close, stopButton, what, until, clock, count, tasks, next, finish, people, over,
       trialTools, transcript };
   }
@@ -603,7 +602,8 @@ export function startRoutines() {
     const { layer, banner } = showing.view;
     const trial = Boolean(showing.data.trial);
     layer.hidden = closed() || (inParents() && !trial);
-    banner.hidden = trial || closed() || !inParents();
+    banner.hidden = trial || (!closed() && !inParents());
+    banner.textContent = closed() ? t.routine.reopen : t.routine.banner;
   }
 
   function render(phase, time) {
@@ -707,6 +707,18 @@ export function startRoutines() {
     showing.data.closed_phase = showing.phaseKey;
     note("closed", { phase: showing.phaseKey });
     place();
+  }
+
+  // "Volver a la rutina": closed, it shows again now (on every device); from the
+  // parents' zone, to the home screen with it on top.
+  function reopen() {
+    if (closed()) {
+      showing.data.closed_phase = null;
+      note("reopened");
+    }
+    if (inParents()) location.hash = "#/";
+    place();
+    tick();
   }
 
   // "Finalizar": whoever is in charge ends it for today, with the parents' code.

@@ -72,7 +72,7 @@ class EventLog:
     def routine_did(self, type_: str, routine_name: str, *, seconds=None, part=None, early=False) -> None:
         """What happened to a routine: routine_started, routine_stopped (seconds after it
         rang), routine_part (its name), routine_goal (early: everyone had signed),
-        routine_closed, routine_finished. It belongs to nobody in particular."""
+        routine_closed, routine_reopened, routine_finished. It belongs to nobody in particular."""
         detail = texts.routine_detail(seconds=seconds, part=part, early=early)
         self._record(None, type_, subject=routine_name, detail=detail)
 
