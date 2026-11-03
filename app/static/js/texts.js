@@ -230,7 +230,7 @@ export const t = {
     title: "Lo que dice la voz",
     hint: "Todo lo que dirá la voz, en orden y con su hora (un día normal, sin los días movidos). Lo que lleva lápiz se cambia aquí; lo gris lo dice sola, y cambia solo al mover las partes.",
     hintByHand: "Todo lo que dirá la voz, en orden, desde que se empieza. Lo que lleva lápiz se cambia aquí; lo gris lo dice sola.",
-    kinds: { own: "tuya", tasks: "tareas", auto: "la dice sola", sound: "sonido" },
+    kinds: { own: "", tasks: "tareas", auto: "la dice sola", sound: "sonido" }, // own: the pencil says it
     changed: "cambiada",
     nothing: "(nada)",
     listen: "Escuchar",

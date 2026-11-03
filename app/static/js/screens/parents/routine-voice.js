@@ -51,8 +51,10 @@ export async function viewRoutineVoice(routineId, focus = null) {
     return h("li", { class: `voice-line voice-line--${line.kind}` },
       h("span", { class: "voice-line__time" }, line.when),
       h("span", { class: "voice-line__text" }, line.text || t.routineVoice.nothing),
-      h("span", { class: `voice-line__tag${mine ? " voice-line__tag--mine" : ""}` },
-        mine ? t.routineVoice.changed : t.routineVoice.kinds[line.kind]),
+      mine || t.routineVoice.kinds[line.kind]
+        ? h("span", { class: `voice-line__tag${mine ? " voice-line__tag--mine" : ""}` },
+          mine ? t.routineVoice.changed : t.routineVoice.kinds[line.kind])
+        : h("span", {}),
       line.kind !== "sound" && line.text
         ? h("button", {
           type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routineVoice.listen,
