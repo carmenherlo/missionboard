@@ -8,8 +8,8 @@
 
 const KEY = "missionboard.sound";
 const USUAL_LEVEL = 0.8;
-const LOUDNESS = { voice: 1, effects: 0.75, ticking: 0.75 };
-const USUAL_TICKING = 0.5; // under the voice, not over it
+const LOUDNESS = { voice: 1, effects: 0.75, ticking: 0.4 };
+const USUAL_TICKING = 0.5; // like a real clock's: there, barely heard
 
 let audio = null;
 let settings = read();
@@ -115,10 +115,11 @@ export const sounds = {
     });
   },
 
-  // The second hand, heard: a soft wooden "tic" (or "tac", lower), `delay` seconds from now.
+  // The second hand, heard: a faint "tic" (or "tac", lower), `delay` seconds from now,
+  // like a real clock's: it is there, and only now and then reminds you of the time.
   tick(delay, tac = false) {
     play((ctx, out, now) => {
-      blip(ctx, out, { at: now + delay, freq: tac ? 1400 : 1900, length: 0.035, type: "triangle", volume: 0.6 });
+      blip(ctx, out, { at: now + delay, freq: tac ? 2000 : 2600, length: 0.02, type: "triangle", volume: 0.3 });
     }, "ticking");
   },
 
