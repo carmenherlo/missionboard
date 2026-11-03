@@ -16,7 +16,9 @@ export async function viewHome() {
           h("a", { class: "child-card", href: `#/child/${child.id}` },
             avatar(child, { size: "lg" }),
             h("span", { class: "child-card__name" }, child.name))))
-    : h("p", { class: "empty" }, t.home.empty);
+    : h("div", { class: "home__empty" },
+        h("p", { class: "empty" }, t.home.empty),
+        h("p", { class: "note" }, t.home.emptyHint));
 
   render(
     h("main", { class: "home" },
@@ -28,6 +30,5 @@ export async function viewHome() {
           onclick: () => openChooser(byHand),
         }, icon("alarm"))),
       parentsCornerButton("#/parents", t.home.parentsLabel),
-      h("h1", { class: "home__title" }, t.home.title),
       grid));
 }

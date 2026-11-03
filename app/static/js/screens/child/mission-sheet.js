@@ -9,12 +9,13 @@ import { picture } from "./ring.js";
 
 const MANY_STEPS = 6; // more than this: smaller cards, so all fit without scrolling
 
-export function missionSheet(day, mission, { onToggle, onSpeak, onClose }) {
+// again: drawn again after a step changed (it does not come in a second time).
+export function missionSheet(day, mission, { onToggle, onSpeak, onClose, again = false }) {
   const done = mission.steps.filter((s) => s.checked).length;
   const total = mission.steps.length;
   const locked = mission.state === "done"; // a done mission is only looked at until tomorrow
 
-  return h("div", { class: "mission-layer", onclick: (e) => { if (e.target === e.currentTarget) onClose(); } },
+  return h("div", { class: `mission-layer${again ? " mission-layer--again" : ""}`, onclick: (e) => { if (e.target === e.currentTarget) onClose(); } },
     h("section", { class: "mission-sheet", role: "dialog", "aria-modal": "true", "aria-label": mission.name },
       h("header", { class: "mission-sheet__bar" },
         avatar(day.child, { size: "md" }),
@@ -36,7 +37,7 @@ function stepCard(step, { locked, onToggle, onSpeak }) {
       type: "button", class: "step-card__toggle",
       "aria-pressed": String(step.checked), "aria-label": t.child.stepLabel(step.text, step.checked),
       disabled: locked,
-      onclick: () => onToggle(step),
+      onclick: (e) => onToggle(step, e.currentTarget.closest(".step-card")),
     },
       h("span", { class: "step-tile" }, picture(step.image_url, step.text, "step-tile__letter")),
       h("span", { class: "step-card__text" }, step.text)),

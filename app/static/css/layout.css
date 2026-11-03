@@ -146,8 +146,8 @@
   gap: 2rem;
 }
 
-.home__title {
-  font-size: 2.5rem;
+.home__empty {
+  font-size: var(--text-lg);
 }
 
 .children {

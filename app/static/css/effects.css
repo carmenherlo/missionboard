@@ -32,6 +32,12 @@
   animation: rise var(--appear) ease-out;
 }
 
+/* Drawn again after a step changed: it is already there. */
+.mission-layer--again,
+.mission-layer--again .mission-sheet {
+  animation: none;
+}
+
 @keyframes appear {
   from { opacity: 0; }
 }

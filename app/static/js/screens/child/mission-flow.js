@@ -15,6 +15,7 @@ export async function openMission(container, childId, missionId, { day = null, o
   day ??= await api("GET", base);
   let busy = false; // one step at a time
   let closed = false;
+  let drawn = false;
 
   // The child's colour and its tones: the only styles passed from code (see tokens.css).
   const { color, soft, strong, on } = day.colors;
@@ -30,12 +31,16 @@ export async function openMission(container, childId, missionId, { day = null, o
   function draw() {
     const mission = day.missions.find((m) => m.id === missionId);
     if (!mission) return close();
-    holder.replaceChildren(missionSheet(day, mission, { onToggle: toggle, onSpeak: listen, onClose: close }));
+    holder.replaceChildren(missionSheet(day, mission, { onToggle: toggle, onSpeak: listen, onClose: close, again: drawn }));
+    drawn = true;
   }
 
-  async function toggle(step) {
+  // The step changes as soon as it is tapped (03/11: waiting for the server, a tap
+  // seemed lost and children tapped twice); the server's answer then redraws it.
+  async function toggle(step, card) {
     if (busy) return;
     busy = true;
+    card?.classList.toggle("step-card--done", !step.checked);
     try {
       const result = await api("PUT", `${base}/missions/${missionId}/steps/${step.id}`,
         { json: { checked: !step.checked } });

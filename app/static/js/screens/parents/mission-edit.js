@@ -207,16 +207,58 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
       .catch(() => {})
       .then(renderSteps),
   });
+  // "Seleccionar", as in a routine's parts: a box on each step instead of its handle,
+  // and one bin for all the chosen ones (deleting them one by one meant opening each).
+  let selected = null; // null: not selecting; else the chosen step ids
+  const stepsTools = h("div", { class: "form-actions form-actions--start" });
+  function renderStepsTools() {
+    stepsTools.hidden = mission.steps.length === 0;
+    if (!selected) {
+      stepsTools.replaceChildren(h("button", {
+        type: "button", class: "btn", onclick: () => { selected = new Set(); renderSteps(); },
+      }, icon("check"), t.routineEdit.select));
+      return;
+    }
+    const count = selected.size;
+    stepsTools.replaceChildren(
+      h("button", {
+        type: "button", class: "btn btn--danger", disabled: count === 0,
+        onclick: () => stepsTools.replaceChildren(confirmBar({
+          message: t.missionEdit.confirmDeleteSteps(count),
+          confirmLabel: t.missionEdit.confirmYes,
+          onCancel: renderStepsTools,
+          onConfirm: async () => {
+            await save(api("POST", `${missionUrl}/steps/delete`, { json: { ids: [...selected] } })).catch(() => {});
+            selected = null;
+            renderSteps();
+          },
+        })),
+      }, icon("trash"), t.routineEdit.deleteSelected(count)),
+      h("button", { type: "button", class: "btn", onclick: () => { selected = null; renderSteps(); } }, t.common.cancel));
+  }
   function renderSteps() {
     stepsTitle.textContent = t.missionEdit.steps(mission.steps.length);
+    if (selected) selected = new Set([...selected].filter((id) => mission.steps.some((s) => s.id === id)));
+    renderStepsTools();
     stepsList.replaceChildren(...mission.steps.map((step) =>
-      h("li", { class: "row row--sortable row--compact", "data-id": step.id },
-        h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
+      h("li", {
+        class: `row row--sortable row--compact${selected ? " row--selectable" : ""}`, "data-id": step.id,
+        onclick: selected && ((e) => {
+          if (e.target.closest("a")) return;
+          if (selected.has(step.id)) selected.delete(step.id);
+          else selected.add(step.id);
+          renderSteps();
+        }),
+      },
+        selected
+          ? h("input", { type: "checkbox", checked: selected.has(step.id), "aria-label": step.text, tabindex: -1 })
+          : h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
         imageThumb(step.image_url, { size: "sm", label: step.text, suggested: step.image_suggested }),
         h("span", { class: "row__text" }, step.text),
         h("a", {
           class: "icon-button icon-button--ghost", href: `${editHref}/steps/${step.id}`,
           "aria-label": t.missionEdit.editStepNamed(step.text), title: t.missionEdit.editStep,
+          hidden: Boolean(selected),
         }, icon("edit")))));
     stepsEmpty.hidden = mission.steps.length > 0;
   }
@@ -279,6 +321,6 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
           panel(t.missionEdit.panelWhen,
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysSummary, daysError),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.schedule), scheduleBox, scheduleError))),
-        panel(stepsTitle, stepsEmpty, stepsList, addStep)),
+        panel(stepsTitle, stepsTools, stepsEmpty, stepsList, addStep)),
       footer));
 }

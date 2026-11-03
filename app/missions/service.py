@@ -171,13 +171,20 @@ class MissionEditor:
         return mission
 
     def delete_step(self, mission_id: str, step_id: str) -> Mission:
+        return self.delete_steps(mission_id, [step_id])
+
+    def delete_steps(self, mission_id: str, step_ids: list[str]) -> Mission:
+        """Remove one or several steps at once (the ones chosen in "Seleccionar")."""
         with self._missions.atomic():
             mission = self.get(mission_id)
-            step = self._find_step(mission, step_id)
-            mission.steps.remove(step)
+            gone = [self._find_step(mission, step_id) for step_id in dict.fromkeys(step_ids)]
+            if not gone:
+                raise InvalidError("Choose the steps to remove")
+            mission.steps = [s for s in mission.steps if s not in gone]
             self._missions.update(mission)
-        self._photos.delete(photo_filename(step.image))
-        self._log("deleted", mission, step=step)
+        for step in gone:
+            self._photos.delete(photo_filename(step.image))
+            self._log("deleted", mission, step=step)
         return mission
 
     def reorder_steps(self, mission_id: str, step_ids: list[str]) -> Mission:

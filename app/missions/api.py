@@ -198,6 +198,16 @@ def add_editing_routes(router: APIRouter, prefix: str, get_editor) -> None:
     ):
         return present(editor.update_step(item_id, step_id, **_changes(body, required={"text"})))
 
+    @router.post(prefix + "/{item_id}/steps/delete", dependencies=parent_only)
+    def delete_steps(
+        item_id: str,
+        body: OrderIn,
+        editor: MissionEditor = Depends(get_editor),
+        present: Presenter = Depends(),
+    ):
+        """Remove several steps at once (the ones chosen in "Seleccionar")."""
+        return present(editor.delete_steps(item_id, body.ids))
+
     @router.delete(prefix + "/{item_id}/steps/{step_id}", dependencies=parent_only)
     def delete_step(
         item_id: str,

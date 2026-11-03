@@ -23,8 +23,8 @@ export const t = {
     backHome: "Volver al inicio",
   },
   home: {
-    title: "¿Quién eres?",
-    empty: "Todavía no hay niños.",
+    empty: "Aún no hay perfiles creados.",
+    emptyHint: "Créalos en la Zona de padres → Configurar → Niños.",
     parentsLabel: "Zona de padres",
     homeLabel: "Salir al inicio",
     fullscreen: "Pantalla completa",
@@ -492,6 +492,7 @@ export const t = {
     delete: "Borrar misión",
     confirmDelete: (mission, child) => `¿Borrar la misión «${mission}» de ${child}?`,
     confirmDeleteDetail: "Desaparece de su ruta. Las estrellas que ya ganó con ella se conservan.",
+    confirmDeleteSteps: (n) => `¿Borrar ${n === 1 ? "1 paso" : `${n} pasos`}?`,
     confirmYes: "Sí, borrar",
     missingName: "Escribe el nombre de la misión.",
     saveAsTemplate: "Guardar como plantilla",

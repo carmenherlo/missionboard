@@ -402,3 +402,15 @@ def test_missions_saved_before_suggestions_still_load(client, bea, data_dir):
         entry.pop("image_suggested")
     config_path(data_dir).write_text(yaml.safe_dump(doc))
     assert client.get(f"/api/children/{bea['id']}/missions").json()[0]["image_suggested"] is False
+
+
+def test_delete_several_steps_at_once(client, mission):
+    for text in ("A", "B", "C"):
+        steps = add_step(client, mission["id"], text).json()["steps"]
+    a, b, c = (s["id"] for s in steps)
+    url = f"/api/missions/{mission['id']}/steps/delete"
+    body = client.post(url, json={"ids": [a, c]}, headers=PARENT).json()
+    assert [s["text"] for s in body["steps"]] == ["B"]
+    assert client.post(url, json={"ids": ["nope"]}, headers=PARENT).status_code == 404
+    assert client.post(url, json={"ids": []}, headers=PARENT).status_code == 422
+    assert client.post(url, json={"ids": [b]}).status_code == 401
