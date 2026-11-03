@@ -373,11 +373,13 @@ export async function viewRoutineEdit(routineId) {
       }
     };
     for (const input of [name, at, say]) input.addEventListener("change", saveGoal);
+    const nameHint = h("span", { class: "hint" }, t.routineEdit.goalNameHint(goal.name));
+    name.addEventListener("input", () => { nameHint.textContent = t.routineEdit.goalNameHint(name.value.trim()); });
     goalBox.replaceChildren(...[!ending && tabs,
-      h("div", { class: "times" }, h("label", {}, t.routineEdit.goalName, name),
-        !ending && h("label", { class: "time" }, t.routineEdit.goalAt, at)),
-      h("label", {}, t.routineEdit.goalSay, say),
-      h("p", { class: "hint" }, ending ? t.routineEdit.goalIsTheEnd : t.routineEdit.goalHint)].filter(Boolean));
+      h("label", {}, t.routineEdit.goalName, name, nameHint),
+      ending ? h("p", { class: "hint" }, t.routineEdit.goalIsTheEnd)
+        : h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.goalAt, at)),
+      h("label", {}, t.routineEdit.goalSay, say)].filter(Boolean));
   }
   function newGoal() {
     const last = routine.parts.at(-1).end;

@@ -60,6 +60,8 @@ export async function viewRoutinePartEdit(routineId, partId) {
 
   // ---------- name and when ----------
   const nameInput = textInput(part().name, (name) => name && name !== part().name && patch({ name }), { maxlength: 60 });
+  const nameHint = h("span", { class: "hint" }, t.routinePart.nameHint(part().name));
+  nameInput.addEventListener("input", () => { nameHint.textContent = t.routinePart.nameHint(nameInput.value.trim()); });
   const when = h("div", { class: "stack stack--tight" });
   function renderWhen() {
     const own = Boolean(part().at);
@@ -201,7 +203,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
         h("div", { class: "stack" },
           panel(t.routinePart.panelPart,
             h("label", {}, t.routinePart.name, nameInput),
-            h("span", { class: "hint" }, t.routinePart.nameHint),
+            nameHint,
             when),
           panel(t.routinePart.panelSay,
             says,

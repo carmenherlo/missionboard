@@ -17,7 +17,7 @@ export function viewRoutineNew() {
   const error = h("p", { class: "form-error", role: "alert" });
   const anchor = h("div", {});
   const timeLabel = h("span", {});
-  const goalField = h("label", {}, t.routines.goal, goal);
+  const goalField = h("label", {}, t.routines.goal, goal, h("span", { class: "hint" }, t.routines.goalNameHint));
   const hint = h("p", { class: "hint" });
 
   function renderAnchor() {
