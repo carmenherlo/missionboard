@@ -106,16 +106,16 @@ export async function viewRoutineEdit(routineId) {
     noticesList.replaceChildren(...routine.notices.map((notice, index) =>
       h("li", { class: "row row--compact" },
         h("span", { class: "row__text" }, notice.say,
-          h("span", { class: "row__detail" }, h("span", { class: "pill pill--muted" }, t.routineEdit.noticeBefore(notice.minutes)))),
+          h("span", { class: "row__detail" }, h("span", { class: "pill pill--muted" }, t.routineEdit.noticeBefore(movedTime(routine.wake, -notice.minutes), notice.minutes)))),
         h("button", {
           type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routineEdit.removeNotice,
           onclick: () => patch({ notices: routine.notices.filter((_, i) => i !== index) }),
         }, icon("close")))));
   }
-  const noticeMinutes = h("input", { type: "number", min: 1, max: 180, value: 20, "aria-label": t.routineEdit.noticeMinutes });
+  const noticeMinutes = h("input", { type: "number", min: 1, max: 180, value: 20 });
   const noticeSay = h("input", { type: "text", maxlength: 200, placeholder: t.routineEdit.noticePlaceholder });
   const addNotice = h("form", {
-    class: "row row--add", novalidate: true,
+    class: "stack stack--tight", novalidate: true,
     onsubmit: async (event) => {
       event.preventDefault();
       const say = noticeSay.value.trim();
@@ -125,11 +125,15 @@ export async function viewRoutineEdit(routineId) {
       await patch({ notices });
       noticeSay.value = "";
     },
-  }, noticeMinutes, noticeSay, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routineEdit.addNotice));
+  }, h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.noticeMinutes, noticeMinutes)),
+  h("label", {}, t.routineEdit.noticeSay, noticeSay),
+  h("div", { class: "form-actions form-actions--start" },
+    h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routineEdit.addNotice)));
 
   // Rings at a time, or started by hand (⏰ on the home screen).
   const modeBox = h("div", {});
-  const timed = h("div", { class: "stack stack--tight" });
+  const timed = h("div", { class: "stack stack--tight" }); // in the Horario panel
+  const timedPanels = h("div", { class: "stack" }); // the panels a routine started by hand does not have
   const goalPanel = h("div", {});
   function renderMode() {
     const manual = routine.manual;
@@ -141,6 +145,7 @@ export async function viewRoutineEdit(routineId) {
         }, manual === value && icon("check"), label))),
     manual && h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes))].filter(Boolean));
     timed.hidden = manual;
+    timedPanels.hidden = manual;
     goalPanel.hidden = manual;
   }
   function renderWhen() {
@@ -411,17 +416,24 @@ export async function viewRoutineEdit(routineId) {
     }));
   }
 
+  // One panel for each thing, so the alarm and the moved days do not mix.
   timed.append(
     anchorBox,
     h("div", { class: "times" }, h("label", { class: "time" }, whenLabel, when)),
-    whenHint,
-    h("label", { class: "toggle" }, alarmOn, t.routineEdit.alarm),
-    alarmBeforeRow,
-    alarmHint,
-    h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.offsets), offsetsBox, offsetsTimes,
-      h("span", { class: "hint" }, t.routineEdit.offsetsHint)),
-    h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.notices), noticesList, addNotice,
-      h("span", { class: "hint" }, t.routineEdit.noticesHint)));
+    whenHint);
+  timedPanels.append(
+    panel(t.routineEdit.panelAlarm,
+      h("label", { class: "toggle" }, alarmOn, t.routineEdit.alarm),
+      alarmBeforeRow,
+      alarmHint),
+    panel(t.routineEdit.offsets,
+      h("p", { class: "hint" }, t.routineEdit.offsetsHint),
+      offsetsBox,
+      offsetsTimes),
+    panel(t.routineEdit.notices,
+      h("p", { class: "hint" }, t.routineEdit.noticesHint),
+      noticesList,
+      addNotice));
   goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
   function refresh() {
@@ -442,9 +454,9 @@ export async function viewRoutineEdit(routineId) {
         h("div", { class: "stack" },
           panel(t.routineEdit.panelRoutine,
             h("label", {}, t.routines.name, nameInput),
-            h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.days), daysBox, daysSummary),
-            modeBox,
-            timed),
+            h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.days), daysBox, daysSummary)),
+          panel(t.routineEdit.panelWhen, modeBox, timed),
+          timedPanels,
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(partsTitle, partsTools, h("div", { class: "stack stack--tight" }, alarmCard, partsList, goalCard),
