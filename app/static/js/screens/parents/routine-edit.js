@@ -100,35 +100,8 @@ export async function viewRoutineEdit(routineId) {
           onchange: (e) => patch({ offsets: { ...routine.offsets, [day]: Number(e.target.value) || 0 } }),
         }))));
   }
-  // Notices before it rings: "20 min antes · Es hora de despertar a los niños".
-  const noticesList = h("ul", { class: "rows" });
-  function renderNotices() {
-    noticesList.replaceChildren(...routine.notices.map((notice, index) =>
-      h("li", { class: "row row--compact" },
-        h("span", { class: "row__text" }, notice.say,
-          h("span", { class: "row__detail" }, h("span", { class: "pill pill--muted" }, t.routineEdit.noticeBefore(movedTime(routine.wake, -notice.minutes), notice.minutes)))),
-        h("button", {
-          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routineEdit.removeNotice,
-          onclick: () => patch({ notices: routine.notices.filter((_, i) => i !== index) }),
-        }, icon("close")))));
-  }
-  const noticeMinutes = h("input", { type: "number", min: 1, max: 180, value: 20 });
-  const noticeSay = h("input", { type: "text", maxlength: 200, placeholder: t.routineEdit.noticePlaceholder });
-  const addNotice = h("form", {
-    class: "stack stack--tight", novalidate: true,
-    onsubmit: async (event) => {
-      event.preventDefault();
-      const say = noticeSay.value.trim();
-      const minutes = Number(noticeMinutes.value);
-      if (!say || !(minutes >= 1)) return;
-      const notices = [...routine.notices, { minutes, say }].sort((a, b) => b.minutes - a.minutes);
-      await patch({ notices });
-      noticeSay.value = "";
-    },
-  }, h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.noticeMinutes, noticeMinutes)),
-  h("label", {}, t.routineEdit.noticeSay, noticeSay),
-  h("div", { class: "form-actions form-actions--start" },
-    h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routineEdit.addNotice)));
+  // No panel for the notices (03/11: nobody used them; a part "para los padres" does
+  // it better): saved ones are still said, and rutinas-4's messages will replace them.
 
   // Rings at a time, or started by hand (⏰ on the home screen).
   const modeBox = h("div", {});
@@ -177,7 +150,6 @@ export async function viewRoutineEdit(routineId) {
   function renderRoutine() {
     renderMode();
     renderOffsets();
-    renderNotices();
     if (!routine.manual) renderWhen();
     remind.value = routine.remind_every;
     daysSummary.textContent = daysLongText(routine.days);
@@ -431,11 +403,7 @@ export async function viewRoutineEdit(routineId) {
     panel(t.routineEdit.offsets,
       h("p", { class: "hint" }, t.routineEdit.offsetsHint),
       offsetsBox,
-      offsetsTimes),
-    panel(t.routineEdit.notices,
-      h("p", { class: "hint" }, t.routineEdit.noticesHint),
-      noticesList,
-      addNotice));
+      offsetsTimes));
   goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
   function refresh() {
