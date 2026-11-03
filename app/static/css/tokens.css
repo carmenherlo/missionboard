@@ -158,11 +158,12 @@
   --timer-case: #11141b;
   --timer-text: white;
   --routine-side-width: 200px;
-  /* Songs (rutinas-4, section 3): pink-lilac, like Scratch's sound blocks; only in the parents' editor */
+  /* Songs (rutinas-4, screen 4 bis): pink-lilac, like Scratch's sound blocks; only in the parents' editor */
   --song-bar: #f7def7;
   --song-edge: #c55ec5;
   --on-song: #4a2a4a;
-  --song-lane-width: 8.5rem;
+  --song-rail: 6px; /* the side of the C */
+  --song-indent: 14px; /* the cards inside it move this far right */
   --hold-to-close: 1.2s; /* "Cerrar" closes only when held this long (a quick tap by mistake does not) */
 
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */

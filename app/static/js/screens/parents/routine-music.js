@@ -39,44 +39,36 @@ export function clashWith(routine, music) {
   });
 }
 
-// The lane, beside `cardsBox` (whose cards carry data-card: "alarm", a part's id, "goal").
-export function songLane(routineId) {
-  const element = h("div", { class: "song-lane", "aria-label": t.routineMusic.lane });
-  let last = null;
-
-  function draw(routine, songs, cardsBox) {
-    last = { routine, songs, cardsBox };
-    const byId = Object.fromEntries(songs.map((s) => [s.id, s]));
-    const cards = Object.fromEntries(cardsOf(routine).map((c) => [c.id, c]));
-    const top = cardsBox.getBoundingClientRect().top;
-    const place = (id) => cardsBox.querySelector(`[data-card="${id}"]`)?.getBoundingClientRect();
-    element.replaceChildren(...(routine.music.length ? [] : [h("span", { class: "song-lane__empty" }, t.routineMusic.laneEmpty)]),
-      ...routine.music.map((music) => {
-        const song = byId[music.song];
-        const from = place(music.start);
-        const to = place(music.until ?? music.start);
-        if (!song || !from || !to) return null;
-        const detail = [
-          music.start === "alarm" && t.routineMusic.insteadOfAlarm,
-          music.until ? t.routineMusic.until(cards[music.until]?.name ?? "") : t.routineMusic.once(length(song.seconds)),
-        ].filter(Boolean).join(" · ");
-        return h("a", {
-          class: `song-bar${music.until ? "" : " song-bar--once"}`,
-          href: `${ROUTINES_HREF}/${routineId}/music/${music.id}`,
-          style: `top: ${from.top - top}px; height: ${to.bottom - from.top}px`,
-        }, h("span", { class: "song-bar__name" }, icon("music"), song.name), h("span", { class: "song-bar__detail" }, detail));
-      }).filter(Boolean));
-  }
-
-  // The cards change size (a new part, the window): the bars follow them.
-  const observer = new ResizeObserver(() => last && draw(last.routine, last.songs, last.cardsBox));
-  return {
-    element,
-    draw: (routine, songs, cardsBox) => {
-      observer.disconnect();
-      observer.observe(cardsBox);
-      requestAnimationFrame(() => draw(routine, songs, cardsBox)); // once the cards are laid out
-    },
+// Each song wraps the cards it plays over, like Scratch's C blocks ("repetir"): a
+// head above the card where it starts (its name, until where, and its pencil) and a
+// rail down the side of its cards. The cards carry data-card: "alarm", a part's id, "goal".
+export function songWraps(routineId) {
+  return function draw(routine, songs, cardsBox) {
+    cardsBox.querySelectorAll(".song-head").forEach((head) => head.remove());
+    cardsBox.querySelectorAll(".in-song").forEach((card) => card.classList.remove("in-song", "in-song--last"));
+    const cards = cardsOf(routine);
+    const element = (id) => cardsBox.querySelector(`[data-card="${id}"]`);
+    for (const music of routine.music) {
+      const song = songs.find((s) => s.id === music.song);
+      const from = cards.findIndex((c) => c.id === music.start);
+      const to = cards.findIndex((c) => c.id === (music.until ?? music.start));
+      if (!song || from < 0 || to < from) continue;
+      const wrapped = cards.slice(from, to + 1).map((c) => element(c.id)).filter(Boolean);
+      if (!wrapped.length) continue;
+      wrapped.forEach((card) => card.classList.add("in-song"));
+      wrapped.at(-1).classList.add("in-song--last");
+      const detail = [
+        music.start === "alarm" && t.routineMusic.insteadOfAlarm,
+        music.until ? t.routineMusic.until(cards[to].name) : t.routineMusic.once(length(song.seconds)),
+      ].filter(Boolean).join(" · ");
+      const first = wrapped[0];
+      const head = h(first.tagName === "LI" ? "li" : "div", { class: "song-head" },
+        h("a", { class: "song-head__link", href: `${ROUTINES_HREF}/${routineId}/music/${music.id}` },
+          icon("music"), h("span", { class: "song-head__name" }, song.name),
+          h("span", { class: "song-head__detail" }, detail),
+          h("span", { class: "song-head__edit", "aria-label": t.routineMusic.edit(song.name) }, icon("edit"))));
+      first.before(head);
+    }
   };
 }
 

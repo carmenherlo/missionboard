@@ -1153,64 +1153,68 @@
   font-weight: 600;
 }
 
-/* A routine's songs (rutinas-4, section 3): a lane beside its cards; each song a bar
-   from the card where it starts to the card where it ends (routine-music.js places them). */
-.song-lanes {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--song-lane-width);
-  gap: var(--space-2);
-}
-
-.song-lane {
-  position: relative;
-}
-
-.song-lane__empty {
-  color: var(--muted);
-  font-size: var(--text-sm);
-}
-
-.song-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
+/* A routine's songs (rutinas-4, screen 4 bis): each one wraps the cards it plays
+   over, like Scratch's C blocks: a head above the first card and a rail down the
+   side (routine-music.js adds .song-head and .in-song). */
+.song-cards {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
+  gap: var(--space-2); /* the same as between the parts, so the rail covers every gap */
+}
+
+.song-head {
+  list-style: none;
+  margin-bottom: calc(-1 * var(--space-2)); /* the rail starts right under it */
+}
+
+.song-head__link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
   padding: var(--space-1) var(--space-2);
-  border-left: 5px solid var(--song-edge);
-  border-radius: var(--radius-sm);
+  border-left: var(--song-rail) solid var(--song-edge);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: var(--song-bar);
   color: var(--on-song);
   text-decoration: none;
 }
 
-.song-bar--once {
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+.song-head__link svg {
+  width: 1.1em;
+  height: 1.1em;
 }
 
-.song-bar__name {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
+.song-head__name {
   font-weight: 800;
 }
 
-.song-bar__name svg {
-  flex: none;
-  width: 1em;
-  height: 1em;
-}
-
-.song-bar__detail {
+.song-head__detail {
   font-size: var(--text-sm);
   font-weight: 600;
-  line-height: 1.2;
 }
 
-@media (max-width: 700px) {
-  .song-lanes {
-    --song-lane-width: 6.5rem;
-  }
+.song-head__edit {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+}
+
+.in-song {
+  position: relative;
+  margin-left: var(--song-indent);
+}
+
+.in-song::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--song-indent));
+  top: calc(-1 * var(--space-2));
+  bottom: 0;
+  width: var(--song-rail);
+  background: var(--song-edge);
+}
+
+.in-song--last::before {
+  border-radius: 0 0 var(--song-rail) var(--song-rail);
 }

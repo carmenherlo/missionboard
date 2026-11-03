@@ -10,7 +10,7 @@ import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { addSongForm, songLane } from "./routine-music.js";
+import { addSongForm, songWraps } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const LIST_HREF = "#/parents/config/routines";
@@ -275,6 +275,7 @@ export async function viewRoutineEdit(routineId) {
           "aria-label": t.routineEdit.editPartNamed(part.name), title: t.routineEdit.editPartNamed(part.name),
           hidden: Boolean(selected),
         }, icon("edit")))));
+    wrapSongs(routine, songs, cardsBox);
   }
   const newPart = h("input", { type: "text", maxlength: 60, placeholder: t.routineEdit.newPart });
   const addPart = h("form", {
@@ -400,15 +401,14 @@ export async function viewRoutineEdit(routineId) {
   goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
   // The songs: a lane beside the cards, and a form to add one (routine-music.js).
-  const cardsBox = h("div", { class: "stack stack--tight" }, alarmCard, partsList, goalCard);
-  const lane = songLane(routineId);
+  const cardsBox = h("div", { class: "song-cards" }, alarmCard, partsList, goalCard);
+  const wrapSongs = songWraps(routineId);
   const addSong = addSongForm(routineId, { save, status });
 
   function refresh() {
     renderRoutine();
     renderKids();
     renderParts();
-    lane.draw(routine, songs, cardsBox);
     addSong.draw(routine, songs);
     renderGoal();
     renderConflicts();
@@ -429,7 +429,7 @@ export async function viewRoutineEdit(routineId) {
           timedPanels,
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
-          panel(partsTitle, partsTools, h("div", { class: "song-lanes" }, cardsBox, lane.element),
+          panel(partsTitle, partsTools, cardsBox,
             addPart, importParts, addSong.element),
           goalPanel)),
       footer));

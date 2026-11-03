@@ -249,8 +249,7 @@ export const t = {
     confirmYes: "Sí, borrar",
   },
   routineMusic: {
-    lane: "Canciones",
-    laneEmpty: "Sin canciones",
+    edit: (name) => `Cambiar «${name}»`,
     once: (length) => `una vez · ${length}`,
     insteadOfAlarm: "en vez del timbre",
     until: (card) => `hasta ${card}`,

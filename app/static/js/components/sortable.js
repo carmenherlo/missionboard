@@ -6,7 +6,7 @@
 const SLIDE_MS = 150;
 
 export function sortable(list, { onEnd }) {
-  const ids = () => [...list.children].map((el) => el.dataset.id);
+  const ids = () => [...list.children].filter((el) => el.dataset.id).map((el) => el.dataset.id); // not the songs' heads
 
   // Animate siblings from where they were to where they are now (FLIP).
   function slide(items, before) {
