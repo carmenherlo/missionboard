@@ -48,7 +48,22 @@ export function say(text) {
   else sayWithTablet(parts);
 }
 
+// Something being said right now (the songs go down under the voice).
+let talking = null; // the turn whose sentences are still being played
+export function speaking() {
+  return talking === saying || Boolean(globalThis.speechSynthesis?.speaking);
+}
+
 async function sayNaturally(parts, turn) {
+  talking = turn;
+  try {
+    await playEach(parts, turn);
+  } finally {
+    if (talking === turn) talking = null;
+  }
+}
+
+async function playEach(parts, turn) {
   // All of them asked for at once: the next one is ready when the last ends.
   const sounds = parts.map((part) => new Audio(`/api/voice?text=${encodeURIComponent(part)}`));
   for (const [index, sound] of sounds.entries()) {

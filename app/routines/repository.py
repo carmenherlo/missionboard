@@ -18,6 +18,18 @@ from app.storage import db
 from app.storage.config_store import ConfigStore
 
 
+def card_positions(doc: dict) -> dict[str, int]:
+    """Where a song can start or end, in order: the alarm (-1), each part, the goal."""
+    timed = doc.get("wake") is not None
+    parts = doc.get("parts") or []
+    cards = {part["id"]: index for index, part in enumerate(parts)}
+    if timed and doc.get("alarm", True):
+        cards["alarm"] = -1
+    if timed and doc.get("goal"):
+        cards["goal"] = len(parts)
+    return cards
+
+
 def minute_of(hhmm: str) -> int:
     """ "06:50" → 410 (minute of the day)."""
     hours, minutes = map(int, hhmm.split(":"))
@@ -61,6 +73,19 @@ class Goal(BaseModel):
     _at = field_validator("at", mode="before")(time_from_yaml_number)
 
 
+class Music(BaseModel):
+    """A song in a routine (rutinas-4, section 3), like Scratch's "iniciar sonido": the
+    routine never waits for it. From a card (`start`: "alarm", a part's id or "goal")
+    to a card (`until`: a part's id or "goal", repeating until it ends; None: once)."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    id: str = Field(pattern=r"^[\w-]{1,64}$")
+    song: str
+    start: str
+    until: str | None = None
+
+
 class Notice(BaseModel):
     """Said before the routine rings: "Es hora de despertar a los niños", 20 minutes before."""
 
@@ -93,6 +118,7 @@ class Routine(BaseModel):
     greeting: str | None = Field(default=None, max_length=200)  # the alarm, ringing before the first part
     last_countdown: str | None = Field(default=None, max_length=200)  # ten seconds before the last part ends
     early_goal: str | None = Field(default=None, max_length=200)  # everyone signed before the goal
+    music: tuple[Music, ...] = ()
 
     _wake = field_validator("wake", mode="before")(time_from_yaml_number)
 
@@ -109,6 +135,19 @@ class Routine(BaseModel):
         if any(day not in WEEKDAYS or not -180 <= minutes <= 180 for day, minutes in offsets.items()):
             raise ValueError("offsets: mon..sun, up to 180 minutes either way")
         return {day: minutes for day, minutes in offsets.items() if minutes}
+
+    @model_validator(mode="after")
+    def music_fits(self) -> "Routine":
+        """Each song from a card to the same or a later one, and no two at a time."""
+        cards = card_positions(self.to_doc())
+        end = -2
+        for music in sorted(self.music, key=lambda m: cards.get(m.start, -9)):
+            start = cards.get(music.start)
+            until = start if music.until is None else cards.get(music.until)
+            if start is None or until is None or until < start or music.until == "alarm" or start <= end:
+                raise ValueError(f"the songs of {self.id!r} do not fit its cards")
+            end = until
+        return self
 
     @model_validator(mode="after")
     def times_add_up(self) -> "Routine":

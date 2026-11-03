@@ -2,13 +2,13 @@
 // works offline. Ported from the old app (an earlier version, sounds.js),
 // where they were tested at home with the morning routine.
 //
-// Three channels, voice, effects and the ticking second hand, each with its level and an on/off switch,
+// Four channels, voice, effects, the ticking second hand and the songs, each with its level and an on/off switch,
 // remembered on this device (the sound panel changes them). Browsers only
 // allow sound after a tap: the first tap anywhere starts the audio engine.
 
 const KEY = "missionboard.sound";
 const USUAL_LEVEL = 0.8;
-const LOUDNESS = { voice: 1, effects: 0.75, ticking: 0.4 };
+const LOUDNESS = { voice: 1, effects: 0.75, ticking: 0.4, music: 0.8 };
 const USUAL_TICKING = 0.5; // like a real clock's: there, barely heard
 
 let audio = null;
@@ -20,6 +20,7 @@ function read() {
     voice: { level: USUAL_LEVEL, off: false },
     effects: { level: USUAL_LEVEL, off: false },
     ticking: { level: USUAL_TICKING, off: false },
+    music: { level: USUAL_LEVEL, off: false },
   };
   try {
     return { ...fresh, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };

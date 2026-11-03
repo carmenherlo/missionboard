@@ -33,10 +33,12 @@ import { soundButton } from "../components/sound-panel.js";
 import { sounds } from "../components/sound.js";
 import { onSay, quiet, say } from "../components/speech.js";
 import { h } from "../dom.js";
+import { icon } from "../icons.js";
 import { openMission } from "../screens/child/mission-flow.js";
 import { t } from "../texts.js";
 import { tokenMs } from "../effects/motion.js";
 import { clockFace, timerFace } from "./clock-face.js";
+import { musicPlayer, musicWindows } from "./music.js";
 import * as script from "./script.js";
 import {
   capital, countdownText, hourWords, itIs, minuteOf, shortTime, tasksLeft,
@@ -166,6 +168,8 @@ export function startRoutines() {
       allSigned: false,
       mission: null, // a kid's mission open over the clock: { close }
       holdHintUntil: 0, // a quick tap on "Cerrar": until then, it says to hold it
+      player: musicPlayer(),
+      musicOff: new Set(), // songs silenced today ("Parar", or ♪)
       ticker: setInterval(tick, TICK_MS),
     };
     document.body.append(view.layer, view.banner);
@@ -185,6 +189,7 @@ export function startRoutines() {
     showing.stopListening?.();
     stopRinging();
     quiet();
+    showing.player.stop();
     clearInterval(showing.ticker);
     showing.mission?.close();
     showing.view.layer.remove();
@@ -305,6 +310,39 @@ export function startRoutines() {
     }
     place();
     render(phase, time);
+    playMusic(time);
+  }
+
+  // The songs (music.js): silent while out of sight, and in a trial faster than real time.
+  function playMusic(time) {
+    const { view, player } = showing;
+    player.update(songWindows(), time, !view.layer.hidden && showing.speed === 1);
+    view.musicButton.hidden = !player.playing();
+  }
+
+  function songWindows() {
+    const { data } = showing;
+    const all = parts();
+    return musicWindows(data.music ?? [], {
+      wake: data.manual ? all[0].from : minuteOf(data.wake), parts: all,
+      goalAt: data.goal ? minuteOf(data.goal.at) : all.at(-1).to,
+    }).filter((w) => !showing.musicOff.has(w.id));
+  }
+
+  // How long a song still has to play from now (the goal stays on screen until it ends).
+  function songLeftMs() {
+    const time = now();
+    const window = songWindows().find((w) => w.from <= time + 1 / 60 && time < w.to);
+    return window ? (window.to - time) * 60_000 : 0;
+  }
+
+  // A song in the alarm card plays instead of the "rrring" (rutinas-4, question 4).
+  const alarmSong = () => (showing.data.music ?? []).some((m) => m.start === "alarm" && !showing.musicOff.has(m.id));
+
+  function silenceSong() {
+    const playing = showing.player.playing();
+    if (playing) showing.musicOff.add(playing.id);
+    showing.player.stop();
   }
 
   // In the last part, checking the mission, and every kid has done it.
@@ -330,6 +368,7 @@ export function startRoutines() {
     if (phase.kind === "done") {
       if (showing.data.manual && before !== null) finish(counted);
       else if (showing.data.goal && before?.startsWith("part-")) goalAtTheEnd(time, counted);
+      else if (songLeftMs() > 0) songToTheEnd(); // the goal's song is not cut
       else end();
       return;
     }
@@ -357,7 +396,7 @@ export function startRoutines() {
         time, minutes: Math.round(part.to - part.from), ends: part.to, manual: data.manual, kids: data.people.length,
       });
       if (ringFirst) {
-        sounds.alarm();
+        if (!alarmSong()) sounds.alarm();
         const key = showing.phaseKey;
         setTimeout(() => showing?.phaseKey === key && say(sentences), VOICE_AFTER_RING_MS);
       } else {
@@ -395,7 +434,15 @@ export function startRoutines() {
     showing.finished = done ? "done" : "timeUp";
     note("ended", { early: showing.done === "signed" });
     const id = showing.data.id;
-    setTimeout(() => showing?.data.id === id && end(), DONE_MS);
+    setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
+  }
+
+  // The goal's time came, and its song is still on: the goal stays on screen until it ends.
+  function songToTheEnd() {
+    showing.finishing = true;
+    showing.finished = "goal";
+    const id = showing.data.id;
+    setTimeout(() => showing?.data.id === id && end(), songLeftMs());
   }
 
   // The goal at the very time the last part ends (nothing in between): its words,
@@ -408,7 +455,7 @@ export function startRoutines() {
     else sounds.ding();
     say(script.goalReached(showing.data, time, 0));
     const id = showing.data.id;
-    setTimeout(() => showing?.data.id === id && end(), DONE_MS);
+    setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
   }
 
   // "¡Enhorabuena! Habéis completado con éxito todas vuestras tareas de la misión Despegue."
@@ -433,7 +480,7 @@ export function startRoutines() {
     const once = () => {
       if (!showing?.ringing) return;
       const first = parts()[0];
-      sounds.alarm();
+      if (!alarmSong()) sounds.alarm();
       setTimeout(() => {
         if (!showing?.ringing) return;
         const time = now();
@@ -455,6 +502,7 @@ export function startRoutines() {
     if (!showing?.ringing) return;
     stopRinging();
     quiet();
+    for (const m of showing.data.music ?? []) if (m.start === "alarm") showing.musicOff.add(m.id);
     note("stopped", { seconds: Math.max(0, Math.round((now() - minuteOf(showing.data.wake)) * 60)) });
     showing.data.stopped = true;
   }
@@ -557,6 +605,8 @@ export function startRoutines() {
   function buildView() {
     const time = h("span", { class: "routine__time" });
     const close = h("button", { type: "button", class: "btn routine__close" });
+    const musicButton = h("button", { type: "button", class: "btn routine__music", hidden: true, onclick: () => silenceSong() },
+      icon("music"), t.routine.stopMusic);
     holdToClose(close);
     const stopButton = h("button", { type: "button", class: "btn btn--primary routine__stop", onclick: stop },
       t.routine.stop);
@@ -575,14 +625,14 @@ export function startRoutines() {
     dragging(dial);
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
-        h("header", { class: "routine__top" }, time, h("span", { class: "child-bar__spacer" }), soundButton(), close),
+        h("header", { class: "routine__top" }, time, h("span", { class: "child-bar__spacer" }), musicButton, soundButton(), close),
         trialTools,
         what, until, dial, stopButton, tasks, next, transcript, finish),
       h("aside", { class: "routine__side" }, people),
       over);
     // In the parents' zone, or once closed: a button to go back to it.
     const banner = h("button", { type: "button", class: "routine-banner", onclick: () => reopen() });
-    return { layer, banner, time, close, stopButton, what, until, clock, count, tasks, next, finish, people, over,
+    return { layer, banner, time, close, musicButton, stopButton, what, until, clock, count, tasks, next, finish, people, over,
       trialTools, transcript };
   }
 

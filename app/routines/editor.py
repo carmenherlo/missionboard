@@ -18,7 +18,8 @@ from app.images.photos import validate_photo
 from app.images.rules import ImageRules
 from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.templates.repository import TemplatesRepository
-from app.routines.repository import Part, Routine, RoutinesRepository, hhmm, minute_of
+from app.routines.repository import Part, Routine, RoutinesRepository, card_positions, hhmm, minute_of
+from app.songs.repository import SongsRepository
 from app.storage.photo_store import PhotoStore
 
 UNSET = object()
@@ -271,6 +272,50 @@ class RoutinesEditor:
         self._log("changed", routine)
         return routine
 
+    # ---------- songs (rutinas-4, section 3) ----------
+
+    def add_music(self, routine_id: str, song_id: str, start: str, songs: SongsRepository) -> Routine:
+        """A song from a card, once (until it ends): its screen makes it longer."""
+        return self._set_music(routine_id, None, {"id": _new_id(), "song": song_id, "start": start, "until": None}, songs)
+
+    def update_music(self, routine_id: str, music_id: str, songs: SongsRepository, **fields) -> Routine:
+        old = next((m for m in self.get(routine_id).music if m.id == music_id), None)
+        if old is None:
+            raise NotFoundError("Song not in this routine")
+        return self._set_music(routine_id, music_id, old.model_dump() | fields, songs)
+
+    def delete_music(self, routine_id: str, music_id: str) -> Routine:
+        routine = self.get(routine_id)
+        song = next((m for m in routine.music if m.id == music_id), None)
+        if song is None:
+            raise NotFoundError("Song not in this routine")
+        routine = self._change(routine_id, {"music": [m.model_dump() for m in routine.music if m.id != music_id]})
+        self._log("changed", routine)
+        return routine
+
+    def _set_music(self, routine_id: str, music_id: str | None, music: dict, songs: SongsRepository) -> Routine:
+        """One song added or changed, refused if it would play at the same time as another
+        (one Música channel); the screen says which before asking."""
+        if songs.get(music["song"]) is None:
+            raise NotFoundError("Song not found")
+        routine = self.get(routine_id)
+        others = [m.model_dump() for m in routine.music if m.id != music_id]
+        cards = card_positions(routine.to_doc())
+        if music["start"] not in cards or (music["until"] is not None and music["until"] not in cards):
+            raise InvalidError("No such card in this routine")
+        if music["until"] is not None and cards[music["until"]] < cards[music["start"]]:
+            raise InvalidError("A song ends where it starts or later")
+        span = (cards[music["start"]], cards[music["until"] or music["start"]])
+        for other in others:
+            theirs = (cards[other["start"]], cards[other["until"] or other["start"]])
+            if span[0] <= theirs[1] and theirs[0] <= span[1]:
+                raise ConflictError("Two songs at the same time")
+        kept = others + [music] if music_id is None else [music if m.id == music_id else m.model_dump()
+                                                           for m in routine.music]
+        routine = self._change(routine_id, {"music": kept})
+        self._log("changed", routine)
+        return routine
+
     # ---------- "Probar ahora" ----------
 
     def trial(self, routine_id: str, from_part: int = 0) -> tuple[Routine, float | None]:
@@ -305,7 +350,7 @@ class RoutinesEditor:
 
     def _valid(self, doc: dict, check_others: bool) -> Routine:
         try:
-            routine = Routine.model_validate(_settled(doc))
+            routine = Routine.model_validate(_music_kept(_settled(doc)))
         except ValidationError as err:
             raise InvalidError("The times do not add up") from err
         if check_others:
@@ -352,6 +397,30 @@ def _settled(doc: dict) -> dict:
         return doc  # it would start the day before: refused as it is
     parts[0]["at"] = hhmm(start)
     return {**doc, "parts": parts, "wake": hhmm((start - lead) % (24 * 60))}
+
+
+def _music_kept(doc: dict) -> dict:
+    """After any change, each song still from a card to a card: without the alarm, from
+    the first part; a card gone, it goes (where it started) or ends there once (where
+    it ended); moved round so that two would meet, the earlier one plays just once."""
+    cards = card_positions(doc)
+    first = doc["parts"][0]["id"] if doc.get("parts") else None
+    kept, end = [], -2
+    music = [dict(m) for m in doc.get("music") or []]
+    for m in music:
+        if m["start"] == "alarm" and "alarm" not in cards:
+            m["start"] = first
+        if m.get("until") not in cards or cards[m["until"]] < cards.get(m["start"], 0) or m["until"] == "alarm":
+            m["until"] = None
+    for m in sorted((m for m in music if m["start"] in cards), key=lambda m: cards[m["start"]]):
+        start = cards[m["start"]]
+        if start <= end:
+            if kept and cards[kept[-1]["start"]] == start:
+                continue  # two from the same card: the first one stays
+            kept[-1]["until"] = None
+        kept.append(m)
+        end = cards[m["until"]] if m["until"] else start
+    return {**doc, "music": kept}
 
 
 def _dump(part: Part) -> dict:

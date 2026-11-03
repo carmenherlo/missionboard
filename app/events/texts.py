@@ -100,6 +100,8 @@ SCREENS = {
     "routine_edit": ("Editar rutina", None),
     "routine_part_edit": ("Editar parte de rutina", None),
     "routine_voice": ("Lo que dice la voz", None),
+    "songs": ("Canciones", None),
+    "routine_music": ("Canción de una rutina", None),
     "prize_edit": ("Editar premio", None),
 }
 
@@ -140,6 +142,9 @@ _CONFIG = {
     ("prize", "created"): "Añadiste el premio «{mission}»",
     ("prize", "changed"): "Cambiaste el premio «{mission}»",
     ("prize", "deleted"): "Borraste el premio «{mission}»",
+    ("song", "created"): "Subiste la canción «{mission}»",
+    ("song", "changed"): "Cambiaste la canción «{mission}»",
+    ("song", "deleted"): "Borraste la canción «{mission}»",
 }
 
 

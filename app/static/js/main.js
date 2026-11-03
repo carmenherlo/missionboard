@@ -15,8 +15,10 @@ import { viewPrizeEdit } from "./screens/parents/prize-edit.js";
 import { viewRoutineEdit } from "./screens/parents/routine-edit.js";
 import { viewRoutineNew } from "./screens/parents/routine-new.js";
 import { viewRoutinePartEdit } from "./screens/parents/routine-part-edit.js";
+import { viewRoutineMusic } from "./screens/parents/routine-music.js";
 import { viewRoutineVoice } from "./screens/parents/routine-voice.js";
 import { viewRoutinesList } from "./screens/parents/routines-list.js";
+import { viewSongsList } from "./screens/parents/songs-list.js";
 import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
 import { viewPrizesList } from "./screens/parents/prizes-list.js";
@@ -59,7 +61,10 @@ const routes = [
   [parentsPath("/missions/:mission/steps/:step"), (ids) => viewStepEdit(ids.mission, ids.step), "parents", "step_edit"],
   [parentsPath("/routines"), () => viewRoutinesList(), "parents", "routines"],
   [parentsPath("/routines/new"), () => viewRoutineNew(), "parents", "routine_new"],
+  [parentsPath("/routines/songs"), () => viewSongsList(), "parents", "songs"],
   [parentsPath("/routines/:routine"), (ids) => viewRoutineEdit(ids.routine), "parents", "routine_edit"],
+  [parentsPath("/routines/:routine/music/:music"),
+    (ids) => viewRoutineMusic(ids.routine, ids.music), "parents", "routine_music"],
   [parentsPath("/routines/:routine/voice"), (ids) => viewRoutineVoice(ids.routine), "parents", "routine_voice"],
   [parentsPath("/routines/:routine/voice/:part"),
     (ids) => viewRoutineVoice(ids.routine, ids.part), "parents", "routine_voice"],

@@ -21,7 +21,7 @@ const USUAL_WARNING = 1; // a part with no warnings of its own (settings.routine
 export async function viewRoutineVoice(routineId, focus = null) {
   const url = `/api/routines/${routineId}`;
   const routineHref = `#/parents/config/routines/${routineId}`;
-  let routine = await api("GET", url);
+  let [routine, songs] = await Promise.all([api("GET", url), api("GET", "/api/songs")]);
   const status = saveStatus();
   const groups = h("div", { class: "stack" });
   let editing = null; // the key of the line being changed
@@ -37,7 +37,7 @@ export async function viewRoutineVoice(routineId, focus = null) {
   const patchPart = (part, json) => save(api("PATCH", `${url}/parts/${part.id}`, { json }));
 
   function draw() {
-    groups.replaceChildren(...scriptOf(routine, { patchRoutine, patchPart, routineHref }).map((group) =>
+    groups.replaceChildren(...scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }).map((group) =>
       h("section", { class: "panel", id: `voice-${group.id}` },
         h("h2", { class: "panel__title" }, group.title),
         h("ul", { class: "rows" }, ...group.lines.map((line, index) => {
@@ -110,7 +110,7 @@ export async function viewRoutineVoice(routineId, focus = null) {
 
 // The routine as a list of groups (the alarm, each part, the goal), each with its lines:
 // { when, kind: "own" | "tasks" | "auto" | "sound", text, edit?, href? }.
-function scriptOf(routine, { patchRoutine, patchPart, routineHref }) {
+function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
   const manual = routine.manual;
   const kids = routine.kids.length;
   // A moment as said on its line: "6:34:44", or from the start when started by hand ("min 5").
@@ -185,7 +185,7 @@ function scriptOf(routine, { patchRoutine, patchPart, routineHref }) {
     if (last && manual) {
       lines.push(auto(to, t.routineVoice.byHandDone), auto(to, t.routineVoice.byHandTimeUp));
     }
-    groups.push({ id: part.id, title: `${manual ? when(from) : part.start.replace(/^0/, "")} · ${capital(part.name)}`, lines });
+    groups.push({ id: part.id, title: `${manual ? when(from) : part.start.replace(/^0/, "")} · ${capital(part.name)}`, lines, end: to });
   });
 
   // The goal: its sentence when the last part ends, and how long is left until its time.
@@ -212,7 +212,26 @@ function scriptOf(routine, { patchRoutine, patchPart, routineHref }) {
         when: t.routineVoice.early,
       });
     }
-    groups.push({ id: "goal", title: `${shortTime(at)} · ${t.routineEdit.goalCard}`, lines });
+    groups.push({ id: "goal", title: `${shortTime(at)} · ${t.routineEdit.goalCard}`, lines, end: at });
+  }
+
+  // The songs (rutinas-4): heard, not said, at the start of their card and the end of the last one.
+  const groupOf = (card) => groups.find((g) => g.id === (card === "alarm" ? "wake" : card))
+    ?? (card === "alarm" ? groups.find((g) => g.id === first.id) : null);
+  const label = (card) => (card === "goal" ? t.routineEdit.goalCard.toLowerCase()
+    : routine.parts.find((p) => p.id === card)?.name ?? "");
+  for (const music of routine.music) {
+    const song = songs.find((s) => s.id === music.song);
+    const from = groupOf(music.start);
+    if (!song || !from) continue;
+    const seconds = Math.round(song.seconds);
+    from.lines.unshift({
+      when: from.lines[0].when, kind: "sound",
+      text: t.routineVoice.songStarts(song.name, music.until ? label(music.until)
+        : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`, Boolean(music.until)),
+    });
+    const to = music.until && groupOf(music.until);
+    if (to) to.lines.push({ when: when(to.end), kind: "sound", text: t.routineVoice.songEnds(song.name) });
   }
   return groups;
 }

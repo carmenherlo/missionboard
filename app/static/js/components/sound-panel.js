@@ -7,7 +7,7 @@ import { level, setLevel } from "./sound.js";
 
 export function soundButton() {
   const panel = h("div", { class: "sound-panel", hidden: true },
-    ...["voice", "effects", "ticking"].map((channel) =>
+    ...["voice", "effects", "ticking", "music"].map((channel) =>
       h("label", { class: "sound-panel__row" }, t.sound[channel],
         h("input", {
           type: "range", min: 0, max: 1, step: 0.05, value: level(channel),

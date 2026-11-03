@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 10
+CURRENT_VERSION = 11
 
 
 class ConfigVersionError(Exception):
@@ -245,6 +245,12 @@ def _v9_to_v10(doc: dict) -> dict:
     return {**doc, "version": 10, "routines": routines}
 
 
+def _v10_to_v11(doc: dict) -> dict:
+    """The family's songs (rutinas-4): a library, and the songs each routine plays."""
+    routines = [{**routine, "music": routine.get("music") or []} for routine in copy.deepcopy(doc.get("routines") or [])]
+    return {**doc, "version": 11, "songs": doc.get("songs") or [], "routines": routines}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
@@ -255,6 +261,7 @@ _MIGRATIONS = {
     7: _v7_to_v8,
     8: _v8_to_v9,
     9: _v9_to_v10,
+    10: _v10_to_v11,
 }
 
 

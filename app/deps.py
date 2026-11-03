@@ -14,6 +14,7 @@ from app.parents.repository import ParentsRepository
 from app.parents.service import ParentsService
 from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
+from app.songs.repository import SoundFiles
 from app.storage.photo_store import PhotoStore
 
 
@@ -23,6 +24,10 @@ def get_config_store(request: Request) -> ConfigStore:
 
 def get_photo_store(request: Request) -> PhotoStore:
     return request.app.state.photo_store
+
+
+def get_sound_files(request: Request) -> SoundFiles:
+    return request.app.state.sound_files
 
 
 def get_clock(request: Request) -> Clock:

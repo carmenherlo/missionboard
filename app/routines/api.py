@@ -7,6 +7,7 @@ from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
 from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.errors import InvalidError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
@@ -16,6 +17,7 @@ from app.routines.service import NOTES, Current, RoutinesService, kids_of
 from app.storage.photo_store import PhotoStore
 from app.templates.repository import TemplatesRepository
 from app.settings import SettingsRepository
+from app.songs.repository import SongsRepository
 from app.storage.config_store import ConfigStore
 from app.today.api import get_day_service
 from app.today.service import DayService
@@ -169,7 +171,7 @@ def get_routines_editor(
     )
 
 
-def _present(current: Current, libraries: ImageLibraries) -> dict:
+def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository) -> dict:
     routine = current.routine
     return {
         "id": routine.id,
@@ -200,6 +202,7 @@ def _present(current: Current, libraries: ImageLibraries) -> dict:
         "greeting": routine.greeting,
         "last_countdown": routine.last_countdown,
         "early_goal": routine.early_goal,
+        "music": _music(routine, songs),
         "ends": hhmm(routine.ends),
         "stopped": bool(current.run["stopped_at"]),
         "closed_phase": current.run["closed_phase"],
@@ -208,6 +211,20 @@ def _present(current: Current, libraries: ImageLibraries) -> dict:
             for p in current.people
         ],
     }
+
+
+def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
+    """The songs for the screen: its parts have no ids, so where each one starts and ends
+    goes as "alarm", a part's index or "goal" (until null: once, until it ends)."""
+    index = {part.id: i for i, part in enumerate(routine.parts)}
+    played = []
+    for music in routine.music:
+        song = songs.get(music.song)
+        if song is not None:
+            played.append({"id": music.id, "name": song.name, "url": f"/api/songs/{song.id}/file",
+                           "seconds": song.seconds, "start": index.get(music.start, music.start),
+                           "until": index.get(music.until, music.until)})
+    return played
 
 
 @router.get("/notices")
@@ -239,10 +256,11 @@ def start(routine_id: str, body: StartIn, routines: RoutinesService = Depends(ge
 def current_routine(
     routines: RoutinesService = Depends(get_routines_service),
     libraries: ImageLibraries = Depends(get_image_libraries),
+    store: ConfigStore = Depends(get_config_store),
 ):
     """The routine going on now (null if none): the screen asks every little while."""
     current = routines.current()
-    return _present(current, libraries) if current else None
+    return _present(current, libraries, SongsRepository(store)) if current else None
 
 
 # The routine's screen is for everyone in the house: no parent code, except to finish it.
@@ -388,6 +406,38 @@ def delete_part(routine_id: str, part_id: str, editor: RoutinesEditor = Depends(
     return present(editor.delete_part(routine_id, part_id))
 
 
+class MusicCreate(BaseModel):
+    song: str
+    start: str
+
+
+class MusicPatch(BaseModel):
+    song: str | None = None
+    start: str | None = None
+    until: str | None = None  # null: once, until the song ends
+
+
+@router.post("/{routine_id}/music", dependencies=parent_only)
+def add_music(routine_id: str, body: MusicCreate, editor: RoutinesEditor = Depends(get_routines_editor),
+              store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
+    return present(editor.add_music(routine_id, body.song, body.start, SongsRepository(store)))
+
+
+@router.patch("/{routine_id}/music/{music_id}", dependencies=parent_only)
+def update_music(routine_id: str, music_id: str, body: MusicPatch, editor: RoutinesEditor = Depends(get_routines_editor),
+                 store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
+    fields = {name: getattr(body, name) for name in body.model_fields_set}
+    if any(fields.get(name, "") is None for name in ("song", "start")):
+        raise InvalidError("A song and where it starts")
+    return present(editor.update_music(routine_id, music_id, SongsRepository(store), **fields))
+
+
+@router.delete("/{routine_id}/music/{music_id}", dependencies=parent_only)
+def delete_music(routine_id: str, music_id: str, editor: RoutinesEditor = Depends(get_routines_editor),
+                 present: Editing = Depends()):
+    return present(editor.delete_music(routine_id, music_id))
+
+
 @router.put("/{routine_id}/parts/{part_id}/photo", dependencies=parent_only)
 async def upload_part_photo(routine_id: str, part_id: str, request: Request, content_type: str = Header(),
                             editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
@@ -402,6 +452,7 @@ def trial(
     editor: RoutinesEditor = Depends(get_routines_editor),
     routines: RoutinesService = Depends(get_routines_service),
     libraries: ImageLibraries = Depends(get_image_libraries),
+    store: ConfigStore = Depends(get_config_store),
     clock=Depends(get_clock),
 ):
     """"Probar ahora": the routine with its own times, as if it were that moment of the
@@ -413,4 +464,4 @@ def trial(
         now = now.replace(hour=seconds // 3600, minute=seconds // 60 % 60, second=seconds % 60, microsecond=0)
     current = routines.current_for(routine, now)
     editor.tested(routine_id)
-    return {**_present(current, libraries), "trial": True}
+    return {**_present(current, libraries, SongsRepository(store)), "trial": True}

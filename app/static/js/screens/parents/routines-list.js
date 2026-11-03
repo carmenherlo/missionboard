@@ -36,6 +36,8 @@ export async function viewRoutinesList() {
     h("main", { class: "page" },
       h("div", { class: "page-header" },
         h("p", { class: "hint" }, routines.length ? t.routines.hint : t.routines.empty),
-        h("a", { class: "btn btn--primary", href: "#/parents/config/routines/new" }, icon("plus"), t.routines.add)),
+        h("div", { class: "form-actions" },
+          h("a", { class: "btn", href: "#/parents/config/routines/songs" }, icon("music"), t.songs.open),
+          h("a", { class: "btn btn--primary", href: "#/parents/config/routines/new" }, icon("plus"), t.routines.add))),
       routines.length ? list : null));
 }

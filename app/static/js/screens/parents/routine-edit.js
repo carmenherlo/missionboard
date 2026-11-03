@@ -10,6 +10,7 @@ import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { addSongForm, songLane } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const LIST_HREF = "#/parents/config/routines";
@@ -28,8 +29,8 @@ export function routineError(err) {
 // Like Editar misión: panels that save every change on the spot.
 export async function viewRoutineEdit(routineId) {
   const url = `/api/routines/${routineId}`;
-  const [first, children, templates] = await Promise.all([
-    api("GET", url), api("GET", "/api/children"), api("GET", "/api/templates"), loadAvatars()]);
+  const [first, children, templates, songs] = await Promise.all([
+    api("GET", url), api("GET", "/api/children"), api("GET", "/api/templates"), api("GET", "/api/songs"), loadAvatars()]);
   let routine = first;
   const missionsOf = Object.fromEntries(await Promise.all(
     children.map(async (c) => [c.id, await api("GET", `/api/children/${c.id}/missions`)])));
@@ -192,8 +193,8 @@ export async function viewRoutineEdit(routineId) {
   // ---------- the parts, in order ----------
   // Between two cards that do not move, like Scratch's blocks: the alarm opens the
   // routine and the goal closes it. The pin marks the time that stays put.
-  const alarmCard = h("div", {});
-  const goalCard = h("div", {});
+  const alarmCard = h("div", { "data-card": "alarm" });
+  const goalCard = h("div", { "data-card": "goal" });
   function renderCards() {
     const pin = h("span", { "aria-label": t.routineEdit.pinned, title: t.routineEdit.pinned }, icon("pin"));
     alarmCard.hidden = routine.manual;
@@ -252,7 +253,7 @@ export async function viewRoutineEdit(routineId) {
     renderPartsTools();
     partsList.replaceChildren(...routine.parts.map((part) =>
       h("li", {
-        class: `row row--sortable row--compact${selected ? " row--selectable" : ""}`, "data-id": part.id,
+        class: `row row--sortable row--compact${selected ? " row--selectable" : ""}`, "data-id": part.id, "data-card": part.id,
         onclick: selected && ((e) => {
           if (e.target.closest("a")) return;
           if (selected.has(part.id)) selected.delete(part.id);
@@ -398,10 +399,17 @@ export async function viewRoutineEdit(routineId) {
       offsetsTimes));
   goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
+  // The songs: a lane beside the cards, and a form to add one (routine-music.js).
+  const cardsBox = h("div", { class: "stack stack--tight" }, alarmCard, partsList, goalCard);
+  const lane = songLane(routineId);
+  const addSong = addSongForm(routineId, { save, status });
+
   function refresh() {
     renderRoutine();
     renderKids();
     renderParts();
+    lane.draw(routine, songs, cardsBox);
+    addSong.draw(routine, songs);
     renderGoal();
     renderConflicts();
   }
@@ -421,8 +429,8 @@ export async function viewRoutineEdit(routineId) {
           timedPanels,
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
-          panel(partsTitle, partsTools, h("div", { class: "stack stack--tight" }, alarmCard, partsList, goalCard),
-            addPart, importParts),
+          panel(partsTitle, partsTools, h("div", { class: "song-lanes" }, cardsBox, lane.element),
+            addPart, importParts, addSong.element),
           goalPanel)),
       footer));
 }
