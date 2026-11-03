@@ -1014,10 +1014,11 @@
   font-weight: 800;
 }
 
-.offsets__times {
+.offsets__times { /* in italics: the usual times are the ones above */
   margin: 0;
   padding: 0;
   list-style: none;
+  font-style: italic;
 }
 
 .offsets__day input {

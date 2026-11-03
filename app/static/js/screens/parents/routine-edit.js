@@ -155,9 +155,7 @@ export async function viewRoutineEdit(routineId) {
     whenLabel.textContent = ending ? t.routineEdit.anchorEnd : t.routineEdit.anchorStart;
     when.value = ending ? routine.ends : routine.starts;
     const length = lengthText(minuteOf(routine.ends) - minuteOf(routine.starts));
-    whenHint.textContent = ending
-      ? t.routineEdit.endsHint(shortTime(routine.starts), length)
-      : t.routineEdit.startsHint(shortTime(routine.ends), length);
+    whenHint.textContent = t.routineEdit.whenHint(shortTime(routine.starts), shortTime(routine.ends), length);
     alarmOn.checked = routine.alarm;
     const choices = [...new Set([...ALARM_BEFORE_CHOICES, routine.alarm_before])].sort((a, b) => a - b);
     alarmBefore.replaceChildren(...choices.map((n) =>
