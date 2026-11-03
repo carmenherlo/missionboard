@@ -228,8 +228,8 @@ export const t = {
   },
   routineVoice: {
     title: "Lo que dice la voz",
-    hint: "Todo lo que dirá la voz, en orden y con su hora (un día normal, sin los días movidos). Lo que lleva lápiz se cambia aquí. Lo gris es automático: sale de las horas y los minutos de cada parte, y cambia solo al moverlas.",
-    hintByHand: "Todo lo que dirá la voz, en orden, desde que se empieza. Lo que lleva lápiz se cambia aquí. Lo gris es automático: sale de los minutos de cada parte.",
+    hint: "Todo lo que dirá la voz, en orden y con su hora (un día normal, sin los días movidos). Las blancas, con lápiz, se pueden cambiar. Las grises son automáticas: salen de las horas y los minutos de cada parte, y cambian solas al moverlas.",
+    hintByHand: "Todo lo que dirá la voz, en orden, desde que se empieza. Las blancas, con lápiz, se pueden cambiar. Las grises son automáticas: salen de los minutos de cada parte.",
     kinds: { own: "", tasks: "tareas", auto: "automática", sound: "sonido" }, // own: the pencil says it
     changed: "cambiada",
     nothing: "(nada)",
