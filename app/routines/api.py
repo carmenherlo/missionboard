@@ -91,6 +91,7 @@ class RoutinePatch(BaseModel):
     greeting: str | None = Field(default=None, max_length=200)  # null or empty: the usual one
     last_countdown: str | None = Field(default=None, max_length=200)
     early_goal: str | None = Field(default=None, max_length=200)
+    warn_about: Literal["end", "next"] | None = None
 
     _name = field_validator("name")(_not_blank)
     _sentences = field_validator("greeting", "last_countdown", "early_goal")(_blank_is_usual)
@@ -204,6 +205,7 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
         "greeting": routine.greeting,
         "last_countdown": routine.last_countdown,
         "early_goal": routine.early_goal,
+        "warn_about": routine.warn_about,
         "music": _music(routine, songs),
         "ends": hhmm(routine.ends),
         "stopped": bool(current.run["stopped_at"]),
@@ -340,7 +342,7 @@ def get_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routines_e
 def update_routine(routine_id: str, body: RoutinePatch, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "days", "remind_every", "offsets", "notices", *TIMING):  # wake: null means "by hand"
+    for required in ("name", "days", "remind_every", "offsets", "notices", "warn_about", *TIMING):  # wake: null means "by hand"
         if changes.get(required, "") is None:
             changes.pop(required)
     if changes.get("goal") is not None:

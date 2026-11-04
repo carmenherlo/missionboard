@@ -33,12 +33,19 @@ export function partStart(part, { time, minutes, ends, manual, kids }) {
   ].filter(Boolean);
 }
 
-export const partWarning = (part, n) => `${left(n)} para que acabe ${part.name}.`;
+// Before a part ends: "para que acabe el aseo", or, if the routine says so (warn_about:
+// "next", 04/11), "para que empiece vestirse". The last part has no next one: "acabe".
+const untilEndOf = (part, next) => (next ? `para que empiece ${next.name}` : `para que acabe ${part.name}`);
+
+// The part after `index`, if the routine warns about what comes next.
+export const nextFor = (routine, parts, index) => (routine.warn_about === "next" ? parts[index + 1] ?? null : null);
+
+export const partWarning = (part, n, next = null) => `${left(n)} ${untilEndOf(part, next)}.`;
 
 // Sixteen seconds before a part ends, then the ten-second countdown. Not "Acaba el
 // aseo" first: it has not ended yet (03/11). The last one, the routine's own sentence.
-export function partHerald(part, isLast, routine) {
-  return isLast ? lastCountdown(routine) : `Diez segundos para que acabe ${part.name}.`;
+export function partHerald(part, isLast, routine, next = null) {
+  return isLast ? lastCountdown(routine) : `Diez segundos ${untilEndOf(part, next)}.`;
 }
 
 export const lastCountdown = (routine) => routine.last_countdown ?? USUAL.lastCountdown;

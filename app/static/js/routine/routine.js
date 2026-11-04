@@ -560,7 +560,7 @@ export function startRoutines() {
       if (due) {
         showing.warned.add(due);
         sounds.ding();
-        say(script.partWarning(phase.part, due));
+        say(script.partWarning(phase.part, due, script.nextFor(showing.data, parts(), phase.index)));
       }
     } else if (phase.kind === "goal" && showing.earlyGoal == null) { // early, it ends at once
       const minutesLeft = phase.to - time;
@@ -616,7 +616,8 @@ export function startRoutines() {
       say(script.lastCountdown(showing.data)); // then the goal
     } else {
       // The last part leads to the goal, unless the missions are checked first.
-      say(script.partHerald(phase.part, phase.index + 1 === all.length && !checkMinutes(), showing.data));
+      say(script.partHerald(phase.part, phase.index + 1 === all.length && !checkMinutes(), showing.data,
+        script.nextFor(showing.data, all, phase.index)));
     }
   }
 

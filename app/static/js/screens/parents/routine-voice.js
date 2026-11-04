@@ -24,6 +24,9 @@ export async function viewRoutineVoice(routineId, focus = null) {
   let [routine, songs] = await Promise.all([api("GET", url), api("GET", "/api/songs")]);
   const status = saveStatus();
   const groups = h("div", { class: "stack" });
+  // How the warnings before a part ends are said (04/11): "para que acabe el aseo" or
+  // "para que empiece vestirse".
+  const warnBox = h("div", { class: "stack stack--tight" });
   let editing = null; // the key of the line being changed
 
   function save(request) {
@@ -36,7 +39,19 @@ export async function viewRoutineVoice(routineId, focus = null) {
   const patchRoutine = (json) => save(api("PATCH", url, { json }));
   const patchPart = (part, json) => save(api("PATCH", `${url}/parts/${part.id}`, { json }));
 
+  function drawWarnings() {
+    warnBox.replaceChildren(
+      h("div", { class: "tabs" }, [["end", t.routineVoice.warnEnd], ["next", t.routineVoice.warnNext]].map(([value, label]) =>
+        h("button", {
+          type: "button", class: `tab${routine.warn_about === value ? " tab--on" : ""}`,
+          "aria-pressed": String(routine.warn_about === value),
+          onclick: () => routine.warn_about !== value && patchRoutine({ warn_about: value }),
+        }, routine.warn_about === value && icon("check"), label))),
+      h("p", { class: "hint" }, t.routineVoice.warnHint));
+  }
+
   function draw() {
+    drawWarnings();
     groups.replaceChildren(...scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }).map((group) =>
       h("section", { class: "panel", id: `voice-${group.id}` },
         h("h2", { class: "panel__title" }, group.title),
@@ -103,6 +118,7 @@ export async function viewRoutineVoice(routineId, focus = null) {
     h("main", { class: "page" },
       h("div", { class: "stack" },
         h("p", { class: "hint" }, routine.manual ? t.routineVoice.hintByHand : t.routineVoice.hint),
+        panel(t.routineVoice.warnTitle, warnBox),
         groups,
         h("div", { class: "form-actions" }, h("a", { class: "btn btn--primary", href: routineHref }, t.common.done)))));
   if (focus) document.getElementById(`voice-${focus}`)?.scrollIntoView({ block: "start" });
@@ -172,10 +188,10 @@ function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
     if (tasks) lines.push({ when: when(from), kind: "tasks", text: tasks, href: `${routineHref}/parts/${part.id}` });
     lines.push(auto(from, script.partLength(part, { minutes, ends: to, manual, kids })));
     for (const n of (part.warnings ?? (minutes > 2 ? [USUAL_WARNING] : [])).filter((w) => w < minutes).sort((a, b) => b - a)) {
-      lines.push(auto(to - n, script.partWarning(part, n)));
+      lines.push(auto(to - n, script.partWarning(part, n, script.nextFor(routine, routine.parts, index))));
     }
     const check = !manual && routine.goal?.check_minutes > 0; // then the last part does not lead to the goal
-    const herald = script.partHerald(part, last && !check, routine);
+    const herald = script.partHerald(part, last && !check, routine, script.nextFor(routine, routine.parts, index));
     lines.push(last && !check
       ? own(to - HERALD_S / 60, herald, {
         value: routine.last_countdown, usual: script.USUAL.lastCountdown, label: t.routineVoice.lastLabel,

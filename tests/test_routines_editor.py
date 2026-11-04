@@ -405,3 +405,11 @@ def test_the_goals_checking_moves_the_parts(client):
     assert routine["goal"]["at"] == "07:45" and routine["parts"][-1]["end"] == "07:35"
     routine = edit(client, "PATCH", goal={**routine["goal"], "check_minutes": 0}).json()
     assert routine["parts"][-1]["end"] == "07:45"
+
+
+def test_warnings_about_the_next_part(client, clock):
+    assert edit(client, "GET").json()["warn_about"] == "end"
+    assert edit(client, "PATCH", warn_about="next").json()["warn_about"] == "next"
+    assert edit(client, "PATCH", warn_about="later").status_code == 422
+    clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
+    assert client.get("/api/routines/current").json()["warn_about"] == "next"

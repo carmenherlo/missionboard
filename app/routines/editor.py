@@ -81,13 +81,13 @@ class RoutinesEditor:
 
     def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
                offsets=UNSET, notices=UNSET, greeting=UNSET, last_countdown=UNSET, early_goal=UNSET,
-               **timing) -> Routine:
+               warn_about=UNSET, **timing) -> Routine:
         """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`. The
         sentences (greeting, last_countdown, early_goal): None goes back to the usual one."""
         changes = {k: v for k, v in
                    {"name": name, "days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
                     "offsets": offsets, "notices": notices, "greeting": greeting,
-                    "last_countdown": last_countdown, "early_goal": early_goal}.items()
+                    "last_countdown": last_countdown, "early_goal": early_goal, "warn_about": warn_about}.items()
                    if v is not UNSET}
         if set(timing) - set(TIMING):
             raise TypeError(f"unknown: {set(timing) - set(TIMING)}")

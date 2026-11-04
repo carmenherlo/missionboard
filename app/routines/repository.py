@@ -121,6 +121,9 @@ class Routine(BaseModel):
     greeting: str | None = Field(default=None, max_length=200)  # the alarm, ringing before the first part
     last_countdown: str | None = Field(default=None, max_length=200)  # ten seconds before the last part ends
     early_goal: str | None = Field(default=None, max_length=200)  # everyone signed before the goal
+    # Before a part ends, the voice says "para que acabe el aseo" ("end") or "para que
+    # empiece vestirse", the next one ("next", 04/11).
+    warn_about: Literal["end", "next"] = "end"
     music: tuple[Music, ...] = ()
 
     _wake = field_validator("wake", mode="before")(time_from_yaml_number)
