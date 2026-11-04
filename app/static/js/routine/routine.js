@@ -633,7 +633,14 @@ export function startRoutines() {
 
   function buildView() {
     const time = h("span", { class: "routine__time" });
-    const close = h("button", { type: "button", class: "btn routine__close" });
+    // ✕ hides the window (it comes back at its next part); "Finalizar rutina" ends it
+    // for today, with the parents' code (04/11: "Cerrar" sounded like turning it off).
+    const close = h("button", {
+      type: "button", class: "icon-button icon-button--ghost routine__close",
+      "aria-label": t.routine.close, title: t.routine.close,
+    }, icon("close"));
+    const holdHint = h("span", { class: "routine__hold-hint", hidden: true }, t.routine.holdToClose);
+    const finishButton = h("button", { type: "button", class: "btn", onclick: () => askCode() }, t.routine.finishRoutine);
     const musicButton = h("button", { type: "button", class: "btn routine__music", hidden: true, onclick: () => silenceSong() },
       icon("music"), t.routine.stopMusic);
     holdToClose(close);
@@ -655,14 +662,15 @@ export function startRoutines() {
     dragging(dial);
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
-        h("header", { class: "routine__top" }, fullscreenButton(), time, h("span", { class: "child-bar__spacer" }), musicButton, soundButton(), close),
+        h("header", { class: "routine__top" }, fullscreenButton(), time, h("span", { class: "child-bar__spacer" }),
+          musicButton, soundButton(), finishButton, holdHint, close),
         trialTools,
-        what, until, champions, dial, stopButton, tasks, next, transcript, finish),
+        what, until, champions, dial, stopButton, tasks, next, transcript),
       h("aside", { class: "routine__side" }, people),
-      over);
+      over, finish);
     // In the parents' zone, or once closed: a button to go back to it.
     const banner = h("button", { type: "button", class: "routine-banner", onclick: () => reopen() });
-    return { layer, banner, time, close, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
+    return { layer, banner, time, close, holdHint, finishButton, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
       trialTools, transcript };
   }
 
@@ -714,8 +722,8 @@ export function startRoutines() {
     // Started by hand, the time of day does not matter: how long is left in total.
     view.time.textContent = !data.manual ? capital(itIs(time))
       : phase.kind === "part" ? t.routine.leftInTotal(countdownText((parts().at(-1).to - time) * 60)) : "";
-    view.close.textContent = phase.kind === "goal" && !data.trial ? t.routine.finish
-      : Date.now() < showing.holdHintUntil ? t.routine.holdToClose : t.routine.close;
+    view.holdHint.hidden = Date.now() >= showing.holdHintUntil;
+    view.finishButton.hidden = Boolean(data.trial) || Boolean(showing.finishing);
     view.stopButton.hidden = !showing.ringing;
     const toGo = phase.kind === "done" ? "" : countdownText((phase.to - time) * 60);
     let image = null;
@@ -805,7 +813,7 @@ export function startRoutines() {
   // and so does the keyboard.
   function holdToClose(button) {
     let timer = null;
-    const needsHold = () => !showing.data.trial && showing.phaseKey !== "goal";
+    const needsHold = () => !showing.data.trial;
     const release = () => {
       clearTimeout(timer);
       timer = null;
@@ -833,12 +841,8 @@ export function startRoutines() {
   }
 
   function closeOrFinish() {
-    if (showing.data.trial) {
+    if (showing.data.trial || showing.finishing) { // a trial, or its goal already celebrated
       end();
-      return;
-    }
-    if (showing.phaseKey === "goal") {
-      askCode();
       return;
     }
     stopRinging();
@@ -877,7 +881,7 @@ export function startRoutines() {
           input.focus();
         }
       },
-    }, h("p", {}, t.routine.finishHint), field, error,
+    }, h("h2", {}, t.routine.finishTitle), h("p", {}, t.routine.finishHint), field, error,
       h("div", { class: "form-actions" },
         h("button", { type: "button", class: "btn", onclick: () => showing.view.finish.replaceChildren() }, t.common.cancel),
         h("button", { type: "submit", class: "btn btn--primary" }, t.routine.finish)));

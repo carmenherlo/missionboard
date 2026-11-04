@@ -193,12 +193,38 @@
   text-align: center;
 }
 
+/* "Finalizar rutina": asked over everything, with the parents' code. */
+.routine__finish:not(:empty) {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--sheet-backdrop);
+}
+
 .routine__code {
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* nothing wider than the card */
   gap: var(--space-2);
-  padding: var(--space-3);
+  box-sizing: border-box;
+  width: min(440px, 100%);
+  padding: var(--space-4);
   border-radius: var(--radius-lg);
-  background: var(--container);
+  background: var(--surface);
+  box-shadow: var(--shadow-sheet);
+}
+
+.routine__code h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.routine__hold-hint {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
 
 /* ---------- the kids on a side ---------- */
