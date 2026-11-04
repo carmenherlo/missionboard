@@ -84,7 +84,7 @@ class Music(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
     id: str = Field(pattern=r"^[\w-]{1,64}$")
-    song: str
+    songs: tuple[str, ...] = Field(min_length=1)  # one after the other (04/11)
     start: str
     until: str | None = None
 

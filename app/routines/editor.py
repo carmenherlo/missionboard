@@ -274,15 +274,16 @@ class RoutinesEditor:
 
     # ---------- songs (rutinas-4, section 3) ----------
 
-    def add_music(self, routine_id: str, song_id: str, start: str, songs: SongsRepository) -> Routine:
-        """A song from a card, once (until it ends): its screen makes it longer."""
-        return self._set_music(routine_id, None, {"id": _new_id(), "song": song_id, "start": start, "until": None}, songs)
+    def add_music(self, routine_id: str, song_id: str, start: str, library: SongsRepository) -> Routine:
+        """A song from a card, once (until it ends): its screen makes it longer, or adds more."""
+        return self._set_music(routine_id, None, {"id": _new_id(), "songs": [song_id], "start": start, "until": None},
+                               library)
 
-    def update_music(self, routine_id: str, music_id: str, songs: SongsRepository, **fields) -> Routine:
+    def update_music(self, routine_id: str, music_id: str, library: SongsRepository, **fields) -> Routine:
         old = next((m for m in self.get(routine_id).music if m.id == music_id), None)
         if old is None:
             raise NotFoundError("Song not in this routine")
-        return self._set_music(routine_id, music_id, old.model_dump() | fields, songs)
+        return self._set_music(routine_id, music_id, old.model_dump() | fields, library)
 
     def delete_music(self, routine_id: str, music_id: str) -> Routine:
         routine = self.get(routine_id)
@@ -293,10 +294,12 @@ class RoutinesEditor:
         self._log("changed", routine)
         return routine
 
-    def _set_music(self, routine_id: str, music_id: str | None, music: dict, songs: SongsRepository) -> Routine:
+    def _set_music(self, routine_id: str, music_id: str | None, music: dict, library: SongsRepository) -> Routine:
         """One song added or changed, refused if it would play at the same time as another
         (one Música channel); the screen says which before asking."""
-        if songs.get(music["song"]) is None:
+        if not music["songs"]:
+            raise InvalidError("One song at least")
+        if any(library.get(song) is None for song in music["songs"]):
             raise NotFoundError("Song not found")
         routine = self.get(routine_id)
         others = [m.model_dump() for m in routine.music if m.id != music_id]

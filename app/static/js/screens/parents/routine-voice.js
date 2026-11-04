@@ -9,6 +9,7 @@ import { capital, itIs, minuteOf, shortTime } from "../../routine/words.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { routineError } from "./routine-edit.js";
+import { playlist } from "./routine-music.js";
 
 const HERALD_S = 16; // as in routine.js: "Acaba el aseo…" this long before a part ends
 const GOAL_REMINDERS = [5, 1];
@@ -235,9 +236,9 @@ function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
   const label = (card) => (card === "goal" ? t.routineEdit.goalCard.toLowerCase()
     : routine.parts.find((p) => p.id === card)?.name ?? "");
   for (const music of routine.music) {
-    const song = songs.find((s) => s.id === music.song);
+    const song = playlist(music, songs); // one after the other: "Buenos días + ¡A correr!"
     const from = groupOf(music.start);
-    if (!song || !from) continue;
+    if (!song.list.length || !from) continue;
     const seconds = Math.round(song.seconds);
     from.lines.unshift({
       when: from.lines[0].when, kind: "sound",

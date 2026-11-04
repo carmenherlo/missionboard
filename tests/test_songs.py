@@ -69,7 +69,7 @@ def test_a_song_from_a_card_to_a_card(client):
     parts = part_ids(client)
     routine = edit(client, "POST", "/music", song=song, start=parts[3]).json()
     music = routine["music"][0]
-    assert music == {"id": music["id"], "song": song, "start": parts[3], "until": None}
+    assert music == {"id": music["id"], "songs": [song], "start": parts[3], "until": None}
     routine = edit(client, "PATCH", f"/music/{music['id']}", until=parts[5]).json()
     assert routine["music"][0]["until"] == parts[5]
     assert edit(client, "PATCH", f"/music/{music['id']}", until=parts[1]).status_code == 422  # before it starts
@@ -114,7 +114,7 @@ def test_the_screen_gets_where_each_song_plays(client, clock):
     edit(client, "PATCH", f"/music/{music['id']}", until=parts[1])
     clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
     on = client.get("/api/routines/current").json()
-    assert on["music"] == [{"id": music["id"], "name": "¡A correr!", "url": song["url"], "seconds": 190.4,
+    assert on["music"] == [{"id": music["id"], "songs": [{"name": "¡A correr!", "url": song["url"], "seconds": 190.4}],
                             "start": "alarm", "until": 1}]
 
 
@@ -126,3 +126,21 @@ def test_v10_routines_get_their_songs():
 def test_an_opus_song_is_ogg(client):
     song = upload(client, data=b"OggS" + b"\x00" * 24 + b"OpusHead" + b"\x00" * 32).json()
     assert song["file"].endswith(".ogg")
+
+
+def test_songs_one_after_the_other(client):
+    first, second = upload(client).json()["id"], upload(client, name="Otra").json()["id"]
+    music = edit(client, "POST", "/music", song=first, start=part_ids(client)[0]).json()["music"][0]
+    routine = edit(client, "PATCH", f"/music/{music['id']}", songs=[first, second]).json()
+    assert routine["music"][0]["songs"] == [first, second]
+    assert edit(client, "PATCH", f"/music/{music['id']}", songs=[]).status_code == 422
+    assert edit(client, "PATCH", f"/music/{music['id']}", songs=["nope"]).status_code == 404
+    client.delete(f"/api/songs/{first}", headers=PARENT)  # out of the list; the other stays
+    assert edit(client, "GET").json()["music"][0]["songs"] == [second]
+    client.delete(f"/api/songs/{second}", headers=PARENT)  # left without songs: gone
+    assert edit(client, "GET").json()["music"] == []
+
+
+def test_v12_a_song_becomes_a_list():
+    doc = upgrade({"version": 12, "routines": [{"id": "m", "parts": [], "music": [{"id": "a", "song": "x", "start": "p"}]}]})
+    assert doc["routines"][0]["music"] == [{"id": "a", "songs": ["x"], "start": "p"}]

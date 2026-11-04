@@ -221,11 +221,11 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
     index = {part.id: i for i, part in enumerate(routine.parts)}
     played = []
     for music in routine.music:
-        song = songs.get(music.song)
-        if song is not None:
-            played.append({"id": music.id, "name": song.name, "url": f"/api/songs/{song.id}/file",
-                           "seconds": song.seconds, "start": index.get(music.start, music.start),
-                           "until": index.get(music.until, music.until)})
+        found = [song for song in map(songs.get, music.songs) if song is not None]
+        if found:  # one after the other
+            played.append({"id": music.id, "songs": [
+                {"name": song.name, "url": f"/api/songs/{song.id}/file", "seconds": song.seconds} for song in found],
+                "start": index.get(music.start, music.start), "until": index.get(music.until, music.until)})
     return played
 
 
@@ -415,8 +415,9 @@ class MusicCreate(BaseModel):
 
 class MusicPatch(BaseModel):
     song: str | None = None
+    songs: list[str] | None = Field(default=None, min_length=1)  # one after the other, in this order
     start: str | None = None
-    until: str | None = None  # null: once, until the song ends
+    until: str | None = None  # null: once, until the songs end
 
 
 @router.post("/{routine_id}/music", dependencies=parent_only)
@@ -429,7 +430,7 @@ def add_music(routine_id: str, body: MusicCreate, editor: RoutinesEditor = Depen
 def update_music(routine_id: str, music_id: str, body: MusicPatch, editor: RoutinesEditor = Depends(get_routines_editor),
                  store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
     fields = {name: getattr(body, name) for name in body.model_fields_set}
-    if any(fields.get(name, "") is None for name in ("song", "start")):
+    if any(fields.get(name, "") is None for name in ("songs", "start")):
         raise InvalidError("A song and where it starts")
     return present(editor.update_music(routine_id, music_id, SongsRepository(store), **fields))
 

@@ -2,6 +2,7 @@ import { api } from "../../api.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
+import { sortable } from "../../components/sortable.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
@@ -16,6 +17,13 @@ const ROUTINES_HREF = "#/parents/config/routines";
 // The songs of a routine (rutinas-4, section 3): a lane beside its cards, like two
 // Scratch scripts side by side. Each song is a bar from the card where it starts to
 // the card where it ends; one at a time (one Música channel).
+
+// A card's songs, one after the other: the ones still in the library, their names
+// ("Buenos días + ¡A correr!") and how long they last together, in seconds.
+export function playlist(music, songs) {
+  const list = music.songs.map((id) => songs.find((s) => s.id === id)).filter(Boolean);
+  return { list, name: list.map((s) => s.name).join(" + "), seconds: list.reduce((sum, s) => sum + s.seconds, 0) };
+}
 
 // The cards a song can start or end at, in order: the alarm, each part, the goal.
 export function cardsOf(routine) {
@@ -49,10 +57,10 @@ export function songWraps(routineId) {
     const cards = cardsOf(routine);
     const element = (id) => cardsBox.querySelector(`[data-card="${id}"]`);
     for (const music of routine.music) {
-      const song = songs.find((s) => s.id === music.song);
+      const song = playlist(music, songs);
       const from = cards.findIndex((c) => c.id === music.start);
       const to = cards.findIndex((c) => c.id === (music.until ?? music.start));
-      if (!song || from < 0 || to < from) continue;
+      if (!song.list.length || from < 0 || to < from) continue;
       const wrapped = cards.slice(from, to + 1).map((c) => element(c.id)).filter(Boolean);
       if (!wrapped.length) continue;
       wrapped.forEach((card) => card.classList.add("in-song"));
@@ -91,7 +99,7 @@ export function addSongForm(routineId, { save, status }) {
           const music = { id: null, song: song.value, start: start.value, until: null };
           const other = clashWith(routine, music);
           if (other) {
-            status.fail(t.routineMusic.clash(songs.find((s) => s.id === other.song)?.name ?? ""));
+            status.fail(t.routineMusic.clash(playlist(other, songs).name));
             return;
           }
           save(api("POST", `/api/routines/${routineId}/music`, { json: { song: song.value, start: start.value } }))
@@ -122,7 +130,7 @@ export async function viewRoutineMusic(routineId, musicId) {
     const next = { ...music(), ...fields };
     const other = clashWith(routine, next);
     if (other) {
-      status.fail(t.routineMusic.clash(songs.find((s) => s.id === other.song)?.name ?? ""));
+      status.fail(t.routineMusic.clash(playlist(other, songs).name));
       draw();
       return;
     }
@@ -137,23 +145,39 @@ export async function viewRoutineMusic(routineId, musicId) {
 
   function draw() {
     const m = music();
-    const song = songs.find((s) => s.id === m.song);
-    title.textContent = song?.name ?? "";
+    const song = playlist(m, songs);
+    title.textContent = song.name;
     const cards = cardsOf(routine);
     const startAt = cards.findIndex((c) => c.id === m.start);
-    songBox.replaceChildren(
-      h("div", { class: "form-actions form-actions--start" },
-        h("select", { "aria-label": t.routineMusic.panelSong, onchange: (e) => change({ song: e.target.value }) },
-          songs.map((s) => h("option", { value: s.id, selected: s.id === m.song }, s.name))),
+    // The songs, one after the other: dragged to reorder, ✕ to take one out (one at least).
+    const rows = h("ul", { class: "rows" }, m.songs.map((id, index) => {
+      const one = songs.find((s) => s.id === id);
+      return one && h("li", { class: "row row--sortable row--compact", "data-id": String(index) },
+        h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
+        h("span", { class: "row__icon row__icon--sm" }, icon("music")),
+        h("span", { class: "row__text" }, one.name,
+          h("span", { class: "row__detail" }, h("span", { class: "pill pill--muted" }, length(one.seconds)))),
         h("button", {
           type: "button", class: "btn",
           onclick: () => {
             listening?.pause();
-            listening = listening ? null : new Audio(song.url);
-            listening?.play().catch(() => {});
+            listening = new Audio(one.url);
+            listening.play().catch(() => {});
           },
-        }, `▶ ${t.songs.listen}`)),
-      song && h("p", { class: "hint" }, t.routineMusic.lasts(length(song.seconds))));
+        }, `▶ ${t.songs.listen}`),
+        m.songs.length > 1 && h("button", {
+          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routineMusic.takeOut(one.name),
+          onclick: () => change({ songs: m.songs.filter((_, i) => i !== index) }),
+        }, icon("close")));
+    }));
+    sortable(rows, { onEnd: (order) => change({ songs: order.map((i) => m.songs[Number(i)]) }) });
+    const more = h("select", { "aria-label": t.routineMusic.addSong }, songs.map((s) => h("option", { value: s.id }, s.name)));
+    songBox.replaceChildren(rows,
+      h("div", { class: "form-actions form-actions--start" }, more,
+        h("button", { type: "button", class: "btn", onclick: () => change({ songs: [...m.songs, more.value] }) },
+          icon("plus"), t.routineMusic.addAfter)),
+      h("p", { class: "hint" }, m.songs.length > 1 ? t.routineMusic.lastsTogether(length(song.seconds))
+        : t.routineMusic.lasts(length(song.seconds))));
     const ending = m.until !== null;
     whenBox.replaceChildren(...[
       h("label", {}, t.routineMusic.startsWith,
@@ -169,7 +193,7 @@ export async function viewRoutineMusic(routineId, musicId) {
         ending && h("select", { "aria-label": t.routineMusic.ends, onchange: (e) => change({ until: e.target.value }) },
           cards.slice(startAt).filter((c) => c.id !== "alarm").map((c) =>
             h("option", { value: c.id, selected: c.id === m.until }, cardText(c, routine, true))))),
-      song && h("p", { class: "hint" }, hintOf(routine, m, song)),
+      h("p", { class: "hint" }, hintOf(routine, m, song)),
       m.start === "alarm" && h("p", { class: "hint" }, t.routineMusic.hintAlarm),
     ].filter(Boolean));
   }
@@ -207,7 +231,7 @@ export async function viewRoutineMusic(routineId, musicId) {
     parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: routineHref, label: routine.name }),
     h("main", { class: "page" },
       h("div", { class: "columns columns--equal" },
-        h("div", { class: "stack" }, panel(t.routineMusic.panelSong, songBox)),
+        h("div", { class: "stack" }, panel(t.routineMusic.panelSongs, songBox)),
         h("div", { class: "stack" }, panel(t.routineMusic.panelWhen, whenBox))),
       footer));
 }

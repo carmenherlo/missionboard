@@ -46,7 +46,7 @@ class SongsService:
 
     def used_in(self, song_id: str) -> list[str]:
         """The routines that play it (their names)."""
-        return [r.name for r in self._routines.list() if any(m.song == song_id for m in r.music)]
+        return [r.name for r in self._routines.list() if any(song_id in m.songs for m in r.music)]
 
     def upload(self, data: bytes, name: str, seconds: float) -> Song:
         if len(data) > MAX_SONG_BYTES:
@@ -73,9 +73,11 @@ class SongsService:
         with self._songs.atomic():
             song = self.get(song_id)
             for routine in self._routines.list():
-                if any(m.song == song_id for m in routine.music):
+                if any(song_id in m.songs for m in routine.music):
                     doc = routine.to_doc()
-                    doc["music"] = [m for m in doc["music"] if m["song"] != song_id]
+                    for music in doc["music"]:
+                        music["songs"] = [s for s in music["songs"] if s != song_id]
+                    doc["music"] = [m for m in doc["music"] if m["songs"]]  # left without songs: gone
                     self._routines.update(type(routine).model_validate(doc))
             self._songs.remove(song_id)
         self._files.delete(song.file)
