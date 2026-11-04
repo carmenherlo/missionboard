@@ -56,8 +56,11 @@ class GoalIn(BaseModel):
     image: str | None = None
     at: str = Field(pattern=TIME)
     say: str = Field(default="¡Rutina terminada!", max_length=200)
+    check_minutes: int = Field(default=0, ge=0, le=30)  # checking the missions before it (rutinas-6)
+    check_say: str | None = Field(default=None, max_length=200)
 
     _say = field_validator("say")(_not_blank)
+    _check_say = field_validator("check_say")(lambda v: (v or "").strip() or None)
 
 
 def _blank_is_usual(value: str | None) -> str | None:
@@ -115,7 +118,6 @@ class PartPatch(BaseModel):
     say: str | None = Field(default=None, max_length=200)
     tasks: list[str] | None = None
     warnings: list[int] | None = None
-    check_mission: bool | None = None
 
     _name = field_validator("name")(_not_blank)
 
@@ -190,7 +192,6 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
                 "say": part.say,
                 "tasks": list(part.tasks),
                 "warnings": current.warnings(part),
-                "check_mission": part.check_mission,
                 "start": hhmm(start),
                 "end": hhmm(end),
             }
@@ -198,6 +199,7 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
         ],
         "goal": routine.goal and {
             "image_url": libraries.url(routine.goal.image), "at": routine.goal.at, "say": routine.goal.say,
+            "check_minutes": routine.goal.check_minutes, "check_say": routine.goal.check_say,
         },
         "greeting": routine.greeting,
         "last_countdown": routine.last_countdown,
@@ -394,7 +396,7 @@ def reorder_parts(routine_id: str, body: OrderIn, editor: RoutinesEditor = Depen
 def update_part(routine_id: str, part_id: str, body: PartPatch,
                 editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "minutes", "tasks", "check_mission"):
+    for required in ("name", "minutes", "tasks"):
         if changes.get(required, "") is None:
             changes.pop(required)
     return present(editor.update_part(routine_id, part_id, **changes))

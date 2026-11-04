@@ -17,6 +17,8 @@ const LIST_HREF = "#/parents/config/routines";
 const TEXT_SAVE_DELAY_MS = 600;
 const GOAL_AFTER_MINUTES = 10; // a new goal: this long after the last part
 const DEFAULT_WAKE = "07:00"; // back from "by hand" to ringing at a time
+const CHECK_CHOICES = [3, 5, 10]; // minutes to check the missions before the goal
+const USUAL_CHECK_MINUTES = 5;
 const ALARM_BEFORE_CHOICES = [0, 5, 10, 15, 20, 30]; // the API takes 0–60
 
 // What a refused change means: the times do not add up, or it overlaps another routine.
@@ -207,11 +209,17 @@ export async function viewRoutineEdit(routineId) {
       h("span", { class: "routine-card__time" }, routine.anchor === "start" && pin,
         shortTime(routine.alarm ? routine.wake : routine.starts)));
     if (!routine.goal) return;
-    goalCard.className = "routine-card routine-card--goal";
-    goalCard.replaceChildren(icon("flag"),
-      h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
-        h("span", { class: "routine-card__detail" }, `"${routine.goal.say}"`)),
-      h("span", { class: "routine-card__time" }, routine.anchor === "end" && pin, shortTime(routine.goal.at)));
+    // The goal, and before it checking the missions (rutinas-6): one card, two times.
+    const checking = routine.goal.check_minutes > 0;
+    goalCard.className = `routine-card routine-card--goal${checking ? " routine-card--checking" : ""}`;
+    goalCard.replaceChildren(...[
+      checking && h("span", { class: "routine-card__check" }, icon("check"), t.routine.checkTitle,
+        h("span", { class: "routine-card__time" }, t.routineEdit.checkWhen(shortTime(routine.parts.at(-1).end), routine.goal.check_minutes))),
+      h("span", { class: "routine-card__row" }, icon("flag"),
+        h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
+          h("span", { class: "routine-card__detail" }, `"${routine.goal.say}"`)),
+        h("span", { class: "routine-card__time" }, routine.anchor === "end" && pin, shortTime(routine.goal.at))),
+    ].filter(Boolean));
   }
   const partsTitle = h("span", {});
   const partsList = h("ul", { class: "rows" });
@@ -342,9 +350,32 @@ export async function viewRoutineEdit(routineId) {
       type: "time", value: goal.at,
       onchange: () => at.value && at.value !== goal.at && patch({ goal: { ...goal, at: at.value } }),
     });
+    // Checking the missions first (rutinas-6): on, with its minutes.
+    const lastEnd = minuteOf(routine.parts.at(-1).end);
+    const setCheck = (minutes) => {
+      const needed = lastEnd + minutes; // starting at a time, the goal may have to wait for it
+      const goalAt = ending ? goal.at : hhmm(Math.max(minuteOf(goal.at), needed));
+      patch({ goal: { ...goal, at: goalAt, check_minutes: minutes } });
+    };
+    const checking = goal.check_minutes > 0;
+    const checkOn = h("input", {
+      type: "checkbox", checked: checking, onchange: (e) => setCheck(e.target.checked ? USUAL_CHECK_MINUTES : 0),
+    });
+    const during = h("select", { onchange: (e) => setCheck(Number(e.target.value)) },
+      [...new Set([...CHECK_CHOICES, goal.check_minutes])].filter(Boolean).sort((a, b) => a - b)
+        .map((n) => h("option", { value: n, selected: n === goal.check_minutes }, t.routine.minutes(n))));
     goalBox.replaceChildren(...[!ending && tabs,
       ending ? h("p", { class: "hint" }, t.routineEdit.goalIsTheEnd(shortTime(goal.at)))
-        : h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.goalAt, at))].filter(Boolean));
+        : h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.goalAt, at)),
+      h("label", { class: "toggle" }, checkOn, t.routineEdit.checkFirst),
+      checking && h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.checkDuring, during)),
+      h("p", { class: "hint" }, checking
+        ? t.routineEdit.checkHint(shortTime(routine.parts.at(-1).end), movedTime(routine.parts.at(-1).end, goal.check_minutes))
+        : t.routineEdit.noCheckHint),
+      h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.panelSay),
+        h("p", { class: "voice-preview" }, `«${goal.say}»`),
+        h("a", { class: "btn", href: `${LIST_HREF}/${routineId}/voice/goal` }, icon("speaker"), t.routinePart.changeSay)),
+    ].filter(Boolean));
   }
   function newGoal() {
     const last = routine.parts.at(-1).end;
@@ -400,23 +431,6 @@ export async function viewRoutineEdit(routineId) {
       offsetsTimes));
   goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
-  // "Firmar las tareas" as the last part, suggested (04/11): when everyone signs there,
-  // the routine goes straight to its goal and ends, without waiting for its time.
-  const signTip = h("div", { class: "notice" });
-  function renderSignTip() {
-    signTip.hidden = routine.manual || Boolean(routine.parts.at(-1)?.check_mission);
-    signTip.replaceChildren(
-      h("p", { class: "hint" }, t.routineEdit.signTip),
-      h("button", {
-        type: "button", class: "btn",
-        onclick: async () => {
-          const updated = await save(api("POST", `${url}/parts`, { json: { name: t.routineEdit.signPart } })).catch(() => null);
-          const last = updated?.parts.at(-1);
-          if (last) save(api("PATCH", `${url}/parts/${last.id}`, { json: { check_mission: true } })).catch(() => {});
-        },
-      }, icon("plus"), t.routineEdit.addSignPart));
-  }
-
   // The songs: a lane beside the cards, and a form to add one (routine-music.js).
   const cardsBox = h("div", { class: "song-cards" }, alarmCard, partsList, goalCard);
   const wrapSongs = songWraps(routineId);
@@ -426,7 +440,6 @@ export async function viewRoutineEdit(routineId) {
     renderRoutine();
     renderKids();
     renderParts();
-    renderSignTip();
     addSong.draw(routine, songs);
     renderGoal();
     renderConflicts();
@@ -448,7 +461,7 @@ export async function viewRoutineEdit(routineId) {
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(partsTitle, partsTools, cardsBox,
-            signTip, addPart, importParts, addSong.element),
+            addPart, importParts, addSong.element),
           goalPanel)),
       footer));
 }
@@ -461,6 +474,12 @@ export function capital(text) {
 function minuteOf(time) {
   const [hours, mins] = time.split(":").map(Number);
   return hours * 60 + mins;
+}
+
+// 390 → "06:30".
+function hhmm(minute) {
+  const m = ((minute % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
 
 // "06:30" → "6:30".

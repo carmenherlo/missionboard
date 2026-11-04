@@ -11,7 +11,6 @@ import { parentsHeader } from "./common.js";
 import { routineError } from "./routine-edit.js";
 
 const HERALD_S = 16; // as in routine.js: "Acaba el aseo…" this long before a part ends
-const WHO_IS_LEFT_S = 9; // "firmar": who still has steps, this long after it starts
 const GOAL_REMINDERS = [5, 1];
 const USUAL_WARNING = 1; // a part with no warnings of its own (settings.routine_warn_minutes)
 
@@ -171,12 +170,12 @@ function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
     const tasks = script.tasksSentence(part);
     if (tasks) lines.push({ when: when(from), kind: "tasks", text: tasks, href: `${routineHref}/parts/${part.id}` });
     lines.push(auto(from, script.partLength(part, { minutes, ends: to, manual, kids })));
-    if (part.check_mission) lines.push(auto(from + WHO_IS_LEFT_S / 60, `${script.someoneMissing("…", 2)} ${t.routineVoice.ifMissing}`));
     for (const n of (part.warnings ?? (minutes > 2 ? [USUAL_WARNING] : [])).filter((w) => w < minutes).sort((a, b) => b - a)) {
       lines.push(auto(to - n, script.partWarning(part, n)));
     }
-    const herald = script.partHerald(part, last, routine);
-    lines.push(last
+    const check = !manual && routine.goal?.check_minutes > 0; // then the last part does not lead to the goal
+    const herald = script.partHerald(part, last && !check, routine);
+    lines.push(last && !check
       ? own(to - HERALD_S / 60, herald, {
         value: routine.last_countdown, usual: script.USUAL.lastCountdown, label: t.routineVoice.lastLabel,
         save: (value) => patchRoutine({ last_countdown: value }),
@@ -192,17 +191,32 @@ function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
   if (routine.goal && !manual) {
     const end = span(routine.parts.at(-1))[1];
     const at = minuteOf(routine.goal.at);
+    const check = routine.goal.check_minutes;
+    const reach = end + check; // the goal comes after checking the missions (rutinas-6)
     const lines = [
-      auto(end, `${capital(itIs(end))}.`),
-      ...(at - end >= 1 ? [auto(end, script.untilGoal(at - end))] : []),
+      ...(check ? [
+        auto(end, `${capital(itIs(end))}.`),
+        own(end, script.checkOpening(routine), {
+          value: routine.goal.check_say, usual: script.USUAL.check, label: t.routineVoice.checkLabel,
+          save: (value) => patchRoutine({ goal: { ...routine.goal, check_say: value } }),
+        }),
+        auto(end, `${script.someoneMissing("…", 2)} ${t.routineVoice.ifMissing}`),
+        own(reach - HERALD_S / 60, script.lastCountdown(routine), {
+          value: routine.last_countdown, usual: script.USUAL.lastCountdown, label: t.routineVoice.lastLabel,
+          save: (value) => patchRoutine({ last_countdown: value }),
+        }),
+      ] : []),
+      auto(reach, `${capital(itIs(reach))}.`),
+      ...(at - reach >= 1 ? [auto(reach, script.untilGoal(at - reach))] : []),
       // Always one of its own (no usual one to go back to): left empty, it stays as it was.
-      own(end, routine.goal.say, {
+      own(reach, routine.goal.say, {
         value: null, usual: routine.goal.say, label: t.routineVoice.goalLabel,
         save: (say) => patchRoutine({ goal: { ...routine.goal, say: say || routine.goal.say } }),
       }),
-      ...GOAL_REMINDERS.filter((m) => at - m > end).map((m) => auto(at - m, script.untilGoal(m))),
+      ...(check ? [auto(reach, `${script.someoneMissed("…", 2)} ${t.routineVoice.ifMissed}`)] : []),
+      ...GOAL_REMINDERS.filter((m) => at - m > reach).map((m) => auto(at - m, script.untilGoal(m))),
     ];
-    if (routine.parts.some((p) => p.check_mission)) {
+    if (check) {
       lines.push({ ...auto(end, script.wellDone([], t.routineVoice.theMission).join(" ")), when: t.routineVoice.early });
       lines.push({
         ...own(end, script.earlyGoal(routine, [], 0).join(" "), {
@@ -212,7 +226,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
         when: t.routineVoice.early,
       });
     }
-    groups.push({ id: "goal", title: `${shortTime(at)} · ${t.routineEdit.goalCard}`, lines, end: at });
+    groups.push({ id: "goal", title: `${shortTime(check ? end : at)} · ${t.routineEdit.goalCard}`, lines, end: at });
   }
 
   // The songs (rutinas-4): heard, not said, at the start of their card and the end of the last one.

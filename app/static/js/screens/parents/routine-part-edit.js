@@ -122,7 +122,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
     },
   }, newTask, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routinePart.addTask));
 
-  // ---------- warnings and "firmar" ----------
+  // ---------- warnings ----------
   const warnings = h("div", { class: "chips" });
   function renderWarnings() {
     const chosen = part().warnings ?? [1]; // none chosen: the usual one minute
@@ -134,7 +134,6 @@ export async function viewRoutinePartEdit(routineId, partId) {
       }, t.routinePart.warningMinutes(n));
     }));
   }
-  const checkMission = h("input", { type: "checkbox", onchange: (e) => patch({ check_mission: e.target.checked }) });
 
   // ---------- image ----------
   const picker = await imagePicker({
@@ -180,7 +179,6 @@ export async function viewRoutinePartEdit(routineId, partId) {
     renderSays();
     renderTasks();
     renderWarnings();
-    checkMission.checked = part().check_mission;
   }
   refresh();
   renderFooter();
@@ -199,8 +197,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
             h("a", { class: "btn", href: `${routineHref}/voice/${partId}` }, icon("speaker"), t.routinePart.changeSay),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.tasks), tasksList, addTask),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.warnings), warnings,
-              h("span", { class: "hint" }, t.routinePart.warningsHint)),
-            h("label", { class: "toggle" }, checkMission, t.routinePart.checkMission))),
+              h("span", { class: "hint" }, t.routinePart.warningsHint)))),
         h("div", { class: "stack" }, panel(t.stepEdit.image, picker.element))),
       footer));
 }

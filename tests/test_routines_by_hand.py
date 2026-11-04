@@ -34,7 +34,7 @@ def landing(client):
                  headers=PARENT)
     client.post(f"{url}/parts", json={"name": "lavarse las manos"}, headers=PARENT)
     second = client.get(url).json()["parts"][1]
-    client.patch(f"{url}/parts/{second['id']}", json={"minutes": 4, "check_mission": True}, headers=PARENT)
+    client.patch(f"{url}/parts/{second['id']}", json={"minutes": 4}, headers=PARENT)
     return client.get(url).json()
 
 

@@ -1131,6 +1131,29 @@
   border: 1px dashed var(--line);
 }
 
+/* The goal's card: its row, and above it checking the missions (rutinas-6). */
+.routine-card__row {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.routine-card--checking {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+}
+
+.routine-card__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
 .routine-card--goal {
   background: var(--success-soft);
   border-radius: var(--radius-sm) var(--radius-sm) var(--radius-lg) var(--radius-lg);

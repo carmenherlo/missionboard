@@ -46,7 +46,9 @@ def test_the_morning_routine_comes_with_the_migration(client):
         ("el desayuno", "06:45", "07:00"),
         ("el aseo", "07:00", "07:05"),
     ]
-    assert routine["parts"][-1]["check_mission"] is True
+    assert routine["parts"][-1]["name"] == "prepararse para salir"  # "firmar" became the goal's checking
+    assert routine["goal"]["check_minutes"] == 5
+    assert routine["goal"]["check_say"] == "No olvidéis firmar vuestras tareas antes de iros."
     assert routine["goal"]["at"] == "07:45" and routine["goal"]["say"] == "¡Es hora de irse al cole!"
     assert routine["parts"][2]["tasks"] == ["Lavarse los dientes", "Lavarse la cara"]
     assert routine["parts"][2]["image_url"].endswith("/toothbrush.svg")
@@ -54,7 +56,7 @@ def test_the_morning_routine_comes_with_the_migration(client):
 
 def test_a_one_minute_warning_in_every_part_by_default(client):
     warnings = [p["warnings"] for p in current(client)["parts"]]
-    assert warnings == [[1], [5, 1], [1], [1], [1], [1], [1]]
+    assert warnings == [[1], [5, 1], [1], [1], [1], [1]]
 
 
 @pytest.mark.parametrize("moment, on", [

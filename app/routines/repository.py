@@ -55,20 +55,23 @@ class Part(BaseModel):
     say: str | None = None  # a sentence of its own instead of "Comienza el aseo."
     tasks: tuple[str, ...] = ()
     warnings: tuple[int, ...] | None = None  # minutes before the end; None: the default
-    check_mission: bool = False  # the kids must have done their mission by its end
 
     _at = field_validator("at", mode="before")(time_from_yaml_number)
 
 
 class Goal(BaseModel):
     """Where the routine ends, at 07:45: "¡Es hora de irse al cole!". No name since
-    rutinas-5 (the voice says "Quedan cinco minutos para terminar")."""
+    rutinas-5 (the voice says "Quedan cinco minutos para terminar"). Before it, from
+    the end of the last part, `check_minutes` to check the missions (rutinas-6): as
+    soon as every child has done theirs, the goal comes and the routine is over."""
 
     model_config = ConfigDict(extra="ignore", frozen=True)
 
     image: str | None = None
     at: str = Field(pattern=TIME)
     say: str = "¡Rutina terminada!"
+    check_minutes: int = Field(default=0, ge=0, le=30)  # 0: no checking
+    check_say: str | None = Field(default=None, max_length=200)  # None: "Es hora de revisar las misiones."
 
     _at = field_validator("at", mode="before")(time_from_yaml_number)
 
@@ -214,10 +217,11 @@ class Routine(BaseModel):
             end = start + part.minutes
             timed.append((part, start, end))
             previous_end = end
-        if self.goal and minute_of(self.goal.at) < previous_end:
+        checked = previous_end + (self.goal.check_minutes if self.goal else 0)  # the checking, after the parts
+        if self.goal and minute_of(self.goal.at) < checked:
             raise ValueError(f"the goal of {self.id!r} is before the routine ends")
         if self.anchor == "end" and (
-            not self.goal or any(part.at for part in self.parts[1:]) or minute_of(self.goal.at) != previous_end
+            not self.goal or any(part.at for part in self.parts[1:]) or minute_of(self.goal.at) != checked
         ):
             raise ValueError(f"{self.id!r} ends at its goal: its parts go one after the other up to it")
         return timed

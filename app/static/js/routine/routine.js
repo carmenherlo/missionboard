@@ -56,7 +56,6 @@ const HURRY_S = 60; // a part's last minute: the second hand ticks twice as fast
 const TICK_AHEAD_S = 0.5; // the tic-tac is booked this far ahead, so it keeps an even beat
 const HERALD_S = 16; // seconds before a part ends: "Acaba el aseo. Diez segundos…"
 const AFTER_ZERO_MS = 1000; // after the countdown's last pip, the voice waits this long
-const WHO_IS_LEFT_MS = 9000; // in "firmar", after its announcement: who still has steps
 const DONE_MS = 30_000; // started by hand: "¡Hecho!" (or "¡Se acabó el tiempo!") stays this long
 const TRIAL_SPEEDS = [1, 10, 20]; // "Probar ahora": how fast its clock can go
 const TRIAL_JUMP_LEAD_S = 20; // "Siguiente" lands this long before the next part (its countdown is heard)
@@ -164,10 +163,8 @@ export function startRoutines() {
       warned: new Set(), // the warnings of this part already said
       count: null,
       heralded: null,
-      earlyGoal: null, // the minute everyone signed in the last part: the goal comes then
-      goalTimeSaid: false,
+      earlyGoal: null, // the minute everyone had done their mission, checking them: the goal comes then
       goalReminded: Infinity,
-      allSigned: false,
       mission: null, // a kid's mission open over the clock: { close }
       holdHintUntil: 0, // a quick tap on "Cerrar": until then, it says to hold it
       player: musicPlayer(),
@@ -278,15 +275,20 @@ export function startRoutines() {
     const { data } = showing;
     const all = parts();
     const goalAt = data.goal && minuteOf(data.goal.at);
+    const checkTo = all.at(-1).to + checkMinutes();
     if (showing.done) return { kind: "done" };
     if (showing.earlyGoal != null && time < goalAt) return { kind: "goal", from: showing.earlyGoal, to: goalAt };
     if (time < all[0].from) return { kind: "wake", from: minuteOf(data.wake), to: all[0].from };
     for (const [index, part] of all.entries()) {
       if (time < part.to) return { kind: "part", index, part, from: part.from, to: part.to };
     }
-    if (data.goal && time < goalAt) return { kind: "goal", from: all.at(-1).to, to: goalAt };
+    if (time < checkTo) return { kind: "check", from: all.at(-1).to, to: checkTo };
+    if (data.goal && time < goalAt) return { kind: "goal", from: checkTo, to: goalAt };
     return { kind: "done" };
   }
+
+  // Checking the missions before the goal (rutinas-6), in minutes; 0: none.
+  const checkMinutes = () => (showing.data.manual ? 0 : showing.data.goal?.check_minutes ?? 0);
 
   const keyOf = (phase) => (phase.kind === "part" ? `part-${phase.index}` : phase.kind);
   const closed = () => showing.data.closed_phase === showing.phaseKey;
@@ -294,7 +296,7 @@ export function startRoutines() {
   function tick() {
     if (!showing) return;
     const time = now();
-    if (showing.earlyGoal == null && signedInTheLastPart(time)) showing.earlyGoal = time;
+    if (showing.earlyGoal == null && allDoneChecking(time)) showing.earlyGoal = time;
     if (showing.data.manual && !showing.done && everyoneSigned()) showing.done = "signed"; // it ends now
     const phase = phaseAt(time);
     const key = keyOf(phase);
@@ -328,7 +330,7 @@ export function startRoutines() {
     return musicWindows(data.music ?? [], {
       wake: data.manual ? all[0].from : minuteOf(data.wake), parts: all,
       goalAt: data.goal ? minuteOf(data.goal.at) : all.at(-1).to,
-      goalFrom: showing.earlyGoal ?? all.at(-1).to, // everyone signed early: its song then
+      goalFrom: showing.earlyGoal ?? all.at(-1).to + checkMinutes(), // everyone done early: its song then
     }).filter((w) => !showing.musicOff.has(w.id));
   }
 
@@ -348,11 +350,16 @@ export function startRoutines() {
     showing.player.stop();
   }
 
-  // In the last part, checking the mission, and every kid has done it.
-  function signedInTheLastPart(time) {
-    const all = parts();
-    const last = all.at(-1);
-    return Boolean(showing.data.goal && last.check_mission) && time >= last.from && time < last.to && everyoneSigned();
+  // Checking the missions (or about to), and every kid has done theirs: the goal now.
+  function allDoneChecking(time) {
+    const end = parts().at(-1).to;
+    return checkMinutes() > 0 && time >= end && time < end + checkMinutes() && everyoneSigned();
+  }
+
+  // Who has not done their mission yet: [[name, steps left]].
+  function missing() {
+    return showing.data.people.filter((p) => p.mission && !p.mission.completed)
+      .map((p) => [p.child.name, p.mission.total - p.mission.done]);
   }
 
   function everyoneSigned() {
@@ -365,13 +372,12 @@ export function startRoutines() {
   function enter(phase, time, before, counted) {
     stopRinging();
     showing.warned = new Set();
-    showing.allSigned = false;
     showing.mission?.close(); // a new part: the clock comes back to say it
     renderPeople(); // "firmar" or not: who beats
     if (phase.kind === "part" && before !== null) note("part", { part: phase.index });
     if (phase.kind === "done") {
       if (showing.data.manual && before !== null) finish(counted);
-      else if (showing.data.goal && before?.startsWith("part-")) goalAtTheEnd(time, counted);
+      else if (showing.data.goal && (before?.startsWith("part-") || before === "check")) goalAtTheEnd(time, counted);
       else if (songLeftMs() > 0) songToTheEnd(); // the goal's song is not cut
       else end();
       return;
@@ -407,10 +413,9 @@ export function startRoutines() {
         say(sentences);
         if (!counted) sounds.ding(); // after a countdown, its zero was the sign
       }
-      if (part.check_mission) {
-        const key = showing.phaseKey;
-        setTimeout(() => showing?.phaseKey === key && whoIsLeft(true), WHO_IS_LEFT_MS);
-      }
+    } else if (phase.kind === "check") {
+      if (!counted) sounds.ding();
+      say(script.checkStart(data, time, missing()));
     } else if (phase.kind === "goal") {
       note("goal", { early: showing.earlyGoal != null });
       if (showing.earlyGoal != null) {
@@ -480,7 +485,7 @@ export function startRoutines() {
     note("goal", { early: false });
     if (counted) sounds.countdown(true);
     else sounds.ding();
-    say(script.goalReached(showing.data, time, 0));
+    say([...script.goalReached(showing.data, time, 0), ...missed()]);
     celebrateGoal();
     const id = showing.data.id;
     setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
@@ -495,7 +500,7 @@ export function startRoutines() {
   function timeToGo(time, counted) {
     if (!counted) sounds.ding();
     const late = minuteOf(showing.data.goal.at) - time < 1; // opened in its last seconds
-    say(script.goalReached(showing.data, time, late ? 0 : minutesToGoal(time)));
+    say([...script.goalReached(showing.data, time, late ? 0 : minutesToGoal(time)), ...missed()]);
   }
 
   function minutesToGoal(time) {
@@ -555,12 +560,7 @@ export function startRoutines() {
         sounds.ding();
         say(script.partWarning(phase.part, due));
       }
-    } else if (phase.kind === "goal") {
-      const usual = parts().at(-1).to; // when it would have come
-      if (showing.earlyGoal != null && !showing.goalTimeSaid && time >= usual) {
-        showing.goalTimeSaid = true;
-        if (time - usual < 0.5) timeToGo(time, false);
-      }
+    } else if (phase.kind === "goal" && showing.earlyGoal == null) { // early, it ends at once
       const minutesLeft = phase.to - time;
       const due = GOAL_REMINDERS.find((m) => minutesLeft <= m && minutesLeft > m - 0.5 && m < showing.goalReminded);
       if (due) {
@@ -610,23 +610,17 @@ export function startRoutines() {
     const all = parts();
     if (phase.kind === "wake") {
       say(script.firstHerald(all[0]));
+    } else if (phase.kind === "check") {
+      say(script.lastCountdown(showing.data)); // then the goal
     } else {
-      say(script.partHerald(phase.part, phase.index + 1 === all.length, showing.data));
+      // The last part leads to the goal, unless the missions are checked first.
+      say(script.partHerald(phase.part, phase.index + 1 === all.length && !checkMinutes(), showing.data));
     }
   }
 
-  // "firmar": who still has steps (when it starts), and "¡Todos habéis firmado!" (once).
-  function whoIsLeft(starting) {
-    const withMission = showing.data.people.filter((p) => p.mission);
-    const missing = withMission.filter((p) => !p.mission.completed);
-    if (withMission.length && !missing.length && !showing.allSigned) {
-      showing.allSigned = true;
-      if (signedInTheLastPart(now())) return; // the goal comes now, with its "¡Enhorabuena!"
-      sounds.win();
-      say("¡Todos habéis firmado! ¡Muy bien!");
-    } else if (starting && missing.length) {
-      say(missing.map((p) => `A ${p.child.name} ${tasksLeft(p.mission)}.`));
-    }
+  // At the goal, after checking: whoever did not finish their mission.
+  function missed() {
+    return checkMinutes() ? missing().map(([name, n]) => script.someoneMissed(name, n)) : [];
   }
 
   // ---------- what is seen ----------
@@ -739,6 +733,9 @@ export function startRoutines() {
     } else if (showing.finished === "goal") {
       image = data.goal.image_url;
       what = data.goal.say;
+    } else if (phase.kind === "check") {
+      what = t.routine.checkTitle;
+      until = t.routine.goalAt(hourWords(minuteOf(data.goal.at)), toGo);
     } else if (phase.kind === "goal") {
       image = data.goal.image_url;
       what = data.goal.say;
@@ -750,7 +747,8 @@ export function startRoutines() {
     view.until.textContent = until;
     view.clock.replaceChildren(data.manual
       ? timerFace(phase, time)
-      : clockFace(phase, time, parts().map((p) => ({ start: p.from, end: p.to }))));
+      : clockFace(phase, time, [...parts().map((p) => ({ start: p.from, end: p.to })),
+        ...(checkMinutes() ? [{ start: parts().at(-1).to, end: parts().at(-1).to + checkMinutes() }] : [])]));
     if (String(showing.count ?? "") !== view.count.textContent) {
       view.count.textContent = showing.count ?? "";
       view.count.hidden = !showing.count || data.manual; // the timer counts in its middle already
@@ -765,19 +763,22 @@ export function startRoutines() {
     const coming = parts()
       .filter((p, index) => phase.kind === "wake" || (phase.kind === "part" && index > phase.index))
       .map((p) => (data.manual ? p.name : `${shortTime(p.from)} ${p.name}`));
+    if (checkMinutes() && (phase.kind === "wake" || phase.kind === "part")) {
+      coming.push(`${shortTime(parts().at(-1).to)} ${t.routine.checkTitle.toLowerCase()}`);
+    }
     if (data.goal && (phase.kind === "wake" || phase.kind === "part")) coming.push(`${shortTime(minuteOf(data.goal.at))} ${t.routine.goal}`);
-    view.next.textContent = coming.length ? t.routine.next(coming) : "";
+    view.next.textContent = phase.kind === "check" && !showing.finishing ? t.routine.checkHint
+      : coming.length ? t.routine.next(coming) : "";
   }
 
   // The kids on a side: their avatar in a ring that closes as their mission goes, and 3/7.
   function renderPeople() {
     const { view, data } = showing;
-    const index = showing.phaseKey?.startsWith("part-") ? Number(showing.phaseKey.slice(5)) : -1;
-    const signing = Boolean(parts()[index]?.check_mission);
+    const signing = showing.phaseKey === "check";
     view.people.replaceChildren(...data.people.map((person) => {
       const { mission } = person;
       const { color, soft, strong, on } = person.colors;
-      // "firmar": whoever has not finished their mission yet beats (effects.css).
+      // Checking the missions: whoever has not finished theirs yet beats (effects.css).
       const waiting = signing && mission && !mission.completed;
       return h("li", {},
         h("button", {

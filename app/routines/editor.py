@@ -392,7 +392,7 @@ def _settled(doc: dict) -> dict:
     parts = [{**part, "at": None} for part in doc["parts"]]
     first_at = doc["parts"][0].get("at")
     lead = (minute_of(first_at) - minute_of(doc["wake"])) % (24 * 60) if first_at else 0
-    start = minute_of(doc["goal"]["at"]) - sum(part["minutes"] for part in parts)
+    start = minute_of(doc["goal"]["at"]) - doc["goal"].get("check_minutes", 0) - sum(part["minutes"] for part in parts)
     if start < 0:
         return doc  # it would start the day before: refused as it is
     parts[0]["at"] = hhmm(start)

@@ -9,6 +9,7 @@ import { capital, hourWords, itIs, left, list, minutesWords } from "./words.js";
 export const USUAL = {
   lastCountdown: "Diez segundos para terminar.",
   earlyGoal: "¡Muy bien!",
+  check: "Es hora de revisar las misiones.",
 };
 
 export const partOpening = (part) => part.say ?? `Comienza ${part.name}.`;
@@ -68,6 +69,16 @@ export function wellDone(kids, mission) {
 export function earlyGoal(routine, done, minutesLeft) {
   return [...done, ...(minutesLeft >= 1 ? [untilGoal(minutesLeft)] : []), routine.early_goal ?? USUAL.earlyGoal];
 }
+
+// Checking the missions, part of the goal (rutinas-6): when the last part ends.
+export const checkOpening = (routine) => routine.goal.check_say ?? USUAL.check;
+
+export function checkStart(routine, time, missing) {
+  return [`${capital(itIs(time))}.`, checkOpening(routine), ...missing.map(([name, n]) => someoneMissing(name, n))];
+}
+
+// At the goal, whoever did not finish: "A Leo le faltaron 2 tareas."
+export const someoneMissed = (name, n) => `A ${name} ${n === 1 ? "le faltó 1 tarea" : `le faltaron ${n} tareas`}.`;
 
 export const someoneMissing = (name, n) => `A ${name} ${n === 1 ? "le falta 1 tarea" : `le faltan ${n} tareas`}.`;
 

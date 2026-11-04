@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 11
+CURRENT_VERSION = 12
 
 
 class ConfigVersionError(Exception):
@@ -251,6 +251,30 @@ def _v10_to_v11(doc: dict) -> dict:
     return {**doc, "version": 11, "songs": doc.get("songs") or [], "routines": routines}
 
 
+def _v11_to_v12(doc: dict) -> dict:
+    """Checking the missions is part of the goal (rutinas-6): a last part that checked
+    them ("firmar las tareas") becomes the goal's checking, with its minutes and its
+    sentence, so the times stay the same. No part checks missions any more."""
+    routines = []
+    for routine in copy.deepcopy(doc.get("routines") or []):
+        parts = routine.get("parts") or []
+        goal = routine.get("goal")
+        last = parts[-1] if parts else None
+        if goal and routine.get("wake") is not None and len(parts) > 1 and last.get("check_mission"):
+            parts.pop()
+            goal["check_minutes"] = last.get("minutes", 0)
+            goal["check_say"] = last.get("say")
+            for music in routine.get("music") or []:  # songs at that part go to the goal
+                if music.get("start") == last.get("id"):
+                    music["start"] = "goal"
+                if music.get("until") == last.get("id"):
+                    music["until"] = "goal"
+        for part in parts:
+            part.pop("check_mission", None)
+        routines.append({**routine, "parts": parts})
+    return {**doc, "version": 12, "routines": routines}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
@@ -262,6 +286,7 @@ _MIGRATIONS = {
     8: _v8_to_v9,
     9: _v9_to_v10,
     10: _v10_to_v11,
+    11: _v11_to_v12,
 }
 
 
