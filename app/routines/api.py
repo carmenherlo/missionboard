@@ -227,7 +227,8 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
         if found:  # one after the other
             played.append({"id": music.id, "songs": [
                 {"name": song.name, "url": f"/api/songs/{song.id}/file", "seconds": song.seconds} for song in found],
-                "start": index.get(music.start, music.start), "until": index.get(music.until, music.until)})
+                "start": index.get(music.start, music.start), "until": index.get(music.until, music.until),
+                "after_voice": music.after_voice, "loud": music.loud})
     return played
 
 
@@ -420,6 +421,8 @@ class MusicPatch(BaseModel):
     songs: list[str] | None = Field(default=None, min_length=1)  # one after the other, in this order
     start: str | None = None
     until: str | None = None  # null: once, until the songs end
+    after_voice: bool | None = None
+    loud: bool | None = None
 
 
 @router.post("/{routine_id}/music", dependencies=parent_only)
@@ -432,6 +435,9 @@ def add_music(routine_id: str, body: MusicCreate, editor: RoutinesEditor = Depen
 def update_music(routine_id: str, music_id: str, body: MusicPatch, editor: RoutinesEditor = Depends(get_routines_editor),
                  store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
     fields = {name: getattr(body, name) for name in body.model_fields_set}
+    for name in ("after_voice", "loud"):  # null: as it was
+        if fields.get(name, "") is None:
+            fields.pop(name)
     if any(fields.get(name, "") is None for name in ("songs", "start")):
         raise InvalidError("A song and where it starts")
     return present(editor.update_music(routine_id, music_id, SongsRepository(store), **fields))

@@ -8,6 +8,8 @@ import { speaking } from "../components/speech.js";
 
 const UNDER_THE_VOICE = 0.3; // the song's level while the voice speaks
 const FADE_S = 2; // a song cut at the end of its card goes down this long
+const VOICE_STARTS_S = 6; // after the voice: wait this long first (it may begin a moment late: the ring, the zero)
+const LOUD = 1; // "muy alta": the loudest it goes, whatever the Música level
 
 // Where each card's songs play, in minutes of the day: [{ id, songs, total, from, to, loop }]
 // (songs: [{ name, url, seconds }], one after the other; total: all of them, in seconds).
@@ -20,7 +22,10 @@ export function musicWindows(music, { wake, parts, goalAt, goalFrom = parts.at(-
     const from = at(m.start, false);
     const loop = m.until !== null;
     const total = m.songs.reduce((sum, song) => sum + song.seconds, 0);
-    return { id: m.id, songs: m.songs, total, from, to: loop ? at(m.until, true) : from + total / 60, loop };
+    return {
+      id: m.id, songs: m.songs, total, from, to: loop ? at(m.until, true) : from + total / 60, loop,
+      afterVoice: Boolean(m.after_voice), loud: Boolean(m.loud),
+    };
   }).filter((w) => w.to > w.from && w.total > 0);
 }
 
@@ -38,6 +43,12 @@ function songAt(window, time) {
 
 export function musicPlayer() {
   let current = null; // { key, id, name, audio }: the window, and which of its songs
+  // "After the voice": how late each window really started (minutes), once the voice was quiet.
+  const late = new Map();
+  const moved = (w) => {
+    const by = late.get(w.id) ?? 0;
+    return { ...w, from: w.from + by, to: w.loop ? w.to : w.to + by };
+  };
 
   function stop() {
     current?.audio.pause();
@@ -47,7 +58,18 @@ export function musicPlayer() {
   // At `time`, the window that should sound (if `on`), at its place; the volume follows
   // the Música channel, the voice and the end of its window.
   function update(windows, time, on) {
-    const window = on ? windows.find((w) => w.from <= time && time < w.to) : null;
+    // A song still going ("una vez", longer than its card) gives way to the next one.
+    let window = on ? windows.map(moved).filter((w) => w.from <= time && time < w.to)
+      .sort((a, b) => b.from - a.from)[0] ?? null : null;
+    if (window?.afterVoice && !late.has(window.id)) {
+      // Not yet: it starts, from its beginning, once the voice has had time to start and finish.
+      if ((time - window.from) * 60 < VOICE_STARTS_S || speaking()) {
+        stop();
+        return;
+      }
+      late.set(window.id, time - window.from);
+      window = moved(windows.find((w) => w.id === window.id));
+    }
     if (!window) {
       stop();
       return;
@@ -71,7 +93,8 @@ export function musicPlayer() {
     }
     const toEnd = window.loop ? (window.to - time) * 60 : Infinity;
     const fade = Math.min(1, toEnd / FADE_S);
-    current.audio.volume = Math.min(1, volume("music") * (speaking() ? UNDER_THE_VOICE : 1) * fade);
+    const level = window.loud ? LOUD : volume("music");
+    current.audio.volume = Math.min(1, level * (speaking() ? UNDER_THE_VOICE : 1) * fade);
   }
 
   return {

@@ -337,7 +337,8 @@ export function startRoutines() {
   // How long a song still has to play from now (the goal stays on screen until it ends).
   function songLeftMs() {
     const time = now();
-    const window = songWindows().find((w) => w.from <= time + 1 / 60 && time < w.to);
+    const window = songWindows().filter((w) => w.from <= time + 1 / 60 && time < w.to)
+      .sort((a, b) => b.from - a.from)[0]; // the latest one plays (music.js)
     return window ? (window.to - time) * 60_000 : 0;
   }
 

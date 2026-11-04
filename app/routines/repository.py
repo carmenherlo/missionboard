@@ -87,6 +87,8 @@ class Music(BaseModel):
     songs: tuple[str, ...] = Field(min_length=1)  # one after the other (04/11)
     start: str
     until: str | None = None
+    after_voice: bool = False  # it waits until the voice has finished speaking (04/11)
+    loud: bool = False  # at full volume, whatever the Música level: to wake up (04/11)
 
 
 class Notice(BaseModel):

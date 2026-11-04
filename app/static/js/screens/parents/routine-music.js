@@ -74,6 +74,8 @@ export function songWraps(routineId) {
       wrapped.at(-1).classList.add("in-song--last");
       const detail = [
         music.start === "alarm" && t.routineMusic.insteadOfAlarm,
+        music.after_voice && t.routineMusic.afterVoiceTag,
+        music.loud && t.routineMusic.loudTag,
         music.until ? t.routineMusic.until(cards[to].name) : t.routineMusic.once(length(song.seconds)),
       ].filter(Boolean).join(" · ");
       const first = wrapped[0];
@@ -201,6 +203,13 @@ export async function viewRoutineMusic(routineId, musicId) {
             h("option", { value: c.id, selected: c.id === m.until }, cardText(c, routine, true))))),
       h("p", { class: "hint" }, hintOf(routine, m, song)),
       m.start === "alarm" && h("p", { class: "hint" }, t.routineMusic.hintAlarm),
+      h("label", { class: "toggle" },
+        h("input", { type: "checkbox", checked: m.after_voice, onchange: (e) => change({ after_voice: e.target.checked }) }),
+        t.routineMusic.afterVoice),
+      h("label", { class: "toggle" },
+        h("input", { type: "checkbox", checked: m.loud, onchange: (e) => change({ loud: e.target.checked }) }),
+        t.routineMusic.loud),
+      h("p", { class: "hint" }, t.routineMusic.optionsHint),
     ].filter(Boolean));
   }
 

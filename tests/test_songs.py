@@ -69,7 +69,8 @@ def test_a_song_from_a_card_to_a_card(client):
     parts = part_ids(client)
     routine = edit(client, "POST", "/music", song=song, start=parts[3]).json()
     music = routine["music"][0]
-    assert music == {"id": music["id"], "songs": [song], "start": parts[3], "until": None}
+    assert music == {"id": music["id"], "songs": [song], "start": parts[3], "until": None,
+                     "after_voice": False, "loud": False}
     routine = edit(client, "PATCH", f"/music/{music['id']}", until=parts[5]).json()
     assert routine["music"][0]["until"] == parts[5]
     assert edit(client, "PATCH", f"/music/{music['id']}", until=parts[1]).status_code == 422  # before it starts
@@ -114,7 +115,7 @@ def test_the_screen_gets_where_each_song_plays(client, clock):
     clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
     on = client.get("/api/routines/current").json()
     assert on["music"] == [{"id": music["id"], "songs": [{"name": "¡A correr!", "url": song["url"], "seconds": 190.4}],
-                            "start": 0, "until": 1}]
+                            "start": 0, "until": 1, "after_voice": False, "loud": False}]
 
 
 def test_v10_routines_get_their_songs():
@@ -152,3 +153,11 @@ def test_no_song_where_the_alarm_rings(client):
     assert edit(client, "POST", "/music", song=song, start=first).status_code == 422
     edit(client, "PATCH", alarm_before=5)  # a while before: a song in the first part is fine
     assert edit(client, "POST", "/music", song=song, start=first).status_code == 200
+
+
+def test_after_the_voice_and_loud(client):
+    song = upload(client).json()["id"]
+    music = edit(client, "POST", "/music", song=song, start=part_ids(client)[1]).json()["music"][0]
+    music = edit(client, "PATCH", f"/music/{music['id']}", after_voice=True, loud=True).json()["music"][0]
+    assert music["after_voice"] is True and music["loud"] is True
+    assert edit(client, "PATCH", f"/music/{music['id']}", loud=None).json()["music"][0]["loud"] is True  # null: unchanged
