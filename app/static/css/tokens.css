@@ -176,6 +176,8 @@
   --celebration-glow-breath: 2.2s; /* the ring around the avatar in the celebration */
   --star-shine: 2.4s; /* the star won, shining */
   --appear: 220ms; /* panels and messages coming in */
+  --state-hover: 8%; /* Material 3 state layer: the text's colour over what is touched */
+  --state-pressed: 10%;
   --wheel-spin: 4s; /* the wheel turning until it stops on the prize */
   --confetti-1: #5b4ae6;
   --confetti-2: #ff9f43;

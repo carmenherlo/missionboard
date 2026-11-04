@@ -228,6 +228,50 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  transition: background-color var(--appear) ease;
+}
+
+/* Material 3 state layer (04/11: a card that opens gave no sign of being one): the
+   text's colour over the whole card, faint on hover, a little more while pressed. */
+.row--covered,
+.row--link {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.row--link {
+  position: relative;
+}
+
+.row--link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: background-color var(--appear) ease;
+}
+
+@media (hover: hover) {
+  .row--covered:hover .row__cover::after,
+  .row--link:hover::after {
+    background: color-mix(in srgb, var(--text) var(--state-hover), transparent);
+  }
+}
+
+.row--covered:has(.row__cover:active) .row__cover::after,
+.row--link:active::after {
+  background: color-mix(in srgb, var(--text) var(--state-pressed), transparent);
+}
+
+.row__cover:focus-visible {
+  outline: none;
+}
+
+.row--covered:has(.row__cover:focus-visible),
+.row--link:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .row--covered button {
