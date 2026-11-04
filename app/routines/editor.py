@@ -304,6 +304,8 @@ class RoutinesEditor:
         if any(library.get(song) is None for song in music["songs"]):
             raise NotFoundError("Song not found")
         routine = self.get(routine_id)
+        if _rings_at_first_part(routine) and music["start"] == routine.parts[0].id:
+            raise InvalidError("The alarm rings as the first part starts: not a song there too")
         others = [m.model_dump() for m in routine.music if m.id != music_id]
         cards = card_positions(routine.to_doc())
         if music["start"] not in cards or (music["until"] is not None and music["until"] not in cards):
@@ -402,6 +404,11 @@ def _settled(doc: dict) -> dict:
         return doc  # it would start the day before: refused as it is
     parts[0]["at"] = hhmm(start)
     return {**doc, "parts": parts, "wake": hhmm((start - lead) % (24 * 60))}
+
+
+def _rings_at_first_part(routine: Routine) -> bool:
+    """The alarm rings right as the first part starts: a song there would sound with it."""
+    return not routine.manual and routine.alarm and routine.alarm_before == 0
 
 
 def _music_kept(doc: dict) -> dict:

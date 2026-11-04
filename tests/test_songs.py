@@ -143,3 +143,12 @@ def test_songs_one_after_the_other(client):
 def test_v12_a_song_becomes_a_list():
     doc = upgrade({"version": 12, "routines": [{"id": "m", "parts": [], "music": [{"id": "a", "song": "x", "start": "p"}]}]})
     assert doc["routines"][0]["music"] == [{"id": "a", "songs": ["x"], "start": "p"}]
+
+
+def test_no_song_where_the_alarm_rings(client):
+    song = upload(client).json()["id"]
+    first = part_ids(client)[0]
+    edit(client, "PATCH", alarm_before=0)  # it rings right as the first part starts
+    assert edit(client, "POST", "/music", song=song, start=first).status_code == 422
+    edit(client, "PATCH", alarm_before=5)  # a while before: a song in the first part is fine
+    assert edit(client, "POST", "/music", song=song, start=first).status_code == 200

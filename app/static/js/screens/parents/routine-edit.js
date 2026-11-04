@@ -10,7 +10,7 @@ import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { addSongForm, songWraps } from "./routine-music.js";
+import { addSongForm, ringsAtFirstPart, songWraps } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const LIST_HREF = "#/parents/config/routines";
@@ -81,6 +81,8 @@ export async function viewRoutineEdit(routineId) {
   const alarmBefore = h("select", { onchange: (e) => patch({ alarm_before: Number(e.target.value) }) });
   const alarmBeforeRow = h("div", { class: "times" });
   const alarmHint = h("p", { class: "hint" }); // only what the fields above do not say
+  // A song in the first part and the alarm right as it starts: the song instead of the ring.
+  const alarmClash = h("p", { class: "notice" });
   const remind = h("input", {
     type: "number", min: 0, max: 30, value: routine.remind_every,
     onchange: (e) => patch({ remind_every: Number(e.target.value) }),
@@ -146,6 +148,9 @@ export async function viewRoutineEdit(routineId) {
     alarmBeforeRow.replaceChildren(...[
       routine.alarm && h("label", { class: "time" }, t.routineEdit.alarmBefore, alarmBefore),
       before && h("label", { class: "time" }, t.routineEdit.remindEvery, remind)].filter(Boolean));
+    const clash = ringsAtFirstPart(routine) && routine.music.some((m) => m.start === routine.parts[0].id);
+    alarmClash.hidden = !clash;
+    alarmClash.textContent = clash ? t.routineEdit.alarmAndSong(capital(routine.parts[0].name)) : "";
     alarmHint.hidden = routine.alarm && !before;
     alarmHint.textContent = !routine.alarm ? t.routineEdit.noAlarmHint
       : before ? t.routineEdit.alarmHint(shortTime(routine.wake), routine.remind_every) : "";
@@ -425,6 +430,7 @@ export async function viewRoutineEdit(routineId) {
       h("label", { class: "toggle" }, alarmOn, t.routineEdit.alarm),
       alarmBeforeRow,
       alarmHint,
+      alarmClash,
       h("p", { class: "hint" }, t.routineEdit.wakeWithSong)),
     panel(t.routineEdit.offsets,
       h("p", { class: "hint" }, t.routineEdit.offsetsHint),
@@ -436,6 +442,10 @@ export async function viewRoutineEdit(routineId) {
   const cardsBox = h("div", { class: "song-cards" }, alarmCard, partsList, goalCard);
   const wrapSongs = songWraps(routineId);
   const addSong = addSongForm(routineId, { save, status });
+  const songsPanel = panel(t.routineMusic.panel,
+    h("p", { class: "hint" }, t.routineMusic.panelHint),
+    addSong.element,
+    h("a", { class: "btn", href: `${LIST_HREF}/songs` }, icon("music"), t.routineMusic.library));
 
   function refresh() {
     renderRoutine();
@@ -462,7 +472,9 @@ export async function viewRoutineEdit(routineId) {
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(partsTitle, partsTools, cardsBox,
-            addPart, importParts, addSong.element),
+            addPart, importParts),
+          // Each thing in its own panel (04/11): the songs apart, like the goal.
+          songsPanel,
           goalPanel)),
       footer));
 }

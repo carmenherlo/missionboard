@@ -20,6 +20,7 @@
 
 .page-title__text {
   min-width: 0;
+  overflow-wrap: anywhere; /* long names (a song's file name) wrap instead of running off */
   font-size: var(--text-xl);
 }
 

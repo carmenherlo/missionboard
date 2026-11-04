@@ -36,8 +36,11 @@ export function cardsOf(routine) {
 }
 
 // Where a song can start: not the alarm (04/11: the alarm rings by itself; to wake up
-// to a song, no alarm and the song in the first part).
-const songCards = (routine) => cardsOf(routine).filter((c) => c.id !== "alarm");
+// to a song, no alarm and the song in the first part), nor the first part if the alarm
+// rings right as it starts (both at once).
+export const ringsAtFirstPart = (routine) => !routine.manual && routine.alarm && routine.alarm_before === 0;
+const songCards = (routine) => cardsOf(routine).filter((c) => c.id !== "alarm"
+  && !(ringsAtFirstPart(routine) && c.id === routine.parts[0].id));
 
 // The other song this one would play at the same time as, if any.
 export function clashWith(routine, music) {
@@ -89,8 +92,7 @@ export function addSongForm(routineId, { save, status }) {
   const element = h("div", {});
   function draw(routine, songs) {
     if (!songs.length) {
-      element.replaceChildren(h("p", { class: "hint" }, t.routineMusic.noSongs, " ",
-        h("a", { href: `${ROUTINES_HREF}/songs` }, t.routineMusic.toLibrary)));
+      element.replaceChildren(h("p", { class: "hint" }, t.routineMusic.noSongs));
       return;
     }
     const song = h("select", { "aria-label": t.routineMusic.panelSong }, songs.map((s) => h("option", { value: s.id }, s.name)));

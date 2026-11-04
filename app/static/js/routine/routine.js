@@ -341,8 +341,10 @@ export function startRoutines() {
     return window ? (window.to - time) * 60_000 : 0;
   }
 
-  // A song in the alarm card plays instead of the "rrring" (rutinas-4, question 4).
-  const alarmSong = () => (showing.data.music ?? []).some((m) => m.start === "alarm" && !showing.musicOff.has(m.id));
+  // A song in the alarm card (older routines), or in the first part when the alarm rings
+  // right as it starts (04/11: never both at once), plays instead of the "rrring".
+  const alarmSong = () => (showing.data.music ?? []).some((m) => !showing.musicOff.has(m.id)
+    && (m.start === "alarm" || (m.start === 0 && minuteOf(showing.data.wake) === parts()[0].from)));
 
   function silenceSong() {
     const playing = showing.player.playing();
