@@ -299,6 +299,8 @@ class RoutinesEditor:
         (one Música channel); the screen says which before asking."""
         if not music["songs"]:
             raise InvalidError("One song at least")
+        if music["start"] == "alarm":  # the alarm rings by itself: to wake up to a song, no alarm (04/11)
+            raise InvalidError("Not at the alarm: in the first part, without the alarm")
         if any(library.get(song) is None for song in music["songs"]):
             raise NotFoundError("Song not found")
         routine = self.get(routine_id)

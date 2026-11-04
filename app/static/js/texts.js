@@ -192,6 +192,7 @@ export const t = {
       ? `Suena a las ${wake} hasta que alguien lo para; luego avisa cada ${n} minutos de cuánto falta para empezar.`
       : `Suena a las ${wake} hasta que alguien lo para.`,
     noAlarmHint: "Sin timbre: a su hora suena un ding, se abre la pantalla y la voz dice la primera parte.",
+    wakeWithSong: "¿Despertar con una canción? Quita la alarma y pon la canción en la primera parte.",
     alarmCard: "Alarma",
     alarmCardBefore: (n) => (n ? `${n} min antes de empezar` : "al empezar"),
     noAlarmCard: "Sin alarma",

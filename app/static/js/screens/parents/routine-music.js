@@ -35,6 +35,10 @@ export function cardsOf(routine) {
   ].map((card) => ({ ...card, label: capital(card.name) }));
 }
 
+// Where a song can start: not the alarm (04/11: the alarm rings by itself; to wake up
+// to a song, no alarm and the song in the first part).
+const songCards = (routine) => cardsOf(routine).filter((c) => c.id !== "alarm");
+
 // The other song this one would play at the same time as, if any.
 export function clashWith(routine, music) {
   const order = cardsOf(routine).map((c) => c.id);
@@ -91,7 +95,7 @@ export function addSongForm(routineId, { save, status }) {
     }
     const song = h("select", { "aria-label": t.routineMusic.panelSong }, songs.map((s) => h("option", { value: s.id }, s.name)));
     const start = h("select", { "aria-label": t.routineMusic.startsWith },
-      cardsOf(routine).map((c) => h("option", { value: c.id }, `${t.routineMusic.startsWith}: ${c.label}`)));
+      songCards(routine).map((c) => h("option", { value: c.id }, `${t.routineMusic.startsWith}: ${c.label}`)));
     element.replaceChildren(h("div", { class: "form-actions form-actions--start" }, song, start,
       h("button", {
         type: "button", class: "btn",
@@ -157,14 +161,14 @@ export async function viewRoutineMusic(routineId, musicId) {
         h("span", { class: "row__icon row__icon--sm" }, icon("music")),
         h("span", { class: "row__text" }, one.name,
           h("span", { class: "row__detail" }, h("span", { class: "pill pill--muted" }, length(one.seconds)))),
-        h("button", {
-          type: "button", class: "btn",
+        h("button", { // small, so long names keep the row's width
+          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.songs.listen, title: t.songs.listen,
           onclick: () => {
             listening?.pause();
             listening = new Audio(one.url);
             listening.play().catch(() => {});
           },
-        }, `▶ ${t.songs.listen}`),
+        }, icon("play")),
         m.songs.length > 1 && h("button", {
           type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routineMusic.takeOut(one.name),
           onclick: () => change({ songs: m.songs.filter((_, i) => i !== index) }),
@@ -182,7 +186,7 @@ export async function viewRoutineMusic(routineId, musicId) {
     whenBox.replaceChildren(...[
       h("label", {}, t.routineMusic.startsWith,
         h("select", { onchange: (e) => change({ start: e.target.value }) },
-          cards.map((c) => h("option", { value: c.id, selected: c.id === m.start }, cardText(c, routine))))),
+          songCards(routine).map((c) => h("option", { value: c.id, selected: c.id === m.start }, cardText(c, routine))))),
       h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineMusic.ends),
         h("div", { class: "tabs" },
           [[false, t.routineMusic.endsWithSong], [true, t.routineMusic.endsWithPart]].map(([value, label]) =>

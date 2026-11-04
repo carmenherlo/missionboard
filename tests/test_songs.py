@@ -86,13 +86,15 @@ def test_two_songs_never_at_once(client):
     assert edit(client, "POST", "/music", song=song, start=parts[2]).status_code == 409
     assert edit(client, "POST", "/music", song=song, start=parts[1]).status_code == 409
     assert edit(client, "POST", "/music", song=song, start=parts[4]).status_code == 200
-    assert edit(client, "POST", "/music", song=song, start="alarm").status_code == 200
+    assert edit(client, "POST", "/music", song=song, start=parts[0]).status_code == 200
+    # Not at the alarm: it rings by itself (to wake up to a song, no alarm and the first part)
+    assert edit(client, "POST", "/music", song=song, start="alarm").status_code == 422
 
 
 def test_the_songs_follow_the_cards(client):
     song = upload(client).json()["id"]
     parts = part_ids(client)
-    edit(client, "POST", "/music", song=song, start="alarm")
+    edit(client, "POST", "/music", song=song, start=parts[0])
     music = edit(client, "POST", "/music", song=song, start=parts[2]).json()["music"]
     later = next(m for m in music if m["start"] == parts[2])
     edit(client, "PATCH", f"/music/{later['id']}", until=parts[4])
@@ -101,21 +103,18 @@ def test_the_songs_follow_the_cards(client):
     assert next(m for m in routine["music"] if m["start"] == parts[2])["until"] is None
     # The part where it started goes: so does the song
     routine = edit(client, "DELETE", f"/parts/{parts[2]}").json()
-    assert [m["start"] for m in routine["music"]] == ["alarm"]
-    # No alarm: from the first part
-    routine = edit(client, "PATCH", alarm=False).json()
-    assert [m["start"] for m in routine["music"]] == [routine["parts"][0]["id"]]
+    assert [m["start"] for m in routine["music"]] == [parts[0]]
 
 
 def test_the_screen_gets_where_each_song_plays(client, clock):
     song = upload(client).json()
     parts = part_ids(client)
-    music = edit(client, "POST", "/music", song=song["id"], start="alarm").json()["music"][0]
+    music = edit(client, "POST", "/music", song=song["id"], start=parts[0]).json()["music"][0]
     edit(client, "PATCH", f"/music/{music['id']}", until=parts[1])
     clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
     on = client.get("/api/routines/current").json()
     assert on["music"] == [{"id": music["id"], "songs": [{"name": "¡A correr!", "url": song["url"], "seconds": 190.4}],
-                            "start": "alarm", "until": 1}]
+                            "start": 0, "until": 1}]
 
 
 def test_v10_routines_get_their_songs():
