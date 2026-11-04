@@ -12,9 +12,13 @@ export async function viewRoutinesList() {
   const routines = await api("GET", "/api/routines");
 
   const list = h("ul", { class: "rows" }, routines.map((routine) =>
-    h("li", { class: "row" },
+    // The whole card opens the routine (04/11: editing matters more than trying it).
+    h("li", { class: "row row--covered" },
       imageThumb(routine.parts[0].image_url, { size: "md", label: routine.name }),
-      h("span", { class: "row__name" }, routine.name,
+      h("a", {
+        class: "row__name row__cover", href: `#/parents/config/routines/${routine.id}`,
+        "aria-label": t.routines.editNamed(routine.name),
+      }, routine.name,
         h("span", { class: "row__detail" },
           h("span", { class: "pill" }, daysText(routine.days)),
           h("span", { class: "pill" }, routine.manual
@@ -26,10 +30,7 @@ export async function viewRoutinesList() {
           type: "button", class: "btn", onclick: () => tryRoutine(routine.id),
           "aria-label": t.routines.tryNamed(routine.name),
         }, t.routines.tryNow),
-        h("a", {
-          class: "icon-button icon-button--ghost", href: `#/parents/config/routines/${routine.id}`,
-          "aria-label": t.routines.editNamed(routine.name), title: t.routines.edit,
-        }, icon("edit"))))));
+        h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))))));
 
   render(
     parentsHeader(t.routines.title, { href: "#/parents/config", label: t.config.back }),

@@ -11,8 +11,9 @@ const FADE_S = 2; // a song cut at the end of its card goes down this long
 
 // Where each song plays, in minutes of the day: [{ id, name, url, from, to, loop }].
 // `music` as the server gives it (start/until: "alarm", a part's index or "goal").
-export function musicWindows(music, { wake, parts, goalAt }) {
-  const at = (card, end) => (card === "alarm" ? wake : card === "goal" ? (end ? goalAt : parts.at(-1).to)
+// goalFrom: when the goal comes (early, if everyone signed in the last part).
+export function musicWindows(music, { wake, parts, goalAt, goalFrom = parts.at(-1).to }) {
+  const at = (card, end) => (card === "alarm" ? wake : card === "goal" ? (end ? Math.max(goalAt, goalFrom) : goalFrom)
     : end ? parts[card].to : parts[card].from);
   return music.map((m) => {
     const from = at(m.start, false);

@@ -13,7 +13,6 @@ import { missionSheet } from "./mission-sheet.js";
 export async function openMission(container, childId, missionId, { day = null, onDay = () => {}, onClose = () => {} } = {}) {
   const base = `/api/children/${childId}/today`;
   day ??= await api("GET", base);
-  let busy = false; // one step at a time
   let closed = false;
   let drawn = false;
 
@@ -36,29 +35,44 @@ export async function openMission(container, childId, missionId, { day = null, o
   }
 
   // The step changes as soon as it is tapped (03/11: waiting for the server, a tap
-  // seemed lost and children tapped twice); the server's answer then redraws it.
-  async function toggle(step, card) {
-    if (busy) return;
-    busy = true;
-    card?.classList.toggle("step-card--done", !step.checked);
+  // seemed lost and children tapped twice). Taps go in a queue, in order: tapping
+  // another step while one is saving is not lost (04/11). The panel is drawn again
+  // from the server's answer once nothing else is waiting.
+  let queue = Promise.resolve();
+  let waiting = 0;
+  const wanted = new Map(); // step id → checked, as last tapped
+  let celebrated = false; // the last step came: what is still queued does not matter
+
+  function toggle(step, card) {
+    const checked = !(wanted.get(step.id) ?? step.checked);
+    wanted.set(step.id, checked);
+    card?.classList.toggle("step-card--done", checked);
+    waiting += 1;
+    queue = queue.then(() => send(step.id, checked)).finally(() => { waiting -= 1; });
+  }
+
+  async function send(stepId, checked) {
+    if (closed || celebrated) return;
     try {
-      const result = await api("PUT", `${base}/missions/${missionId}/steps/${step.id}`,
-        { json: { checked: !step.checked } });
+      const result = await api("PUT", `${base}/missions/${missionId}/steps/${stepId}`, { json: { checked } });
       day = result.today;
       onDay(day);
       if (result.completed) {
+        celebrated = true;
+        wanted.clear();
         holder.replaceChildren();
         showCelebration(holder, day, result.stars_earned, close);
-      } else {
-        draw();
+        return;
       }
     } catch {
       // The mission closed meanwhile, or the connection failed: show how things are now.
       day = await api("GET", base).catch(() => day);
       onDay(day);
+      wanted.clear();
+    }
+    if (waiting <= 1 && !closed) {
+      wanted.clear();
       draw();
-    } finally {
-      busy = false;
     }
   }
 

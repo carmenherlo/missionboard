@@ -175,6 +175,8 @@ class RoutinesService:
                 raise NotFoundError("Part not found")
             self._events.routine_did("routine_part", routine.name, part=routine.parts[part].name)
         elif kind == "goal":
+            if early:  # everyone signed in the last part: it is over for today (04/11)
+                self._runs.set(day, routine.id, finished_at=now)
             self._events.routine_did("routine_goal", routine.name, early=early)
         elif kind == "closed":
             self._runs.set(day, routine.id, closed_phase=phase)

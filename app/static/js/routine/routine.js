@@ -29,6 +29,7 @@
 import { api } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
 import { codeField } from "../components/code-input.js";
+import { fullscreenButton } from "../components/fullscreen-button.js";
 import { soundButton } from "../components/sound-panel.js";
 import { sounds } from "../components/sound.js";
 import { onSay, quiet, say } from "../components/speech.js";
@@ -36,6 +37,7 @@ import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { openMission } from "../screens/child/mission-flow.js";
 import { t } from "../texts.js";
+import { confetti } from "../effects/confetti.js";
 import { tokenMs } from "../effects/motion.js";
 import { clockFace, timerFace } from "./clock-face.js";
 import { musicPlayer, musicWindows } from "./music.js";
@@ -303,7 +305,7 @@ export function startRoutines() {
       enter(phase, time, before, counted);
       if (!showing) return; // "done": it ended
     }
-    if (!closed()) {
+    if (!closed() && !showing.finishing) {
       remind(phase, time);
       tickTock(phase, time);
       countDown(phase, time, key);
@@ -326,6 +328,7 @@ export function startRoutines() {
     return musicWindows(data.music ?? [], {
       wake: data.manual ? all[0].from : minuteOf(data.wake), parts: all,
       goalAt: data.goal ? minuteOf(data.goal.at) : all.at(-1).to,
+      goalFrom: showing.earlyGoal ?? all.at(-1).to, // everyone signed early: its song then
     }).filter((w) => !showing.musicOff.has(w.id));
   }
 
@@ -411,10 +414,15 @@ export function startRoutines() {
     } else if (phase.kind === "goal") {
       note("goal", { early: showing.earlyGoal != null });
       if (showing.earlyGoal != null) {
+        // Everyone signed in the last part (04/11): no waiting for the goal's time, they
+        // have gone. The goal now, with its celebration, and then it ends for today.
         sounds.win();
-        say(script.earlyGoal(data, wellDone(), minutesToGoal(time)));
+        say(script.earlyGoal(data, wellDone(), 0));
+        celebrateGoal();
+        endAfterTheGoal();
       } else {
         timeToGo(time, counted);
+        celebrateGoal();
       }
     }
   }
@@ -438,6 +446,24 @@ export function startRoutines() {
     setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
   }
 
+  // The goal's celebration: the kids who did their mission, big and shining, and confetti.
+  function celebrateGoal() {
+    const { view, data } = showing;
+    const done = data.people.filter((p) => p.mission?.completed);
+    view.champions.replaceChildren(...done.map((p) => h("li", {
+      class: "routine__champion",
+      style: `--child-color: ${p.colors.color}`,
+    }, avatar(p.child, { size: "lg", fx: "shine" }), h("span", {}, p.child.name))));
+    confetti(view.layer);
+  }
+
+  function endAfterTheGoal() {
+    showing.finishing = true;
+    showing.finished = "goal";
+    const id = showing.data.id;
+    setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
+  }
+
   // The goal's time came, and its song is still on: the goal stays on screen until it ends.
   function songToTheEnd() {
     showing.finishing = true;
@@ -455,6 +481,7 @@ export function startRoutines() {
     if (counted) sounds.countdown(true);
     else sounds.ding();
     say(script.goalReached(showing.data, time, 0));
+    celebrateGoal();
     const id = showing.data.id;
     setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
   }
@@ -545,20 +572,21 @@ export function startRoutines() {
   }
 
   // The second hand, heard, so nobody forgets the routine is on: a tic-tac each
-  // second while a part runs, twice as fast in its last minute; in the last ten
-  // seconds the countdown's pips take over. Not in a trial sped up.
+  // second while a part runs, twice as fast in its last minute, and at its loudest
+  // in the last ten seconds, with the countdown's pips. Not in a trial sped up.
   function tickTock(phase, time) {
     if (phase.kind !== "part" || showing.speed !== 1) {
       showing.nextBeat = null;
       return;
     }
     const second = time * 60;
-    const end = phase.to * 60 - COUNTDOWN_S;
+    const end = phase.to * 60; // through the countdown too, then at its loudest
+    const loudFrom = end - COUNTDOWN_S;
     if (showing.nextBeat == null || showing.nextBeat < second - 1) showing.nextBeat = Math.ceil(second);
-    while (showing.nextBeat < second + TICK_AHEAD_S && showing.nextBeat <= end) {
+    while (showing.nextBeat < second + TICK_AHEAD_S && showing.nextBeat < end) {
       const beat = showing.nextBeat;
       showing.beats = (showing.beats ?? 0) + 1;
-      if (beat >= second - 0.05) sounds.tick(Math.max(0, beat - second), showing.beats % 2 === 0);
+      if (beat >= second - 0.05) sounds.tick(Math.max(0, beat - second), showing.beats % 2 === 0, beat >= loudFrom);
       showing.nextBeat = beat + (phase.to * 60 - beat <= HURRY_S ? 0.5 : 1);
     }
   }
@@ -618,6 +646,7 @@ export function startRoutines() {
     const tasks = h("ul", { class: "routine__tasks" });
     const next = h("p", { class: "routine__next" });
     const finish = h("div", { class: "routine__finish" });
+    const champions = h("ul", { class: "routine__champions" }); // the goal's celebration
     const people = h("ul", { class: "routine__people" });
     const over = h("div", {}); // a kid's mission, over the clock
     const trialTools = h("div", { class: "routine__trial" });
@@ -626,14 +655,14 @@ export function startRoutines() {
     dragging(dial);
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
-        h("header", { class: "routine__top" }, time, h("span", { class: "child-bar__spacer" }), musicButton, soundButton(), close),
+        h("header", { class: "routine__top" }, fullscreenButton(), time, h("span", { class: "child-bar__spacer" }), musicButton, soundButton(), close),
         trialTools,
-        what, until, dial, stopButton, tasks, next, transcript, finish),
+        what, until, champions, dial, stopButton, tasks, next, transcript, finish),
       h("aside", { class: "routine__side" }, people),
       over);
     // In the parents' zone, or once closed: a button to go back to it.
     const banner = h("button", { type: "button", class: "routine-banner", onclick: () => reopen() });
-    return { layer, banner, time, close, musicButton, stopButton, what, until, clock, count, tasks, next, finish, people, over,
+    return { layer, banner, time, close, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
       trialTools, transcript };
   }
 
@@ -699,13 +728,13 @@ export function startRoutines() {
       image = phase.part.image_url;
       what = capital(phase.part.name);
       until = data.manual ? t.routine.endsIn(toGo) : t.routine.endsAt(hourWords(phase.to), toGo);
+    } else if (showing.finished === "goal") {
+      image = data.goal.image_url;
+      what = data.goal.say;
     } else if (phase.kind === "goal") {
       image = data.goal.image_url;
       what = data.goal.say;
       until = t.routine.goalAt(hourWords(phase.to), toGo);
-    } else if (showing.finished === "goal") {
-      image = data.goal.image_url;
-      what = data.goal.say;
     } else if (showing.finished) {
       what = showing.finished === "done" ? t.routine.done : t.routine.timeUp;
     }

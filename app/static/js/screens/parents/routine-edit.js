@@ -400,6 +400,23 @@ export async function viewRoutineEdit(routineId) {
       offsetsTimes));
   goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
+  // "Firmar las tareas" as the last part, suggested (04/11): when everyone signs there,
+  // the routine goes straight to its goal and ends, without waiting for its time.
+  const signTip = h("div", { class: "notice" });
+  function renderSignTip() {
+    signTip.hidden = routine.manual || Boolean(routine.parts.at(-1)?.check_mission);
+    signTip.replaceChildren(
+      h("p", { class: "hint" }, t.routineEdit.signTip),
+      h("button", {
+        type: "button", class: "btn",
+        onclick: async () => {
+          const updated = await save(api("POST", `${url}/parts`, { json: { name: t.routineEdit.signPart } })).catch(() => null);
+          const last = updated?.parts.at(-1);
+          if (last) save(api("PATCH", `${url}/parts/${last.id}`, { json: { check_mission: true } })).catch(() => {});
+        },
+      }, icon("plus"), t.routineEdit.addSignPart));
+  }
+
   // The songs: a lane beside the cards, and a form to add one (routine-music.js).
   const cardsBox = h("div", { class: "song-cards" }, alarmCard, partsList, goalCard);
   const wrapSongs = songWraps(routineId);
@@ -409,6 +426,7 @@ export async function viewRoutineEdit(routineId) {
     renderRoutine();
     renderKids();
     renderParts();
+    renderSignTip();
     addSong.draw(routine, songs);
     renderGoal();
     renderConflicts();
@@ -430,7 +448,7 @@ export async function viewRoutineEdit(routineId) {
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(partsTitle, partsTools, cardsBox,
-            addPart, importParts, addSong.element),
+            signTip, addPart, importParts, addSong.element),
           goalPanel)),
       footer));
 }

@@ -118,10 +118,11 @@ export const sounds = {
 
   // The second hand, heard: a faint "tic" (or "tac", lower), `delay` seconds from now,
   // like a real clock's: it is there, and only now and then reminds you of the time.
-  tick(delay, tac = false) {
+  // loud: a part's last ten seconds (04/11: the second hand then at its loudest).
+  tick(delay, tac = false, loud = false) {
     play((ctx, out, now) => {
-      blip(ctx, out, { at: now + delay, freq: tac ? 2000 : 2600, length: 0.02, type: "triangle", volume: 0.3 });
-    }, "ticking");
+      blip(ctx, out, { at: now + delay, freq: tac ? 2000 : 2600, length: 0.02, type: "triangle", volume: loud ? 0.6 : 0.3 });
+    }, "ticking", { full: loud });
   },
 
   // Well done: a fanfare.
@@ -139,12 +140,13 @@ export const sounds = {
 
 // ---------- building blocks ----------
 
-function play(draw, channel = "effects") {
+// full: as loud as it goes, whatever its level (still silent if its channel is off).
+function play(draw, channel = "effects", { full = false } = {}) {
   if (isOff(channel)) return;
   const ctx = context();
   if (!ctx) return; // no Web Audio: silent
   const output = ctx.createGain();
-  output.gain.value = volume(channel);
+  output.gain.value = full ? 1 : volume(channel);
   output.connect(ctx.destination);
   draw(ctx, output, ctx.currentTime + 0.01);
 }

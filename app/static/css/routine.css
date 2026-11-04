@@ -408,3 +408,26 @@
   padding: 0;
   list-style: none;
 }
+
+/* The goal's celebration (04/11): the kids who did their mission, big, with their name. */
+.routine__champions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routine__champions:empty {
+  display: none;
+}
+
+.routine__champion {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}

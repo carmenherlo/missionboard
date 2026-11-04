@@ -105,12 +105,19 @@ def test_rang_once_a_day_and_stopped(client):
 
 def test_parts_and_goal_go_to_the_log(client):
     note(client, "part", part=2)
+    assert note(client, "part", part=99).status_code == 404
     note(client, "goal", early=True)
     assert descriptions(client, limit=2) == [
         "Rutina «Mañana»: llega la meta · antes de hora: todos habían firmado",
         "Rutina «Mañana»: empieza el aseo",
     ]
-    assert note(client, "part", part=99).status_code == 404
+
+
+def test_everyone_signed_early_it_is_over_for_today(client):
+    note(client, "goal", early=False)
+    assert current(client) is not None  # the goal at its time: it ends by itself
+    note(client, "goal", early=True)
+    assert current(client) is None
 
 
 def test_closed_until_its_next_part(client):

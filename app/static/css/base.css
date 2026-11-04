@@ -27,6 +27,14 @@ select {
   font: inherit;
 }
 
+/* A tap is a tap: the tablet does not wait to see if a second one zooms (two steps
+   tapped quickly lost the second). */
+button,
+a,
+label {
+  touch-action: manipulation;
+}
+
 /* Hidden means hidden, whatever display a class gives it. */
 [hidden] {
   display: none !important;
