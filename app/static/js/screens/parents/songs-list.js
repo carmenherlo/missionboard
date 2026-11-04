@@ -83,7 +83,10 @@ export async function viewSongsList() {
   }
 
   // The browser measures how long it lasts (the server does not read audio files).
-  const picker = h("input", { type: "file", accept: "audio/*", hidden: true, onchange: () => upload(picker.files[0]) });
+  // .opus named too: some tablets do not file it as audio and would hide it (04/11).
+  const picker = h("input", {
+    type: "file", accept: "audio/*,.mp3,.m4a,.opus,.ogg,.wav", hidden: true, onchange: () => upload(picker.files[0]),
+  });
   async function upload(file) {
     picker.value = "";
     if (!file) return;

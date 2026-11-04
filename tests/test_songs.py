@@ -121,3 +121,8 @@ def test_the_screen_gets_where_each_song_plays(client, clock):
 def test_v10_routines_get_their_songs():
     doc = upgrade({"version": 10, "routines": [{"id": "manana", "parts": []}]})
     assert doc["songs"] == [] and doc["routines"][0]["music"] == []
+
+
+def test_an_opus_song_is_ogg(client):
+    song = upload(client, data=b"OggS" + b"\x00" * 24 + b"OpusHead" + b"\x00" * 32).json()
+    assert song["file"].endswith(".ogg")
