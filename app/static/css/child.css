@@ -220,6 +220,12 @@
   transform: rotate(-90deg);
 }
 
+.ring__white {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+
 .ring__track {
   fill: none; /* transparent: the picture floats inside its ring (as in an earlier game) */
   stroke: var(--line);

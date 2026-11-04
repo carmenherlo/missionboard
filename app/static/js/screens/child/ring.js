@@ -4,9 +4,9 @@ import { h } from "../../dom.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-function circle(className, progress) {
+function circle(className, progress, r = 46) {
   const c = document.createElementNS(SVG_NS, "circle");
-  for (const [name, value] of Object.entries({ class: className, cx: 50, cy: 50, r: 46 })) c.setAttribute(name, value);
+  for (const [name, value] of Object.entries({ class: className, cx: 50, cy: 50, r })) c.setAttribute(name, value);
   if (progress !== undefined) {
     c.setAttribute("pathLength", "100");
     c.setAttribute("stroke-dasharray", `${progress * 100} 100`);
@@ -19,7 +19,7 @@ export function ring(progress, content, { star = null, className = "" } = {}) {
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("viewBox", "0 0 100 100");
   svg.setAttribute("aria-hidden", "true");
-  svg.append(circle("ring__track"));
+  svg.append(circle("ring__track"), circle("ring__white", undefined, 41.5)); // the thin white ring inside, as in an earlier game
   if (progress > 0) svg.append(circle("ring__glow", progress), circle("ring__fill", progress));
   return h("span", { class: `ring ${className}`.trim() },
     svg,
