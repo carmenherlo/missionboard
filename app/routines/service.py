@@ -15,16 +15,12 @@ from app.clock import Clock, app_day
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS
+from app.routines.links import kids_of
 from app.routines.repository import Part, Routine, RoutinesRepository, RunsRepository, minute_of
 from app.settings import SettingsRepository
 from app.today.service import DONE, DayService
 
 NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
-
-
-def kids_of(routine: Routine, children: list[Child]) -> list[Child]:
-    """The routine's children, in the family's order (none listed: every child)."""
-    return [c for c in children if not routine.kids or c.id in routine.kids]
 
 
 @dataclass

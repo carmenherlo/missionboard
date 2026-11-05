@@ -23,8 +23,10 @@ from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
-from app.missions.repository import WEEKDAYS, Mission, MissionsRepository
+from app.missions.repository import WEEKDAYS, Mission, MissionsRepository, Schedule
 from app.prizes.repository import Prize, PrizesRepository
+from app.routines import links
+from app.routines.repository import RoutinesRepository
 from app.settings import Moment, SettingsRepository
 from app.today.repository import DayRepository
 
@@ -41,6 +43,8 @@ class MissionToday:
     state: str
     checked: set[str] = field(default_factory=set)
     focus: bool = False
+    schedule: Schedule | None = None  # today's hours: its own, or its routine's (rutinas-8)
+    routines: list = field(default_factory=list)  # the routines it goes with
 
 
 @dataclass
@@ -94,6 +98,7 @@ class DayService:
         clock: Clock,
         events: EventLog,
         prizes: PrizesRepository,
+        routines: RoutinesRepository,
         choose=secrets.choice,  # tests pass their own, to know the prize
     ):
         self._children = children
@@ -103,6 +108,7 @@ class DayService:
         self._clock = clock
         self._events = events
         self._prizes = prizes
+        self._routines = routines
         self._choose = choose
 
     def today(self, child_id: str) -> Today:
@@ -116,15 +122,21 @@ class DayService:
         checked = self._days.checked_steps(day, child.id)
         completed = self._days.completed_missions(day, child.id)
         missions = []
+        # A mission in a routine goes by the routine's days and hours (rutinas-8)
+        with_routines = links.routines_by_mission(self._routines.list(), self._children.list())
         for mission in self._missions.list_for_child(child.id):
+            routines = with_routines.get(mission.id, [])
             # Not today, or nothing to check yet (a mission still being written)
-            if weekday not in mission.days or not mission.steps:
+            if weekday not in links.days_of(mission, routines) or not mission.steps:
                 continue
             step_ids = {s.id for s in mission.steps}
+            schedule = links.schedule_on(mission, routines, weekday)
             missions.append(MissionToday(
                 mission=mission,
-                state=self._state(mission, mission.id in completed, time),
+                state=self._state(schedule, mission.id in completed, time),
                 checked=checked.get(mission.id, set()) & step_ids,
+                schedule=schedule,
+                routines=routines,
             ))
 
         focus = next((m for m in missions if m.state == OPEN), None)
@@ -212,7 +224,7 @@ class DayService:
         step = next((s for s in item.mission.steps if s.id == step_id), None) if step_id else None
         if step_id and step is None:
             raise NotFoundError("Step not found")
-        schedule = item.mission.schedule
+        schedule = item.schedule
         locked = {
             UPCOMING: schedule and ("opens", schedule.start),
             CLOSED: schedule and ("closed", schedule.end),
@@ -224,10 +236,9 @@ class DayService:
     # ---------- helpers ----------
 
     @staticmethod
-    def _state(mission: Mission, done: bool, time: str) -> str:
+    def _state(schedule: Schedule | None, done: bool, time: str) -> str:
         if done:
             return DONE
-        schedule = mission.schedule
         if schedule and time < schedule.start:
             return UPCOMING
         if schedule and schedule.end and time >= schedule.end:

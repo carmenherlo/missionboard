@@ -208,13 +208,35 @@ export async function viewRoutineEdit(routineId) {
 
   // ---------- who it is for, each with their mission ----------
   const kidsList = h("ul", { class: "rows" });
+  const kidsConfirm = h("div", {});
+  // A mission into the routine, or out of it (rutinas-8): if its own hours change, say so first.
+  function chooseMission(child, missionId) {
+    const missions = missionsOf[child.id];
+    const before = missions.find((m) => m.id === routine.missions[child.id]);
+    const after = missions.find((m) => m.id === missionId);
+    const hours = (m) => m.schedule.end ? t.routineEdit.ownFromTo(m.schedule.start, m.schedule.end) : t.routineEdit.ownFrom(m.schedule.start);
+    const routineHours = routine.manual ? t.missionEdit.allDay : `${shortTime(routine.starts)}–${shortTime(routine.ends)}`;
+    const messages = [
+      after?.schedule && t.routineEdit.joinsRoutine(after.name, child.name, hours(after), routineHours, daysLongText(routine.days)),
+      before && before !== after && (before.schedule
+        ? t.routineEdit.leavesRoutine(before.name, hours(before)) : t.routineEdit.leavesRoutineOpen(before.name)),
+    ].filter(Boolean);
+    const go = () => save(api("PUT", `${url}/missions/${child.id}`, { json: { mission_id: missionId || null } }))
+      .then(() => { kidsConfirm.replaceChildren(); }).catch(() => {});
+    if (!messages.length) return go();
+    kidsConfirm.replaceChildren(confirmBar({
+      message: messages[0], detail: messages[1], confirmLabel: t.routineEdit.confirmMission,
+      onCancel: () => { kidsConfirm.replaceChildren(); renderKids(); },
+      onConfirm: go,
+    }));
+    return null;
+  }
   function renderKids() {
     kidsList.replaceChildren(...children.map((child) => {
       const inIt = routine.kids.includes(child.id);
       const select = h("select", {
         disabled: !inIt, "aria-label": t.routineEdit.missionOf(child.name),
-        onchange: (e) => save(api("PUT", `${url}/missions/${child.id}`, { json: { mission_id: e.target.value || null } }))
-          .catch(() => {}),
+        onchange: (e) => chooseMission(child, e.target.value),
       },
         h("option", { value: "" }, t.routineEdit.noMission),
         missionsOf[child.id].map((m) => h("option", { value: m.id, selected: routine.missions[child.id] === m.id }, m.name)));
@@ -466,13 +488,6 @@ export async function viewRoutineEdit(routineId) {
     return { at };
   }
 
-  // ---------- a child's mission closing before the routine ends ----------
-  const conflicts = h("div", { class: "stack stack--tight" });
-  function renderConflicts() {
-    conflicts.replaceChildren(...routine.conflicts.map((c) =>
-      h("p", { class: "notice" }, t.routineEdit.conflict(c), " ",
-        h("a", { href: `#/parents/config/missions/${c.mission_id}` }, t.routineEdit.fixSchedule))));
-  }
 
   // ---------- footer ----------
   const footer = h("div", { class: "page-footer" });
@@ -528,7 +543,6 @@ export async function viewRoutineEdit(routineId) {
     renderParts();
     addSong.draw(routine, songs);
     renderGoal();
-    renderConflicts();
   }
   refresh();
   renderFooter();
@@ -536,7 +550,6 @@ export async function viewRoutineEdit(routineId) {
   render(
     parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: LIST_HREF, label: t.routines.title }),
     h("main", { class: "page" },
-      conflicts,
       h("div", { class: "columns" },
         h("div", { class: "stack" },
           panel(t.routineEdit.panelRoutine,
@@ -545,7 +558,7 @@ export async function viewRoutineEdit(routineId) {
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.days), daysBox, daysSummary)),
           panel(t.routineEdit.panelWhen, modeBox, timed),
           timedPanels,
-          panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
+          panel(t.routineEdit.panelKids, kidsList, kidsConfirm, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(partsTitle, partsTools, cardsBox,
             addPart, importParts),

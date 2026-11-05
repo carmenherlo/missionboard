@@ -46,7 +46,6 @@ def test_the_list_has_the_morning_routine(client):
     morning = routines[0]
     assert morning["every_child"] is True and morning["ends"] == "07:30"
     assert morning["parts"][0]["id"] == "manana-1" and morning["parts"][0]["image_url"].endswith("cooking.svg")
-    assert morning["conflicts"] == []
 
 
 def test_a_new_routine_rings_at_its_time_with_one_part(client):
@@ -109,13 +108,29 @@ def test_who_it_is_for_and_their_mission(client):
     assert edit(client, "PUT", f"/missions/{bea['id']}", mission_id=None).json()["missions"] == {bea["id"]: None}
 
 
-def test_a_mission_closing_before_the_routine_ends_is_warned(client):
+def test_a_mission_in_a_routine_follows_its_days_and_hours(client, clock):
+    # rutinas-8: its own schedule (9:00 to 10:00, every day) is kept but does not count
     bea = create_child(client)
     despegue = create_mission(client, bea["id"], name="Despegue").json()
-    patch(client, despegue["id"], schedule={"start": "06:00", "end": "07:00"})
-    routine = edit(client, "PUT", f"/missions/{bea['id']}", mission_id=despegue["id"]).json()
-    assert routine["conflicts"] == [{"child": "Bea", "mission": "Despegue", "mission_id": despegue["id"],
-                                     "closes": "07:00", "ends": "07:30"}]
+    add_step(client, despegue["id"], "Vestirse")
+    patch(client, despegue["id"], schedule={"start": "09:00", "end": "10:00"})
+    edit(client, "PUT", f"/missions/{bea['id']}", mission_id=despegue["id"])
+    mission = client.get(f"/api/children/{bea['id']}/missions").json()[0]
+    assert mission["schedule"] == {"start": "09:00", "end": "10:00"}  # kept, for when it leaves
+    assert [(r["name"], r["start"], r["end"]) for r in mission["routines"]] == [("Mañana", "06:35", "07:30")]
+
+    def state(moment):
+        clock.moment = moment
+        found = [m for m in client.get(f"/api/children/{bea['id']}/today").json()["missions"] if m["name"] == "Despegue"]
+        return found[0]["state"] if found else None
+
+    assert state(datetime(2026, 11, 2, 6, 0, tzinfo=MADRID)) == "upcoming"  # Monday: opens with the routine
+    assert state(datetime(2026, 11, 2, 7, 0, tzinfo=MADRID)) == "open"
+    assert state(datetime(2026, 11, 2, 7, 45, tzinfo=MADRID)) == "closed"  # after the goal
+    assert state(datetime(2026, 11, 7, 7, 0, tzinfo=MADRID)) is None  # Saturday: no routine, no mission
+    # Out of the routine: its own hours again
+    edit(client, "PUT", f"/missions/{bea['id']}", mission_id=None)
+    assert state(datetime(2026, 11, 2, 7, 0, tzinfo=MADRID)) == "upcoming"
 
 
 def test_a_deleted_child_leaves_the_routines(client, data_dir):

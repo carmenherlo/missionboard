@@ -9,6 +9,8 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import Mission, MissionsRepository, Schedule
 from app.missions.service import MissionEditor, MissionsService
+from app.routines import links
+from app.routines.repository import RoutinesRepository, hhmm
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 
@@ -89,16 +91,28 @@ def _media_type(content_type: str) -> str:
 
 
 class Presenter:
-    """Turns missions into JSON, adding the URL of every image."""
+    """Turns missions into JSON, adding the URL of every image, and the routines each
+    one goes with (rutinas-8: then the routine's days and hours count, not its own)."""
 
-    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries)):
+    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries),
+                 store: ConfigStore = Depends(get_config_store)):
         self._libraries = libraries
+        self._store = store
+        self._links = None
 
     def __call__(self, mission: Mission) -> dict:
         data = asdict(mission)
         data["image_url"] = self._libraries.url(mission.image)
         for step in data["steps"]:
             step["image_url"] = self._libraries.url(step["image"])
+        if self._links is None:
+            self._links = links.routines_by_mission(RoutinesRepository(self._store).list(),
+                                                    ChildrenRepository(self._store).list())
+        data["routines"] = [{
+            "id": r.id, "name": r.name, "days": list(r.days), "manual": r.manual,
+            "image_url": self._libraries.url(r.image or r.parts[0].image),
+            "start": None if r.manual else hhmm(r.starts), "end": None if r.manual else hhmm(r.ends),
+        } for r in self._links.get(mission.id, [])]
         return data
 
 

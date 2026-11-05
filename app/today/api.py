@@ -13,6 +13,7 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
 from app.prizes.repository import PrizesRepository
+from app.routines.repository import RoutinesRepository
 from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 from app.today.repository import BackgroundStore, DayRepository
@@ -52,7 +53,7 @@ def get_day_service(
 ) -> DayService:
     return DayService(
         ChildrenRepository(store), MissionsRepository(store), days, SettingsRepository(store), clock, events,
-        PrizesRepository(store),
+        PrizesRepository(store), RoutinesRepository(store),
     )
 
 
@@ -87,9 +88,9 @@ class Presenter:
                     "image_url": self._libraries.url(item.mission.image),
                     "state": item.state,
                     "focus": item.focus,
-                    "schedule": (
-                        {"start": item.mission.schedule.start, "end": item.mission.schedule.end}
-                        if item.mission.schedule else None
+                    "schedule": (  # today's: its own, or its routine's (rutinas-8)
+                        {"start": item.schedule.start, "end": item.schedule.end}
+                        if item.schedule else None
                     ),
                     "steps": [
                         {

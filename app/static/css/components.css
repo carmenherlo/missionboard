@@ -1617,3 +1617,55 @@ select.pick {
 .rest__time--7 { left: 8%; top: 66%; }
 .rest__time--8 { left: 36%; top: 62%; }
 .rest__time--9 { left: 58%; top: 68%; }
+
+
+/* A mission that goes with a routine (rutinas-8): its days and hours are the routine's. */
+.pill--routine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--alarm-card);
+  color: var(--text);
+}
+
+.pill--routine img {
+  width: 16px;
+  height: 16px;
+}
+
+
+/* Editar misión → Cuándo → Con la rutina: the routine it goes with, to see. */
+.routine-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.routine-line__text {
+  display: grid;
+  flex: 1;
+}
+
+/* The cover of a card that does something on the spot (a button, not a link). */
+.row__cover--button {
+  display: grid;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+
+/* Three choices in half a column (Editar misión → Cuándo): the words may take two lines. */
+.tabs--wrap .tab {
+  padding: var(--space-1);
+  white-space: normal;
+  line-height: 1.15;
+  text-align: center;
+}

@@ -308,18 +308,10 @@ class Editing:
     ):
         self._libraries = libraries
         self._children = ChildrenRepository(store)
-        self._missions = MissionsRepository(store)
 
     def __call__(self, routine: Routine) -> dict:
         timeline = routine.timeline()
         kids = kids_of(routine, self._children.list())
-        conflicts = []
-        for child in kids:
-            mission = self._missions.get(routine.missions.get(child.id) or "")
-            if (not routine.manual and mission and mission.schedule and mission.schedule.end
-                    and mission.schedule.end < hhmm(routine.ends)):
-                conflicts.append({"child": child.name, "mission": mission.name, "mission_id": mission.id,
-                                  "closes": mission.schedule.end, "ends": hhmm(routine.ends)})
         return {
             **routine.to_doc(),
             "every_child": not routine.kids,
@@ -334,7 +326,6 @@ class Editing:
                  "start": hhmm(start), "end": hhmm(end)}
                 for part, start, end in timeline
             ],
-            "conflicts": conflicts,
             # Its icon: its own, or its first part's (05/11)
             "image_url": self._libraries.url(routine.image or routine.parts[0].image),
         }

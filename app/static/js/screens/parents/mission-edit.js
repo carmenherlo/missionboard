@@ -10,17 +10,20 @@ import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { WEEKDAYS, daysLongText } from "./mission-summary.js";
+import { WEEKDAYS, daysLongText, routineHours } from "./mission-summary.js";
 
 const NAME_SAVE_DELAY_MS = 600;
 
 export async function viewMissionEdit(missionId) {
-  const [mission, children] = await Promise.all([
+  const [mission, children, routines] = await Promise.all([
     api("GET", `api/missions/${missionId}`),
     api("GET", "api/children"),
+    api("GET", "api/routines"),
   ]);
   const child = children.find((c) => c.id === mission.child_id);
   missionEditor(mission, {
+    // The routines this child is in, ringing or by hand: "Con la rutina" (rutinas-8)
+    routines: routines.filter((r) => r.kids.includes(child.id)),
     apiUrl: `api/missions/${missionId}`,
     editHref: `#/parents/config/missions/${missionId}`,
     back: { href: `#/parents/config/missions/child/${mission.child_id}`, label: t.childMissions.title(child.name) },
@@ -70,7 +73,7 @@ function saveAsTemplateAction(missionId) {
 
 // The editor of a mission or a template. Every change is saved on the spot;
 // "Listo" just goes back.
-function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteLabel, confirmDelete, action }) {
+function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteLabel, confirmDelete, action, routines = [] }) {
   const status = saveStatus();
   const missionUrl = apiUrl;
   const listHref = back.href;
@@ -159,25 +162,61 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
   }
 
   // ---------- schedule ----------
+  // Always open, its own hours, or with a routine (rutinas-8): then the routine's days and
+  // hours count, and its own schedule is kept, unused, for when it leaves the routine.
   const scheduleBox = h("div", { class: "schedule" });
   const scheduleError = h("p", { class: "form-error", role: "alert" });
-  let withSchedule = Boolean(mission.schedule);
+  const daysField = h("div", { class: "field" });
+  const inRoutine = () => (mission.routines ?? []).length > 0;
+  let mode = inRoutine() ? "routine" : mission.schedule ? "schedule" : "always";
+  let choosing = false; // "Con la rutina" with several routines: which one
+
+  const reload = async () => { mission = await api("GET", missionUrl); };
+  // Into a routine (it replaces the child's mission there, if there was one), or out of all of them.
+  async function link(routineId) {
+    await status.track(api("PUT", `api/routines/${routineId}/missions/${mission.child_id}`, { json: { mission_id: mission.id } }));
+    await reload();
+  }
+  async function unlinkAll() {
+    for (const r of mission.routines ?? []) {
+      await status.track(api("PUT", `api/routines/${r.id}/missions/${mission.child_id}`, { json: { mission_id: null } }));
+    }
+    await reload();
+  }
+
+  async function choose(value) {
+    if (mode === value) return;
+    scheduleError.textContent = "";
+    try {
+      if (value === "routine") {
+        if (routines.length === 1) await link(routines[0].id);
+        else choosing = true;
+      } else {
+        if (inRoutine()) await unlinkAll();
+        if (value === "always" && mission.schedule) await patch({ schedule: null });
+      }
+      mode = value;
+    } catch {
+      // the status says why
+    }
+    renderSchedule();
+  }
+
   function renderSchedule() {
-    const modes = h("div", { class: "tabs" },
-      [[false, t.missionEdit.alwaysOpen], [true, t.missionEdit.withSchedule]].map(([value, label]) =>
-        h("button", {
-          type: "button", class: `tab${withSchedule === value ? " tab--on" : ""}`,
-          "aria-pressed": String(withSchedule === value),
-          onclick: () => {
-            if (withSchedule === value) return;
-            withSchedule = value;
-            scheduleError.textContent = "";
-            if (!value) patch({ schedule: null }).catch(() => {});
-            renderSchedule();
-          },
-        }, withSchedule === value && icon("check"), label)));
-    if (!withSchedule) {
+    const options = [["always", t.missionEdit.alwaysOpen], ["schedule", t.missionEdit.withSchedule]];
+    if (routines.length || inRoutine()) options.push(["routine", t.missionEdit.withRoutine]);
+    const modes = h("div", { class: `tabs${options.length > 2 ? " tabs--wrap" : ""}` }, options.map(([value, label]) =>
+      h("button", {
+        type: "button", class: `tab${mode === value ? " tab--on" : ""}`, "aria-pressed": String(mode === value),
+        onclick: () => choose(value),
+      }, mode === value && icon("check"), label)));
+    daysField.hidden = mode === "routine";
+    if (mode === "always") {
       scheduleBox.replaceChildren(modes);
+      return;
+    }
+    if (mode === "routine") {
+      scheduleBox.replaceChildren(modes, ...routineChoice());
       return;
     }
     const start = h("input", { type: "time", value: mission.schedule?.start ?? "", onchange: saveSchedule });
@@ -199,6 +238,39 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
         h("label", { class: "time" }, t.missionEdit.from, start),
         h("label", { class: "time" }, t.missionEdit.to, end)),
       h("p", { class: "hint" }, t.missionEdit.endOptional));
+  }
+
+  // With a routine: its days and hours, to see (they are changed in the routine); or,
+  // choosing among several, which one.
+  function routineChoice() {
+    if (choosing || !inRoutine()) {
+      return [h("p", { class: "hint" }, t.missionEdit.whichRoutine), h("ul", { class: "rows" }, routines.map((r) => {
+        const other = r.missions[mission.child_id];
+        return h("li", { class: "row row--compact row--covered" },
+          imageThumb(r.image_url, { size: "sm", label: r.name }),
+          h("button", {
+            type: "button", class: "row__text row__cover row__cover--button",
+            onclick: async () => {
+              choosing = false;
+              await link(r.id).catch(() => {});
+              renderSchedule();
+            },
+          }, r.name, h("span", { class: "row__detail" },
+            h("span", { class: "pill pill--muted" }, r.manual ? t.childMissions.byHand : t.childMissions.range(r.starts.replace(/^0/, ""), r.ends.replace(/^0/, ""))),
+            other && other !== mission.id && h("span", { class: "pill pill--muted" }, t.missionEdit.replaces))),
+          h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")));
+      }))];
+    }
+    return [
+      ...mission.routines.map((r) => h("div", { class: "routine-line" },
+        imageThumb(r.image_url, { size: "sm", label: r.name }),
+        h("span", { class: "routine-line__text" }, h("b", {}, r.name),
+          h("span", { class: "hint" }, r.manual ? t.missionEdit.allDay : routineHours(r)),
+          h("span", { class: "hint" }, daysLongText(r.days))),
+        h("a", { class: "btn", href: `#/parents/config/routines/${r.id}` }, t.missionEdit.openRoutine, icon("next")))),
+      h("p", { class: "hint" }, t.missionEdit.routineHint),
+      mission.schedule && h("p", { class: "hint" }, t.missionEdit.ownScheduleKept(mission.schedule.start, mission.schedule.end)),
+    ].filter(Boolean);
   }
 
   // ---------- steps ----------
@@ -327,6 +399,7 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
   }
 
   renderImage();
+  daysField.append(h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysSummary, daysError);
   renderDays();
   renderSchedule();
   renderSteps();
@@ -345,7 +418,7 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
               h("label", {}, t.missionEdit.name, nameInput)),
             pickerBox),
           panel(t.missionEdit.panelWhen,
-            h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysSummary, daysError),
+            daysField,
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.schedule), scheduleBox, scheduleError))),
         panel(stepsTitle, stepsTools, stepsEmpty, stepsList, addStep)),
       footer));
