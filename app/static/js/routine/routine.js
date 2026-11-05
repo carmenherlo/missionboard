@@ -167,12 +167,17 @@ export function startRoutines() {
       earlyGoal: null, // the minute everyone had done their mission, checking them: the goal comes then
       goalReminded: Infinity,
       mission: null, // a kid's mission open over the clock: { close }
+      // A trial (rutinas-7): the missions are pretend, each kid's checked steps, here only;
+      // and how they were at each moment, so "Atrás" puts them back.
+      pretend: new Map(), // child id → Set of step ids
+      pretendLog: [], // [{ time, pretend }]
       holdHintUntil: 0, // a quick tap on "Cerrar": until then, it says to hold it
       player: musicPlayer(),
       musicOff: new Set(), // songs silenced today ("Parar", or ♪)
       ticker: setInterval(tick, TICK_MS),
     };
     document.body.append(view.layer, view.banner);
+    if (data.trial) startPretending();
     renderTrialTools();
     note("started");
     renderPeople();
@@ -239,12 +244,58 @@ export function startRoutines() {
     const { data } = showing;
     const first = data.manual ? parts()[0].from : minuteOf(data.wake);
     const target = Math.max(first, phase.from - TRIAL_JUMP_LEAD_S / 60);
-    if (showing.earlyGoal != null && target < showing.earlyGoal) showing.earlyGoal = null;
     showing.count = null; // going back is not a countdown reaching zero
     landAt(target);
   }
 
+  // ---------- a trial's pretend missions (rutinas-7) ----------
+
+  // Every mission starts not done, whatever today's real one is.
+  function startPretending() {
+    for (const person of showing.data.people) if (person.mission) showing.pretend.set(person.child.id, new Set());
+    applyPretend();
+    showing.pretendLog = [{ time: -Infinity, pretend: copyPretend() }];
+  }
+
+  const copyPretend = () => new Map([...showing.pretend].map(([id, steps]) => [id, new Set(steps)]));
+
+  function applyPretend() {
+    for (const person of showing.data.people) {
+      const steps = showing.pretend.get(person.child.id);
+      if (!person.mission || !steps) continue;
+      person.mission.done = steps.size;
+      person.mission.completed = steps.size >= person.mission.total;
+    }
+  }
+
+  function setPretend(childId, steps) {
+    showing.pretend.set(childId, new Set(steps));
+    applyPretend();
+    showing.pretendLog.push({ time: now(), pretend: copyPretend() });
+    renderPeople();
+  }
+
+  // "Sin hacer" · "✓ Hecha": all its steps, or none (its steps from the kid's day).
+  async function pretendAll(person, done) {
+    if (!done) return setPretend(person.child.id, []);
+    const day = await api("GET", `/api/children/${person.child.id}/today`).catch(() => null);
+    const mission = day?.missions.find((m) => m.id === person.mission.id);
+    if (showing && mission) setPretend(person.child.id, mission.steps.map((st) => st.id));
+  }
+
+  // Back in time: the missions as they were then (and an early goal not yet come).
+  function rewindPretend(time) {
+    if (!showing.data.trial) return;
+    if (showing.earlyGoal != null && time < showing.earlyGoal) showing.earlyGoal = null;
+    const log = showing.pretendLog;
+    while (log.length > 1 && log.at(-1).time > time) log.pop();
+    showing.pretend = new Map([...log.at(-1).pretend].map(([id, steps]) => [id, new Set(steps)]));
+    applyPretend();
+    renderPeople();
+  }
+
   function landAt(time) {
+    if (time < now()) rewindPretend(time);
     pretend(time);
     stopRinging();
     quiet();
@@ -263,7 +314,9 @@ export function startRoutines() {
     if (time - target > 30) target += 60;
     const { data } = showing;
     const last = data.goal ? minuteOf(data.goal.at) : parts().at(-1).to;
-    pretend(Math.min(Math.max(target, minuteOf(data.wake)), last - 1 / 60));
+    const to = Math.min(Math.max(target, minuteOf(data.wake)), last - 1 / 60);
+    if (to < time) rewindPretend(to);
+    pretend(to);
     stopRinging();
     tick();
   }
@@ -820,14 +873,25 @@ export function startRoutines() {
           avatar(person.child, { size: "md", fx: "halo" }),
           h("span", { class: "routine-kid__name" }, person.child.name),
           h("span", { class: "routine-kid__progress" },
-            !mission ? "" : mission.completed ? t.routine.allDone : `${mission.done}/${mission.total}`)));
-    }));
+            !mission ? "" : mission.completed ? t.routine.allDone : `${mission.done}/${mission.total}`)),
+        data.trial && mission && h("div", { class: "tabs routine-kid__pretend", role: "group", "aria-label": person.child.name },
+          [[false, t.routine.pretendNotDone], [true, t.routine.pretendDone]].map(([done, label]) =>
+            h("button", {
+              type: "button", class: `tab${mission.completed === done ? " tab--on" : ""}`,
+              "aria-pressed": String(mission.completed === done), onclick: () => pretendAll(person, done),
+            }, label))));
+    }), data.trial && data.people.some((p) => p.mission) ? h("li", { class: "hint routine__pretend-hint" }, t.routine.pretendHint) : "");
   }
 
   async function openKid(person) {
     if (showing.mission) return;
     showing.mission = { close: () => {} };
+    const pretend = showing.data.trial ? {
+      checked: new Set(showing.pretend.get(person.child.id)),
+      onChange: (checked) => setPretend(person.child.id, checked),
+    } : null;
     showing.mission = await openMission(showing.view.over, person.child.id, person.mission.id, {
+      pretend,
       onClose: () => {
         if (!showing) return;
         showing.mission = null;

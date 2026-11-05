@@ -9,8 +9,10 @@ import { missionSheet } from "./mission-sheet.js";
 
 // day: the child's day (GET /api/children/<id>/today), or null to fetch it.
 // onDay(day): the day changed (a step, the mission done). onClose(day): it is gone.
+// pretend: a routine's trial (rutinas-7): { checked: Set of step ids, onChange(checked, stepIds) }.
+// The steps start as `checked` says and nothing reaches the server: no stars, nothing logged.
 // Returns { close } to close it from outside (a routine's new part).
-export async function openMission(container, childId, missionId, { day = null, onDay = () => {}, onClose = () => {} } = {}) {
+export async function openMission(container, childId, missionId, { day = null, onDay = () => {}, onClose = () => {}, pretend = null } = {}) {
   const base = `/api/children/${childId}/today`;
   day ??= await api("GET", base);
   let closed = false;
@@ -28,8 +30,11 @@ export async function openMission(container, childId, missionId, { day = null, o
     { json: { kind, mission_id: missionId, step_id: step?.id } }).catch(() => {});
 
   function draw() {
-    const mission = day.missions.find((m) => m.id === missionId);
+    let mission = day.missions.find((m) => m.id === missionId);
     if (!mission) return close();
+    if (pretend) {
+      mission = { ...mission, state: "open", steps: mission.steps.map((st) => ({ ...st, checked: pretend.checked.has(st.id) })) };
+    }
     holder.replaceChildren(missionSheet(day, mission, { onToggle: toggle, onSpeak: listen, onClose: close, again: drawn }));
     drawn = true;
   }
@@ -44,6 +49,7 @@ export async function openMission(container, childId, missionId, { day = null, o
   let celebrated = false; // the last step came: what is still queued does not matter
 
   function toggle(step, card) {
+    if (pretend) return toggleOnlyHere(step);
     const checked = !(wanted.get(step.id) ?? step.checked);
     wanted.set(step.id, checked);
     card?.classList.toggle("step-card--done", checked);
@@ -76,9 +82,27 @@ export async function openMission(container, childId, missionId, { day = null, o
     }
   }
 
+  // A trial: the step changes here only; the last one, the celebration (no stars).
+  function toggleOnlyHere(step) {
+    if (celebrated) return;
+    const checked = new Set(pretend.checked);
+    if (checked.has(step.id)) checked.delete(step.id);
+    else checked.add(step.id);
+    pretend.checked = checked;
+    const ids = day.missions.find((m) => m.id === missionId).steps.map((st) => st.id);
+    pretend.onChange(checked, ids);
+    if (ids.every((id) => checked.has(id))) {
+      celebrated = true;
+      holder.replaceChildren();
+      showCelebration(holder, day, 0, close);
+      return;
+    }
+    draw();
+  }
+
   function listen(step) {
     speak(step.text);
-    note("step_spoken", step);
+    if (!pretend) note("step_spoken", step);
   }
 
   function close() {
@@ -88,7 +112,7 @@ export async function openMission(container, childId, missionId, { day = null, o
     onClose(day);
   }
 
-  note("mission_opened");
+  if (!pretend) note("mission_opened");
   draw();
   return { close };
 }
