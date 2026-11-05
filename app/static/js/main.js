@@ -61,7 +61,8 @@ const routes = [
   [parentsPath("/missions/:mission/steps/:step"), (ids) => viewStepEdit(ids.mission, ids.step), "parents", "step_edit"],
   [parentsPath("/routines"), () => viewRoutinesList(), "parents", "routines"],
   [parentsPath("/routines/new"), () => viewRoutineNew(), "parents", "routine_new"],
-  [parentsPath("/routines/songs"), () => viewSongsList(), "parents", "songs"],
+  // From a routine (?from=<id>), "←" goes back to it (05/11), not to the list of routines.
+  [parentsPath("/routines/songs(\\?from=(?<routine>[\\w-]+))?"), (ids) => viewSongsList(ids.routine), "parents", "songs"],
   [parentsPath("/routines/:routine"), (ids) => viewRoutineEdit(ids.routine), "parents", "routine_edit"],
   [parentsPath("/routines/:routine/music/:music"),
     (ids) => viewRoutineMusic(ids.routine, ids.music), "parents", "routine_music"],

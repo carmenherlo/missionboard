@@ -336,7 +336,7 @@ export async function viewRoutineEdit(routineId) {
           "aria-label": selected ? undefined : t.routineEdit.editPartNamed(part.name),
         }, capital(part.name),
           !routine.manual && h("span", { class: "row__detail" },
-            h("span", { class: "pill pill--muted" }, shortTime(part.start)))),
+            h("span", { class: "pill pill--muted" }, t.routineEdit.partStarts(shortTime(part.start))))),
         selected
           ? h("span", { class: "pill pill--muted" }, t.routine.minutes(part.minutes))
           : stepper({
@@ -492,7 +492,7 @@ export async function viewRoutineEdit(routineId) {
   const songsPanel = panel(t.routineMusic.panel,
     h("p", { class: "hint" }, t.routineMusic.panelHint),
     addSong.element,
-    h("a", { class: "btn", href: `${LIST_HREF}/songs` }, icon("music"), t.routineMusic.library));
+    h("a", { class: "btn", href: `${LIST_HREF}/songs?from=${routineId}` }, icon("music"), t.routineMusic.library));
 
   function refresh() {
     renderRoutine();

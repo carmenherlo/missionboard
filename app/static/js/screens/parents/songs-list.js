@@ -12,8 +12,11 @@ const MAX_SONG_BYTES = 15 * 1024 * 1024;
 
 // Configurar → Rutinas → Canciones (rutinas-4, screen 3): the family's songs, uploaded
 // once and used in any routine. Like the prizes: a list, and a button to add.
-export async function viewSongsList() {
+// fromRoutine: opened from a routine's editor, "←" goes back there.
+export async function viewSongsList(fromRoutine = null) {
   let songs = await api("GET", "/api/songs");
+  const routine = fromRoutine && await api("GET", `/api/routines/${fromRoutine}`).catch(() => null);
+  const back = routine ? { href: `${BACK_HREF}/${routine.id}`, label: routine.name } : { href: BACK_HREF, label: t.routines.title };
   const status = saveStatus();
   const list = h("ul", { class: "rows" });
   const actions = h("div", { class: "form-actions form-actions--start" });
@@ -118,7 +121,7 @@ export async function viewSongsList() {
   draw();
   render(
     parentsHeader(h("span", { class: "title-line" }, h("span", {}, t.songs.title), status.element),
-      { href: BACK_HREF, label: t.routines.title }),
+      back),
     h("main", { class: "page" },
       h("div", { class: "stack" },
         h("p", { class: "hint" }, songs.length ? t.songs.hint : t.songs.empty),

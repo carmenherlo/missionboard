@@ -237,7 +237,7 @@ export const t = {
     confirmDeleteParts: (n) => `¿Borrar ${n === 1 ? "1 parte" : `${n} partes`}?`,
     import: "Importar",
     editPartNamed: (name) => `Editar ${name}`,
-    partTime: (start, minutes) => `${start} · ${minutes} min`,
+    partStarts: (time) => `Empieza: ${time}`,
     minutesOf: (name) => `Minutos de ${name}`,
     panelGoal: "Meta",
     withGoal: "Con meta",
