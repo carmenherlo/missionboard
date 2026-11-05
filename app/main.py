@@ -20,6 +20,7 @@ from app.prizes import api as prizes_api
 from app.routines import api as routines_api
 from app.shop import api as shop_api
 from app.songs import api as songs_api
+from app.backup import api as backup_api
 from app.songs.repository import SoundFiles
 from app.shop.repository import PurchasesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
@@ -81,6 +82,7 @@ def create_app(
 
     app = FastAPI(title="missionboard", lifespan=lifespan)
     app.state.config_store = config_store
+    app.state.data_dir = data_dir
     app.state.photo_store = PhotoStore(data_dir)
     app.state.sound_files = SoundFiles(data_dir)
     app.state.clock = clock or SystemClock()
@@ -117,6 +119,7 @@ def create_app(
     app.include_router(voice_api.router)
     app.include_router(shop_api.router)
     app.include_router(songs_api.router)
+    app.include_router(backup_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():

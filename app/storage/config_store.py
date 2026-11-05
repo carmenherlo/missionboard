@@ -40,6 +40,12 @@ class ConfigStore:
                 shutil.copy2(self.path, self.path.with_name(f"{self.path.name}.v{version}.bak"))
                 self._write(upgraded)
 
+    @contextmanager
+    def lock(self):
+        """Nobody reads or writes the file meanwhile (putting a copy back)."""
+        with self._lock:
+            yield
+
     def load(self) -> dict:
         """Current document. Inside edit(), it is the one being edited."""
         doc = getattr(self._local, "doc", None)

@@ -12,6 +12,7 @@ export function viewConfigIndex() {
     { href: "#/parents/config/shop", iconName: "shop", label: t.config.shop },
     { href: "#/parents/config/code", iconName: "parentCode", label: t.config.parentCode },
     { href: "#/parents/config/log", iconName: "history", label: t.config.eventLog },
+    { href: "#/parents/config/backup", iconName: "download", label: t.config.backup },
   ];
   render(
     parentsHeader(t.config.title),
