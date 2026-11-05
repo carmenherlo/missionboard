@@ -45,6 +45,7 @@ export async function apiFile(path) {
 }
 
 export function errorMessage(err) {
+  if (err?.userMessage) return err.userMessage; // a screen's own words for this error
   if (!(err instanceof ApiError)) return t.errors.offline;
   if (err.status === 401) return t.errors.badParentCode;
   if (err.status === 409) return t.errors.presetTaken;

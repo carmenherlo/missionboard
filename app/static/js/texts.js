@@ -145,6 +145,7 @@ export const t = {
     confirmDetail: "Niños, misiones, rutinas, historial… todo pasa a ser lo de la copia. El código de padres también.",
     confirmYes: "Sí, restaurar",
     restored: "✓ Copia restaurada.",
+    tooBigOnTheWay: "La copia es demasiado grande para subirla desde el menú lateral de Home Assistant (deja pasar unos 16 MB). Abre la app por su puerto (http://<tu Home Assistant>:8003) y restáurala desde ahí.",
     toHome: "Ir al inicio",
   },
   shop: {

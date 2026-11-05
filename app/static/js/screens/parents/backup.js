@@ -65,7 +65,13 @@ function restorePanel() {
             confirmLabel: t.backup.confirmYes,
             onCancel: draw,
             onConfirm: async () => {
-              await api("POST", "api/backup/restore", { body: chosen, contentType: "application/zip" });
+              try {
+                await api("POST", "api/backup/restore", { body: chosen, contentType: "application/zip" });
+              } catch (err) {
+                // Too big on the way: Home Assistant's sidebar (ingress) lets ~16 MB through (05/11).
+                if (err?.status === 413) err.userMessage = t.backup.tooBigOnTheWay;
+                throw err;
+              }
               done();
             },
           }));
