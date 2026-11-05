@@ -78,6 +78,7 @@ SCREENS = {
     "child_today": ("la ruta de un niño", "la ruta de {child}"),
     "event_log": ("Registro de la prueba", None),
     "backup": ("Copia de seguridad", None),
+    "display": ("Pantalla", None),
     "config": ("Configurar", None),
     "change_code": ("Código de padres", None),
     "children": ("Niños", None),

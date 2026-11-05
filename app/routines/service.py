@@ -8,7 +8,7 @@ wake-up time until its goal, on its days, unless it was finished today.
 
 import json
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
@@ -126,6 +126,26 @@ class RoutinesService:
             for notice in routine.notices:
                 found.append({"routine": routine.id, "at": minute_of(routine.wake) - notice.minutes, "say": notice.say})
         return found
+
+    def next_ring(self, days_ahead: int = 7) -> tuple[Routine, datetime] | None:
+        """The next routine to ring after now (the clock screen): from today on, each
+        day as it goes that day (moved days included). Started by hand, never."""
+        now = self._clock.now()
+        found = None
+        for ahead in range(days_ahead + 1):
+            date = (now + timedelta(days=ahead)).date()
+            weekday = WEEKDAYS[date.weekday()]
+            for stored in self._routines.list():
+                if stored.manual or weekday not in stored.days:
+                    continue
+                routine = stored.on(weekday)
+                wake = minute_of(routine.wake)
+                ring = datetime.combine(date, time(wake // 60, wake % 60), tzinfo=now.tzinfo)
+                if ring > now and (found is None or ring < found[1]):
+                    found = (routine, ring)
+            if found:
+                return found
+        return None
 
     def by_hand(self) -> list[tuple[Routine, list[Child]]]:
         """The routines that can be started by hand today, each with its children."""

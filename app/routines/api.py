@@ -242,6 +242,20 @@ def notices(routines: RoutinesService = Depends(get_routines_service), clock=Dep
             "notices": routines.notices()}
 
 
+@router.get("/next")
+def next_ring(routines: RoutinesService = Depends(get_routines_service), clock=Depends(get_clock),
+              libraries: ImageLibraries = Depends(get_image_libraries)):
+    """The next routine to ring (the clock screen): its name, icon, time, and in how
+    many days (0: today). Null when none rings in the next week."""
+    found = routines.next_ring()
+    if found is None:
+        return None
+    routine, ring = found
+    return {"id": routine.id, "name": routine.name, "at": f"{ring:%H:%M}",
+            "in_days": (ring.date() - clock.now().date()).days,
+            "image_url": libraries.url(routine.image or routine.parts[0].image)}
+
+
 @router.get("/by-hand")
 def by_hand(routines: RoutinesService = Depends(get_routines_service)):
     """The routines that can be started by hand today (⏰ on the home screen), with their children."""

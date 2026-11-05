@@ -10,6 +10,7 @@ import { viewChildForm } from "./screens/parents/child-form.js";
 import { viewChildrenList } from "./screens/parents/children-list.js";
 import { viewConfigIndex } from "./screens/parents/config-index.js";
 import { viewBackup } from "./screens/parents/backup.js";
+import { viewDisplaySettings } from "./screens/parents/display-settings.js";
 import { viewEventLog } from "./screens/parents/event-log.js";
 import { viewParentsLock } from "./screens/parents/lock.js";
 import { viewPrizeEdit } from "./screens/parents/prize-edit.js";
@@ -31,6 +32,7 @@ import { viewTemplateApply } from "./screens/parents/template-apply.js";
 import { viewTemplateNew } from "./screens/parents/template-new.js";
 import { viewTemplatesList } from "./screens/parents/templates-list.js";
 import { startKeepAwake } from "./components/keep-awake.js";
+import { startRest } from "./components/rest.js";
 import { startRoutines } from "./routine/routine.js";
 import { t } from "./texts.js";
 
@@ -53,6 +55,7 @@ const routes = [
   [parentsPath("/code"), () => viewChangeCode(), "parents", "change_code"],
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],
   [parentsPath("/backup"), () => viewBackup(), "parents", "backup"],
+  [parentsPath("/display"), () => viewDisplaySettings(), "parents", "display"],
   [parentsPath("/children"), () => viewChildrenList(), "parents", "children"],
   [parentsPath("/children/new"), () => viewChildForm(null), "parents", "child_new"],
   [parentsPath("/children/:child"), (ids) => viewChildForm(ids.child), "parents", "child_edit"],
@@ -121,3 +124,4 @@ window.addEventListener("hashchange", route);
 route();
 startRoutines(); // the routine going on, over any screen (rutinas-1.html)
 startKeepAwake(); // sound allowed and the screen on, for the routines
+startRest(); // the screen black when nobody touches it, on the home screen (reloj.html)

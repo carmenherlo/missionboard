@@ -154,6 +154,11 @@
   /* Home (05/11: bigger, more inviting): each child's avatar grows with the screen,
      up to three side by side on a tablet in landscape. */
   --home-avatar-size: clamp(150px, min(24vw, 38vh), 300px);
+  /* The clock screen and rest mode (reloj.html). The rest colours: black, and the time
+     barely there (enough to read it at night without lighting up the room). */
+  --home-clock-size: min(56vh, 42vw, 460px);
+  --rest-bg: #000;
+  --rest-text: #2e2e2e;
   /* The countdown's last ten seconds: a disc over the hands, so the number reads from afar (rutinas-7, 8 A). */
   --countdown-disc: var(--primary);
   --countdown-text: var(--on-primary);

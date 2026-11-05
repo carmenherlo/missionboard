@@ -190,3 +190,13 @@ def test_a_routine_whose_times_do_not_add_up_stops_the_app(data_dir, clock, rout
     with pytest.raises(Exception):
         with TestClient(create_app(data_dir, clock=clock)):
             pass
+
+
+def test_the_next_routine_to_ring(client, clock):
+    clock.moment = MONDAY.replace(hour=5, minute=0)
+    assert client.get("/api/routines/next").json() | {"image_url": None} == {
+        "id": "manana", "name": "Mañana", "at": "06:30", "in_days": 0, "image_url": None}
+    clock.moment = MONDAY.replace(hour=9, minute=0)  # rung already today: tomorrow's
+    assert client.get("/api/routines/next").json()["in_days"] == 1
+    clock.moment = MONDAY.replace(day=6, hour=9)  # Friday after it: Monday's (no weekends)
+    assert client.get("/api/routines/next").json()["in_days"] == 3

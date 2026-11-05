@@ -1491,3 +1491,129 @@ select.pick {
   font-weight: 800;
   vertical-align: middle;
 }
+
+
+/* ---------- the clock screen and rest mode (reloj.html) ---------- */
+
+.icon-button--label {
+  width: auto;
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.icon-button--label .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.clock-screen {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-5);
+}
+
+.clock-screen__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+}
+
+.clock-screen__dial {
+  width: var(--home-clock-size);
+  height: var(--home-clock-size);
+}
+
+.clock-screen__dial svg {
+  width: 100%;
+  height: 100%;
+}
+
+.clock-screen__side {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.clock-screen__time {
+  margin: 0;
+  font-size: calc(var(--home-clock-size) * 0.3);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.clock-screen__date {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.clock-screen__next {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--alarm-card);
+}
+
+.clock-screen__next[hidden] {
+  display: none;
+}
+
+.clock-screen__next img {
+  width: 48px;
+  height: 48px;
+}
+
+.clock-screen__next > span {
+  display: grid;
+}
+
+.clock-screen__kids {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.clock-screen__kid {
+  border-radius: 50%;
+}
+
+.rest {
+  position: fixed;
+  inset: 0;
+  z-index: 60; /* over everything; a routine appearing wakes it (rest.js) */
+  background: var(--rest-bg);
+  cursor: pointer;
+}
+
+.rest__time {
+  position: absolute;
+  display: grid;
+  margin: 0;
+  color: var(--rest-text);
+  font-size: clamp(64px, 12vw, 140px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.rest__time small {
+  font-size: 0.28em;
+  font-weight: 700;
+}
+
+/* A new place each minute (rest.js picks one), so the time never marks the screen. */
+.rest__time--1 { left: 10%; top: 12%; }
+.rest__time--2 { left: 38%; top: 10%; }
+.rest__time--3 { left: 62%; top: 16%; }
+.rest__time--4 { left: 14%; top: 40%; }
+.rest__time--5 { left: 40%; top: 38%; }
+.rest__time--6 { left: 60%; top: 44%; }
+.rest__time--7 { left: 8%; top: 66%; }
+.rest__time--8 { left: 36%; top: 62%; }
+.rest__time--9 { left: 58%; top: 68%; }
