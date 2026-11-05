@@ -218,9 +218,11 @@ export function startRoutines() {
   }
 
   // Just before the next part (or the goal, or the end): its countdown and announcement are heard.
+  // Already in those last seconds: on to the one after, so every tap moves on.
   function jump() {
     const time = now();
-    const phase = phaseAt(time);
+    let phase = phaseAt(time);
+    if (phase.kind !== "done" && phase.to - time <= (TRIAL_JUMP_LEAD_S + 1) / 60) phase = phaseAt(phase.to);
     if (phase.kind === "done") return;
     pretend(Math.max(time, phase.to - TRIAL_JUMP_LEAD_S / 60));
     stopRinging();
