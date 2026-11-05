@@ -10,7 +10,7 @@ import { parentsHeader } from "./common.js";
 const BACK_HREF = "#/parents/config/routines";
 const MAX_SONG_BYTES = 15 * 1024 * 1024;
 
-// Configurar → Rutinas → Canciones (rutinas-4, screen 3): the family's songs, uploaded
+// Configurar → Rutinas → Música (rutinas-4, screen 3; "Canciones" until 05/11): the family's songs, uploaded
 // once and used in any routine. Like the prizes: a list, and a button to add.
 // fromRoutine: opened from a routine's editor, "←" goes back there.
 export async function viewSongsList(fromRoutine = null) {
