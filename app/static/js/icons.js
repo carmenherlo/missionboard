@@ -47,6 +47,8 @@ const PATHS = {
   history: ["M3 12a9 9 0 1 0 2.6-6.4L3 8", "M3 3v5h5", "M12 7v5l3 2"],
   alarm: ["M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "M12 9v4l2.5 1.5", "M5 3 2 6", "M19 3l3 3"],
   clock: ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 7v5l3 2"],
+  // Day / night (05/11, as in so many apps): a circle half filled (the filled half: components.css)
+  dayNight: ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 3a9 9 0 0 1 0 18z"],
   eye: [
     "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z",
     "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",

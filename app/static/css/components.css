@@ -1669,3 +1669,9 @@ select.pick {
   line-height: 1.15;
   text-align: center;
 }
+
+
+/* The day / night icon: its right half filled. */
+.icon--dayNight path:last-child {
+  fill: currentColor;
+}

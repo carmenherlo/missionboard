@@ -135,6 +135,7 @@ export const t = {
   clock: {
     toClock: "Reloj",
     toKids: "Niños",
+    night: "Noche",
     rings: (inDays, at) => `${inDays === 0 ? "hoy" : inDays === 1 ? "mañana" : `en ${inDays} días`}, a las ${at.replace(/^0/, "")}`,
   },
   display: {

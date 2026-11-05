@@ -2,6 +2,7 @@ import { api, session } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
 import { parentsCornerButton } from "../components/corner-button.js";
 import { fullscreenButton } from "../components/fullscreen-button.js";
+import { restNow } from "../components/rest.js";
 import { homeScreen, setDisplay } from "../display.js";
 import { h, render } from "../dom.js";
 import { icon } from "../icons.js";
@@ -36,7 +37,12 @@ export async function viewHome() {
         h("button", {
           type: "button", class: "icon-button icon-button--ghost icon-button--label",
           onclick: () => { setDisplay({ screen: showClock ? "kids" : "clock" }); viewHome(); },
-        }, icon(showClock ? "children" : "clock"), showClock ? t.clock.toKids : t.clock.toClock)),
+        }, icon(showClock ? "children" : "clock"), showClock ? t.clock.toKids : t.clock.toClock),
+        // Night now: the screen at rest at once; a tap brings the day back (05/11).
+        h("button", {
+          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.clock.night, title: t.clock.night,
+          onclick: () => restNow(),
+        }, icon("dayNight"))),
       parentsCornerButton("#/parents", t.home.parentsLabel),
       grid));
 }
