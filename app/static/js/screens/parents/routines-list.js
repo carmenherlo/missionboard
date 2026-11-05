@@ -14,7 +14,7 @@ export async function viewRoutinesList() {
   const list = h("ul", { class: "rows" }, routines.map((routine) =>
     // The whole card opens the routine (04/11: editing matters more than trying it).
     h("li", { class: "row row--covered" },
-      imageThumb(routine.parts[0].image_url, { size: "md", label: routine.name }),
+      imageThumb(routine.image_url, { size: "md", label: routine.name }),
       h("a", {
         class: "row__name row__cover", href: `#/parents/config/routines/${routine.id}`,
         "aria-label": t.routines.editNamed(routine.name),

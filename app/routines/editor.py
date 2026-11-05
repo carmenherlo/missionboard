@@ -81,7 +81,7 @@ class RoutinesEditor:
 
     def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
                offsets=UNSET, notices=UNSET, greeting=UNSET, last_countdown=UNSET, early_goal=UNSET,
-               warn_about=UNSET, **timing) -> Routine:
+               warn_about=UNSET, image=UNSET, **timing) -> Routine:
         """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`. The
         sentences (greeting, last_countdown, early_goal): None goes back to the usual one."""
         changes = {k: v for k, v in
@@ -89,6 +89,9 @@ class RoutinesEditor:
                     "offsets": offsets, "notices": notices, "greeting": greeting,
                     "last_countdown": last_countdown, "early_goal": early_goal, "warn_about": warn_about}.items()
                    if v is not UNSET}
+        current_image = self.get(routine_id).image
+        if image is not UNSET:  # a library image, or None: its first part's again
+            changes["image"] = self._images.check_new_image(current_image, image)
         if set(timing) - set(TIMING):
             raise TypeError(f"unknown: {set(timing) - set(TIMING)}")
         if timing:
@@ -108,7 +111,24 @@ class RoutinesEditor:
                 parts[0]["at"] = hhmm((minute_of(changes["wake"]) + NEW_PART_MINUTES) % (24 * 60))
                 changes["parts"] = parts
         routine = self._change(routine_id, changes)
-        self._log("changed", routine, {k: v for k, v in changes.items() if k in ("name", "days")})
+        if "image" in changes:
+            self._images.drop_replaced_photo(current_image, routine.image)
+        self._log("changed", routine, {k: v for k, v in changes.items() if k in ("name", "days")}
+                  | ({"image": routine.image} if "image" in changes else {}))
+        return routine
+
+    def set_photo(self, routine_id: str, data: bytes, media_type: str) -> Routine:
+        """Its own icon, from an uploaded photo."""
+        extension = validate_photo(data, media_type)
+        old = self.get(routine_id).image
+        ref = photo_ref(self._photos.save(data, prefix=routine_id, extension=extension))
+        try:
+            routine = self._change(routine_id, {"image": ref})
+        except Exception:
+            self._photos.delete(photo_filename(ref))
+            raise
+        self._images.drop_replaced_photo(old, ref)
+        self._log("changed", routine, {"image": ref})
         return routine
 
     def _retimed(self, routine: Routine, anchor=None, starts=None, ends=None, alarm=None, alarm_before=None) -> dict:
@@ -153,6 +173,7 @@ class RoutinesEditor:
             self._routines.remove(routine_id)
         for part in routine.parts:
             self._photos.delete(photo_filename(part.image))
+        self._photos.delete(photo_filename(routine.image))
         self._log("deleted", routine)
 
     def set_kids(self, routine_id: str, kids: list[str]) -> Routine:

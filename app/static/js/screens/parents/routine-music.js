@@ -90,14 +90,23 @@ export function songWraps(routineId) {
 }
 
 // Under "Añadir parte": a song and where it starts (it plays once; its screen makes it longer).
+const UPLOAD = "upload"; // the last choice of "Añadir": a new song, uploaded in the library
+
 export function addSongForm(routineId, { save, status }) {
   const element = h("div", {});
+  // Only "Añadir" here (05/11): uploading a new one is the last choice of the list, and
+  // goes to the library (and back here).
+  const library = `${ROUTINES_HREF}/songs?from=${routineId}`;
   function draw(routine, songs) {
     if (!songs.length) {
-      element.replaceChildren(h("p", { class: "hint" }, t.routineMusic.noSongs));
+      element.replaceChildren(h("p", { class: "hint" }, t.routineMusic.noSongs),
+        h("a", { class: "btn", href: library }, icon("plus"), t.routineMusic.upload));
       return;
     }
-    const song = h("select", { "aria-label": t.routineMusic.panelSong }, songs.map((s) => h("option", { value: s.id }, s.name)));
+    const song = h("select", {
+      "aria-label": t.routineMusic.panelSong,
+      onchange: (e) => { if (e.target.value === UPLOAD) location.hash = library; },
+    }, songs.map((s) => h("option", { value: s.id }, s.name)), h("option", { value: UPLOAD }, t.routineMusic.uploadOther));
     const start = h("select", { "aria-label": t.routineMusic.startsWith },
       songCards(routine).map((c) => h("option", { value: c.id }, `${t.routineMusic.startsWith}: ${c.label}`)));
     element.replaceChildren(h("div", { class: "form-actions form-actions--start" }, song, start,

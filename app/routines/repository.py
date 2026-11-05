@@ -105,6 +105,7 @@ class Routine(BaseModel):
 
     id: str = Field(pattern=r"^[\w-]{1,64}$")
     name: str = Field(min_length=1, max_length=40)
+    image: str | None = None  # its own icon (05/11); None: its first part's
     days: tuple[str, ...] = tuple(WEEKDAYS)
     kids: tuple[str, ...] = ()  # child ids; empty: every child, also the ones added later
     missions: dict[str, str | None] = {}  # each child's mission in this routine (by id)

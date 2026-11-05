@@ -1,6 +1,7 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { confirmBar } from "../../components/confirm-bar.js";
+import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
@@ -72,6 +73,34 @@ export async function viewRoutineEdit(routineId) {
     nameTimer = setTimeout(saveName, TEXT_SAVE_DELAY_MS);
   });
   nameInput.addEventListener("blur", saveName);
+  // Its icon (05/11), as a mission's: a picture with a pencil that opens the picker below.
+  // None of its own ("Ninguna"): its first part's.
+  const imageBox = h("div", { class: "mission-image" });
+  const pickerBox = h("div", {});
+  let pickerOpen = false;
+  async function renderImage() {
+    const thumb = () => imageThumb(routine.image_url, { size: "lg", label: routine.name });
+    imageBox.replaceChildren(h("button", {
+      type: "button", class: "image-button", "aria-label": t.missionEdit.changeImage,
+      onclick: () => { pickerOpen = !pickerOpen; renderImage(); },
+    }, thumb(), h("span", { class: "icon-button image-button__pencil" }, icon("edit"))));
+    if (!pickerOpen) {
+      pickerBox.replaceChildren();
+      return;
+    }
+    const picker = await imagePicker({
+      initial: { ref: routine.image ?? routine.parts[0].image, url: routine.image_url }, // opens on the one it shows
+      onChange: async (choice) => {
+        await saveImageChoice(choice, {
+          patch: (ref) => save(api("PATCH", url, { json: { image: ref } })),
+          upload: (file) => save(api("PUT", `${url}/photo`, { body: file, contentType: file.type })),
+        }).catch(() => {});
+        imageBox.querySelector(".image-button").firstElementChild.replaceWith(thumb());
+      },
+    });
+    pickerBox.replaceChildren(picker.element);
+  }
+  renderImage();
   // "Empieza a las" or "Termina a las": the time that stays put when the parts change.
   const anchorBox = h("div", {});
   const whenLabel = h("span", {});
@@ -491,8 +520,7 @@ export async function viewRoutineEdit(routineId) {
   const addSong = addSongForm(routineId, { save, status });
   const songsPanel = panel(t.routineMusic.panel,
     h("p", { class: "hint" }, t.routineMusic.panelHint),
-    addSong.element,
-    h("a", { class: "btn", href: `${LIST_HREF}/songs?from=${routineId}` }, icon("music"), t.routineMusic.library));
+    addSong.element);
 
   function refresh() {
     renderRoutine();
@@ -512,7 +540,8 @@ export async function viewRoutineEdit(routineId) {
       h("div", { class: "columns" },
         h("div", { class: "stack" },
           panel(t.routineEdit.panelRoutine,
-            h("label", {}, t.routines.name, nameInput),
+            h("div", { class: "mission-identity" }, imageBox, h("label", {}, t.routines.name, nameInput)),
+            pickerBox,
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.days), daysBox, daysSummary)),
           panel(t.routineEdit.panelWhen, modeBox, timed),
           timedPanels,

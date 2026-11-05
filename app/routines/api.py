@@ -92,6 +92,7 @@ class RoutinePatch(BaseModel):
     last_countdown: str | None = Field(default=None, max_length=200)
     early_goal: str | None = Field(default=None, max_length=200)
     warn_about: Literal["end", "next"] | None = None
+    image: str | None = None  # a library image; null: its first part's (photos are uploaded)
 
     _name = field_validator("name")(_not_blank)
     _sentences = field_validator("greeting", "last_countdown", "early_goal")(_blank_is_usual)
@@ -320,6 +321,8 @@ class Editing:
                 for part, start, end in timeline
             ],
             "conflicts": conflicts,
+            # Its icon: its own, or its first part's (05/11)
+            "image_url": self._libraries.url(routine.image or routine.parts[0].image),
         }
 
 
@@ -447,6 +450,14 @@ def update_music(routine_id: str, music_id: str, body: MusicPatch, editor: Routi
 def delete_music(routine_id: str, music_id: str, editor: RoutinesEditor = Depends(get_routines_editor),
                  present: Editing = Depends()):
     return present(editor.delete_music(routine_id, music_id))
+
+
+@router.put("/{routine_id}/photo", dependencies=parent_only)
+async def upload_photo(routine_id: str, request: Request, content_type: str = Header(),
+                       editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
+    """Its own icon, from a photo (as the parts')."""
+    media_type = content_type.split(";")[0].strip().lower()
+    return present(editor.set_photo(routine_id, await request.body(), media_type))
 
 
 @router.put("/{routine_id}/parts/{part_id}/photo", dependencies=parent_only)

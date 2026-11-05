@@ -131,6 +131,20 @@ def test_delete_a_routine(client):
     assert client.get("/api/routines").json() == []
 
 
+def test_its_own_icon(client, data_dir):
+    # None of its own: its first part's
+    assert edit(client, "GET").json()["image_url"].endswith("/cooking.svg")
+    routine = edit(client, "PATCH", image="fluent/school").json()
+    assert routine["image"] == "fluent/school" and routine["image_url"].endswith("/school.svg")
+    assert edit(client, "PATCH", image="photo/not-uploaded.png").status_code == 422
+    routine = upload(client, f"{URL}/photo").json()
+    assert routine["image"].startswith("photo/") and client.get(routine["image_url"]).status_code == 200
+    photo = routine["image"].removeprefix("photo/")
+    routine = edit(client, "PATCH", image=None).json()  # back to its first part's; the photo goes
+    assert routine["image"] is None and routine["image_url"].endswith("/cooking.svg")
+    assert not (data_dir / "photos" / photo).exists()
+
+
 # ---------- its parts ----------
 
 
