@@ -37,7 +37,7 @@ import { t } from "./texts.js";
 // ?theme=<name> loads app/static/css/themes/<name>.css instead of the default one.
 const theme = new URLSearchParams(location.search).get("theme");
 if (theme && /^[\w-]+$/.test(theme)) {
-  document.getElementById("theme").href = `/static/css/themes/${theme}.css`;
+  document.getElementById("theme").href = `static/css/themes/${theme}.css`;
 }
 
 // [pattern, view, zone, screen]. zone "parents" asks for the parent code;
@@ -95,7 +95,7 @@ function logScreen(screen, zone, ids = {}) {
     mission_id: ids.mission ?? ids.template, // a template is shown where a mission would be
     step_id: ids.step,
   };
-  api("POST", "/api/events/screen", { json }).catch(() => {});
+  api("POST", "api/events/screen", { json }).catch(() => {});
 }
 
 async function route() {

@@ -7,7 +7,7 @@ def test_catalog_endpoint(client):
     libraries = client.get("/api/images").json()["libraries"]
     assert [lib["id"] for lib in libraries] == ["fluent"]
     fluent = libraries[0]
-    assert fluent["base_url"] == "/static/libraries/fluent"
+    assert fluent["base_url"] == "static/libraries/fluent"
     assert len(fluent["items"]) > 1000
     assert fluent["featured"]
 
@@ -41,10 +41,10 @@ def test_licenses_ship_with_the_library():
 @pytest.mark.parametrize(
     "ref, url",
     [
-        ("fluent/rocket", "/static/libraries/fluent/rocket.svg"),
+        ("fluent/rocket", "static/libraries/fluent/rocket.svg"),
         ("fluent/nope", None),
         ("gone/rocket", None),
-        ("photo/ab-cd.jpg", "/api/photos/ab-cd.jpg"),
+        ("photo/ab-cd.jpg", "api/photos/ab-cd.jpg"),
         (None, None),
     ],
 )

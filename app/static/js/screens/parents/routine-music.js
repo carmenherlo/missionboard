@@ -119,7 +119,7 @@ export function addSongForm(routineId, { save, status }) {
             status.fail(t.routineMusic.clash(playlist(other, songs).name));
             return;
           }
-          save(api("POST", `/api/routines/${routineId}/music`, { json: { song: song.value, start: start.value } }))
+          save(api("POST", `api/routines/${routineId}/music`, { json: { song: song.value, start: start.value } }))
             .catch(() => {});
         },
       }, icon("plus"), t.routineMusic.addSong)));
@@ -129,9 +129,9 @@ export function addSongForm(routineId, { save, status }) {
 
 // A song of a routine (rutinas-4, screen 5), like Editar parte: saved on the spot.
 export async function viewRoutineMusic(routineId, musicId) {
-  const url = `/api/routines/${routineId}`;
+  const url = `api/routines/${routineId}`;
   const routineHref = `${ROUTINES_HREF}/${routineId}`;
-  let [routine, songs] = await Promise.all([api("GET", url), api("GET", "/api/songs")]);
+  let [routine, songs] = await Promise.all([api("GET", url), api("GET", "api/songs")]);
   const music = () => routine.music.find((m) => m.id === musicId);
   if (!music()) {
     location.replace(routineHref);

@@ -227,7 +227,7 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
         found = [song for song in map(songs.get, music.songs) if song is not None]
         if found:  # one after the other
             played.append({"id": music.id, "songs": [
-                {"name": song.name, "url": f"/api/songs/{song.id}/file", "seconds": song.seconds} for song in found],
+                {"name": song.name, "url": f"api/songs/{song.id}/file", "seconds": song.seconds} for song in found],
                 "start": index.get(music.start, music.start), "until": index.get(music.until, music.until),
                 "after_voice": music.after_voice, "loud": music.loud})
     return played

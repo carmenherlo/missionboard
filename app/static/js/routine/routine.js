@@ -75,7 +75,7 @@ let controller = null;
 
 // "Probar ahora": the routine from its start (or from its part `from`), now.
 export async function tryRoutine(routineId, from = 0) {
-  const [data] = await Promise.all([api("GET", `/api/routines/${routineId}/trial?from=${from}`), loadAvatars()]);
+  const [data] = await Promise.all([api("GET", `api/routines/${routineId}/trial?from=${from}`), loadAvatars()]);
   controller.trial(data);
 }
 
@@ -90,7 +90,7 @@ function startNotices() {
   const said = new Set();
   async function load() {
     try {
-      const data = await api("GET", "/api/routines/notices");
+      const data = await api("GET", "api/routines/notices");
       if (data.day !== day) said.clear();
       ({ notices, now: serverNow, day } = data);
       fetchedAt = Date.now();
@@ -126,7 +126,7 @@ export function startRoutines() {
     if (showing?.data.trial) return; // a trial goes on until it is closed
     let data;
     try {
-      data = await api("GET", "/api/routines/current");
+      data = await api("GET", "api/routines/current");
     } catch {
       return; // no connection now: next time
     }
@@ -204,7 +204,7 @@ export function startRoutines() {
 
   const note = (kind, extra = {}) => {
     if (showing.data.trial) return; // a trial is not the real thing: nothing to log
-    api("POST", `/api/routines/${showing.data.id}/notes`, { json: { kind, ...extra } }).catch(() => {});
+    api("POST", `api/routines/${showing.data.id}/notes`, { json: { kind, ...extra } }).catch(() => {});
   };
 
   // ---------- where it is ----------
@@ -278,7 +278,7 @@ export function startRoutines() {
   // "Sin hacer" · "✓ Hecha": all its steps, or none (its steps from the kid's day).
   async function pretendAll(person, done) {
     if (!done) return setPretend(person.child.id, []);
-    const day = await api("GET", `/api/children/${person.child.id}/today`).catch(() => null);
+    const day = await api("GET", `api/children/${person.child.id}/today`).catch(() => null);
     const mission = day?.missions.find((m) => m.id === person.mission.id);
     if (showing && mission) setPretend(person.child.id, mission.steps.map((st) => st.id));
   }
@@ -967,7 +967,7 @@ export function startRoutines() {
       onsubmit: async (event) => {
         event.preventDefault();
         try {
-          await api("POST", `/api/routines/${showing.data.id}/finish`, { parentCode: input.value });
+          await api("POST", `api/routines/${showing.data.id}/finish`, { parentCode: input.value });
           end();
         } catch {
           error.textContent = t.errors.badParentCode;

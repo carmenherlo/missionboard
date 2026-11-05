@@ -275,7 +275,7 @@ def test_the_background_of_the_moment(client, bea, data_dir):
     (data_dir / "backgrounds").mkdir()
     (data_dir / "backgrounds" / "tarde.png").write_bytes(b"\x89PNG fake")
     url = today(client, bea)["background_url"]
-    assert url.startswith("/api/backgrounds/tarde?v=")
+    assert url.startswith("api/backgrounds/tarde?v=")
     assert client.get(url).content == b"\x89PNG fake"
     assert client.get("/api/backgrounds/noche").status_code == 404
     assert client.get("/api/backgrounds/..%2Fconfig").status_code == 404

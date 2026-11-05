@@ -8,7 +8,7 @@ import { missionPills } from "./mission-summary.js";
 
 // Same cards as a child's missions, without order: templates have no route.
 export async function viewTemplatesList() {
-  const templates = await api("GET", "/api/templates");
+  const templates = await api("GET", "api/templates");
 
   const list = h("ul", { class: "rows" }, templates.map((template) =>
     h("li", { class: "row row--covered" }, // the whole card opens it (rutinas-7)

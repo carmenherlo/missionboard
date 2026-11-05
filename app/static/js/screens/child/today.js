@@ -15,7 +15,7 @@ const REFRESH_MS = 60_000; // missions open and close with the time: look again 
 const TOAST_MS = 3000;
 
 export async function viewChildToday(childId) {
-  const base = `/api/children/${childId}/today`;
+  const base = `api/children/${childId}/today`;
   const [first] = await Promise.all([api("GET", base), loadAvatars()]);
   let day = first;
   let overlay = false; // a mission, its celebration or the wheel is open: no redrawing under it

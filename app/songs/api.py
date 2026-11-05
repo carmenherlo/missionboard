@@ -40,7 +40,7 @@ def get_songs_service(
 
 
 def present(song: Song, songs: SongsService) -> dict:
-    return {**asdict(song), "url": f"/api/songs/{song.id}/file", "used_in": songs.used_in(song.id)}
+    return {**asdict(song), "url": f"api/songs/{song.id}/file", "used_in": songs.used_in(song.id)}
 
 
 @router.get("")

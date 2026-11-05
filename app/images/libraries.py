@@ -51,7 +51,7 @@ class Library:
 
 
 LIBRARIES = [
-    Library("fluent", STATIC_DIR / "libraries" / "fluent", "/static/libraries/fluent"),
+    Library("fluent", STATIC_DIR / "libraries" / "fluent", "static/libraries/fluent"),
 ]
 
 
@@ -96,7 +96,7 @@ class ImageLibraries:
         if not ref:
             return None
         if filename := photo_filename(ref):
-            return f"/api/photos/{filename}"
+            return f"api/photos/{filename}"
         if not self.exists(ref):
             return None  # e.g. a library that was removed: the step shows its text only
         source, name = split_ref(ref)

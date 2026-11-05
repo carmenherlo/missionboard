@@ -9,7 +9,7 @@ import { parentsHeader } from "./common.js";
 // Like the steps of a mission: a list, "add" at the bottom, the pencil to edit.
 // No order to drag: the wheel picks at random.
 export async function viewPrizesList() {
-  const prizes = await api("GET", "/api/prizes");
+  const prizes = await api("GET", "api/prizes");
 
   const input = h("input", { type: "text", maxlength: 40, placeholder: t.prizes.newPrize });
   const error = h("p", { class: "form-error", role: "alert" });
@@ -20,7 +20,7 @@ export async function viewPrizesList() {
       const text = input.value.trim();
       if (!text) return;
       try {
-        await api("POST", "/api/prizes", { json: { text } });
+        await api("POST", "api/prizes", { json: { text } });
         await viewPrizesList();
         document.querySelector(".row--add input")?.focus();
       } catch (err) {

@@ -11,8 +11,8 @@ const LATEST = 20;
 // Look only: download the whole log, and see the latest events to check it works.
 export async function viewEventLog() {
   const [log, children] = await Promise.all([
-    api("GET", `/api/events?limit=${LATEST}`),
-    api("GET", "/api/children"),
+    api("GET", `api/events?limit=${LATEST}`),
+    api("GET", "api/children"),
     loadAvatars(),
   ]);
   const childrenById = new Map(children.map((child) => [child.id, child]));
@@ -35,7 +35,7 @@ function downloadPanel(log) {
     onclick: async () => {
       error.textContent = "";
       try {
-        const { blob, filename } = await apiFile("/api/events/export.csv");
+        const { blob, filename } = await apiFile("api/events/export.csv");
         const url = URL.createObjectURL(blob);
         h("a", { href: url, download: filename }).click();
         URL.revokeObjectURL(url);

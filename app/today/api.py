@@ -75,7 +75,7 @@ class Presenter:
             "colors": avatars.tones(today.child.color),
             "day": today.day.isoformat(),
             "moment": moment,
-            "background_url": f"/api/backgrounds/{moment}?v={version}" if version else None,
+            "background_url": f"api/backgrounds/{moment}?v={version}" if version else None,
             "stars": today.stars,
             "star_url": self._libraries.url(STAR_IMAGE),
             "celebration_star_url": self._libraries.url(CELEBRATION_STAR_IMAGE),

@@ -12,8 +12,8 @@ const LIST_HREF = "#/parents/config/prizes";
 
 // Like editing a step: name and picture, every change saved on the spot.
 export async function viewPrizeEdit(prizeId) {
-  let prize = await api("GET", `/api/prizes/${prizeId}`);
-  const url = `/api/prizes/${prizeId}`;
+  let prize = await api("GET", `api/prizes/${prizeId}`);
+  const url = `api/prizes/${prizeId}`;
   const status = saveStatus();
   const title = h("span", {}, prize.text);
   const save = (request) => status.track(request).then((updated) => {

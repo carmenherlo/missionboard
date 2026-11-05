@@ -9,7 +9,7 @@ import { refreshRoutines } from "./routine.js";
 
 // The routines that can be started by hand today ([] when none).
 export function routinesByHand() {
-  return api("GET", "/api/routines/by-hand").catch(() => []);
+  return api("GET", "api/routines/by-hand").catch(() => []);
 }
 
 export async function openChooser(routines) {
@@ -34,7 +34,7 @@ function choice(routine, close) {
     onclick: async () => {
       start.disabled = true;
       try {
-        await api("POST", `/api/routines/${routine.id}/start`, { json: { kids: [...chosen] } });
+        await api("POST", `api/routines/${routine.id}/start`, { json: { kids: [...chosen] } });
         close();
         refreshRoutines();
       } catch (err) {

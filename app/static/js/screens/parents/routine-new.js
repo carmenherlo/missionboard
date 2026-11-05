@@ -45,7 +45,7 @@ export function viewRoutineNew() {
       ? { name: name.value.trim(), ends: time.value }
       : { name: name.value.trim(), starts: time.value };
     try {
-      const routine = await api("POST", "/api/routines", { json });
+      const routine = await api("POST", "api/routines", { json });
       location.hash = `${LIST_HREF}/${routine.id}`;
     } catch (err) {
       error.textContent = err.status === 409 ? t.routines.overlaps : errorMessage(err);

@@ -12,21 +12,21 @@ const TEXT_SAVE_DELAY_MS = 600;
 
 export async function viewStepEdit(missionId, stepId) {
   const [mission, children] = await Promise.all([
-    api("GET", `/api/missions/${missionId}`),
-    api("GET", "/api/children"),
+    api("GET", `api/missions/${missionId}`),
+    api("GET", "api/children"),
   ]);
   const child = children.find((c) => c.id === mission.child_id);
   await stepEditor(mission, stepId, {
-    apiUrl: `/api/missions/${missionId}`,
+    apiUrl: `api/missions/${missionId}`,
     missionHref: `#/parents/config/missions/${missionId}`,
     previewLabel: t.stepEdit.preview(child.name),
   });
 }
 
 export async function viewTemplateStepEdit(templateId, stepId) {
-  const template = await api("GET", `/api/templates/${templateId}`);
+  const template = await api("GET", `api/templates/${templateId}`);
   await stepEditor(template, stepId, {
-    apiUrl: `/api/templates/${templateId}`,
+    apiUrl: `api/templates/${templateId}`,
     missionHref: `#/parents/config/templates/${templateId}`,
     previewLabel: t.stepEdit.previewTemplate,
   });

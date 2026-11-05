@@ -14,8 +14,8 @@ const MAX_SONG_BYTES = 15 * 1024 * 1024;
 // once and used in any routine. Like the prizes: a list, and a button to add.
 // fromRoutine: opened from a routine's editor, "←" goes back there.
 export async function viewSongsList(fromRoutine = null) {
-  let songs = await api("GET", "/api/songs");
-  const routine = fromRoutine && await api("GET", `/api/routines/${fromRoutine}`).catch(() => null);
+  let songs = await api("GET", "api/songs");
+  const routine = fromRoutine && await api("GET", `api/routines/${fromRoutine}`).catch(() => null);
   const back = routine ? { href: `${BACK_HREF}/${routine.id}`, label: routine.name } : { href: BACK_HREF, label: t.routines.title };
   const status = saveStatus();
   const list = h("ul", { class: "rows" });
@@ -60,7 +60,7 @@ export async function viewSongsList(fromRoutine = null) {
     const done = async () => {
       const name = input.value.trim();
       if (name && name !== song.name) {
-        const renamed = await status.track(api("PATCH", `/api/songs/${song.id}`, { json: { name } })).catch(() => null);
+        const renamed = await status.track(api("PATCH", `api/songs/${song.id}`, { json: { name } })).catch(() => null);
         if (renamed) songs = songs.map((s) => (s.id === song.id ? renamed : s));
       }
       renaming = null;
@@ -78,8 +78,8 @@ export async function viewSongsList(fromRoutine = null) {
       confirmLabel: t.songs.confirmYes,
       onCancel: drawActions,
       onConfirm: async () => {
-        await status.track(api("DELETE", `/api/songs/${song.id}`)).catch(() => {});
-        songs = await api("GET", "/api/songs");
+        await status.track(api("DELETE", `api/songs/${song.id}`)).catch(() => {});
+        songs = await api("GET", "api/songs");
         draw();
       },
     }));
@@ -105,7 +105,7 @@ export async function viewSongsList(fromRoutine = null) {
     const name = file.name.replace(/\.[^.]+$/, "").slice(0, 40).trim() || "Canción";
     const query = new URLSearchParams({ name, seconds: String(seconds) });
     try {
-      const song = await status.track(api("POST", `/api/songs?${query}`, { body: file, contentType: file.type || "audio/mpeg" }));
+      const song = await status.track(api("POST", `api/songs?${query}`, { body: file, contentType: file.type || "audio/mpeg" }));
       songs = [...songs, song];
       draw();
     } catch (err) {

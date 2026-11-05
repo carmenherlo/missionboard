@@ -72,7 +72,7 @@ def test_new_mission_defaults(client, bea, data_dir):
 def test_new_mission_with_library_image(client, bea):
     mission = create_mission(client, bea["id"], image="fluent/rocket").json()
     assert mission["image"] == "fluent/rocket"
-    assert mission["image_url"] == "/static/libraries/fluent/rocket.svg"
+    assert mission["image_url"] == "static/libraries/fluent/rocket.svg"
     assert client.get(mission["image_url"]).status_code == 200
 
 

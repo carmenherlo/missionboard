@@ -5,7 +5,7 @@ import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
 export async function viewChildrenList() {
-  const [children] = await Promise.all([api("GET", "/api/children"), loadAvatars()]);
+  const [children] = await Promise.all([api("GET", "api/children"), loadAvatars()]);
 
   function row(child) {
     const actions = h("div", { class: "row__actions" });
@@ -24,7 +24,7 @@ export async function viewChildrenList() {
 
     async function remove() {
       try {
-        await api("DELETE", `/api/children/${child.id}`);
+        await api("DELETE", `api/children/${child.id}`);
         viewChildrenList();
       } catch (err) {
         actions.prepend(h("span", { class: "form-error" }, errorMessage(err)));

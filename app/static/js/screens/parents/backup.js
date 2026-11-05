@@ -25,7 +25,7 @@ function downloadPanel() {
       error.textContent = "";
       button.disabled = true;
       try {
-        const { blob, filename } = await apiFile("/api/backup");
+        const { blob, filename } = await apiFile("api/backup");
         const url = URL.createObjectURL(blob);
         h("a", { href: url, download: filename }).click();
         URL.revokeObjectURL(url);
@@ -65,7 +65,7 @@ function restorePanel() {
             confirmLabel: t.backup.confirmYes,
             onCancel: draw,
             onConfirm: async () => {
-              await api("POST", "/api/backup/restore", { body: chosen, contentType: "application/zip" });
+              await api("POST", "api/backup/restore", { body: chosen, contentType: "application/zip" });
               done();
             },
           }));

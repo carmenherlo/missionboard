@@ -9,7 +9,7 @@ import { daysText } from "./mission-summary.js";
 
 // Like Plantillas: a card per routine with what matters at a glance.
 export async function viewRoutinesList() {
-  const routines = await api("GET", "/api/routines");
+  const routines = await api("GET", "api/routines");
 
   const list = h("ul", { class: "rows" }, routines.map((routine) =>
     // The whole card opens the routine (04/11: editing matters more than trying it).

@@ -10,8 +10,8 @@ import { missionPills } from "./mission-summary.js";
 
 export async function viewChildMissions(childId) {
   const [children, missions] = await Promise.all([
-    api("GET", "/api/children"),
-    api("GET", `/api/children/${childId}/missions`),
+    api("GET", "api/children"),
+    api("GET", `api/children/${childId}/missions`),
     loadAvatars(),
   ]);
   const child = children.find((c) => c.id === childId);
@@ -41,7 +41,7 @@ export async function viewChildMissions(childId) {
       renumber();
       error.textContent = "";
       try {
-        await api("PUT", `/api/children/${childId}/missions/order`, { json: { ids } });
+        await api("PUT", `api/children/${childId}/missions/order`, { json: { ids } });
       } catch (err) {
         error.textContent = errorMessage(err);
       }

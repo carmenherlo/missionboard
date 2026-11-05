@@ -9,7 +9,7 @@ import { t } from "../texts.js";
 
 export async function viewHome() {
   session.parentCode = null;
-  const [children, byHand] = await Promise.all([api("GET", "/api/children"), routinesByHand(), loadAvatars()]);
+  const [children, byHand] = await Promise.all([api("GET", "api/children"), routinesByHand(), loadAvatars()]);
   const grid = children.length
     ? h("section", { class: "children" },
         children.map((child) =>

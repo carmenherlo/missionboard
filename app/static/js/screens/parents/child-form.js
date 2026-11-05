@@ -15,7 +15,7 @@ const NAME_SAVE_DELAY_MS = 600;
 // Existing child: every change is saved on the spot, like missions and steps.
 
 export async function viewChildForm(childId) {
-  const [children, catalog] = await Promise.all([api("GET", "/api/children"), loadAvatars()]);
+  const [children, catalog] = await Promise.all([api("GET", "api/children"), loadAvatars()]);
   const existing = childId ? children.find((c) => c.id === childId) : null;
   if (childId && !existing) {
     location.hash = "#/parents/config/children";
@@ -175,7 +175,7 @@ export async function viewChildForm(childId) {
       preset: form.preset,
       color: form.color,
     };
-    const upload = (id) => api("PUT", `/api/children/${id}/photo`, {
+    const upload = (id) => api("PUT", `api/children/${id}/photo`, {
       body: form.photoFile, contentType: form.photoFile.type,
     });
     if (savedId && form.photoFile) {
@@ -183,8 +183,8 @@ export async function viewChildForm(childId) {
       form.photoFile = null;
     }
     const saved = savedId
-      ? await api("PUT", `/api/children/${savedId}`, { json: payload })
-      : await api("POST", "/api/children", { json: payload });
+      ? await api("PUT", `api/children/${savedId}`, { json: payload })
+      : await api("POST", "api/children", { json: payload });
     savedId = saved.id;
     if (form.photoFile) {
       await upload(saved.id);

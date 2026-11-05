@@ -20,7 +20,7 @@ def test_home_page(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    assert '<script type="module" src="/static/js/main.js">' in response.text
+    assert '<script type="module" src="static/js/main.js">' in response.text
 
 
 STATIC_DIR = Path(__file__).parent.parent / "app" / "static"
@@ -72,3 +72,14 @@ def test_every_theme_defines_the_roles_the_app_uses(client):
         defined = set(re.findall(r"(--md-[\w-]+):", theme.read_text()))
         assert used <= defined, f"{theme.name} lacks {sorted(used - defined)}"
     assert client.get("/static/css/themes/azul-mision.css").status_code == 200
+
+
+def test_the_front_uses_relative_paths():
+    # Under Home Assistant's ingress the page lives under a sub-path: "/api/..." or
+    # "/static/..." would leave it, "api/..." and "static/..." stay inside.
+    import re
+    pattern = re.compile(r"""["'`(]/(api|static)/""")
+    found = [f"{p.relative_to(STATIC_DIR)}:{n}" for p in STATIC_DIR.rglob("*")
+             if p.suffix in (".js", ".html", ".css") and "libraries" not in p.parts
+             for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1) if pattern.search(line)]
+    assert found == []

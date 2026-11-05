@@ -25,7 +25,7 @@ function plainThumb(url, size, label) {
       label.trim().charAt(0).toUpperCase());
   }
   // Photos fill the frame; library drawings are shown whole.
-  const photo = url?.startsWith("/api/photos/");
+  const photo = url?.startsWith("api/photos/");
   return h("span", { class: `thumb thumb--${size}${photo ? " thumb--photo" : ""}` },
     url ? h("img", { src: url, alt: label, loading: "lazy" }) : null);
 }

@@ -5,7 +5,7 @@ let catalog = null;
 
 // Presets and palette, fetched once per page load.
 export async function loadAvatars() {
-  if (!catalog) catalog = await api("GET", "/api/avatars");
+  if (!catalog) catalog = await api("GET", "api/avatars");
   return catalog;
 }
 

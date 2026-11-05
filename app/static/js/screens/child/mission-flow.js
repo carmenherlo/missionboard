@@ -13,7 +13,7 @@ import { missionSheet } from "./mission-sheet.js";
 // The steps start as `checked` says and nothing reaches the server: no stars, nothing logged.
 // Returns { close } to close it from outside (a routine's new part).
 export async function openMission(container, childId, missionId, { day = null, onDay = () => {}, onClose = () => {}, pretend = null } = {}) {
-  const base = `/api/children/${childId}/today`;
+  const base = `api/children/${childId}/today`;
   day ??= await api("GET", base);
   let closed = false;
   let drawn = false;

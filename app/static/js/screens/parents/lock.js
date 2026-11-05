@@ -16,7 +16,7 @@ export function viewParentsLock(onUnlock) {
       return;
     }
     try {
-      await api("POST", "/api/parents/unlock", { json: { code: input.value } });
+      await api("POST", "api/parents/unlock", { json: { code: input.value } });
       session.parentCode = input.value;
       onUnlock();
     } catch (err) {

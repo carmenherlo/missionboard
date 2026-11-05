@@ -19,7 +19,7 @@ const WARNING_CHOICES = [1, 2, 3, 5];
 
 // Like Editar paso: everything is saved on the spot.
 export async function viewRoutinePartEdit(routineId, partId) {
-  const url = `/api/routines/${routineId}`;
+  const url = `api/routines/${routineId}`;
   const routineHref = `#/parents/config/routines/${routineId}`;
   let routine = await api("GET", url);
   const part = () => routine.parts.find((p) => p.id === partId);

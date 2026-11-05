@@ -10,7 +10,7 @@ import { t } from "../../texts.js";
 import { picture } from "./ring.js";
 
 export async function openStars(container, childId, { onClose }) {
-  const base = `/api/children/${childId}/shop`;
+  const base = `api/children/${childId}/shop`;
   let view = await api("GET", base);
   const body = h("div", { class: "stars-body" });
   const close = () => {

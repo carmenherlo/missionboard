@@ -19,9 +19,9 @@ const USUAL_WARNING = 1; // a part with no warnings of its own (settings.routine
 // time (a usual day). The sentences that are the parents' are changed right here;
 // the rest (times, minutes left) is seen but follows the times. `focus`: a part to show.
 export async function viewRoutineVoice(routineId, focus = null) {
-  const url = `/api/routines/${routineId}`;
+  const url = `api/routines/${routineId}`;
   const routineHref = `#/parents/config/routines/${routineId}`;
-  let [routine, songs] = await Promise.all([api("GET", url), api("GET", "/api/songs")]);
+  let [routine, songs] = await Promise.all([api("GET", url), api("GET", "api/songs")]);
   const status = saveStatus();
   const groups = h("div", { class: "stack" });
   // How the warnings before a part ends are said (04/11): "para que acabe el aseo" or

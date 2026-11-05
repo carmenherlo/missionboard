@@ -12,8 +12,8 @@ const LIST_HREF = "#/parents/config/shop";
 
 // Like Editar premio, with its price: every change saved on the spot.
 export async function viewShopItemEdit(itemId) {
-  let item = await api("GET", `/api/shop/${itemId}`);
-  const url = `/api/shop/${itemId}`;
+  let item = await api("GET", `api/shop/${itemId}`);
+  const url = `api/shop/${itemId}`;
   const status = saveStatus();
   const title = h("span", {}, item.text);
   const save = (request) => status.track(request).then((updated) => {

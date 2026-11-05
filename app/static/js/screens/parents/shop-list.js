@@ -8,7 +8,7 @@ import { parentsHeader } from "./common.js";
 
 // Like Premios del día, each item with its price in stars.
 export async function viewShopList() {
-  const items = await api("GET", "/api/shop");
+  const items = await api("GET", "api/shop");
 
   const text = h("input", { type: "text", maxlength: 40, placeholder: t.shop.newItem });
   const price = h("input", { type: "number", min: 1, max: 999, value: 5, "aria-label": t.shop.price });
@@ -19,7 +19,7 @@ export async function viewShopList() {
       event.preventDefault();
       if (!text.value.trim() || !(Number(price.value) >= 1)) return;
       try {
-        await api("POST", "/api/shop", { json: { text: text.value.trim(), price: Number(price.value) } });
+        await api("POST", "api/shop", { json: { text: text.value.trim(), price: Number(price.value) } });
         await viewShopList();
         document.querySelector(".row--add input")?.focus();
       } catch (err) {

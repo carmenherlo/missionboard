@@ -11,12 +11,12 @@ import { parentsHeader } from "./common.js";
 // and "←" / "Cancelar" go back there.
 export async function viewTemplateApply(templateId, fromEditor = false) {
   const [template, children] = await Promise.all([
-    api("GET", `/api/templates/${templateId}`),
-    api("GET", "/api/children"),
+    api("GET", `api/templates/${templateId}`),
+    api("GET", "api/children"),
     loadAvatars(),
   ]);
   const missionsOf = await Promise.all(
-    children.map((c) => api("GET", `/api/children/${c.id}/missions`)));
+    children.map((c) => api("GET", `api/children/${c.id}/missions`)));
   const listHref = "#/parents/config/templates";
   const backHref = fromEditor ? `${listHref}/${templateId}` : listHref;
   const header = () => parentsHeader(t.templateApply.title(template.name),
@@ -63,7 +63,7 @@ export async function viewTemplateApply(templateId, fromEditor = false) {
     error.textContent = "";
     const applied = chosenChildren();
     try {
-      await api("POST", `/api/templates/${templateId}/apply`, { json: { child_ids: applied.map((c) => c.id) } });
+      await api("POST", `api/templates/${templateId}/apply`, { json: { child_ids: applied.map((c) => c.id) } });
     } catch (err) {
       error.textContent = errorMessage(err);
       return;

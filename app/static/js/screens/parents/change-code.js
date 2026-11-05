@@ -32,7 +32,7 @@ export function viewChangeCode() {
       return;
     }
     try {
-      await api("PUT", "/api/parents/code", {
+      await api("PUT", "api/parents/code", {
         json: { current_code: currentCode.value, code: newCode.value },
       });
       session.parentCode = newCode.value;

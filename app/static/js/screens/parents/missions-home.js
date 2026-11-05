@@ -9,12 +9,12 @@ import { parentsHeader } from "./common.js";
 // even with one child or none, so templates can be prepared at any time.
 export async function viewMissionsHome() {
   const [children, templates] = await Promise.all([
-    api("GET", "/api/children"),
-    api("GET", "/api/templates"),
+    api("GET", "api/children"),
+    api("GET", "api/templates"),
     loadAvatars(),
   ]);
   const counts = await Promise.all(
-    children.map((c) => api("GET", `/api/children/${c.id}/missions`).then((m) => m.length)));
+    children.map((c) => api("GET", `api/children/${c.id}/missions`).then((m) => m.length)));
 
   const kids = children.length
     ? [

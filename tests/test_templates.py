@@ -51,7 +51,7 @@ def test_a_new_install_has_the_three_samples(client):
     assert despegue["child_id"] is None
     assert despegue["days"] == ["mon", "tue", "wed", "thu", "fri"]
     assert despegue["schedule"] is None
-    assert despegue["image_url"] == "/static/libraries/fluent/rocket.svg"
+    assert despegue["image_url"] == "static/libraries/fluent/rocket.svg"
     assert [s["text"] for s in despegue["steps"]] == [
         "Hacer la cama", "Vestirse", "Desayunar", "Lavarse los dientes", "Peinarse", "Preparar la mochila",
     ]
@@ -222,7 +222,7 @@ def test_photos_are_copied_and_survive_deleting_the_original(client, bea, alex, 
     client.delete(url, headers=PARENT)
     assert len(photo_files(data_dir)) == 4
     for mission in copies:
-        assert client.get(f"/api/missions/{mission['id']}").json()["image_url"].startswith("/api/photos/")
+        assert client.get(f"/api/missions/{mission['id']}").json()["image_url"].startswith("api/photos/")
         assert client.get(mission["image_url"]).status_code == 200
 
 

@@ -28,7 +28,7 @@ if (globalThis.speechSynthesis) {
   pickTabletVoice();
   speechSynthesis.addEventListener("voiceschanged", pickTabletVoice);
 }
-api("GET", "/api/voice/status").then((status) => { natural = status.available; }).catch(() => {});
+api("GET", "api/voice/status").then((status) => { natural = status.available; }).catch(() => {});
 
 export function canSpeak() {
   return natural || tabletVoice !== null;
@@ -65,7 +65,7 @@ async function sayNaturally(parts, turn) {
 
 async function playEach(parts, turn) {
   // All of them asked for at once: the next one is ready when the last ends.
-  const sounds = parts.map((part) => new Audio(`/api/voice?text=${encodeURIComponent(part)}`));
+  const sounds = parts.map((part) => new Audio(`api/voice?text=${encodeURIComponent(part)}`));
   for (const [index, sound] of sounds.entries()) {
     if (turn !== saying) return;
     sound.volume = Math.min(1, volume("voice"));

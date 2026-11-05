@@ -16,12 +16,12 @@ const NAME_SAVE_DELAY_MS = 600;
 
 export async function viewMissionEdit(missionId) {
   const [mission, children] = await Promise.all([
-    api("GET", `/api/missions/${missionId}`),
-    api("GET", "/api/children"),
+    api("GET", `api/missions/${missionId}`),
+    api("GET", "api/children"),
   ]);
   const child = children.find((c) => c.id === mission.child_id);
   missionEditor(mission, {
-    apiUrl: `/api/missions/${missionId}`,
+    apiUrl: `api/missions/${missionId}`,
     editHref: `#/parents/config/missions/${missionId}`,
     back: { href: `#/parents/config/missions/child/${mission.child_id}`, label: t.childMissions.title(child.name) },
     deleteLabel: t.missionEdit.delete,
@@ -32,10 +32,10 @@ export async function viewMissionEdit(missionId) {
 
 // A template is edited like a mission, with a reminder that it is nobody's.
 export async function viewTemplateEdit(templateId) {
-  const template = await api("GET", `/api/templates/${templateId}`);
+  const template = await api("GET", `api/templates/${templateId}`);
   const editHref = `#/parents/config/templates/${templateId}`;
   missionEditor(template, {
-    apiUrl: `/api/templates/${templateId}`,
+    apiUrl: `api/templates/${templateId}`,
     editHref,
     back: { href: "#/parents/config/templates", label: t.templates.title },
     badge: t.templates.badge,
@@ -54,7 +54,7 @@ function saveAsTemplateAction(missionId) {
     onclick: async () => {
       button.disabled = true;
       try {
-        const template = await api("POST", `/api/missions/${missionId}/template`);
+        const template = await api("POST", `api/missions/${missionId}/template`);
         box.replaceChildren(
           h("span", { class: "form-success", role: "status" }, t.missionEdit.savedAsTemplate(template.name)),
           h("a", { class: "btn", href: "#/parents/config/templates" }, t.missionEdit.seeTemplates));

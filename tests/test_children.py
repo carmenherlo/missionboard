@@ -166,7 +166,7 @@ def test_upload_and_get_photo(client, data_dir):
     assert updated["avatar_type"] == "photo"
     assert updated["preset"] is None
     assert updated["color"] == PURPLE
-    assert updated["photo_url"].startswith(f"/api/children/{child['id']}/photo")
+    assert updated["photo_url"].startswith(f"api/children/{child['id']}/photo")
 
     photo = client.get(updated["photo_url"])
     assert photo.status_code == 200

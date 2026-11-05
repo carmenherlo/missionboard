@@ -54,7 +54,7 @@ def public_child(child: Child) -> dict:
     """A child as the screens get it: with the address of their photo."""
     return {
         **asdict(child),
-        "photo_url": f"/api/children/{child.id}/photo?v={child.photo}" if child.photo else None,
+        "photo_url": f"api/children/{child.id}/photo?v={child.photo}" if child.photo else None,
     }
 
 

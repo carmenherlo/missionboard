@@ -35,12 +35,12 @@ export function routineError(err) {
 
 // Like Editar misión: panels that save every change on the spot.
 export async function viewRoutineEdit(routineId) {
-  const url = `/api/routines/${routineId}`;
+  const url = `api/routines/${routineId}`;
   const [first, children, templates, songs] = await Promise.all([
-    api("GET", url), api("GET", "/api/children"), api("GET", "/api/templates"), api("GET", "/api/songs"), loadAvatars()]);
+    api("GET", url), api("GET", "api/children"), api("GET", "api/templates"), api("GET", "api/songs"), loadAvatars()]);
   let routine = first;
   const missionsOf = Object.fromEntries(await Promise.all(
-    children.map(async (c) => [c.id, await api("GET", `/api/children/${c.id}/missions`)])));
+    children.map(async (c) => [c.id, await api("GET", `api/children/${c.id}/missions`)])));
 
   const status = saveStatus();
   const title = h("span", {}, routine.name);

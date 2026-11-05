@@ -10,16 +10,16 @@ import { missionPills } from "./mission-summary.js";
 // Two ways side by side: from scratch (left) or from a template (right).
 export async function viewMissionNew(childId) {
   const [children, templates] = await Promise.all([
-    api("GET", "/api/children"),
-    api("GET", "/api/templates"),
+    api("GET", "api/children"),
+    api("GET", "api/templates"),
   ]);
   const child = children.find((c) => c.id === childId);
   const backHref = `#/parents/config/missions/child/${childId}`;
   const openMission = (mission) => { location.hash = `#/parents/config/missions/${mission.id}`; };
 
   const form = await newMissionForm({
-    createUrl: `/api/children/${childId}/missions`,
-    itemUrl: (mission) => `/api/missions/${mission.id}`,
+    createUrl: `api/children/${childId}/missions`,
+    itemUrl: (mission) => `api/missions/${mission.id}`,
     cancelHref: backHref,
     missingName: t.missionNew.missingName,
     onCreated: openMission,
@@ -30,7 +30,7 @@ export async function viewMissionNew(childId) {
   const useTemplate = (template) => async () => {
     error.textContent = "";
     try {
-      const [mission] = await api("POST", `/api/templates/${template.id}/apply`, { json: { child_ids: [childId] } });
+      const [mission] = await api("POST", `api/templates/${template.id}/apply`, { json: { child_ids: [childId] } });
       openMission(mission);
     } catch (err) {
       error.textContent = errorMessage(err);

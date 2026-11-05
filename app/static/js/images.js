@@ -26,7 +26,7 @@ function prepare(library) {
 // Every library, fetched once per page load.
 export async function loadImageLibraries() {
   if (!libraries) {
-    const body = await api("GET", "/api/images");
+    const body = await api("GET", "api/images");
     libraries = body.libraries.map(prepare);
   }
   return libraries;
