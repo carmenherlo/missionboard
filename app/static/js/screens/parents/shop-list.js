@@ -35,13 +35,13 @@ export async function viewShopList() {
         h("p", { class: "hint" }, items.length ? t.shop.hint : t.shop.empty),
         panel(t.shop.count(items.length),
           items.length > 0 && h("ul", { class: "rows" }, items.map((item) =>
-            h("li", { class: "row row--compact" },
+            h("li", { class: "row row--compact row--covered" }, // the whole card opens it (rutinas-7)
               imageThumb(item.image_url, { size: "sm", label: item.text, suggested: item.image_suggested }),
-              h("span", { class: "row__text" }, item.text,
-                h("span", { class: "row__detail" }, h("span", { class: "pill" }, t.shop.priceText(item.price)))),
               h("a", {
-                class: "icon-button icon-button--ghost", href: `#/parents/config/shop/${item.id}`,
-                "aria-label": t.shop.editNamed(item.text), title: t.shop.edit,
-              }, icon("edit"))))),
+                class: "row__text row__cover", href: `#/parents/config/shop/${item.id}`,
+                "aria-label": t.shop.editNamed(item.text),
+              }, item.text,
+                h("span", { class: "row__detail" }, h("span", { class: "pill" }, t.shop.priceText(item.price)))),
+              h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))))),
           add, error))));
 }

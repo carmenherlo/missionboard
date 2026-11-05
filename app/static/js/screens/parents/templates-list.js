@@ -11,19 +11,19 @@ export async function viewTemplatesList() {
   const templates = await api("GET", "/api/templates");
 
   const list = h("ul", { class: "rows" }, templates.map((template) =>
-    h("li", { class: "row" },
+    h("li", { class: "row row--covered" }, // the whole card opens it (rutinas-7)
       imageThumb(template.image_url, { size: "md", label: template.name, suggested: template.image_suggested }),
-      h("span", { class: "row__name" }, template.name,
+      h("a", {
+        class: "row__name row__cover", href: `#/parents/config/templates/${template.id}`,
+        "aria-label": t.templates.editNamed(template.name),
+      }, template.name,
         h("span", { class: "row__detail" }, missionPills(template))),
       h("span", { class: "row__actions" },
         h("a", {
           class: "btn", href: `#/parents/config/templates/${template.id}/apply`,
           "aria-label": t.templates.applyNamed(template.name),
         }, t.templates.apply),
-        h("a", {
-          class: "icon-button icon-button--ghost", href: `#/parents/config/templates/${template.id}`,
-          "aria-label": t.templates.editNamed(template.name), title: t.childMissions.edit,
-        }, icon("edit"))))));
+        h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))))));
 
   render(
     parentsHeader(t.templates.title, { href: "#/parents/config/missions", label: t.missions.title }),

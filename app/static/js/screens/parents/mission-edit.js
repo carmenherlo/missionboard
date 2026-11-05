@@ -4,6 +4,7 @@ import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { saveStatus } from "../../components/save-status.js";
 import { sortable } from "../../components/sortable.js";
+import { undoBar } from "../../components/undo-bar.js";
 import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
@@ -76,6 +77,7 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
 
   const titleName = h("span", {}, mission.name);
   function save(request) {
+    flushDelete(); // a step let go in the bin: gone for good before anything else changes
     return status.track(request).then((updated) => {
       if (updated) mission = updated;
       titleName.textContent = mission.name;
@@ -206,7 +208,30 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
     onEnd: (ids) => save(api("PUT", `${missionUrl}/steps/order`, { json: { ids } }))
       .catch(() => {})
       .then(renderSteps),
+    trash: { label: t.common.dropToDelete, onDrop: (id) => dropStep(id) },
   });
+  // Let go in the bin (rutinas-7, as a routine's parts): out of sight at once, and gone
+  // for good once "Deshacer" goes by (or anything else is saved, or the screen changes).
+  let pendingDelete = null; // { id, bar }
+  function dropStep(id) {
+    flushDelete();
+    const step = mission.steps.find((st) => st.id === id);
+    if (!step) return;
+    const bar = undoBar({
+      message: t.common.deleted(step.text),
+      onUndo: () => { pendingDelete = null; renderSteps(); },
+      onTimeout: flushDelete,
+    });
+    pendingDelete = { id, bar };
+    renderSteps();
+  }
+  function flushDelete() {
+    if (!pendingDelete) return;
+    const { id, bar } = pendingDelete;
+    pendingDelete = null;
+    bar.close();
+    save(api("POST", `${missionUrl}/steps/delete`, { json: { ids: [id] } })).catch(() => {}).then(renderSteps);
+  }
   // "Seleccionar", as in a routine's parts: a box on each step instead of its handle,
   // and one bin for all the chosen ones (deleting them one by one meant opening each).
   let selected = null; // null: not selecting; else the chosen step ids
@@ -240,9 +265,9 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
     stepsTitle.textContent = t.missionEdit.steps(mission.steps.length);
     if (selected) selected = new Set([...selected].filter((id) => mission.steps.some((s) => s.id === id)));
     renderStepsTools();
-    stepsList.replaceChildren(...mission.steps.map((step) =>
+    stepsList.replaceChildren(...mission.steps.filter((step) => step.id !== pendingDelete?.id).map((step) =>
       h("li", {
-        class: `row row--sortable row--compact${selected ? " row--selectable" : ""}`, "data-id": step.id,
+        class: `row row--sortable row--compact${selected ? " row--selectable" : " row--covered"}`, "data-id": step.id,
         onclick: selected && ((e) => {
           if (e.target.closest("a")) return;
           if (selected.has(step.id)) selected.delete(step.id);
@@ -254,12 +279,13 @@ function missionEditor(mission, { apiUrl, editHref, back, badge, notice, deleteL
           ? h("input", { type: "checkbox", checked: selected.has(step.id), "aria-label": step.text, tabindex: -1 })
           : h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
         imageThumb(step.image_url, { size: "sm", label: step.text, suggested: step.image_suggested }),
-        h("span", { class: "row__text" }, step.text),
-        h("a", {
-          class: "icon-button icon-button--ghost", href: `${editHref}/steps/${step.id}`,
-          "aria-label": t.missionEdit.editStepNamed(step.text), title: t.missionEdit.editStep,
-          hidden: Boolean(selected),
-        }, icon("edit")))));
+        // The whole row opens the step (rutinas-7); the handle does not.
+        selected ? h("span", { class: "row__text" }, step.text)
+          : h("a", {
+            class: "row__text row__cover", href: `${editHref}/steps/${step.id}`,
+            "aria-label": t.missionEdit.editStepNamed(step.text),
+          }, step.text),
+        !selected && h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
     stepsEmpty.hidden = mission.steps.length > 0;
   }
   const stepsEmpty = h("p", { class: "hint" }, t.missionEdit.noSteps);

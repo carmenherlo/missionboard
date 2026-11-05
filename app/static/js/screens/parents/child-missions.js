@@ -24,16 +24,17 @@ export async function viewChildMissions(childId) {
   }
 
   const list = h("ul", { class: "rows" }, missions.map((mission, i) =>
-    h("li", { class: "row row--sortable", "data-id": mission.id },
+    // The whole card opens the mission (rutinas-7, as in Rutinas); the handle still sorts.
+    h("li", { class: "row row--sortable row--covered", "data-id": mission.id },
       h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
       h("span", { class: "order" }, i + 1),
       imageThumb(mission.image_url, { size: "md", label: mission.name, suggested: mission.image_suggested }),
-      h("span", { class: "row__name" }, mission.name,
-        h("span", { class: "row__detail" }, missionPills(mission))),
       h("a", {
-        class: "icon-button icon-button--ghost", href: `#/parents/config/missions/${mission.id}`,
-        "aria-label": t.childMissions.editMission(mission.name), title: t.childMissions.edit,
-      }, icon("edit")))));
+        class: "row__name row__cover", href: `#/parents/config/missions/${mission.id}`,
+        "aria-label": t.childMissions.editMission(mission.name),
+      }, mission.name,
+        h("span", { class: "row__detail" }, missionPills(mission))),
+      h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
 
   sortable(list, {
     onEnd: async (ids) => {

@@ -36,12 +36,12 @@ export async function viewPrizesList() {
         h("p", { class: "hint" }, prizes.length ? t.prizes.hint : t.prizes.empty),
         panel(t.prizes.count(prizes.length),
           prizes.length > 0 && h("ul", { class: "rows" }, prizes.map((prize) =>
-            h("li", { class: "row row--compact" },
+            h("li", { class: "row row--compact row--covered" }, // the whole card opens it (rutinas-7)
               imageThumb(prize.image_url, { size: "sm", label: prize.text, suggested: prize.image_suggested }),
-              h("span", { class: "row__text" }, prize.text),
               h("a", {
-                class: "icon-button icon-button--ghost", href: `#/parents/config/prizes/${prize.id}`,
-                "aria-label": t.prizes.editNamed(prize.text), title: t.prizes.edit,
-              }, icon("edit"))))),
+                class: "row__text row__cover", href: `#/parents/config/prizes/${prize.id}`,
+                "aria-label": t.prizes.editNamed(prize.text),
+              }, prize.text),
+              h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))))),
           add, error))));
 }
