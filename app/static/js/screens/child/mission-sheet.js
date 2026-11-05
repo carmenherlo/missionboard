@@ -13,10 +13,12 @@ const MANY_STEPS = 6; // more than this: smaller cards, so all fit without scrol
 export function missionSheet(day, mission, { onToggle, onSpeak, onClose, again = false }) {
   const done = mission.steps.filter((s) => s.checked).length;
   const total = mission.steps.length;
-  const locked = mission.state === "done"; // a done mission is only looked at until tomorrow
+  // A past mission (done, or closed without doing it): opened to look at, all in grey,
+  // as it was left; its steps do not answer the finger (05/11).
+  const past = mission.state === "done" || mission.state === "closed";
 
   return h("div", { class: `mission-layer${again ? " mission-layer--again" : ""}`, onclick: (e) => { if (e.target === e.currentTarget) onClose(); } },
-    h("section", { class: "mission-sheet", role: "dialog", "aria-modal": "true", "aria-label": mission.name },
+    h("section", { class: `mission-sheet${past ? " mission-sheet--past" : ""}`, role: "dialog", "aria-modal": "true", "aria-label": mission.name },
       h("header", { class: "mission-sheet__bar" },
         avatar(day.child, { size: "md" }),
         h("h2", { class: "mission-sheet__title" }, mission.name),
@@ -27,8 +29,10 @@ export function missionSheet(day, mission, { onToggle, onSpeak, onClose, again =
         h("button", {
           type: "button", class: "icon-button mission-sheet__close", "aria-label": t.child.close, onclick: onClose,
         }, icon("close"))),
+      past && h("p", { class: "mission-sheet__past" }, mission.state === "done"
+        ? t.child.pastDone : t.child.pastClosed(mission.schedule?.end, done, total)),
       h("div", { class: `step-grid${total > MANY_STEPS ? " step-grid--many" : ""}` },
-        mission.steps.map((step) => stepCard(step, { locked, onToggle, onSpeak })))));
+        mission.steps.map((step) => stepCard(step, { locked: past, onToggle, onSpeak })))));
 }
 
 function stepCard(step, { locked, onToggle, onSpeak }) {

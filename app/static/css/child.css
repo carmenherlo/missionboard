@@ -721,3 +721,23 @@
 .purchases h3 {
   margin: 0 0 var(--space-2);
 }
+
+
+/* A past mission (done, or closed without doing it), opened to look at (05/11): all in
+   grey, as it was left, and its steps do not look like they answer the finger. */
+.mission-sheet__past {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-align: center;
+}
+
+.mission-sheet--past .step-grid {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.mission-sheet--past .step-card__toggle {
+  cursor: default;
+}

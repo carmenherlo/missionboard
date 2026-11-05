@@ -57,7 +57,7 @@ function missionNode(mission, distance, day, { onOpen, onLocked }) {
   if (isNow) tag = t.child.now;
   else if (mission.focus && state === "upcoming") tag = t.child.at(schedule.start);
 
-  const canOpen = state === "open" || state === "done";
+  const canOpen = state !== "upcoming"; // a past one opens too, to look at (05/11)
   return h("button", {
     type: "button",
     class: `route-node route-node--${state} route-node--${sizeFor(distance)}${mission.focus ? " route-node--focus" : ""}`,

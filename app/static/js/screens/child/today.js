@@ -88,9 +88,7 @@ export async function viewChildToday(childId) {
 
   function showLocked(mission) {
     note("mission_locked", mission);
-    toast(mission.state === "upcoming"
-      ? t.child.opensAt(mission.schedule.start)
-      : t.child.closedAt(mission.schedule.end));
+    toast(t.child.opensAt(mission.schedule.start)); // only one not open yet: past ones open, in grey
   }
 
   function toast(text) {
