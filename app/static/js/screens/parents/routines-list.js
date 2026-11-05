@@ -38,7 +38,13 @@ export async function viewRoutinesList() {
       h("div", { class: "page-header" },
         h("p", { class: "hint" }, routines.length ? t.routines.hint : t.routines.empty),
         h("div", { class: "form-actions" },
-          h("a", { class: "btn", href: "#/parents/config/routines/songs" }, icon("music"), t.songs.open),
           h("a", { class: "btn btn--primary", href: "#/parents/config/routines/new" }, icon("plus"), t.routines.add))),
-      routines.length ? list : null));
+      routines.length ? list : null,
+      // The music below, as Plantillas in Misiones (05/11: first, it looked the most important)
+      h("div", { class: "stack stack--tight section-gap" },
+        h("a", { class: "row row--link", href: "#/parents/config/routines/songs" },
+          h("span", { class: "row__icon" }, icon("music")),
+          h("span", { class: "row__name" }, t.songs.open),
+          h("span", { class: "row__chevron" }, icon("next"))),
+        h("p", { class: "hint" }, t.songs.hint))));
 }
