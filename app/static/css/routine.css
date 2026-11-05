@@ -145,11 +145,18 @@
 .routine__count {
   position: absolute;
   inset: 0;
+  margin: auto;
+  width: var(--countdown-size);
+  height: var(--countdown-size);
   display: grid;
   place-items: center;
-  color: var(--text);
-  font-size: calc(var(--clock-size) * 0.42);
+  border-radius: 50%;
+  background: var(--countdown-disc);
+  box-shadow: 0 0 0 calc(var(--clock-size) * 0.015) var(--countdown-ring);
+  color: var(--countdown-text);
+  font-size: calc(var(--clock-size) * 0.38);
   font-weight: 800;
+  line-height: 1;
   pointer-events: none;
 }
 
@@ -241,6 +248,21 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* A trial (rutinas-7): under each kid, their pretend mission, not done or done, in a tap. */
+.routine-kid__pretend {
+  margin-top: var(--space-1);
+}
+
+.routine-kid__pretend .tab {
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.routine__pretend-hint {
+  text-align: center;
 }
 
 .routine-kid {

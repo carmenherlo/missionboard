@@ -147,6 +147,11 @@
   --coming-2: #d5ddff;
   --clock-gone: rgb(255 255 255 / 0.7); /* what has gone by of the stretch, faded */
   --clock-size: min(46vh, 420px);
+  /* The countdown's last ten seconds: a disc over the hands, so the number reads from afar (rutinas-7, 8 A). */
+  --countdown-disc: var(--primary);
+  --countdown-text: var(--on-primary);
+  --countdown-size: 58%; /* of the clock */
+  --countdown-ring: white;
   /* The timer of a routine started by hand (from the old app): a part's time
      in four quarters, from plenty to ending, on a dark case. */
   --timer-1: #2ec4b6; /* turquoise */
