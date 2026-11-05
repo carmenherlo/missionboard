@@ -23,7 +23,7 @@
 // "Probar ahora" (Configurar → Rutinas) shows a routine the same way, at its own
 // times, on this device only: over any screen, nothing logged, and "Cerrar"
 // ends it. Its clock can go faster (×10, ×20) or jump to just before the next
-// part ("Siguiente"); dragging round the clock moves its time (as the minute
+// part ("Siguiente") or back ("Atrás"); dragging round the clock moves its time (as the minute
 // hand would go), and "Transcripción" lists what the voice said, at which
 // time of the trial; the real routine always goes at the household's time.
 import { api } from "../api.js";
@@ -59,6 +59,7 @@ const AFTER_ZERO_MS = 1000; // after the countdown's last pip, the voice waits t
 const DONE_MS = 30_000; // started by hand: "¡Hecho!" (or "¡Se acabó el tiempo!") stays this long
 const TRIAL_SPEEDS = [1, 10, 20]; // "Probar ahora": how fast its clock can go
 const TRIAL_JUMP_LEAD_S = 20; // "Siguiente" lands this long before the next part (its countdown is heard)
+const JUST_STARTED_S = 5; // "Atrás" this soon after a part starts: to the one before it
 const HOLD_HINT_MS = 2500; // a quick tap on "Cerrar": "Mantén pulsado para cerrar", this long
 
 const inParents = () => location.hash.startsWith("#/parents");
@@ -224,7 +225,27 @@ export function startRoutines() {
     let phase = phaseAt(time);
     if (phase.kind !== "done" && phase.to - time <= (TRIAL_JUMP_LEAD_S + 1) / 60) phase = phaseAt(phase.to);
     if (phase.kind === "done") return;
-    pretend(Math.max(time, phase.to - TRIAL_JUMP_LEAD_S / 60));
+    landAt(Math.max(time, phase.to - TRIAL_JUMP_LEAD_S / 60));
+  }
+
+  // "Atrás": just before the part on screen starts (its countdown and announcement again);
+  // if it has only just started, before the one before it. Every tap goes one back.
+  function back() {
+    if (showing.finishing) return; // the routine is ending
+    const time = now();
+    let phase = phaseAt(time);
+    if (phase.kind === "done") return;
+    if (time - phase.from < JUST_STARTED_S / 60) phase = phaseAt(phase.from - 1 / 600);
+    const { data } = showing;
+    const first = data.manual ? parts()[0].from : minuteOf(data.wake);
+    const target = Math.max(first, phase.from - TRIAL_JUMP_LEAD_S / 60);
+    if (showing.earlyGoal != null && target < showing.earlyGoal) showing.earlyGoal = null;
+    showing.count = null; // going back is not a countdown reaching zero
+    landAt(target);
+  }
+
+  function landAt(time) {
+    pretend(time);
     stopRinging();
     quiet();
     tick();
@@ -687,6 +708,7 @@ export function startRoutines() {
           type: "button", class: `tab${speed === showing.speed ? " tab--on" : ""}`,
           "aria-pressed": String(speed === showing.speed), onclick: () => setSpeed(speed),
         }, `×${speed}`))),
+      h("button", { type: "button", class: "btn", onclick: back }, t.routine.previousPart),
       h("button", { type: "button", class: "btn", onclick: jump }, t.routine.nextPart),
       h("button", {
         type: "button", class: "btn routine__trial-toggle",

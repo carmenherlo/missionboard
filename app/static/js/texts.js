@@ -88,6 +88,7 @@ export const t = {
     chooseKids: "Toca a los que han llegado.",
     trialLabel: "Prueba",
     speed: "Velocidad",
+    previousPart: "Atrás",
     nextPart: "Siguiente",
     dragHint: "Arrastra el reloj para mover la hora",
     transcript: "Transcripción",
