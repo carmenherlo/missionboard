@@ -227,7 +227,7 @@
 }
 
 .ring__track {
-  fill: none; /* transparent: the picture floats inside its ring (as in an earlier game) */
+  fill: none; /* transparent: the picture floats inside its ring */
   stroke: var(--line);
   stroke-width: 6;
 }

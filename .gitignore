@@ -1,6 +1,11 @@
 # Real family data: never in the repo
 data/
 
+# Private notes: the plan, the sketches and the project's working notes stay local
+CLAUDE.md
+CLAUDE.local.md
+docs/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -1,5 +1,5 @@
 """The natural voice: texts read aloud with Piper, on this server, no internet
-needed. Ported from the old app (an earlier version, app/voice.py), where
+needed. Ported from an earlier version of the app, where
 the family chose it: the woman's voice (speaker "F") of the Spanish model
 es_ES-sharvard-medium. The browser plays it (static/js/components/speech.js);
 without a model, or without Piper, there is no voice here and the tablet
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 MODEL_NAME = "es_ES-sharvard-medium.onnx"
 SPEAKER = "F"  # the woman's voice
 # Piper's usual style reads rather flat: a livelier intonation, a less even
-# rhythm and a bit faster (as chosen in the old app).
+# rhythm and a bit faster (as chosen in an earlier version).
 STYLE = {"noise_scale": 0.9, "noise_w_scale": 1.0, "length_scale": 0.88}
 MAX_TEXT = 600  # characters; a routine's sentence is far shorter
 

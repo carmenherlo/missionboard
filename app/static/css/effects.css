@@ -6,7 +6,7 @@
    "Reduce motion" on the tablet turns them all off (end of the file).
    ===================================================================== */
 
-/* "Latido" (from an earlier game): a light in its colour behind, growing and fading, on what
+/* "Latido": a light in its colour behind, growing and fading, on what
    waits for the child: the mission of "¡Ahora!", the prize unlocked, and in a routine's
    "firmar", whoever still has steps. The pictures are transparent: it shows through. */
 .route-node--focus.route-node--open .ring::before,
@@ -31,7 +31,7 @@
   to { opacity: 1; transform: scale(1.1); }
 }
 
-/* "Resplandor" (from an earlier game): a reflection goes once round the ring, like a gold ring
+/* "Resplandor": a reflection goes once round the ring, like a gold ring
    turned in the light: the child's avatar when their screen opens, and the celebration. */
 .fx-shine::after {
   content: "";

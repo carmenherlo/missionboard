@@ -84,7 +84,7 @@ export function checkStart(routine, time, missing) {
   return [`${capital(itIs(time))}.`, checkOpening(routine), ...missing.map(([name, n]) => someoneMissing(name, n))];
 }
 
-// At the goal, whoever did not finish: "A Leo le faltaron 2 tareas."
+// At the goal, whoever did not finish: "A Alex le faltaron 2 tareas."
 export const someoneMissed = (name, n) => `A ${name} ${n === 1 ? "le faltó 1 tarea" : `le faltaron ${n} tareas`}.`;
 
 export const someoneMissing = (name, n) => `A ${name} ${n === 1 ? "le falta 1 tarea" : `le faltan ${n} tareas`}.`;

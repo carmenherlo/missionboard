@@ -19,7 +19,7 @@ export function ring(progress, content, { star = null, className = "" } = {}) {
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("viewBox", "0 0 100 100");
   svg.setAttribute("aria-hidden", "true");
-  svg.append(circle("ring__track"), circle("ring__white", undefined, 41.5)); // the thin white ring inside, as in an earlier game
+  svg.append(circle("ring__track"), circle("ring__white", undefined, 41.5)); // the thin white ring inside
   if (progress > 0) svg.append(circle("ring__glow", progress), circle("ring__fill", progress));
   return h("span", { class: `ring ${className}`.trim() },
     svg,

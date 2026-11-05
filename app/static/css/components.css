@@ -951,11 +951,11 @@
   width: var(--size);
   height: var(--size);
   border-radius: 50%;
-  /* A double ring, as in an earlier game: a thin white one hugging the picture (the border)
+  /* A double ring: a thin white one hugging the picture (the border)
      and, outside it, a thicker one in the child's colour (the shadow). */
   border: calc(var(--size) * 0.025 + 1px) solid var(--surface);
   box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--child-color, var(--line));
-  background: none; /* transparent: the animal floats inside its ring (as in an earlier game) */
+  background: none; /* transparent: the animal floats inside its ring */
   font-size: calc(var(--size) * 0.45);
   font-weight: 800;
   overflow: hidden;

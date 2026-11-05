@@ -1,4 +1,4 @@
-// The clock of a routine (ported from the old app, where it helps the kids
+// The clock of a routine (ported from an earlier version, where it helps the kids
 // understand time): hands at the household's time and, painted on the dial,
 // the stretch of the phase. For a part, its four quarters in green, blue,
 // orange and red as it runs out; yellow while waiting (for the first part,

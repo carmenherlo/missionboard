@@ -2,7 +2,7 @@
 
 A routine is a talking schedule (see service.py): it rings at its wake-up
 time and then guides part after part, with the voice and a clock, until its
-goal. Ported from the old app (an earlier version, app/alarms.py), where
+goal. Ported from an earlier version of the app, where
 it was tested at home.
 """
 

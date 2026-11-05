@@ -1,5 +1,5 @@
 // Sound effects made by the browser itself (Web Audio): no files, no licences,
-// works offline. Ported from the old app (an earlier version, sounds.js),
+// works offline. Ported from an earlier version of the app,
 // where they were tested at home with the morning routine.
 //
 // Four channels, voice, effects, the ticking second hand and the songs, each with its level and an on/off switch,

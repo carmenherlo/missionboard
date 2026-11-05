@@ -1,4 +1,4 @@
-// The routine going on (rutinas-1.html), ported from the old app (alarm.js),
+// The routine going on (rutinas-1.html), ported from an earlier version,
 // where the morning one was tested at home. Every little while it asks the
 // server which routine is on (by the household's clock, not the tablet's)
 // and, if there is one, a full-screen layer guides the kids:

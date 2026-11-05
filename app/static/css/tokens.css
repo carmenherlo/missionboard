@@ -139,7 +139,7 @@
   --wheel-pointer: var(--text);
 
   /* ---------- Routines (rutinas-1.html) ----------
-     The clock: a part's stretch in four quarters as it runs out, from the old app,
+     The clock: a part's stretch in four quarters as it runs out,
      where they help the kids see how much time is left. */
   --stretch-1: #3bb273; /* green: plenty */
   --stretch-2: #3a86ff; /* blue */
@@ -159,7 +159,7 @@
   --countdown-text: var(--on-primary);
   --countdown-size: 58%; /* of the clock */
   --countdown-ring: white;
-  /* The timer of a routine started by hand (from the old app): a part's time
+  /* The timer of a routine started by hand (as in an earlier version): a part's time
      in four quarters, from plenty to ending, on a dark case. */
   --timer-1: #2ec4b6; /* turquoise */
   --timer-2: #ffd23f; /* yellow */
@@ -179,7 +179,7 @@
 
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 5s; /* "¡Misión cumplida!" closes by itself after this */
-  --heartbeat: 1.1s; /* "latido" (from an earlier game): a light in its colour behind, growing and fading */
+  --heartbeat: 1.1s; /* "latido": a light in its colour behind, growing and fading */
   --heartbeat-strength: 60%; /* how much of the colour that light has */
   --shine: 1.4s; /* "resplandor": a reflection going once round a ring */
   --shine-light: rgb(255 252 235 / 1);

@@ -153,8 +153,8 @@ def _v5_to_v6(doc: dict) -> dict:
     return {**doc, "version": 6, "prizes": copy.deepcopy(_SAMPLE_PRIZES)}
 
 
-# The morning routine as it was in the old app (an earlier version,
-# data/alarms/alarms.yaml, tested at home), for every child. "warnings": the
+# A morning routine, as it was in an earlier version (tested in daily use),
+# for every child. "warnings": the
 # minutes before a part ends when the voice warns; None takes the default
 # (settings.routine_warn_minutes). The breakfast had a 5-minute warning too.
 def _part(name, image, minutes, *, at=None, say=None, tasks=(), warnings=None, check_mission=False):
@@ -191,7 +191,7 @@ _SAMPLE_ROUTINES = [
 
 
 def _v6_to_v7(doc: dict) -> dict:
-    """Add the routines, starting with the morning one of the old app."""
+    """Add the routines, starting with a morning one."""
     return {**doc, "version": 7, "routines": copy.deepcopy(_SAMPLE_ROUTINES)}
 
 

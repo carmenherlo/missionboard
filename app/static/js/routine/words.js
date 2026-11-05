@@ -1,5 +1,5 @@
 // How times are said and written in a routine, as people say them at home
-// (ported from the old app, alarm.js).
+// (ported from an earlier version).
 
 // "06:50" → 410 (minute of the day)
 export function minuteOf(hhmm) {
