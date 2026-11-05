@@ -130,16 +130,7 @@ class RoutinesEditor:
         if anchor:
             changes["anchor"] = anchor
         if starts:
-            # The whole routine moves (rutinas-7): the parts at a time of their own and
-            # the goal too, so that "− / +" on its card never leaves them behind.
-            moved = minute_of(starts) - start
-            for part in parts[1:]:
-                if part["at"]:
-                    part["at"] = hhmm((minute_of(part["at"]) + moved) % (24 * 60))
-            if goal and moved:
-                goal["at"] = hhmm((minute_of(goal["at"]) + moved) % (24 * 60))
-                changes["goal"] = goal
-            start = minute_of(starts)
+            start = minute_of(starts)  # the parts and the goal follow (_settled)
         if ends:
             if not goal:
                 raise InvalidError("No goal to end at")
@@ -217,8 +208,8 @@ class RoutinesEditor:
     def update_part(self, routine_id: str, part_id: str, **fields) -> Routine:
         routine = self.get(routine_id)
         old = self._find_part(routine, part_id)
-        if routine.anchor == "end" and fields.get("at"):
-            raise InvalidError("It ends at a time: its parts go one after the other")
+        if fields.get("at") and (routine.anchor == "end" or part_id != routine.parts[0].id):
+            raise InvalidError("Only the pinned time stays put: the parts go one after the other")
         if "image" in fields:
             fields["image"] = self._images.check_new_image(old.image, fields["image"])
             fields["image_suggested"] = False
@@ -400,10 +391,21 @@ class RoutinesEditor:
 
 
 def _settled(doc: dict) -> dict:
-    """A routine that ends at a time ("Termina a las"): its parts one after the other,
-    the last ending at its goal; the first part (and when it rings, as many minutes
-    before as it was) moves to fit. Any other routine, as it is."""
-    if doc.get("anchor") != "end" or doc.get("wake") is None or not doc.get("goal"):
+    """Only the pinned time stays put (05/11): the parts have only their minutes, one
+    after the other. Starting at a time ("Empieza a las"): from the first part's time,
+    and the goal comes when they end (after checking the missions). Ending at a time
+    ("Termina a las"): the last ends at its goal; the first part (and when it rings, as
+    many minutes before as it was) moves to fit. Started by hand, as it is."""
+    if doc.get("wake") is None or not doc.get("parts"):
+        return doc
+    if doc.get("anchor") != "end":
+        parts = [{**part, "at": None} for part in doc["parts"]]
+        parts[0]["at"] = doc["parts"][0].get("at") or doc["wake"]
+        if not doc.get("goal"):
+            return {**doc, "parts": parts}
+        end = minute_of(parts[0]["at"]) + sum(part["minutes"] for part in parts) + doc["goal"].get("check_minutes", 0)
+        return {**doc, "parts": parts, "goal": {**doc["goal"], "at": hhmm(end % (24 * 60))}}
+    if not doc.get("goal"):
         return doc
     parts = [{**part, "at": None} for part in doc["parts"]]
     first_at = doc["parts"][0].get("at")

@@ -65,39 +65,22 @@ export async function viewRoutinePartEdit(routineId, partId) {
   // ---------- name and when ----------
   const nameInput = textInput(part().name, (name) => name && name !== part().name && patch({ name }), { maxlength: 60 });
   const nameHint = h("span", { class: "hint" }, t.routinePart.nameHint);
-  // How long, with − / + as on its card (rutinas-7), and from when to when.
+  // How long, with − / + as on its card (rutinas-7), and from when to when. Only its
+  // minutes (05/11): the parts go one after the other, and only the pinned time stays put.
   const when = h("div", { class: "part-length" });
-  // "Seguida de la anterior / A una hora": folded away, almost every part follows on.
-  const more = h("details", { class: "panel panel--more" });
   function renderWhen() {
-    const own = Boolean(part().at);
-    const fixedHint = routine.manual ? (isFirst() ? t.routinePart.firstByHand : t.routinePart.byHand)
-      : isFirst() ? t.routinePart.first
+    const hint = routine.manual ? (isFirst() ? t.routinePart.firstByHand : t.routinePart.byHand)
+      : isFirst() && routine.anchor !== "end" ? t.routinePart.first
       : routine.anchor === "end" ? t.routinePart.chained
-      : null; // it can follow on or go at a time of its own: in "Más opciones"
+      : t.routinePart.followsOn;
     when.replaceChildren(
       h("span", { class: "field__label" }, t.routinePart.length),
       stepper({
         value: part().minutes, min: 1, max: 180, format: t.routine.minutes, label: t.routinePart.length,
         onChange: (minutes) => patch({ minutes }),
       }),
-      h("span", { class: "hint" }, [
-        !routine.manual && t.routinePart.starts(part().start, part().end),
-        fixedHint ?? (own ? t.routinePart.ownTime : t.routinePart.followsOn),
-      ].filter(Boolean).join(" ")));
-    more.hidden = Boolean(fixedHint);
-    if (fixedHint) return;
-    const at = h("input", { type: "time", value: part().at ?? part().start, onchange: (e) => e.target.value && patch({ at: e.target.value }) });
-    more.open ||= own;
-    more.replaceChildren(
-      h("summary", { class: "panel__title" }, t.routinePart.moreOptions),
-      h("div", { class: "tabs" },
-        [[false, t.routinePart.afterPrevious], [true, t.routinePart.atTime]].map(([value, label]) =>
-          h("button", {
-            type: "button", class: `tab${own === value ? " tab--on" : ""}`, "aria-pressed": String(own === value),
-            onclick: () => own !== value && patch({ at: value ? part().start : null }),
-          }, own === value && icon("check"), label))),
-      own && h("div", { class: "times" }, h("label", { class: "time" }, t.routinePart.at, at)));
+      h("span", { class: "hint" }, [!routine.manual && t.routinePart.starts(part().start, part().end), hint]
+        .filter(Boolean).join(" ")));
   }
 
   // ---------- what it says: seen here, changed in "Lo que dice la voz" (rutinas-5) ----------
@@ -229,7 +212,6 @@ export async function viewRoutinePartEdit(routineId, partId) {
             says,
             h("a", { class: "btn", href: `${routineHref}/voice/${partId}` }, icon("speaker"), t.routinePart.changeSay),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.warnings), warnings,
-              h("span", { class: "hint" }, t.routinePart.warningsHint))),
-          more)),
+              h("span", { class: "hint" }, t.routinePart.warningsHint))))),
       footer));
 }

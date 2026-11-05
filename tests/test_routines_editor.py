@@ -44,7 +44,7 @@ def test_the_list_has_the_morning_routine(client):
     routines = client.get("/api/routines").json()
     assert [r["name"] for r in routines] == ["Mañana"]
     morning = routines[0]
-    assert morning["every_child"] is True and morning["ends"] == "07:45"
+    assert morning["every_child"] is True and morning["ends"] == "07:30"
     assert morning["parts"][0]["id"] == "manana-1" and morning["parts"][0]["image_url"].endswith("cooking.svg")
     assert morning["conflicts"] == []
 
@@ -82,13 +82,15 @@ def test_changes_need_the_parent_code(client):
 def test_name_days_wake_and_goal(client, data_dir):
     routine = edit(client, "PATCH", name="Cole", days=["fri", "mon"], wake="06:20", remind_every=10).json()
     assert routine["name"] == "Cole" and routine["days"] == ["mon", "fri"] and routine["wake"] == "06:20"
+    # Starting at a time, the goal comes when the parts end (05/11): its own time does not count
     goal = {"at": "07:50", "say": "¡Al autobús!"}
-    assert edit(client, "PATCH", goal=goal).json()["goal"] == {**goal, "image": None, "check_minutes": 0, "check_say": None}
+    assert edit(client, "PATCH", goal=goal).json()["goal"] == {
+        "at": "07:25", "say": "¡Al autobús!", "image": None, "check_minutes": 0, "check_say": None}
     assert edit(client, "PATCH", goal=None).json()["ends"] == "07:25"
     assert saved(data_dir)["routines"][0]["name"] == "Cole"
 
 
-@pytest.mark.parametrize("body", [{"wake": "06:40"}, {"goal": {"at": "07:20"}}, {"days": []}])
+@pytest.mark.parametrize("body", [{"wake": "06:40"}, {"days": []}])
 def test_times_that_do_not_add_up_are_refused(client, body):
     assert edit(client, "PATCH", **body).status_code == 422
     assert client.get(URL).json()["wake"] == "06:30"
@@ -113,7 +115,7 @@ def test_a_mission_closing_before_the_routine_ends_is_warned(client):
     patch(client, despegue["id"], schedule={"start": "06:00", "end": "07:00"})
     routine = edit(client, "PUT", f"/missions/{bea['id']}", mission_id=despegue["id"]).json()
     assert routine["conflicts"] == [{"child": "Bea", "mission": "Despegue", "mission_id": despegue["id"],
-                                     "closes": "07:00", "ends": "07:45"}]
+                                     "closes": "07:00", "ends": "07:30"}]
 
 
 def test_a_deleted_child_leaves_the_routines(client, data_dir):
@@ -146,12 +148,12 @@ def test_add_change_and_remove_parts(client):
     assert descriptions(client, limit=1) == ["Quitaste «lavarse las manos» de la rutina «Mañana»"]
 
 
-def test_a_part_at_its_own_time_or_right_after(client):
-    routine = edit(client, "PATCH", "/parts/manana-3", at="07:02").json()
-    assert parts(routine)[2] == ("el aseo", "07:02", "07:07")
-    assert edit(client, "PATCH", "/parts/manana-3", at="06:50").status_code == 422  # during breakfast
-    routine = edit(client, "PATCH", "/parts/manana-3", at=None).json()
-    assert parts(routine)[2] == ("el aseo", "07:00", "07:05")
+def test_only_the_first_part_has_a_time(client):
+    # Only the pinned time stays put (05/11): the others have only their minutes
+    assert edit(client, "PATCH", "/parts/manana-3", at="07:02").status_code == 422
+    routine = edit(client, "PATCH", "/parts/manana-1", at="06:40").json()
+    assert parts(routine)[:2] == [("la preparación del desayuno", "06:40", "06:50"), ("el desayuno", "06:50", "07:05")]
+    assert routine["goal"]["at"] == "07:35"
 
 
 def test_reorder_and_the_start_time_goes_with_the_first_part(client):
@@ -159,8 +161,6 @@ def test_reorder_and_the_start_time_goes_with_the_first_part(client):
     routine = edit(client, "PUT", "/parts/order", ids=order).json()
     assert parts(routine)[2:4] == [("vestirse", "07:00", "07:07"), ("el aseo", "07:07", "07:12")]
     order = ["manana-2", "manana-1", "manana-4", "manana-3", "manana-5", "manana-6"]
-    assert edit(client, "PUT", "/parts/order", ids=order).status_code == 422  # breakfast keeps its 6:45
-    edit(client, "PATCH", "/parts/manana-2", at=None)
     routine = edit(client, "PUT", "/parts/order", ids=order).json()
     assert parts(routine)[:2] == [("el desayuno", "06:35", "06:50"), ("la preparación del desayuno", "06:50", "07:00")]
 
@@ -189,7 +189,7 @@ def test_trial_keeps_the_routines_own_times(client, clock):
     trial = client.get(f"{URL}/trial", headers=PARENT).json()
     assert trial["trial"] is True and trial["wake"] == "06:30"
     assert [(p["start"], p["end"]) for p in trial["parts"]][:2] == [("06:35", "06:45"), ("06:45", "07:00")]
-    assert trial["goal"]["at"] == "07:45"
+    assert trial["goal"]["at"] == "07:30"
     assert trial["now"] == pytest.approx(6 * 60 + 30)  # as if it were 6:30, whatever the time now
     assert descriptions(client, limit=1) == ["Probaste la rutina «Mañana»"]
     assert client.get("/api/routines/current").json() is None  # nothing really rings
@@ -228,7 +228,7 @@ def test_a_day_with_everything_later(client, clock):
     assert client.get("/api/routines/current").json() is None
     clock.moment = datetime(2026, 11, 3, 6, 50, tzinfo=MADRID)
     on = client.get("/api/routines/current").json()
-    assert on["wake"] == "06:45" and on["parts"][0]["start"] == "06:50" and on["goal"]["at"] == "08:00"
+    assert on["wake"] == "06:45" and on["parts"][0]["start"] == "06:50" and on["goal"]["at"] == "07:45"
     clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)  # Monday: as usual
     assert client.get("/api/routines/current").json()["wake"] == "06:30"
 
@@ -236,7 +236,7 @@ def test_a_day_with_everything_later(client, clock):
 def test_moved_days_count_for_overlaps_and_must_stay_in_their_day(client):
     other = client.post("/api/routines", json={"name": "Otra", "wake": "08:00"}, headers=PARENT)
     assert other.status_code == 201
-    assert edit(client, "PATCH", offsets={"tue": 30}).status_code == 409  # Mañana would end at 8:15 on Tuesday
+    assert edit(client, "PATCH", offsets={"tue": 45}).status_code == 409  # Mañana would end at 8:15 on Tuesday
     assert edit(client, "PATCH", offsets={"tue": -500}).status_code == 422
 
 
@@ -273,8 +273,8 @@ def test_import_the_steps_of_a_mission_or_template(client):
     add_step(client, mission["id"], "Pijama")
     assert client.post(url, json={"mission_id": mission["id"]}, headers=PARENT).json()["parts"][-1]["name"] == "pijama"
     assert client.post(url, json={"mission_id": "nope"}, headers=PARENT).status_code == 404
-    # Past the goal of the morning routine: refused, nothing changes
-    assert edit(client, "POST", "/parts/import", mission_id="aterrizaje").status_code == 422
+    # Into the morning routine: its goal comes later (4 parts of 5 minutes)
+    assert edit(client, "POST", "/parts/import", mission_id="aterrizaje").json()["goal"]["at"] == "07:50"
 
 
 def test_remove_several_parts_at_once(client):
@@ -310,13 +310,13 @@ def test_a_new_routine_needs_one_time(client):
 
 def test_ending_at_its_goal_keeps_that_time(client):
     routine = edit(client, "PATCH", anchor="end").json()
-    # The goal stays at 7:45: the parts move up to it, one after the other, up to its
+    # The goal stays at 7:30: the parts move up to it, one after the other, up to its
     # 5 minutes of checking the missions, and it still rings 5 minutes before
-    assert routine["goal"]["at"] == "07:45" and routine["parts"][-1]["end"] == "07:40"
-    assert routine["starts"] == "06:50" and routine["wake"] == "06:45" and routine["alarm_before"] == 5
+    assert routine["goal"]["at"] == "07:30" and routine["parts"][-1]["end"] == "07:25"
+    assert routine["starts"] == "06:35" and routine["wake"] == "06:30" and routine["alarm_before"] == 5
     first = routine["parts"][0]["id"]
     routine = edit(client, "PATCH", f"/parts/{first}", minutes=15).json()  # 5 more minutes
-    assert routine["starts"] == "06:45" and routine["wake"] == "06:40" and routine["ends"] == "07:45"
+    assert routine["starts"] == "06:30" and routine["wake"] == "06:25" and routine["ends"] == "07:30"
     routine = edit(client, "PATCH", ends="08:00").json()
     assert routine["starts"] == "07:00" and routine["goal"]["at"] == "08:00"
     # One after the other: no part at its own time, and the goal is a must
@@ -344,11 +344,11 @@ def test_starts_at_and_the_alarm(client):
 
 
 def test_a_new_start_moves_the_whole_routine(client):
-    # "El desayuno" at 6:45 of its own, and the goal at 7:45: they move with it
+    # The parts one after the other from there, and the goal when they end
     routine = edit(client, "PATCH", starts="06:40").json()
     assert routine["starts"] == "06:40" and routine["wake"] == "06:35"
     assert parts(routine)[:2] == [("la preparación del desayuno", "06:40", "06:50"), ("el desayuno", "06:50", "07:05")]
-    assert routine["goal"]["at"] == "07:50"
+    assert routine["goal"]["at"] == "07:35"
 
 
 def test_the_screen_knows_if_it_rings(client, clock):
@@ -410,9 +410,9 @@ def test_the_goals_checking_moves_the_parts(client):
     routine = edit(client, "PATCH", anchor="end").json()
     goal = routine["goal"]
     routine = edit(client, "PATCH", goal={**goal, "check_minutes": 10}).json()
-    assert routine["goal"]["at"] == "07:45" and routine["parts"][-1]["end"] == "07:35"
+    assert routine["goal"]["at"] == "07:30" and routine["parts"][-1]["end"] == "07:20"
     routine = edit(client, "PATCH", goal={**routine["goal"], "check_minutes": 0}).json()
-    assert routine["parts"][-1]["end"] == "07:45"
+    assert routine["parts"][-1]["end"] == "07:30"
 
 
 def test_warnings_about_the_next_part(client, clock):

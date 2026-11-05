@@ -396,18 +396,9 @@ export async function viewRoutineEdit(routineId) {
     }
     const goal = routine.goal;
     const ending = routine.anchor === "end"; // its time is "Termina a las", and it is a must
-    // Only its time: what the voice says there is in "Lo que dice la voz" (rutinas-5).
-    const at = h("input", {
-      type: "time", value: goal.at,
-      onchange: () => at.value && at.value !== goal.at && patch({ goal: { ...goal, at: at.value } }),
-    });
+    // No time of its own (05/11): it is "Termina a las", or it comes when the parts end.
     // Checking the missions first (rutinas-6): on, with its minutes.
-    const lastEnd = minuteOf(routine.parts.at(-1).end);
-    const setCheck = (minutes) => {
-      const needed = lastEnd + minutes; // starting at a time, the goal may have to wait for it
-      const goalAt = ending ? goal.at : hhmm(Math.max(minuteOf(goal.at), needed));
-      patch({ goal: { ...goal, at: goalAt, check_minutes: minutes } });
-    };
+    const setCheck = (minutes) => patch({ goal: { ...goal, check_minutes: minutes } });
     const checking = goal.check_minutes > 0;
     const checkOn = h("input", {
       type: "checkbox", checked: checking, onchange: (e) => setCheck(e.target.checked ? USUAL_CHECK_MINUTES : 0),
@@ -416,8 +407,8 @@ export async function viewRoutineEdit(routineId) {
       [...new Set([...CHECK_CHOICES, goal.check_minutes])].filter(Boolean).sort((a, b) => a - b)
         .map((n) => h("option", { value: n, selected: n === goal.check_minutes }, t.routine.minutes(n))));
     goalBox.replaceChildren(...[!ending && tabs,
-      ending ? h("p", { class: "hint" }, t.routineEdit.goalIsTheEnd(shortTime(goal.at)))
-        : h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.goalAt, at)),
+      h("p", { class: "hint" }, ending ? t.routineEdit.goalIsTheEnd(shortTime(goal.at))
+        : t.routineEdit.goalAfterParts(shortTime(goal.at))),
       h("label", { class: "toggle" }, checkOn, t.routineEdit.checkFirst),
       checking && h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.checkDuring, during)),
       h("p", { class: "hint" }, checking

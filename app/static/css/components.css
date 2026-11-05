@@ -1463,15 +1463,6 @@
   margin: 0;
 }
 
-/* A panel folded away until it is opened ("Más opciones"). */
-.panel--more > summary {
-  cursor: pointer;
-}
-
-.panel--more:not([open]) > summary {
-  margin-bottom: 0;
-}
-
 /* A sentence with gaps to tap (rutinas-7: when a song plays). The gaps are the
    browser's own lists, dressed as the app's pills. */
 .sentence {

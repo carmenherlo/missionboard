@@ -5,6 +5,7 @@ import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.storage.config_migrations import CURRENT_VERSION, upgrade
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import add_step, create_child, create_mission
@@ -49,7 +50,8 @@ def test_the_morning_routine_comes_with_the_migration(client):
     assert routine["parts"][-1]["name"] == "prepararse para salir"  # "firmar" became the goal's checking
     assert routine["goal"]["check_minutes"] == 5
     assert routine["goal"]["check_say"] == "No olvidéis firmar vuestras tareas antes de iros."
-    assert routine["goal"]["at"] == "07:45" and routine["goal"]["say"] == "¡Es hora de irse al cole!"
+    # One after the other from 6:35 (05/11): the goal comes when they end and are checked
+    assert routine["goal"]["at"] == "07:30" and routine["goal"]["say"] == "¡Es hora de irse al cole!"
     assert routine["parts"][2]["tasks"] == ["Lavarse los dientes", "Lavarse la cara"]
     assert routine["parts"][2]["image_url"].endswith("/toothbrush.svg")
 
@@ -62,8 +64,8 @@ def test_a_one_minute_warning_in_every_part_by_default(client):
 @pytest.mark.parametrize("moment, on", [
     (MONDAY.replace(hour=6, minute=29, second=59), False),
     (MONDAY.replace(hour=6, minute=30, second=0), True),
-    (MONDAY.replace(hour=7, minute=44, second=59), True),
-    (MONDAY.replace(hour=7, minute=45, second=0), False),
+    (MONDAY.replace(hour=7, minute=29, second=59), True),
+    (MONDAY.replace(hour=7, minute=30, second=0), False),
     (MONDAY.replace(day=7), False),  # Saturday
 ])
 def test_it_is_on_from_its_wake_up_until_its_goal_on_its_days(client, clock, moment, on):
@@ -162,6 +164,17 @@ def test_only_the_routines_children(data_dir, clock):
         assert [p["child"]["name"] for p in current(client)["people"]] == ["Bea"]
 
 
+def test_v13_only_the_pinned_time_stays_put():
+    doc = {"version": 13, "routines": [{
+        "id": "m", "wake": "06:30", "goal": {"at": "07:45", "check_minutes": 5},
+        "parts": [{"id": "a", "at": "06:35", "minutes": 10}, {"id": "b", "at": "06:50", "minutes": 15},
+                  {"id": "c", "at": None, "minutes": 5}],
+    }]}
+    routine = upgrade(doc)["routines"][0]
+    assert [p["at"] for p in routine["parts"]] == ["06:35", None, None]
+    assert routine["goal"]["at"] == "07:10"  # 6:35 + 30 minutes of parts + 5 of checking
+
+
 @pytest.mark.parametrize("routine", [
     {"id": "r", "name": "R", "wake": "07:00", "parts": [{"name": "a", "minutes": 5}]},  # first part, no time
     {"id": "r", "name": "R", "wake": "07:00", "parts": [
@@ -170,7 +183,10 @@ def test_only_the_routines_children(data_dir, clock):
      "goal": {"name": "g", "at": "07:05"}},  # goal before the end
 ])
 def test_a_routine_whose_times_do_not_add_up_stops_the_app(data_dir, clock, routine):
-    write_routines(data_dir, [routine])
+    # Written by hand at today's version (older ones are put in order by the migrations)
+    data_dir.mkdir(parents=True)
+    doc = {"version": CURRENT_VERSION, "children": [], "missions": [], "templates": [], "prizes": [], "routines": [routine]}
+    config_path(data_dir).write_text(yaml.safe_dump(doc))
     with pytest.raises(Exception):
         with TestClient(create_app(data_dir, clock=clock)):
             pass

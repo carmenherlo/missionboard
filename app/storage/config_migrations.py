@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 13
+CURRENT_VERSION = 14
 
 
 class ConfigVersionError(Exception):
@@ -287,6 +287,27 @@ def _v12_to_v13(doc: dict) -> dict:
     return {**doc, "version": 13, "routines": routines}
 
 
+def _v13_to_v14(doc: dict) -> dict:
+    """Only the pinned time stays put (05/11): a routine that starts at a time has its
+    parts one after the other from the first, and its goal when they end (after
+    checking the missions). No part at a time of its own any more."""
+    routines = []
+    for routine in copy.deepcopy(doc.get("routines") or []):
+        parts = routine.get("parts") or []
+        if routine.get("wake") is not None and routine.get("anchor", "start") != "end" and parts:
+            first = parts[0].get("at") or routine["wake"]
+            for part in parts:
+                part["at"] = None
+            parts[0]["at"] = first
+            goal = routine.get("goal")
+            if goal:
+                hours, minutes = map(int, first.split(":"))
+                end = hours * 60 + minutes + sum(p["minutes"] for p in parts) + goal.get("check_minutes", 0)
+                goal["at"] = f"{end // 60 % 24:02d}:{end % 60:02d}"
+        routines.append(routine)
+    return {**doc, "version": 14, "routines": routines}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
@@ -300,6 +321,7 @@ _MIGRATIONS = {
     10: _v10_to_v11,
     11: _v11_to_v12,
     12: _v12_to_v13,
+    13: _v13_to_v14,
 }
 
 
