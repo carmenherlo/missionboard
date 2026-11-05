@@ -55,6 +55,10 @@
   --success-vivid: var(--md-success-custom);
   --danger: var(--md-error);
   --danger-soft: var(--md-error-container);
+  /* The snackbar ("Deshacer"): Material's inverse surface, dark on the light page. */
+  --inverse-surface: var(--md-inverse-surface);
+  --on-inverse-surface: var(--md-inverse-on-surface);
+  --inverse-primary: var(--md-inverse-primary);
 
   /* Tints for steps and missions without an image (their initial on a colour) */
   --tint-1: #5b4ae6;

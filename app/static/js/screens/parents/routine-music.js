@@ -187,20 +187,22 @@ export async function viewRoutineMusic(routineId, musicId) {
       h("p", { class: "hint" }, m.songs.length > 1 ? t.routineMusic.lastsTogether(length(song.seconds))
         : t.routineMusic.lasts(length(song.seconds))));
     const ending = m.until !== null;
+    // One sentence with gaps to tap (rutinas-7): "Empieza en [ficha] y suena [una vez /
+    // hasta que acabe] [ficha]"; the last gap only when it lasts up to a card.
+    const startPick = h("select", { class: "pick", "aria-label": t.routineMusic.startsIn, onchange: (e) => change({ start: e.target.value }) },
+      songCards(routine).map((c) => h("option", { value: c.id, selected: c.id === m.start }, cardText(c, routine))));
+    const howPick = h("select", {
+      class: "pick", "aria-label": t.routineMusic.ends,
+      onchange: (e) => change({ until: e.target.value === "card" ? cards[startAt].id === "alarm" ? cards[startAt + 1]?.id : m.start : null }),
+    },
+      h("option", { value: "once", selected: !ending }, t.routineMusic.playsOnce(length(song.seconds))),
+      h("option", { value: "card", selected: ending }, t.routineMusic.playsUntil));
+    const untilPick = ending && h("select", { class: "pick", "aria-label": t.routineMusic.ends, onchange: (e) => change({ until: e.target.value }) },
+      cards.slice(startAt).filter((c) => c.id !== "alarm").map((c) =>
+        h("option", { value: c.id, selected: c.id === m.until }, cardText(c, routine, true))));
     whenBox.replaceChildren(...[
-      h("label", {}, t.routineMusic.startsWith,
-        h("select", { onchange: (e) => change({ start: e.target.value }) },
-          songCards(routine).map((c) => h("option", { value: c.id, selected: c.id === m.start }, cardText(c, routine))))),
-      h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineMusic.ends),
-        h("div", { class: "tabs" },
-          [[false, t.routineMusic.endsWithSong], [true, t.routineMusic.endsWithPart]].map(([value, label]) =>
-            h("button", {
-              type: "button", class: `tab${ending === value ? " tab--on" : ""}`, "aria-pressed": String(ending === value),
-              onclick: () => ending !== value && change({ until: value ? cards[startAt].id === "alarm" ? cards[startAt + 1]?.id : m.start : null }),
-            }, ending === value && icon("check"), label))),
-        ending && h("select", { "aria-label": t.routineMusic.ends, onchange: (e) => change({ until: e.target.value }) },
-          cards.slice(startAt).filter((c) => c.id !== "alarm").map((c) =>
-            h("option", { value: c.id, selected: c.id === m.until }, cardText(c, routine, true))))),
+      h("p", { class: "sentence" }, t.routineMusic.startsIn, " ", startPick, " ", t.routineMusic.andPlays, " ", howPick,
+        ...(untilPick ? [" ", untilPick] : [])),
       h("p", { class: "hint" }, hintOf(routine, m, song)),
       m.start === "alarm" && h("p", { class: "hint" }, t.routineMusic.hintAlarm),
       h("label", { class: "toggle" },

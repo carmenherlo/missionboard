@@ -274,9 +274,110 @@
   outline-offset: 2px;
 }
 
-.row--covered button {
+.row--covered button,
+.row--covered .drag-handle,
+.row--covered input {
   position: relative;
   z-index: 1;
+}
+
+/* ---------- dragging to the bin, and undoing it (rutinas-7) ---------- */
+
+.trash {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-5);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border: 2px dashed var(--danger);
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  box-shadow: var(--shadow-lifted);
+  transform: translateX(-50%);
+  pointer-events: none;
+  transition: transform var(--appear) ease, background-color var(--appear) ease;
+}
+
+.trash .icon {
+  width: 30px;
+  height: 30px;
+}
+
+.trash--hot {
+  border-style: solid;
+  background: var(--danger);
+  color: var(--on-primary);
+  transform: translateX(-50%) scale(1.12);
+}
+
+.undo-bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-5);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  max-width: calc(100vw - 2 * var(--space-3));
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--inverse-surface);
+  color: var(--on-inverse-surface);
+  font-weight: 600;
+  box-shadow: var(--shadow-lifted);
+  transform: translateX(-50%);
+}
+
+.undo-bar__action {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--inverse-primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* − 5 min + : a number a step at a time, on a card. */
+.stepper {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.stepper__value {
+  min-width: 3.6em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stepper__button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .row__chevron {
@@ -1164,6 +1265,14 @@
   white-space: nowrap;
 }
 
+/* The time that stays put, with its − / + (rutinas-7). */
+.routine-card__pinned {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
 .routine-card--alarm {
   background: var(--alarm-card);
   border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm);
@@ -1334,4 +1443,54 @@
 
 .in-song--last::before {
   border-radius: 0 0 var(--song-rail) var(--song-rail);
+}
+
+/* ---------- Editar parte, compact (rutinas-7) ---------- */
+
+/* "Dura  − 5 min +  De 7:00 a 7:05. Seguida de la anterior." in one line. */
+.part-length {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.part-length .field__label {
+  margin: 0;
+}
+
+.part-length .hint {
+  margin: 0;
+}
+
+/* A panel folded away until it is opened ("Más opciones"). */
+.panel--more > summary {
+  cursor: pointer;
+}
+
+.panel--more:not([open]) > summary {
+  margin-bottom: 0;
+}
+
+/* A sentence with gaps to tap (rutinas-7: when a song plays). The gaps are the
+   browser's own lists, dressed as the app's pills. */
+.sentence {
+  margin: 0;
+  font-weight: 600;
+  line-height: 2.8;
+}
+
+select.pick {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-weight: 800;
+  vertical-align: middle;
 }

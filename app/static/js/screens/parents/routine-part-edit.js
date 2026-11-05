@@ -1,8 +1,10 @@
 import { api } from "../../api.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
+import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
+import { stepper } from "../../components/stepper.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
@@ -63,31 +65,39 @@ export async function viewRoutinePartEdit(routineId, partId) {
   // ---------- name and when ----------
   const nameInput = textInput(part().name, (name) => name && name !== part().name && patch({ name }), { maxlength: 60 });
   const nameHint = h("span", { class: "hint" }, t.routinePart.nameHint);
-  const when = h("div", { class: "stack stack--tight" });
+  // How long, with − / + as on its card (rutinas-7), and from when to when.
+  const when = h("div", { class: "part-length" });
+  // "Seguida de la anterior / A una hora": folded away, almost every part follows on.
+  const more = h("details", { class: "panel panel--more" });
   function renderWhen() {
     const own = Boolean(part().at);
-    const minutes = h("input", {
-      type: "number", min: 1, max: 180, value: part().minutes,
-      onchange: (e) => Number(e.target.value) >= 1 && patch({ minutes: Number(e.target.value) }),
-    });
+    const fixedHint = routine.manual ? (isFirst() ? t.routinePart.firstByHand : t.routinePart.byHand)
+      : isFirst() ? t.routinePart.first
+      : routine.anchor === "end" ? t.routinePart.chained
+      : null; // it can follow on or go at a time of its own: in "Más opciones"
+    when.replaceChildren(
+      h("span", { class: "field__label" }, t.routinePart.length),
+      stepper({
+        value: part().minutes, min: 1, max: 180, format: t.routine.minutes, label: t.routinePart.length,
+        onChange: (minutes) => patch({ minutes }),
+      }),
+      h("span", { class: "hint" }, [
+        !routine.manual && t.routinePart.starts(part().start, part().end),
+        fixedHint ?? (own ? t.routinePart.ownTime : t.routinePart.followsOn),
+      ].filter(Boolean).join(" ")));
+    more.hidden = Boolean(fixedHint);
+    if (fixedHint) return;
     const at = h("input", { type: "time", value: part().at ?? part().start, onchange: (e) => e.target.value && patch({ at: e.target.value }) });
-    const tabs = routine.manual
-      ? h("p", { class: "hint" }, isFirst() ? t.routinePart.firstByHand : t.routinePart.byHand)
-      : isFirst()
-      ? h("p", { class: "hint" }, t.routinePart.first)
-      : routine.anchor === "end"
-      ? h("p", { class: "hint" }, t.routinePart.chained)
-      : h("div", { class: "tabs" },
+    more.open ||= own;
+    more.replaceChildren(
+      h("summary", { class: "panel__title" }, t.routinePart.moreOptions),
+      h("div", { class: "tabs" },
         [[false, t.routinePart.afterPrevious], [true, t.routinePart.atTime]].map(([value, label]) =>
           h("button", {
             type: "button", class: `tab${own === value ? " tab--on" : ""}`, "aria-pressed": String(own === value),
             onclick: () => own !== value && patch({ at: value ? part().start : null }),
-          }, own === value && icon("check"), label)));
-    when.replaceChildren(tabs,
-      h("div", { class: "times" },
-        !routine.manual && own && !isFirst() && h("label", { class: "time" }, t.routinePart.at, at),
-        h("label", { class: "time" }, t.routinePart.minutes, minutes)),
-      !routine.manual && h("p", { class: "hint" }, t.routinePart.starts(part().start, part().end)));
+          }, own === value && icon("check"), label))),
+      own && h("div", { class: "times" }, h("label", { class: "time" }, t.routinePart.at, at)));
   }
 
   // ---------- what it says: seen here, changed in "Lo que dice la voz" (rutinas-5) ----------
@@ -135,14 +145,34 @@ export async function viewRoutinePartEdit(routineId, partId) {
     }));
   }
 
-  // ---------- image ----------
-  const picker = await imagePicker({
-    initial: { ref: part().image, url: part().image_url },
-    onChange: (choice) => saveImageChoice(choice, {
-      patch: (ref) => save(api("PATCH", partUrl, { json: { image: ref } })),
-      upload: (file) => save(api("PUT", `${partUrl}/photo`, { body: file, contentType: file.type })),
-    }).catch(() => {}),
-  });
+  // ---------- image: a picture with a pencil, as in Editar misión (rutinas-7) ----------
+  const imageBox = h("div", { class: "mission-image" });
+  const pickerBox = h("div", {}); // below the picture-and-name row, full width
+  let pickerOpen = false;
+  async function renderImage() {
+    const thumb = () => imageThumb(part().image_url, { size: "lg", label: part().name, suggested: part().image_suggested });
+    imageBox.replaceChildren(h("button", {
+      type: "button", class: "image-button", "aria-label": t.missionEdit.changeImage,
+      onclick: () => { pickerOpen = !pickerOpen; renderImage(); },
+    }, thumb(), h("span", { class: "icon-button image-button__pencil" }, icon("edit"))));
+    if (!pickerOpen) {
+      pickerBox.replaceChildren();
+      return;
+    }
+    const picker = await imagePicker({
+      initial: { ref: part().image, url: part().image_url },
+      onChange: async (choice) => {
+        await saveImageChoice(choice, {
+          patch: (ref) => save(api("PATCH", partUrl, { json: { image: ref } })),
+          upload: (file) => save(api("PUT", `${partUrl}/photo`, { body: file, contentType: file.type })),
+        }).catch(() => {});
+        // Only swap the picture, so the picker keeps its search and scroll.
+        imageBox.querySelector(".image-button").firstElementChild.replaceWith(thumb());
+      },
+    });
+    pickerBox.replaceChildren(picker.element);
+  }
+  renderImage();
 
   // ---------- footer ----------
   const footer = h("div", { class: "page-footer" });
@@ -189,15 +219,17 @@ export async function viewRoutinePartEdit(routineId, partId) {
       h("div", { class: "columns columns--equal" },
         h("div", { class: "stack" },
           panel(t.routinePart.panelPart,
-            h("label", {}, t.routinePart.name, nameInput),
+            h("div", { class: "mission-identity" }, imageBox, h("label", {}, t.routinePart.name, nameInput)),
             nameHint,
+            pickerBox,
             when),
+          panel(t.routinePart.tasks, tasksList, addTask)),
+        h("div", { class: "stack" },
           panel(t.routinePart.panelSay,
             says,
             h("a", { class: "btn", href: `${routineHref}/voice/${partId}` }, icon("speaker"), t.routinePart.changeSay),
-            h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.tasks), tasksList, addTask),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.warnings), warnings,
-              h("span", { class: "hint" }, t.routinePart.warningsHint)))),
-        h("div", { class: "stack" }, panel(t.stepEdit.image, picker.element))),
+              h("span", { class: "hint" }, t.routinePart.warningsHint))),
+          more)),
       footer));
 }
