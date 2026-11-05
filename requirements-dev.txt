@@ -1,2 +1,4 @@
 # Development only (not in the Docker image)
+pytest==9.1.1
+httpx2==2.13.1  # FastAPI's TestClient
 materialyoucolor==3.0.4  # tools/build_theme.py; pulls in pillow
