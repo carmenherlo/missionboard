@@ -78,6 +78,7 @@ export async function viewRoutineEdit(routineId) {
   const when = h("input", {
     type: "time",
     onchange: (e) => e.target.value && patch(routine.anchor === "end" ? { ends: e.target.value } : { starts: e.target.value }),
+    // "Termina a las": when the parts end and the missions are checked (05/11), not the goal's latest
   });
   const whenHint = h("p", { class: "hint" });
   // The alarm: on or off (a bedtime routine), and how long before the first part.
@@ -141,9 +142,9 @@ export async function viewRoutineEdit(routineId) {
           onclick: () => routine.anchor !== value && patch({ anchor: value }),
         }, routine.anchor === value && icon("check"), label))));
     whenLabel.textContent = ending ? t.routineEdit.anchorEnd : t.routineEdit.anchorStart;
-    when.value = ending ? routine.ends : routine.starts;
-    const length = lengthText(minuteOf(routine.ends) - minuteOf(routine.starts));
-    whenHint.textContent = t.routineEdit.whenHint(shortTime(routine.starts), shortTime(routine.ends), length);
+    when.value = ending ? partsEnd() : routine.starts;
+    const length = lengthText(minuteOf(partsEnd()) - minuteOf(routine.starts));
+    whenHint.textContent = t.routineEdit.whenHint(shortTime(routine.starts), shortTime(partsEnd()), length);
     alarmOn.checked = routine.alarm;
     const choices = [...new Set([...ALARM_BEFORE_CHOICES, routine.alarm_before])].sort((a, b) => a - b);
     alarmBefore.replaceChildren(...choices.map((n) =>
@@ -207,15 +208,19 @@ export async function viewRoutineEdit(routineId) {
   // routine and the goal closes it. The pin marks the time that stays put.
   const alarmCard = h("div", { "data-card": "alarm" });
   const goalCard = h("div", { "data-card": "goal" });
+  // When the parts end: "Termina a las" (05/11: the missions are checked then, and the
+  // goal comes as soon as everyone has theirs, at the latest its margin later).
+  const partsEnd = () => routine.parts.at(-1).end;
   // The time that stays put (📌), − / + on its own card (rutinas-7): the whole routine moves.
   function pinnedStepper(shown, field) {
     const base = minuteOf(shown);
+    const changed = (m) => field === "ends" ? hhmm(m) : hhmm(minuteOf(routine[field]) + m - base);
     return h("span", { class: "routine-card__pinned" },
       h("span", { "aria-label": t.routineEdit.pinned, title: t.routineEdit.pinned }, icon("pin")),
       stepper({
         value: base, step: PINNED_STEP, min: 0, max: 24 * 60 - 1, format: (m) => shortTime(hhmm(m)),
         label: t.routineEdit.pinned,
-        onChange: (m) => patch({ [field]: hhmm(minuteOf(routine[field]) + m - base) }),
+        onChange: (m) => patch({ [field]: changed(m) }),
       }));
   }
   function renderCards() {
@@ -230,17 +235,22 @@ export async function viewRoutineEdit(routineId) {
         ? pinnedStepper(routine.alarm ? routine.wake : routine.starts, "starts")
         : h("span", { class: "routine-card__time" }, shortTime(routine.alarm ? routine.wake : routine.starts)));
     if (!routine.goal) return;
-    // The goal, and before it checking the missions (rutinas-6): one card, two times.
+    // The goal, and before it checking the missions (rutinas-6). Checking has the time (the
+    // pinned one, ending at a time); the goal comes as soon as everyone has their mission,
+    // at the latest when the margin is over (05/11: "Meta 7:35" read as ringing at 7:35).
     const checking = routine.goal.check_minutes > 0;
+    const ending = routine.anchor === "end";
     goalCard.className = `routine-card routine-card--goal${checking ? " routine-card--checking" : ""}`;
     goalCard.replaceChildren(...[
       checking && h("span", { class: "routine-card__check" }, icon("check"), t.routine.checkTitle,
-        h("span", { class: "routine-card__time" }, t.routineEdit.checkWhen(shortTime(routine.parts.at(-1).end), routine.goal.check_minutes))),
+        ending ? pinnedStepper(partsEnd(), "ends") : h("span", { class: "routine-card__time" }, shortTime(partsEnd()))),
       h("span", { class: "routine-card__row" }, icon("flag"),
         h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
-          h("span", { class: "routine-card__detail" }, `"${routine.goal.say}"`)),
-        routine.anchor === "end"
-          ? pinnedStepper(routine.goal.at, "ends")
+          h("span", { class: "routine-card__detail" }, checking
+            ? t.routineEdit.goalWhenDone(routine.goal.check_minutes, shortTime(routine.goal.at))
+            : `"${routine.goal.say}"`)),
+        checking ? ""
+          : ending ? pinnedStepper(routine.goal.at, "ends")
           : h("span", { class: "routine-card__time" }, shortTime(routine.goal.at))),
     ].filter(Boolean));
   }
@@ -398,7 +408,9 @@ export async function viewRoutineEdit(routineId) {
     const ending = routine.anchor === "end"; // its time is "Termina a las", and it is a must
     // No time of its own (05/11): it is "Termina a las", or it comes when the parts end.
     // Checking the missions first (rutinas-6): on, with its minutes.
-    const setCheck = (minutes) => patch({ goal: { ...goal, check_minutes: minutes } });
+    // Ending at a time, the parts keep ending then and the goal's latest moves with the margin.
+    const setCheck = (minutes) => patch({ goal: { ...goal, check_minutes: minutes,
+      ...(ending && { at: hhmm(minuteOf(partsEnd()) + minutes) }) } });
     const checking = goal.check_minutes > 0;
     const checkOn = h("input", {
       type: "checkbox", checked: checking, onchange: (e) => setCheck(e.target.checked ? USUAL_CHECK_MINUTES : 0),
@@ -407,13 +419,11 @@ export async function viewRoutineEdit(routineId) {
       [...new Set([...CHECK_CHOICES, goal.check_minutes])].filter(Boolean).sort((a, b) => a - b)
         .map((n) => h("option", { value: n, selected: n === goal.check_minutes }, t.routine.minutes(n))));
     goalBox.replaceChildren(...[!ending && tabs,
-      h("p", { class: "hint" }, ending ? t.routineEdit.goalIsTheEnd(shortTime(goal.at))
-        : t.routineEdit.goalAfterParts(shortTime(goal.at))),
       h("label", { class: "toggle" }, checkOn, t.routineEdit.checkFirst),
       checking && h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.checkDuring, during)),
       h("p", { class: "hint" }, checking
-        ? t.routineEdit.checkHint(shortTime(routine.parts.at(-1).end), movedTime(routine.parts.at(-1).end, goal.check_minutes))
-        : t.routineEdit.noCheckHint),
+        ? t.routineEdit.checkHint(shortTime(partsEnd()), shortTime(goal.at))
+        : ending ? t.routineEdit.goalIsTheEnd(shortTime(goal.at)) : t.routineEdit.goalAfterParts(shortTime(goal.at))),
       h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.panelSay),
         h("p", { class: "voice-preview" }, `«${goal.say}»`),
         h("a", { class: "btn", href: `${LIST_HREF}/${routineId}/voice/goal` }, icon("speaker"), t.routinePart.changeSay)),

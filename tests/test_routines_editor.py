@@ -317,8 +317,10 @@ def test_ending_at_its_goal_keeps_that_time(client):
     first = routine["parts"][0]["id"]
     routine = edit(client, "PATCH", f"/parts/{first}", minutes=15).json()  # 5 more minutes
     assert routine["starts"] == "06:30" and routine["wake"] == "06:25" and routine["ends"] == "07:30"
+    # "Termina a las 8:00": the parts end then, and the 5 minutes of checking come after
     routine = edit(client, "PATCH", ends="08:00").json()
-    assert routine["starts"] == "07:00" and routine["goal"]["at"] == "08:00"
+    assert routine["parts"][-1]["end"] == "08:00" and routine["goal"]["at"] == "08:05"
+    assert routine["starts"] == "07:05"
     # One after the other: no part at its own time, and the goal is a must
     second = routine["parts"][1]["id"]
     assert edit(client, "PATCH", f"/parts/{second}", at="07:20").status_code == 422

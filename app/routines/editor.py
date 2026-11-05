@@ -132,9 +132,11 @@ class RoutinesEditor:
         if starts:
             start = minute_of(starts)  # the parts and the goal follow (_settled)
         if ends:
+            # "Termina a las" is when the parts end and the missions are checked (05/11):
+            # the goal comes as soon as everyone has theirs, at the latest its margin later.
             if not goal:
                 raise InvalidError("No goal to end at")
-            goal["at"] = ends
+            goal["at"] = hhmm((minute_of(ends) + goal.get("check_minutes", 0)) % (24 * 60))
             changes["goal"] = goal
         if alarm is not None:
             changes["alarm"] = alarm
