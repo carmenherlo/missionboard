@@ -125,3 +125,7 @@ frameworks ni empaquetadores.
 | [Nunito](https://fonts.google.com/specimen/Nunito) (`app/static/fonts/nunito/`) | SIL Open Font License, ver `OFL.txt` |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) (`piper-tts`, se instala con pip) | Ver su repositorio |
 | Modelo de voz `es_ES-sharvard-medium` (se descarga, no está en el repositorio) | Ver su [ficha](https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium) |
+
+## Licencia
+
+[MIT](LICENSE). Los recursos de terceros de la tabla de arriba llevan cada uno su licencia.
