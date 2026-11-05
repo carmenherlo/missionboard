@@ -2,6 +2,7 @@
 // and how many they have now. Closes by itself or with a tap. The confetti
 // and the glow are effects (effects/, effects.css): without them it works the same.
 import { avatarPicture } from "../../components/avatar.js";
+import { sounds } from "../../components/sound.js";
 import { h } from "../../dom.js";
 import { confetti } from "../../effects/confetti.js";
 import { tokenMs } from "../../effects/motion.js";
@@ -24,6 +25,7 @@ export function showCelebration(container, day, starsEarned, onClose) {
       h("img", { src: day.star_url, alt: "" }), t.child.starsWon(starsEarned, day.stars)));
 
   container.append(layer);
+  sounds.win();
   confetti(layer);
   timer = setTimeout(close, tokenMs("--celebration-duration", 5000));
 }

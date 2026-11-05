@@ -424,12 +424,11 @@ export function startRoutines() {
       if (showing.earlyGoal != null) {
         // Everyone signed in the last part (04/11): no waiting for the goal's time, they
         // have gone. The goal now, with its celebration, and then it ends for today.
-        sounds.win();
         say(script.earlyGoal(data, wellDone(), 0));
         celebrateGoal();
         endAfterTheGoal();
       } else {
-        timeToGo(time, counted);
+        timeToGo(time);
         celebrateGoal();
       }
     }
@@ -454,9 +453,13 @@ export function startRoutines() {
     setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
   }
 
-  // The goal's celebration: the kids who did their mission, big and shining, and confetti.
-  function celebrateGoal() {
+  // The goal's celebration: the fanfare, the kids who did their mission, big and shining,
+  // and confetti. Early or at its time, the same (05/11). After a countdown's zero, the
+  // fanfare waits for it to be heard.
+  function celebrateGoal(counted = false) {
     const { view, data } = showing;
+    if (counted) setTimeout(() => sounds.win(), AFTER_ZERO_MS);
+    else sounds.win();
     const done = data.people.filter((p) => p.mission?.completed);
     view.champions.replaceChildren(...done.map((p) => h("li", {
       class: "routine__champion",
@@ -487,9 +490,8 @@ export function startRoutines() {
     showing.finished = "goal";
     note("goal", { early: false });
     if (counted) sounds.countdown(true);
-    else sounds.ding();
     say([...script.goalReached(showing.data, time, 0), ...missed()]);
-    celebrateGoal();
+    celebrateGoal(counted);
     const id = showing.data.id;
     setTimeout(() => showing?.data.id === id && end(), Math.max(DONE_MS, songLeftMs()));
   }
@@ -500,8 +502,7 @@ export function startRoutines() {
     return script.wellDone(kids.map((p) => p.child.name), kids[0]?.mission.name);
   }
 
-  function timeToGo(time, counted) {
-    if (!counted) sounds.ding();
+  function timeToGo(time) {
     const late = minuteOf(showing.data.goal.at) - time < 1; // opened in its last seconds
     say([...script.goalReached(showing.data, time, late ? 0 : minutesToGoal(time)), ...missed()]);
   }
