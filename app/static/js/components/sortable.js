@@ -2,10 +2,14 @@
 // Items need data-id and a ".drag-handle"; elsewhere, swiping still scrolls.
 // The dragged item follows the pointer and the others slide out of its way.
 // onEnd(ids) is called with the new order when it changed.
+// trash (rutinas-7): { label, onDrop(id) }: while dragging, a bin at the bottom of the
+// screen; let go over it and the item is dropped (onDrop), instead of moved.
+import { h } from "../dom.js";
+import { icon } from "../icons.js";
 
 const SLIDE_MS = 150;
 
-export function sortable(list, { onEnd }) {
+export function sortable(list, { onEnd, trash = null }) {
   const ids = () => [...list.children].filter((el) => el.dataset.id).map((el) => el.dataset.id); // not the songs' heads
 
   // Animate siblings from where they were to where they are now (FLIP).
@@ -32,6 +36,14 @@ export function sortable(list, { onEnd }) {
     const grabOffset = event.clientY - item.getBoundingClientRect().top;
     item.classList.add("is-dragging");
     item.style.transition = "none";
+    const order = [...list.children]; // to put it back, if it goes to the bin
+    const bin = trash && h("div", { class: "trash", "aria-hidden": "true" }, icon("trash"), h("span", {}, trash.label));
+    if (bin) document.body.append(bin);
+    const overBin = (e) => {
+      if (!bin) return false;
+      const box = bin.getBoundingClientRect();
+      return e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top - 12 && e.clientY <= box.bottom;
+    };
 
     function follow(clientY) {
       item.style.transform = "";
@@ -55,6 +67,7 @@ export function sortable(list, { onEnd }) {
         slide(others, tops);
       }
       follow(e.clientY);
+      bin?.classList.toggle("trash--hot", overBin(e));
     }
 
     function end(e) {
@@ -66,6 +79,13 @@ export function sortable(list, { onEnd }) {
       item.style.transition = `transform ${SLIDE_MS}ms ease`;
       item.style.transform = "";
       item.classList.remove("is-dragging");
+      const dropped = overBin(e);
+      bin?.remove();
+      if (dropped) {
+        list.replaceChildren(...order);
+        trash.onDrop(item.dataset.id);
+        return;
+      }
       if (ids().join() !== before) onEnd(ids());
     }
 

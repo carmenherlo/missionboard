@@ -343,6 +343,14 @@ def test_starts_at_and_the_alarm(client):
     assert routine["alarm"] is False and routine["wake"] == "06:30"  # no ring: it opens at its first part
 
 
+def test_a_new_start_moves_the_whole_routine(client):
+    # "El desayuno" at 6:45 of its own, and the goal at 7:45: they move with it
+    routine = edit(client, "PATCH", starts="06:40").json()
+    assert routine["starts"] == "06:40" and routine["wake"] == "06:35"
+    assert parts(routine)[:2] == [("la preparación del desayuno", "06:40", "06:50"), ("el desayuno", "06:50", "07:05")]
+    assert routine["goal"]["at"] == "07:50"
+
+
 def test_the_screen_knows_if_it_rings(client, clock):
     edit(client, "PATCH", alarm=False)
     clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)

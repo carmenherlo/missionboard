@@ -130,6 +130,15 @@ class RoutinesEditor:
         if anchor:
             changes["anchor"] = anchor
         if starts:
+            # The whole routine moves (rutinas-7): the parts at a time of their own and
+            # the goal too, so that "− / +" on its card never leaves them behind.
+            moved = minute_of(starts) - start
+            for part in parts[1:]:
+                if part["at"]:
+                    part["at"] = hhmm((minute_of(part["at"]) + moved) % (24 * 60))
+            if goal and moved:
+                goal["at"] = hhmm((minute_of(goal["at"]) + moved) % (24 * 60))
+                changes["goal"] = goal
             start = minute_of(starts)
         if ends:
             if not goal:

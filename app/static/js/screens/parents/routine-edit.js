@@ -5,6 +5,8 @@ import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
 import { sortable } from "../../components/sortable.js";
+import { stepper } from "../../components/stepper.js";
+import { undoBar } from "../../components/undo-bar.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
@@ -20,6 +22,8 @@ const DEFAULT_WAKE = "07:00"; // back from "by hand" to ringing at a time
 const CHECK_CHOICES = [3, 5, 10]; // minutes to check the missions before the goal
 const USUAL_CHECK_MINUTES = 5;
 const ALARM_BEFORE_CHOICES = [0, 5, 10, 15, 20, 30]; // the API takes 0–60
+const PINNED_STEP = 5; // the time that stays put, − / + on its card: 5 minutes at a time
+const MAX_PART_MINUTES = 180;
 
 // What a refused change means: the times do not add up, or it overlaps another routine.
 export function routineError(err) {
@@ -41,6 +45,7 @@ export async function viewRoutineEdit(routineId) {
   const title = h("span", {}, routine.name);
   // Every change comes back as the whole routine; a refused one says why.
   function save(request) {
+    flushDelete(); // a part let go in the bin: gone for good before anything else changes
     return status.track(request).then((updated) => {
       routine = updated;
       title.textContent = routine.name;
@@ -202,8 +207,18 @@ export async function viewRoutineEdit(routineId) {
   // routine and the goal closes it. The pin marks the time that stays put.
   const alarmCard = h("div", { "data-card": "alarm" });
   const goalCard = h("div", { "data-card": "goal" });
+  // The time that stays put (📌), − / + on its own card (rutinas-7): the whole routine moves.
+  function pinnedStepper(shown, field) {
+    const base = minuteOf(shown);
+    return h("span", { class: "routine-card__pinned" },
+      h("span", { "aria-label": t.routineEdit.pinned, title: t.routineEdit.pinned }, icon("pin")),
+      stepper({
+        value: base, step: PINNED_STEP, min: 0, max: 24 * 60 - 1, format: (m) => shortTime(hhmm(m)),
+        label: t.routineEdit.pinned,
+        onChange: (m) => patch({ [field]: hhmm(minuteOf(routine[field]) + m - base) }),
+      }));
+  }
   function renderCards() {
-    const pin = h("span", { "aria-label": t.routineEdit.pinned, title: t.routineEdit.pinned }, icon("pin"));
     alarmCard.hidden = routine.manual;
     goalCard.hidden = routine.manual || !routine.goal;
     if (routine.manual) return;
@@ -211,8 +226,9 @@ export async function viewRoutineEdit(routineId) {
     alarmCard.replaceChildren(icon("alarm"),
       h("span", { class: "routine-card__text" }, routine.alarm ? t.routineEdit.alarmCard : t.routineEdit.noAlarmCard,
         routine.alarm && h("span", { class: "routine-card__detail" }, t.routineEdit.alarmCardBefore(routine.alarm_before))),
-      h("span", { class: "routine-card__time" }, routine.anchor === "start" && pin,
-        shortTime(routine.alarm ? routine.wake : routine.starts)));
+      routine.anchor === "start"
+        ? pinnedStepper(routine.alarm ? routine.wake : routine.starts, "starts")
+        : h("span", { class: "routine-card__time" }, shortTime(routine.alarm ? routine.wake : routine.starts)));
     if (!routine.goal) return;
     // The goal, and before it checking the missions (rutinas-6): one card, two times.
     const checking = routine.goal.check_minutes > 0;
@@ -223,14 +239,39 @@ export async function viewRoutineEdit(routineId) {
       h("span", { class: "routine-card__row" }, icon("flag"),
         h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
           h("span", { class: "routine-card__detail" }, `"${routine.goal.say}"`)),
-        h("span", { class: "routine-card__time" }, routine.anchor === "end" && pin, shortTime(routine.goal.at))),
+        routine.anchor === "end"
+          ? pinnedStepper(routine.goal.at, "ends")
+          : h("span", { class: "routine-card__time" }, shortTime(routine.goal.at))),
     ].filter(Boolean));
   }
   const partsTitle = h("span", {});
   const partsList = h("ul", { class: "rows" });
   sortable(partsList, {
     onEnd: (ids) => save(api("PUT", `${url}/parts/order`, { json: { ids } })).catch(() => {}),
+    trash: { label: t.common.dropToDelete, onDrop: (id) => dropPart(id) },
   });
+  // Let go in the bin (rutinas-7): out of sight at once, and gone for good once
+  // "Deshacer" goes by (or anything else is saved, or the screen changes).
+  let pendingDelete = null; // { id, bar }
+  function dropPart(id) {
+    flushDelete();
+    const part = routine.parts.find((p) => p.id === id);
+    if (!part || routine.parts.length - 1 < 1) return;
+    const bar = undoBar({
+      message: t.common.deleted(capital(part.name)),
+      onUndo: () => { pendingDelete = null; renderParts(); },
+      onTimeout: flushDelete,
+    });
+    pendingDelete = { id, bar };
+    renderParts();
+  }
+  function flushDelete() {
+    if (!pendingDelete) return;
+    const { id, bar } = pendingDelete;
+    pendingDelete = null;
+    bar.close();
+    save(api("POST", `${url}/parts/delete`, { json: { ids: [id] } })).catch(() => {});
+  }
   // "Seleccionar": a box on each part instead of its handle, and one bin for all
   // the chosen ones (after importing, the new parts come chosen: easy to drop).
   let selected = null; // null: not selecting; else the chosen part ids
@@ -264,9 +305,9 @@ export async function viewRoutineEdit(routineId) {
     renderCards();
     if (selected) selected = new Set([...selected].filter((id) => routine.parts.some((p) => p.id === id)));
     renderPartsTools();
-    partsList.replaceChildren(...routine.parts.map((part) =>
+    partsList.replaceChildren(...routine.parts.filter((part) => part.id !== pendingDelete?.id).map((part) =>
       h("li", {
-        class: `row row--sortable row--compact${selected ? " row--selectable" : ""}`, "data-id": part.id, "data-card": part.id,
+        class: `row row--sortable row--compact${selected ? " row--selectable" : " row--covered"}`, "data-id": part.id, "data-card": part.id,
         onclick: selected && ((e) => {
           if (e.target.closest("a")) return;
           if (selected.has(part.id)) selected.delete(part.id);
@@ -278,16 +319,21 @@ export async function viewRoutineEdit(routineId) {
           ? h("input", { type: "checkbox", checked: selected.has(part.id), "aria-label": part.name, tabindex: -1 })
           : h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
         imageThumb(part.image_url, { size: "sm", label: part.name, suggested: part.image_suggested }),
-        h("span", { class: "row__text" }, capital(part.name),
-          h("span", { class: "row__detail" },
-            h("span", { class: "pill pill--muted" }, routine.manual
-              ? t.routine.minutes(part.minutes)
-              : t.routineEdit.partTime(part.start, part.minutes)))),
-        h("a", {
-          class: "icon-button icon-button--ghost", href: `${LIST_HREF}/${routineId}/parts/${part.id}`,
-          "aria-label": t.routineEdit.editPartNamed(part.name), title: t.routineEdit.editPartNamed(part.name),
-          hidden: Boolean(selected),
-        }, icon("edit")))));
+        // The whole card opens the part (rutinas-7); the handle and − / + do not.
+        h(selected ? "span" : "a", {
+          class: `row__text${selected ? "" : " row__cover"}`,
+          href: selected ? undefined : `${LIST_HREF}/${routineId}/parts/${part.id}`,
+          "aria-label": selected ? undefined : t.routineEdit.editPartNamed(part.name),
+        }, capital(part.name),
+          !routine.manual && h("span", { class: "row__detail" },
+            h("span", { class: "pill pill--muted" }, shortTime(part.start)))),
+        selected
+          ? h("span", { class: "pill pill--muted" }, t.routine.minutes(part.minutes))
+          : stepper({
+            value: part.minutes, min: 1, max: MAX_PART_MINUTES, format: t.routine.minutes,
+            label: t.routineEdit.minutesOf(part.name),
+            onChange: (minutes) => save(api("PATCH", `${url}/parts/${part.id}`, { json: { minutes } })).catch(() => {}),
+          }))));
     wrapSongs(routine, songs, cardsBox);
   }
   const newPart = h("input", { type: "text", maxlength: 60, placeholder: t.routineEdit.newPart });
