@@ -159,6 +159,15 @@
   --home-clock-size: min(56vh, 42vw, 460px);
   --rest-bg: #000;
   --rest-text: #2e2e2e;
+  /* The clock dark (◐), as a bedside clock: black, and greys that do not light the room. */
+  --night-bg: #000;
+  --night-surface: #111;
+  --night-line: #2a2a2a;
+  --night-text: #a8a8a8;
+  --night-muted: #5c5c5c;
+  --night-hand-second: #7a2a2a;
+  --night-card: #161616;
+  --night-button: #1c1c1c;
   /* The countdown's last ten seconds: a disc over the hands, so the number reads from afar (rutinas-7, 8 A). */
   --countdown-disc: var(--primary);
   --countdown-text: var(--on-primary);
@@ -203,4 +212,21 @@
   --confetti-5: #4fa3ff;
   --confetti-6: #ffd43b;
   --confetti-star: #ffc93c;
+}
+
+
+/* The clock dark (reloj.html, 05/11): the same screen, with the night's colours. Only
+   the base roles change, so the clock face and everything on it follow by themselves. */
+.home--dark {
+  --bg: var(--night-bg);
+  --surface: var(--night-surface);
+  --line: var(--night-line);
+  --text: var(--night-text);
+  --muted: var(--night-muted);
+  --danger: var(--night-hand-second);
+  --alarm-card: var(--night-card);
+  --primary-soft: var(--night-button);
+  --primary-strong: var(--night-text);
+  --primary: var(--night-button);
+  --on-primary: var(--night-text);
 }

@@ -2,8 +2,7 @@ import { api, session } from "../api.js";
 import { avatar, loadAvatars } from "../components/avatar.js";
 import { parentsCornerButton } from "../components/corner-button.js";
 import { fullscreenButton } from "../components/fullscreen-button.js";
-import { restNow } from "../components/rest.js";
-import { homeScreen, setDisplay } from "../display.js";
+import { display, homeScreen, setDisplay } from "../display.js";
 import { h, render } from "../dom.js";
 import { icon } from "../icons.js";
 import { openChooser, routinesByHand } from "../routine/chooser.js";
@@ -15,6 +14,7 @@ export async function viewHome() {
   const [children, byHand] = await Promise.all([api("GET", "api/children"), routinesByHand(), loadAvatars()]);
   // The kids or the clock (reloj.html), as this tablet last chose.
   const showClock = homeScreen() === "clock";
+  const dark = showClock && display().clockTheme === "dark";
   const grid = showClock ? clockScreen(children) : children.length
     ? h("section", { class: "children" },
         children.map((child) =>
@@ -26,7 +26,7 @@ export async function viewHome() {
         h("p", { class: "note" }, t.home.emptyHint));
 
   render(
-    h("main", { class: "home" },
+    h("main", { class: `home${dark ? " home--dark" : ""}` },
       // Top left: full screen, and ⏰ to start a routine by hand when there is one today.
       h("div", { class: "home-tools" },
         fullscreenButton(),
@@ -38,10 +38,10 @@ export async function viewHome() {
           type: "button", class: "icon-button icon-button--ghost icon-button--label",
           onclick: () => { setDisplay({ screen: showClock ? "kids" : "clock" }); viewHome(); },
         }, icon(showClock ? "children" : "clock"), showClock ? t.clock.toKids : t.clock.toClock),
-        // Night now: the screen at rest at once; a tap brings the day back (05/11).
-        h("button", {
-          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.clock.night, title: t.clock.night,
-          onclick: () => restNow(),
+        // The clock light or dark (05/11), as a bedside clock at night.
+        showClock && h("button", {
+          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.clock.theme, title: t.clock.theme,
+          "aria-pressed": String(dark), onclick: () => { setDisplay({ clockTheme: dark ? "light" : "dark" }); viewHome(); },
         }, icon("dayNight"))),
       parentsCornerButton("#/parents", t.home.parentsLabel),
       grid));

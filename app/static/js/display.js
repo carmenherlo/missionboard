@@ -4,7 +4,7 @@
 // be missing (private mode): then the defaults.
 
 const KEY = "missionboard.display";
-const DEFAULTS = { screen: "kids", open: "last", rest: true, restMinutes: 5 };
+const DEFAULTS = { screen: "kids", open: "last", rest: true, restMinutes: 5, clockTheme: "light" };
 
 export function display() {
   try {

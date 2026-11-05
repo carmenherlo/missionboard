@@ -2,13 +2,7 @@
 // screen (the kids or the clock), the screen goes black with the time, faint, moving a
 // little every minute. The page is still "in sight" for the browser, so it is not put
 // to sleep and the routines ring on time: one appearing wakes it. A tap wakes it too,
-// and only wakes it (it does not reach what is underneath). "🌙 Noche" on the home
-// screen puts it to rest at once (restNow), without waiting for the minutes.
-
-let goToRest = () => {};
-export function restNow() {
-  goToRest();
-}
+// and only wakes it (it does not reach what is underneath).
 import { display } from "../display.js";
 import { h } from "../dom.js";
 
@@ -53,13 +47,10 @@ export function startRest() {
     lastTouch = Date.now();
   }
 
-  goToRest = () => { if (!overlay) { sleep(); overlay.byHand = true; } };
-
   setInterval(() => {
     const { rest, restMinutes } = display();
     if (overlay) {
-      // A routine has come, or something changed (put to rest by hand, it rests even with it off)
-      if ((!rest && !overlay.byHand) || !onHome() || busy()) wake();
+      if (!rest || !onHome() || busy()) wake(); // a routine has come, or something changed
       else overlay.draw();
       return;
     }

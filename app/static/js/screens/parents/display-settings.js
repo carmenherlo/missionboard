@@ -1,5 +1,5 @@
-// Configurar → Pantalla (reloj.html): this tablet's rest mode and the screen the app
-// opens with. Kept on the device (display.js), so it saves on the spot, here only.
+// Configurar → Configuración avanzada (reloj.html): this tablet's rest mode, the
+// screen the app opens with, and the clock light or dark. Kept on the device (display.js), so it saves on the spot, here only.
 import { panel } from "../../components/panel.js";
 import { display, setDisplay } from "../../display.js";
 import { h, render } from "../../dom.js";
@@ -12,6 +12,12 @@ const REST_CHOICES = [2, 5, 10, 30];
 export function viewDisplaySettings() {
   const restBox = h("div", { class: "stack stack--tight" });
   const openBox = h("div", {});
+  const clockBox = h("div", { class: "stack stack--tight" });
+  const tabs = (current, choices, onPick) => h("div", { class: "tabs" }, choices.map(([value, label]) =>
+    h("button", {
+      type: "button", class: `tab${current === value ? " tab--on" : ""}`, "aria-pressed": String(current === value),
+      onclick: () => { onPick(value); draw(); },
+    }, current === value && icon("check"), label)));
 
   function draw() {
     const now = display();
@@ -25,12 +31,10 @@ export function viewDisplaySettings() {
             h("option", { value: n, selected: n === now.restMinutes }, t.routine.minutes(n)))))),
       h("p", { class: "hint" }, t.display.restHint),
     ].filter(Boolean));
-    openBox.replaceChildren(h("div", { class: "tabs" },
-      [["last", t.display.openLast], ["kids", t.clock.toKids], ["clock", t.clock.toClock]].map(([value, label]) =>
-        h("button", {
-          type: "button", class: `tab${now.open === value ? " tab--on" : ""}`, "aria-pressed": String(now.open === value),
-          onclick: () => { setDisplay({ open: value }); draw(); },
-        }, now.open === value && icon("check"), label))));
+    openBox.replaceChildren(tabs(now.open, [["last", t.display.openLast], ["kids", t.clock.toKids], ["clock", t.clock.toClock]],
+      (value) => setDisplay({ open: value })));
+    clockBox.replaceChildren(tabs(now.clockTheme, [["light", t.display.light], ["dark", t.display.dark]],
+      (value) => setDisplay({ clockTheme: value })), h("p", { class: "hint" }, t.display.clockHint));
   }
   draw();
 
@@ -39,6 +43,6 @@ export function viewDisplaySettings() {
     h("main", { class: "page" },
       h("p", { class: "hint" }, t.display.hint),
       h("div", { class: "columns columns--equal" },
-        panel(t.display.restTitle, restBox),
+        h("div", { class: "stack" }, panel(t.display.restTitle, restBox), panel(t.display.clockTitle, clockBox)),
         panel(t.display.openTitle, openBox))));
 }
