@@ -151,6 +151,9 @@
   --coming-2: #d5ddff;
   --clock-gone: rgb(255 255 255 / 0.7); /* what has gone by of the stretch, faded */
   --clock-size: min(46vh, 420px);
+  /* Home (05/11: bigger, more inviting): each child's avatar grows with the screen,
+     up to three side by side on a tablet in landscape. */
+  --home-avatar-size: clamp(150px, min(24vw, 38vh), 300px);
   /* The countdown's last ten seconds: a disc over the hands, so the number reads from afar (rutinas-7, 8 A). */
   --countdown-disc: var(--primary);
   --countdown-text: var(--on-primary);

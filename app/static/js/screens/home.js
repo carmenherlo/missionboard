@@ -14,7 +14,7 @@ export async function viewHome() {
     ? h("section", { class: "children" },
         children.map((child) =>
           h("a", { class: "child-card", href: `#/child/${child.id}` },
-            avatar(child, { size: "lg" }),
+            avatar(child, { size: "home" }),
             h("span", { class: "child-card__name" }, child.name))))
     : h("div", { class: "home__empty" },
         h("p", { class: "empty" }, t.home.empty),

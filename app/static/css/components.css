@@ -998,6 +998,7 @@
 .avatar--md { --size: 72px; }
 .avatar--lg { --size: 140px; }
 .avatar--xl { --size: 130px; }
+.avatar--home { --size: var(--home-avatar-size); }
 
 .avatar--photo-choice {
   --child-color: var(--muted);

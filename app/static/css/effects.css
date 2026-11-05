@@ -136,6 +136,14 @@
 }
 @keyframes hold-fill { to { background-size: 100% 100%, auto; } }
 
+/* Home: a child's card gives a little when it is pressed. */
+.child-card {
+  transition: transform var(--appear) ease;
+}
+.child-card:active {
+  transform: scale(0.96);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .prize-won, .routine__count,
