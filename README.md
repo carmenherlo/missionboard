@@ -3,7 +3,7 @@
 **Español** · [English](README.en.md)
 
 Una app familiar para una tablet compartida. Los niños siguen sus **misiones**
-(listas cortas de pasos, con imágenes y voz), ganan **estrellas**, las gastan en una
+(tareas y pasos, con imágenes y voz), ganan **estrellas**, las gastan en una
 **tienda** y desbloquean un **premio del día** con una ruleta. Las **rutinas** guían
 los momentos con prisa (prepararse para el cole, irse a dormir) con un despertador,
 un reloj que habla y música. Todo se configura en la **zona de padres**, protegida
@@ -13,20 +13,25 @@ La app está en español; el código, los comentarios y los tests, en inglés.
 
 ## Qué hace
 
-- **Pantallas de los niños:** cada niño tiene su color y su avatar; su día es una
-  ruta de misiones, y cada misión se abre como un panel de pasos para ir marcando.
-  Estrellas, una celebración al completar una misión y un premio del día al
-  completarlas todas.
-- **Rutinas:** partes con sus minutos, una detrás de otra, entre un despertador y una
-  meta. Se fija la hora de empezar o la de terminar, y el resto se coloca solo. En
-  pantalla: un reloj con el tramo de cada parte, una voz que dice lo que toca, avisos
-  antes de acabar cada parte, una cuenta atrás de diez segundos, cada niño con su
-  misión, y música sonando en las partes que se elijan. Una rutina puede sonar a una
-  hora o lanzarse a mano.
-- **Zona de padres:** niños, misiones y plantillas, rutinas (con un modo de prueba
-  que va más rápido y deja poner las misiones de los niños como se quiera), premios,
-  tienda, el código de padres, un registro de lo que pasa (exportable a CSV) y
-  **copias de seguridad**.
+- **Misiones de la familia:** cada misión tiene tareas, y cada tarea, pasos. Todas son
+  de todos los niños, y a cada uno se le activa lo suyo. Cada misión tiene su color,
+  sus días, su horario y, si se quiere, su rutina.
+- **Pantallas de los niños:** cada niño se reconoce por su avatar; su día es una ruta
+  de misiones, y cada misión se abre como un panel de tarjetas: la tarea es la tarjeta
+  y sus pasos, cuadrados para ir marcando. Estrellas, una celebración al completar una
+  misión y un premio del día al completarlas todas. Los fondos cambian con la estación
+  y el momento del día.
+- **Rutinas:** le ponen tiempo a una misión: sus partes son las tareas, con sus
+  minutos, entre un despertador y una meta. Se fija la hora de empezar o la de
+  terminar, y el resto se coloca solo. Para los niños de la rutina manda su horario;
+  los demás siguen el de la misión. En pantalla: un reloj con el tramo de cada parte,
+  una voz que dice lo que toca, avisos antes de acabar cada parte, una cuenta atrás de
+  diez segundos, cada niño con su misión, y música en las partes que se elijan. Una
+  rutina puede sonar a una hora o lanzarse a mano.
+- **Zona de padres:** niños, misiones, rutinas (con un modo de prueba que va más
+  rápido y deja poner las misiones de los niños como se quiera), premios, tienda, el
+  código de padres, un registro de lo que pasa (exportable a CSV) y **copias de
+  seguridad**.
 - **Voz natural:** las frases se dicen con [Piper](https://github.com/OHF-Voice/piper1-gpl)
   en el servidor y se guardan; si no está, se usa la voz de la propia tablet.
 - **Funciona sin internet:** no depende de servicios externos; las letras y las
@@ -43,7 +48,9 @@ MISSIONBOARD_DATA_DIR=personal uvicorn app.main:app --reload --host 0.0.0.0 --po
 ```
 
 Abre <http://localhost:8002/>. El código de padres por defecto es **1234**: cámbialo
-en *Configurar → Código de padres*.
+en *Configurar → Código de padres*. Una instalación nueva trae de ejemplo tres niños
+(Bea, Alex y Noa) y tres misiones (Despegue, Aterrizaje y Alunizaje), con sus rutinas,
+para cambiarlos a tu gusto.
 
 `bash dev.sh` hace lo mismo con un entorno de conda llamado `missionboard`, y escribe
 la dirección para abrirla desde una tablet de la misma red.
@@ -70,16 +77,24 @@ Todo lo que la familia configura y hace está en una carpeta (`MISSIONBOARD_DATA
 
 | Ruta | Qué hay |
 |---|---|
-| `config.yaml` | Niños, misiones, plantillas, rutinas, premios, tienda, ajustes e interruptores |
+| `config.yaml` | Niños, misiones, rutinas, premios, tienda, ajustes e interruptores |
 | `missionboard.db` | SQLite: el historial (pasos marcados, misiones hechas, estrellas, premios, compras, rutinas, registro) |
-| `photos/`, `sounds/`, `backgrounds/` | Fotos y canciones subidas, y la ilustración de cada momento del día |
+| `photos/`, `sounds/` | Fotos y canciones subidas |
 | `voice-cache/` | Las frases ya dichas; si faltan, se vuelven a generar |
+| `backups/` | Lo que había antes de poner una copia o de empezar de cero |
+
+Los fondos son de la app (`app/static/backgrounds/`), uno por estación y momento del
+día; las fechas y las horas de cada estación están en `settings.seasons`.
 
 - **Migraciones:** se aplican solas al arrancar, y el archivo anterior se guarda al
   lado (`config.yaml.vN.bak`, `missionboard.db.vN.bak`). Si un archivo es de una
   versión más nueva que la app, la app no arranca en vez de cambiarlo.
+- **Empezar de cero:** un `config.yaml` anterior a las misiones de la familia no se
+  convierte: al arrancar se guarda una copia de todo en `backups/` y se empieza con los
+  ejemplos, conservando la biblioteca de canciones. Una copia de seguridad de entonces
+  no se puede restaurar.
 - **Copias de seguridad:** *Configurar → Copia de seguridad* descarga todo en un
-  `.zip` (configuración, historial, fotos, música y fondos) y restaura un archivo
+  `.zip` (configuración, historial, fotos y música) y restaura un archivo
   así: primero lo comprueba, y lo que había se guarda en `backups/`. Es la forma de
   llevar una familia a otro aparato.
 - `settings` y `features` de `config.yaml` se pueden editar a mano; si un valor no
@@ -99,17 +114,18 @@ fuera de `app/static/css/tokens.css`.
 ```
 app/
   main.py                 la app FastAPI: rutas, estado compartido, comprobaciones al arrancar
-  <funcionalidad>/        children, missions, templates, today, routines, prizes,
+  <funcionalidad>/        children, missions, today, routines, prizes,
                           shop, songs, events, backup, voice…
     api.py                rutas: HTTP y validación
     service.py            reglas, en Python puro
     repository.py         leer y escribir YAML o SQLite
-  storage/                config.yaml y sus migraciones, SQLite y sus migraciones
+  samples.py              los ejemplos de una instalación nueva
+  storage/                config.yaml y sus migraciones, SQLite y sus migraciones, empezar de cero
   static/                 la interfaz: HTML, CSS y módulos JavaScript, sin compilar
     css/tokens.css        todos los colores, tamaños y tiempos (themes/ tiene los colores de Material)
     js/screens/           un módulo por pantalla
 themes/                   exportaciones de Material Theme Builder
-tools/                    generadores de temas y de la librería de imágenes
+tools/                    generadores de temas, de la librería de imágenes y de los fondos
 tests/
 ```
 
@@ -125,6 +141,10 @@ frameworks ni empaquetadores.
 | [Nunito](https://fonts.google.com/specimen/Nunito) (`app/static/fonts/nunito/`) | SIL Open Font License, ver `OFL.txt` |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) (`piper-tts`, se instala con pip) | Ver su repositorio |
 | Modelo de voz `es_ES-sharvard-medium` (se descarga, no está en el repositorio) | Ver su [ficha](https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium) |
+
+Dibujados para este proyecto, con la licencia MIT del repositorio: el pijama
+(`app/static/libraries/own/`) y los fondos (`app/static/backgrounds/`, con sus programas
+en `tools/fondos/`, que necesitan Pillow).
 
 ## Licencia
 

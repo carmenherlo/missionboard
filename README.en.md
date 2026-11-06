@@ -2,7 +2,7 @@
 
 [Español](README.md) · **English**
 
-A family app for a shared tablet. Kids follow their **missions** (short lists of
+A family app for a shared tablet. Kids follow their **missions** (tasks and
 steps, with pictures and voice), earn **stars**, spend them in a **shop** and unlock
 a **daily prize** with a spinning wheel. **Routines** guide the busy moments of the
 day (getting ready for school, bedtime) with an alarm, a talking clock and music.
@@ -12,18 +12,23 @@ The interface is in Spanish; the code, comments and tests are in English.
 
 ## Features
 
-- **Kids' screens:** each child has a colour and an avatar; their day is a route of
-  missions, each one opened as a panel of steps to tick. Stars, a celebration when
-  a mission is done, and a daily prize when all of them are.
-- **Routines:** parts with their minutes, one after the other, between an alarm and
-  a goal. Either the start or the end time is pinned and the rest falls into place.
-  On screen: a clock with each part's stretch, a voice that says what comes next,
-  warnings before a part ends, a ten-second countdown, each kid with their mission,
-  and music playing over chosen parts. Routines can ring at a time or be started by
+- **Family missions:** a mission has tasks, and a task has steps. They are all
+  everyone's, and each child has their own things switched on. A mission has its colour,
+  days, hours and, if wanted, its routine.
+- **Kids' screens:** each child is known by their avatar; their day is a route of
+  missions, each one opened as a panel of cards: the task is the card and its steps are
+  squares to tick. Stars, a celebration when a mission is done, and a daily prize when
+  all of them are. The backgrounds follow the season and the moment of the day.
+- **Routines:** they put time to a mission: its parts are the tasks, with their minutes,
+  between an alarm and a goal. Either the start or the end time is pinned and the rest
+  falls into place. The routine's hours count for its children; the others follow the
+  mission's. On screen: a clock with each part's stretch, a voice that says what comes
+  next, warnings before a part ends, a ten-second countdown, each kid with their
+  mission, and music over chosen parts. Routines can ring at a time or be started by
   hand.
-- **Parents' zone:** children, missions and templates, routines (with a trial mode
-  that runs them faster and lets you set the kids' missions at will), prizes, shop,
-  the parents' code, an event log (CSV export) and **backups**.
+- **Parents' zone:** children, missions, routines (with a trial mode that runs them
+  faster and lets you set the kids' missions at will), prizes, shop, the parents' code,
+  an event log (CSV export) and **backups**.
 - **Natural voice:** sentences are spoken with [Piper](https://github.com/OHF-Voice/piper1-gpl)
   on the server and cached; the tablet's own voice is the fallback.
 - **Works offline:** no external services at run time; fonts and images are bundled.
@@ -39,7 +44,9 @@ MISSIONBOARD_DATA_DIR=personal uvicorn app.main:app --reload --host 0.0.0.0 --po
 ```
 
 Open <http://localhost:8002/>. The default parents' code is **1234**: change it in
-*Configurar → Código de padres*.
+*Configurar → Código de padres*. A new installation comes with three example children
+(Bea, Alex and Noa) and three missions (Despegue, Aterrizaje and Alunizaje), with their
+routines, to change as you like.
 
 `bash dev.sh` does the same with a conda environment named `missionboard` and
 prints the address to open from a tablet on the same network.
@@ -66,16 +73,23 @@ Everything the family sets up and does lives in one folder (`MISSIONBOARD_DATA_D
 
 | Path | What |
 |---|---|
-| `config.yaml` | Children, missions, templates, routines, prizes, shop, settings and feature switches |
+| `config.yaml` | Children, missions, routines, prizes, shop, settings and feature switches |
 | `missionboard.db` | SQLite: the history (steps ticked, missions done, stars, prizes, purchases, routines run, event log) |
-| `photos/`, `sounds/`, `backgrounds/` | Uploaded photos, songs, and the background illustration of each moment of the day |
+| `photos/`, `sounds/` | Uploaded photos and songs |
 | `voice-cache/` | Spoken sentences, generated again when missing |
+| `backups/` | What there was before restoring a copy or starting from scratch |
+
+The backgrounds are the app's (`app/static/backgrounds/`), one per season and moment of
+the day; each season's dates and times are in `settings.seasons`.
 
 - **Migrations** run on start-up; the previous file is kept next to it
   (`config.yaml.vN.bak`, `missionboard.db.vN.bak`). A file from a newer version stops
   the app instead of being changed.
+- **Starting from scratch:** a `config.yaml` from before family missions is not
+  converted: on start-up everything is copied to `backups/` and the app starts with the
+  examples, keeping the song library. A backup from then cannot be restored.
 - **Backups:** *Configurar → Copia de seguridad* downloads everything in one `.zip`
-  (configuration, history, photos, songs, backgrounds) and restores such a file,
+  (configuration, history, photos, songs) and restores such a file,
   checking it first and keeping what there was in `backups/`. It is the way to move
   a family to another device.
 - `settings` and `features` in `config.yaml` can be edited by hand; invalid values
@@ -95,17 +109,18 @@ written outside `app/static/css/tokens.css`.
 ```
 app/
   main.py                 the FastAPI app: routers, shared state, start-up checks
-  <feature>/              children, missions, templates, today, routines, prizes,
+  <feature>/              children, missions, today, routines, prizes,
                           shop, songs, events, backup, voice…
     api.py                routes: HTTP and validation
     service.py            rules, plain Python
     repository.py         reading and writing YAML or SQLite
-  storage/                config.yaml store and migrations, SQLite and migrations
+  samples.py              the examples of a new installation
+  storage/                config.yaml store and migrations, SQLite and migrations, starting from scratch
   static/                 the front end: HTML, CSS and JavaScript modules, no build step
     css/tokens.css        every colour, size and timing (themes/ holds Material colour roles)
     js/screens/           one module per screen
 themes/                   Material Theme Builder exports
-tools/                    theme and image-library generators
+tools/                    theme, image-library and background generators
 tests/
 ```
 
@@ -121,6 +136,10 @@ without frameworks or bundlers.
 | [Nunito](https://fonts.google.com/specimen/Nunito) (`app/static/fonts/nunito/`) | SIL Open Font License, see `OFL.txt` |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) (`piper-tts`, installed with pip) | See its repository |
 | Voice model `es_ES-sharvard-medium` (downloaded, not in the repository) | See its [model card](https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium) |
+
+Drawn for this project, under the repository's MIT licence: the pyjamas
+(`app/static/libraries/own/`) and the backgrounds (`app/static/backgrounds/`, with their
+programs in `tools/fondos/`, which need Pillow).
 
 ## Licence
 
