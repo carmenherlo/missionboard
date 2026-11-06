@@ -114,12 +114,19 @@
   --scene-veil-white: rgb(255 255 255 / 0.45); /* so it does not compete with the route */
   --scene-plain: white; /* without an illustration */
 
+  /* A mission's colour (rings, its panel, what is marked), set by the screen as
+     --mission-color, --mission-soft, --mission-strong and --on-mission. The child's
+     stays only in the ring of their avatar. */
+
   /* The mission: a panel over the route, which stays behind, darker. */
   --sheet-backdrop: rgb(20 20 40 / 0.35);
   --sheet-opacity: 90%;
   --sheet-blur: 18px; /* if it stutters on the tablet: 0 (and --sheet-opacity: 100%) */
   --shadow-sheet: 0 24px 60px rgb(0 0 0 / 0.3);
   --step-tile-size: 120px;
+  --task-card-width: 300px;
+  --task-icon-size: 64px;
+  --square-size: 84px; /* a child's finger: not under 64px */
   --step-check-size: 56px;
   --shadow-badge: 0 3px 10px rgb(0 0 0 / 0.15);
 

@@ -1634,3 +1634,68 @@ select.pick {
   background: var(--surface);
   outline: none;
 }
+
+/* Editar misión: tasks as cards, and their steps as cards inside (misiones-2). */
+.task-tree {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task-tree__task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.task-tree__task.is-dragging { z-index: 2; }
+
+.task-tree__name { font-weight: 800; }
+
+.task-tree__steps {
+  min-height: var(--space-1);
+  padding: 0;
+}
+
+.row--step { margin-left: var(--space-5); }
+
+.row--mission { border-left: 6px solid var(--mission-color, var(--line)); }
+
+.order--mission {
+  background: var(--mission-color, var(--line));
+  color: var(--on-mission, var(--surface));
+}
+
+.kids-on {
+  display: flex;
+  flex: none;
+  gap: var(--space-1);
+}
+
+/* A mission's colour: one of the palette, the chosen one with its ✓. */
+.color-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.color-chip {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mission-color);
+  color: var(--surface);
+  cursor: pointer;
+}
+
+.color-chip--on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--mission-color); }

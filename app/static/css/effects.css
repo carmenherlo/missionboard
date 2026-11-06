@@ -17,7 +17,7 @@
   inset: -18%;
   border-radius: 50%;
   background: radial-gradient(closest-side,
-    color-mix(in srgb, var(--halo-color, var(--child-color)) var(--heartbeat-strength), transparent) 55%, transparent);
+    color-mix(in srgb, var(--halo-color, var(--mission-color, var(--child-color))) var(--heartbeat-strength), transparent) 55%, transparent);
   animation: heartbeat var(--heartbeat) ease-in-out infinite alternate;
   pointer-events: none;
 }
@@ -93,12 +93,12 @@
 
 @keyframes celebration-glow {
   0%, 100% {
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--child-color) 70%, transparent))
-      drop-shadow(0 0 14px color-mix(in srgb, var(--child-color) 35%, transparent));
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--mission-color, var(--child-color)) 70%, transparent))
+      drop-shadow(0 0 14px color-mix(in srgb, var(--mission-color, var(--child-color)) 35%, transparent));
   }
   50% {
-    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--child-color) 90%, transparent))
-      drop-shadow(0 0 32px color-mix(in srgb, var(--child-color) 60%, transparent));
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--mission-color, var(--child-color)) 90%, transparent))
+      drop-shadow(0 0 32px color-mix(in srgb, var(--mission-color, var(--child-color)) 60%, transparent));
   }
 }
 

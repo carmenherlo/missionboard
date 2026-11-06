@@ -141,6 +141,7 @@ export async function viewChildForm(childId) {
         error,
         existing
           ? h("div", { class: "form-actions" },
+              h("a", { class: "btn", href: `#/parents/config/children/${existing.id}/missions` }, icon("missions"), t.missionChild.openChild),
               h("a", { class: "btn btn--primary", href: "#/parents/config/children" }, t.common.done))
           : h("div", { class: "form-actions" },
               h("a", { class: "btn", href: "#/parents/config/children" }, t.childForm.cancel),

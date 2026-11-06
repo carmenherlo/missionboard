@@ -1,5 +1,5 @@
 // The ring of a mission (or of the avatar in the celebration): a circle
-// that fills with the child's colour as the steps get done.
+// that fills with its colour as the steps get done.
 import { h } from "../../dom.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -25,6 +25,11 @@ export function ring(progress, content, { star = null, className = "" } = {}) {
     svg,
     h("span", { class: "ring__inner" }, content),
     star && h("span", { class: "ring__star" }, h("img", { src: star, alt: "" })));
+}
+
+// A mission's colour for what is drawn inside: passed as variables, like the child's.
+export function missionStyle({ color, soft, strong, on }) {
+  return `--mission-color: ${color}; --mission-soft: ${soft}; --mission-strong: ${strong}; --on-mission: ${on}`;
 }
 
 // A mission's or step's picture, or its initial when it has none.

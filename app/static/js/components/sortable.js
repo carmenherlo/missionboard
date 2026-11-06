@@ -4,12 +4,15 @@
 // onEnd(ids) is called with the new order when it changed.
 // trash (rutinas-7): { label, onDrop(id) }: while dragging, a bin at the bottom of the
 // screen; let go over it and the item is dropped (onDrop), instead of moved.
+// group (a step and its tasks): () => the lists it can go to; each one takes it while the
+// pointer is over it or over its closest [data-drop-zone]. onPlace(id, list, position)
+// instead of onEnd. Lists can be nested: a handle belongs to its nearest item only.
 import { h } from "../dom.js";
 import { icon } from "../icons.js";
 
 const SLIDE_MS = 150;
 
-export function sortable(list, { onEnd, trash = null }) {
+export function sortable(list, { onEnd, onPlace = null, group = null, trash = null }) {
   const ids = () => [...list.children].filter((el) => el.dataset.id).map((el) => el.dataset.id); // not the songs' heads
 
   // Animate siblings from where they were to where they are now (FLIP).
@@ -30,7 +33,10 @@ export function sortable(list, { onEnd, trash = null }) {
     const handle = event.target.closest(".drag-handle");
     if (!handle || !list.contains(handle)) return;
     const item = handle.closest("[data-id]");
+    if (item.parentElement !== list) return; // the handle of an item in a list inside
     event.preventDefault();
+    const home = list;
+    let current = list;
     const before = ids().join();
     // Where inside the item it was grabbed, so it does not jump under the finger.
     const grabOffset = event.clientY - item.getBoundingClientRect().top;
@@ -54,16 +60,23 @@ export function sortable(list, { onEnd, trash = null }) {
     // Listen on the whole window: the pointer soon leaves the small handle.
     function move(e) {
       if (e.pointerId !== event.pointerId) return;
-      const others = [...list.children].filter((el) => el !== item);
+      if (group) {
+        current = group().find((other) => {
+          const box = (other.closest("[data-drop-zone]") ?? other).getBoundingClientRect();
+          return e.clientY >= box.top && e.clientY <= box.bottom;
+        }) ?? current;
+      }
+      const others = [...current.children].filter((el) => el !== item);
       const next = others.find((el) => {
         const box = el.getBoundingClientRect();
         return e.clientY < box.top + box.height / 2;
       });
-      const moved = next ? item.nextElementSibling !== next : list.lastElementChild !== item;
+      const moved = item.parentElement !== current
+        || (next ? item.nextElementSibling !== next : current.lastElementChild !== item);
       if (moved) {
         const tops = new Map(others.map((el) => [el, el.getBoundingClientRect().top]));
-        if (next) list.insertBefore(item, next);
-        else list.append(item);
+        if (next) current.insertBefore(item, next);
+        else current.append(item);
         slide(others, tops);
       }
       follow(e.clientY);
@@ -82,8 +95,14 @@ export function sortable(list, { onEnd, trash = null }) {
       const dropped = overBin(e);
       bin?.remove();
       if (dropped) {
-        list.replaceChildren(...order);
+        home.replaceChildren(...order);
         trash.onDrop(item.dataset.id);
+        return;
+      }
+      if (onPlace) {
+        if (current !== home || ids().join() !== before) {
+          onPlace(item.dataset.id, current, [...current.children].indexOf(item));
+        }
         return;
       }
       if (ids().join() !== before) onEnd(ids());

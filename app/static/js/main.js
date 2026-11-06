@@ -5,7 +5,7 @@ import { h, render } from "./dom.js";
 import { viewChildToday } from "./screens/child/today.js";
 import { viewHome } from "./screens/home.js";
 import { viewChangeCode } from "./screens/parents/change-code.js";
-import { viewChildMissions } from "./screens/parents/child-missions.js";
+import { viewChildMissions, viewMissionChild } from "./screens/parents/mission-child.js";
 import { viewChildForm } from "./screens/parents/child-form.js";
 import { viewChildrenList } from "./screens/parents/children-list.js";
 import { viewConfigIndex } from "./screens/parents/config-index.js";
@@ -24,13 +24,10 @@ import { viewSongsList } from "./screens/parents/songs-list.js";
 import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
 import { viewPrizesList } from "./screens/parents/prizes-list.js";
-import { viewMissionEdit, viewTemplateEdit } from "./screens/parents/mission-edit.js";
+import { viewMissionEdit } from "./screens/parents/mission-edit.js";
 import { viewMissionNew } from "./screens/parents/mission-new.js";
 import { viewMissionsHome } from "./screens/parents/missions-home.js";
-import { viewStepEdit, viewTemplateStepEdit } from "./screens/parents/step-edit.js";
-import { viewTemplateApply } from "./screens/parents/template-apply.js";
-import { viewTemplateNew } from "./screens/parents/template-new.js";
-import { viewTemplatesList } from "./screens/parents/templates-list.js";
+import { viewStepEdit, viewTaskEdit } from "./screens/parents/item-edit.js";
 import { startKeepAwake } from "./components/keep-awake.js";
 import { startRest } from "./components/rest.js";
 import { startRoutines } from "./routine/routine.js";
@@ -59,11 +56,16 @@ const routes = [
   [parentsPath("/children"), () => viewChildrenList(), "parents", "children"],
   [parentsPath("/children/new"), () => viewChildForm(null), "parents", "child_new"],
   [parentsPath("/children/:child"), (ids) => viewChildForm(ids.child), "parents", "child_edit"],
+  [parentsPath("/children/:child/missions"), (ids) => viewChildMissions(ids.child), "parents", "child_missions"],
+  [parentsPath("/children/:child/missions/:mission"),
+    (ids) => viewMissionChild(ids.mission, ids.child, true), "parents", "mission_child"],
   [parentsPath("/missions"), () => viewMissionsHome(), "parents", "missions"],
-  [parentsPath("/missions/child/:child"), (ids) => viewChildMissions(ids.child), "parents", "child_missions"],
-  [parentsPath("/missions/child/:child/new"), (ids) => viewMissionNew(ids.child), "parents", "mission_new"],
+  [parentsPath("/missions/new"), () => viewMissionNew(), "parents", "mission_new"],
   [parentsPath("/missions/:mission"), (ids) => viewMissionEdit(ids.mission), "parents", "mission_edit"],
+  [parentsPath("/missions/:mission/tasks/:step"), (ids) => viewTaskEdit(ids.mission, ids.step), "parents", "task_edit"],
   [parentsPath("/missions/:mission/steps/:step"), (ids) => viewStepEdit(ids.mission, ids.step), "parents", "step_edit"],
+  [parentsPath("/missions/:mission/children/:child"),
+    (ids) => viewMissionChild(ids.mission, ids.child), "parents", "mission_child"],
   [parentsPath("/routines"), () => viewRoutinesList(), "parents", "routines"],
   [parentsPath("/routines/new"), () => viewRoutineNew(), "parents", "routine_new"],
   // From a routine (?from=<id>), "←" goes back to it (05/11), not to the list of routines.
@@ -80,13 +82,6 @@ const routes = [
   [parentsPath("/shop/:item"), (ids) => viewShopItemEdit(ids.item), "parents", "shop_item_edit"],
   [parentsPath("/prizes"), () => viewPrizesList(), "parents", "prizes"],
   [parentsPath("/prizes/:prize"), (ids) => viewPrizeEdit(ids.prize), "parents", "prize_edit"],
-  [parentsPath("/templates"), () => viewTemplatesList(), "parents", "templates"],
-  [parentsPath("/templates/new"), () => viewTemplateNew(), "parents", "template_new"],
-  [parentsPath("/templates/:template"), (ids) => viewTemplateEdit(ids.template), "parents", "template_edit"],
-  [parentsPath("/templates/:template/apply(?<fromEditor>\\?from=editor)?"),
-    (ids) => viewTemplateApply(ids.template, Boolean(ids.fromEditor)), "parents", "template_apply"],
-  [parentsPath("/templates/:template/steps/:step"),
-    (ids) => viewTemplateStepEdit(ids.template, ids.step), "parents", "template_step_edit"],
 ];
 
 // Fire and forget: the log must never get in the way of a screen.
@@ -95,7 +90,7 @@ function logScreen(screen, zone, ids = {}) {
     zone,
     screen,
     child_id: ids.child,
-    mission_id: ids.mission ?? ids.template, // a template is shown where a mission would be
+    mission_id: ids.mission,
     step_id: ids.step,
   };
   api("POST", "api/events/screen", { json }).catch(() => {});

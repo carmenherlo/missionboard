@@ -171,7 +171,7 @@
   transform: translateX(-50%);
   padding: var(--space-1) var(--space-3);
   border-radius: 999px;
-  background: var(--child-strong);
+  background: var(--mission-strong, var(--child-strong));
   color: var(--on-primary);
   font-size: var(--text-lg);
   font-weight: 800;
@@ -235,7 +235,7 @@
 .ring__fill,
 .ring__glow {
   fill: none;
-  stroke: var(--child-color);
+  stroke: var(--mission-color, var(--child-color));
   stroke-width: 6;
   stroke-linecap: round;
 }
@@ -260,7 +260,7 @@
 }
 
 .ring__letter {
-  color: var(--child-strong);
+  color: var(--mission-strong, var(--child-strong));
   font-size: calc(var(--size) * 0.4);
   font-weight: 800;
 }
@@ -284,7 +284,7 @@
 }
 
 /* Done: in the background, softer. Pending, upcoming and closed: grey. */
-.route-node--done .ring__fill { stroke: var(--child-soft); }
+.route-node--done .ring__fill { stroke: var(--mission-soft, var(--child-soft)); }
 .route-node--done .ring__inner img,
 .route-node--done .ring__star img { opacity: 0.75; filter: saturate(0.6); }
 .route-node--open:not(.route-node--focus) .ring__inner img,
@@ -364,7 +364,7 @@
 }
 
 .progress__dot--on {
-  background: var(--child-color);
+  background: var(--mission-color, var(--child-color));
 }
 
 .progress__count {
@@ -430,7 +430,7 @@
 }
 
 .step-tile__letter {
-  color: var(--child-strong);
+  color: var(--mission-strong, var(--child-strong));
   font-size: calc(var(--step-tile-size) * 0.48);
   font-weight: 800;
 }
@@ -438,8 +438,8 @@
 /* Done: the light tone of the child's colour and a vivid border (the
    background is tinted with their colour too, so the fill alone would vanish). */
 .step-card--done .step-card__toggle {
-  background: var(--child-soft);
-  box-shadow: inset 0 0 0 5px var(--child-color);
+  background: var(--mission-soft, var(--child-soft));
+  box-shadow: inset 0 0 0 5px var(--mission-color, var(--child-color));
 }
 
 .step-card__check {
@@ -451,8 +451,8 @@
   width: var(--step-check-size);
   height: var(--step-check-size);
   border-radius: 50%;
-  background: var(--child-color);
-  color: var(--on-child);
+  background: var(--mission-color, var(--child-color));
+  color: var(--on-mission, var(--on-child));
   font-size: calc(var(--step-check-size) * 0.6);
   box-shadow: 0 0 0 4px var(--surface);
   pointer-events: none;
@@ -740,4 +740,205 @@
 
 .mission-sheet--past .step-card__toggle {
   cursor: default;
+}
+
+/* The mission's tasks (misiones-2): the task is a card and its steps, squares below.
+   All the cards take the same room, however many steps each has. */
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--task-card-width), 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.task-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.task-card--done {
+  background: var(--mission-soft, var(--child-soft));
+  box-shadow: inset 0 0 0 4px var(--mission-color, var(--child-color));
+}
+
+.task-card--current {
+  outline: 5px solid var(--mission-color, var(--child-color));
+  outline-offset: 3px;
+}
+
+.task-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.task-card__toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--task-icon-size);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.task-card__toggle--still { cursor: default; }
+
+.task-card__picture {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--task-icon-size);
+  height: var(--task-icon-size);
+}
+
+.task-card__picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.task-card__letter,
+.square__letter {
+  color: var(--mission-strong, var(--child-strong));
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.task-card__text {
+  min-width: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.task-card__speak {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.task-card__check {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--mission-color, var(--child-color));
+  color: var(--on-mission, var(--on-child));
+}
+
+.task-card--done .task-card__check { display: grid; }
+.task-card--done .task-card__speak { display: none; }
+
+.squares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Big enough for a child's finger (--square-size: over 64px, the size to aim at). */
+.square {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  width: var(--square-size);
+  min-height: var(--square-size);
+  padding: var(--space-1);
+  border: 3px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.square--done {
+  border-color: var(--mission-color, var(--child-color));
+  background: var(--mission-soft, var(--child-soft));
+}
+
+.square__picture {
+  display: grid;
+  place-items: center;
+  width: calc(var(--square-size) * 0.55);
+  height: calc(var(--square-size) * 0.55);
+}
+
+.square__picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.square__text {
+  max-width: 100%;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Parents, switching things on and off for a child: off, grey and saying so; no ✓. */
+.square--off,
+.task-card--off {
+  background: var(--container);
+  color: var(--muted);
+}
+
+.square--off img,
+.task-card--off img {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.task-card--parents .task-card__toggle { cursor: pointer; }
+
+.task-card__off {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.task-grid--parents { padding: var(--space-2) 0 0; }
+
+.mission-sheet--past .task-grid {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.mission-sheet--past .task-card__toggle,
+.mission-sheet--past .square { cursor: default; }
+
+/* Holding a mission that is not open: the parents' code. */
+.open-today { display: grid; place-items: center; }
+
+.open-today__form {
+  width: min(420px, 100%);
 }

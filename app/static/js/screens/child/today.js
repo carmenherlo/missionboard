@@ -7,6 +7,7 @@ import { cornerButton } from "../../components/corner-button.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { openMission as openMissionOver } from "./mission-flow.js";
+import { askToOpen } from "./open-today.js";
 import { prizeSheet } from "./prize-sheet.js";
 import { openStars } from "./stars-sheet.js";
 import { routeView } from "./route.js";
@@ -51,7 +52,7 @@ export async function viewChildToday(childId) {
         }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
       day.missions.length
-        ? routeView(day, { onOpen: openMission, onLocked: showLocked, onPrize: openPrize, onPrizeLocked: showPrizeLocked })
+        ? routeView(day, { onOpen: openMission, onLocked: showLocked, onHold: holdMission, onPrize: openPrize, onPrizeLocked: showPrizeLocked })
         : h("section", { class: "route route__empty" },
             avatar(day.child, { size: "hero" }), t.child.noMissions));
   }
@@ -63,6 +64,22 @@ export async function viewChildToday(childId) {
       onDay: (next) => { day = next; },
       onClose: (next) => {
         day = next;
+        overlay = false;
+        draw();
+      },
+    });
+  }
+
+  // Held down, a mission that is not open: with the parents' code, open only today.
+  function holdMission(mission) {
+    overlay = true;
+    askToOpen(screen, mission, `${base}/missions/${mission.id}/open`, {
+      onOpened: (next) => {
+        day = next;
+        overlay = false;
+        draw();
+      },
+      onCancel: () => {
         overlay = false;
         draw();
       },

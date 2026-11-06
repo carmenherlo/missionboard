@@ -1,46 +1,61 @@
-import { api } from "../../api.js";
+import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
+import { imageThumb } from "../../components/image-thumb.js";
+import { sortable } from "../../components/sortable.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
+import { missionStyle } from "../child/ring.js";
 import { parentsHeader } from "./common.js";
+import { missionPills } from "./mission-summary.js";
 
-// The children (each one's missions) and, below, the templates: always shown,
-// even with one child or none, so templates can be prepared at any time.
+// The family's missions, in the order of the children's route. Each card says who has
+// something on, and opens the mission.
 export async function viewMissionsHome() {
-  const [children, templates] = await Promise.all([
+  const [missions, children] = await Promise.all([
+    api("GET", "api/missions"),
     api("GET", "api/children"),
-    api("GET", "api/templates"),
     loadAvatars(),
   ]);
-  const counts = await Promise.all(
-    children.map((c) => api("GET", `api/children/${c.id}/missions`).then((m) => m.length)));
+  const error = h("p", { class: "form-error", role: "alert" });
 
-  const kids = children.length
-    ? [
-        h("p", { class: "hint" }, t.missions.whose),
-        h("div", { class: "kid-cards" },
-          children.map((child, i) =>
-            h("a", { class: "kid-card", href: `#/parents/config/missions/child/${child.id}` },
-              avatar(child, { size: "xl" }),
-              h("span", { class: "child-card__name" }, child.name),
-              h("span", { class: counts[i] ? "pill" : "pill pill--muted" }, t.missions.count(counts[i]))))),
-      ]
-    : [
-        h("p", { class: "empty" }, t.missions.noChildren),
-        h("a", { class: "btn btn--primary", href: "#/parents/config/children/new" }, t.missions.addChild),
-      ];
+  function renumber() {
+    list.querySelectorAll(".order").forEach((el, i) => { el.textContent = i + 1; });
+  }
+
+  const list = h("ul", { class: "rows" }, missions.map((mission, i) =>
+    h("li", { class: "row row--sortable row--covered row--mission", "data-id": mission.id, style: missionStyle(mission.colors) },
+      h("span", { class: "drag-handle", "aria-label": t.missions.dragLabel }, icon("drag")),
+      h("span", { class: "order order--mission" }, i + 1),
+      imageThumb(mission.image_url, { size: "md", label: mission.name, suggested: mission.image_suggested }),
+      h("a", {
+        class: "row__name row__cover", href: `#/parents/config/missions/${mission.id}`,
+        "aria-label": t.missions.editMission(mission.name),
+      }, mission.name,
+        h("span", { class: "row__detail" }, missionPills(mission))),
+      h("span", { class: "kids-on" }, children
+        .filter((child) => mission.children.find((c) => c.id === child.id)?.active > 0)
+        .map((child) => avatar(child, { size: "sm" }))),
+      h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
+
+  sortable(list, {
+    onEnd: async (ids) => {
+      renumber();
+      error.textContent = "";
+      try {
+        await api("PUT", "api/missions/order", { json: { ids } });
+      } catch (err) {
+        error.textContent = errorMessage(err);
+      }
+    },
+  });
 
   render(
     parentsHeader(t.missions.title, { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
-      ...kids,
-      h("div", { class: "stack stack--tight section-gap" },
-        h("a", { class: "row row--link", href: "#/parents/config/templates" },
-          h("span", { class: "row__icon" }, icon("templates")),
-          h("span", { class: "row__name" }, t.missions.templates,
-            h("span", { class: "row__detail" },
-              h("span", { class: "pill pill--muted" }, t.templates.count(templates.length)))),
-          h("span", { class: "row__chevron" }, icon("next"))),
-        h("p", { class: "hint" }, t.missions.templatesHint))));
+      h("div", { class: "page-header" },
+        h("p", { class: "hint" }, missions.length ? t.missions.hint : t.missions.empty),
+        h("a", { class: "btn btn--primary", href: "#/parents/config/missions/new" }, icon("plus"), t.missions.add)),
+      missions.length ? list : null,
+      error));
 }

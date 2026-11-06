@@ -4,7 +4,7 @@ import { t } from "../texts.js";
 import { imagePicker } from "./image-picker.js";
 import { panel } from "./panel.js";
 
-// Quick form to create a mission or a template: just a name and an image.
+// Quick form to create a mission: just a name and an image.
 // `createUrl` gets { name, image }; a photo is uploaded to `${itemUrl(created)}/photo`.
 export async function newMissionForm({ createUrl, itemUrl, cancelHref, missingName, onCreated }) {
   const nameInput = h("input", {

@@ -5,9 +5,11 @@
 import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
-import { picture, ring } from "./ring.js";
+import { missionStyle, picture, ring } from "./ring.js";
 
-export function routeView(day, { onOpen, onLocked, onPrize, onPrizeLocked }) {
+const HOLD_MS = 1000; // holding a mission that is not open: a parent opens it, only today
+
+export function routeView(day, { onOpen, onLocked, onHold, onPrize, onPrizeLocked }) {
   const stops = [
     ...day.missions.map((mission) => ({ mission, done: mission.state === "done", focus: mission.focus })),
     ...(day.prize ? [{ prize: day.prize, done: day.prize.state === "won", focus: day.prize.state === "unlocked" }] : []),
@@ -20,7 +22,7 @@ export function routeView(day, { onOpen, onLocked, onPrize, onPrizeLocked }) {
   stops.forEach((stop, i) => {
     if (i > 0) line.append(link(i, focus, stops));
     line.append(stop.mission
-      ? missionNode(stop.mission, distance(i), day, { onOpen, onLocked })
+      ? missionNode(stop.mission, distance(i), day, { onOpen, onLocked, onHold })
       : prizeNode(stop.prize, distance(i), { onPrize, onPrizeLocked }));
   });
 
@@ -43,13 +45,12 @@ function link(i, focus, stops) {
 
 const sizeFor = (distance) => (distance === 0 ? "focus" : distance === 1 ? "near" : "far");
 
-function missionNode(mission, distance, day, { onOpen, onLocked }) {
-  const { state, steps, schedule } = mission;
-  const done = steps.filter((s) => s.checked).length;
+function missionNode(mission, distance, day, { onOpen, onLocked, onHold }) {
+  const { state, schedule, done, total } = mission;
   const isNow = mission.focus && state === "open";
 
   let detail = null;
-  if (isNow) detail = t.child.stepsDone(done, steps.length);
+  if (isNow) detail = t.child.stepsDone(done, total);
   else if (state === "upcoming" && !mission.focus) detail = [icon("clock"), t.child.at(schedule.start)];
   else if (state === "closed") detail = t.child.until(schedule.end);
 
@@ -58,19 +59,49 @@ function missionNode(mission, distance, day, { onOpen, onLocked }) {
   else if (mission.focus && state === "upcoming") tag = t.child.at(schedule.start);
 
   const canOpen = state !== "upcoming"; // a past one opens too, to look at (05/11)
+  const hold = (state === "upcoming" || state === "closed") ? holdable(() => onHold(mission)) : null;
   return h("button", {
-    type: "button",
+    type: "button", style: missionStyle(mission.colors),
+    ...(hold?.events ?? {}),
     class: `route-node route-node--${state} route-node--${sizeFor(distance)}${mission.focus ? " route-node--focus" : ""}`,
     "aria-label": [mission.name, tag, ...(Array.isArray(detail) ? [detail[1]] : [detail])].filter(Boolean).join(", "),
-    onclick: () => (canOpen ? onOpen(mission) : onLocked(mission)),
+    onclick: () => {
+      if (hold?.fired()) return;
+      if (canOpen) onOpen(mission);
+      else onLocked(mission);
+    },
   },
     tag && h("span", { class: "route-node__tag" }, tag),
-    ring(state === "done" ? 1 : done / steps.length,
+    ring(state === "done" ? 1 : done / total,
       picture(mission.image_url, mission.name, "ring__letter"),
       { star: state === "done" ? day.star_url : null }),
     h("span", { class: "route-node__label" },
       mission.name,
       detail && h("small", { class: "route-node__detail" }, detail)));
+}
+
+// Held down for a moment: nothing to see for the child until then (the code is asked).
+function holdable(onHold) {
+  let timer = null;
+  let fired = false;
+  const cancel = () => clearTimeout(timer);
+  return {
+    fired: () => {
+      const was = fired;
+      fired = false;
+      return was;
+    },
+    events: {
+      onpointerdown: () => {
+        fired = false;
+        timer = setTimeout(() => { fired = true; onHold(); }, HOLD_MS);
+      },
+      onpointerup: cancel,
+      onpointerleave: cancel,
+      onpointercancel: cancel,
+      oncontextmenu: (e) => e.preventDefault(),
+    },
+  };
 }
 
 // Locked: small and a bit faded, in colour, with a lock. Unlocked: the big one.

@@ -1,18 +1,24 @@
 // A child's mission opened over whatever is on screen (their route, or the
-// clock of a routine): the panel with its steps, checking and unchecking
-// them, 🔊, and the celebration when the last one is checked.
+// clock of a routine): the panel with its tasks and steps, marking and unmarking
+// them, 🔊, and the celebration when the last one is marked.
 import { api } from "../../api.js";
 import { speak } from "../../components/speech.js";
 import { h } from "../../dom.js";
 import { showCelebration } from "./celebration.js";
 import { missionSheet } from "./mission-sheet.js";
 
+// What a child marks of a mission: the steps, or the tasks without steps.
+export function marksOf(mission) {
+  return mission.tasks.flatMap((task) => (task.marks_itself ? [task.id] : task.steps.map((st) => st.id)));
+}
+
 // day: the child's day (GET /api/children/<id>/today), or null to fetch it.
 // onDay(day): the day changed (a step, the mission done). onClose(day): it is gone.
-// pretend: a routine's trial (rutinas-7): { checked: Set of step ids, onChange(checked, stepIds) }.
-// The steps start as `checked` says and nothing reaches the server: no stars, nothing logged.
+// pretend: a routine's trial (rutinas-7): { checked: Set of ids, onChange(checked, ids) }.
+// What they mark starts as `checked` says and nothing reaches the server: no stars, nothing logged.
+// current: the id of the task of the routine's part going on.
 // Returns { close } to close it from outside (a routine's new part).
-export async function openMission(container, childId, missionId, { day = null, onDay = () => {}, onClose = () => {}, pretend = null } = {}) {
+export async function openMission(container, childId, missionId, { day = null, onDay = () => {}, onClose = () => {}, pretend = null, current = null } = {}) {
   const base = `api/children/${childId}/today`;
   day ??= await api("GET", base);
   let closed = false;
@@ -32,35 +38,50 @@ export async function openMission(container, childId, missionId, { day = null, o
   function draw() {
     let mission = day.missions.find((m) => m.id === missionId);
     if (!mission) return close();
-    if (pretend) {
-      mission = { ...mission, state: "open", steps: mission.steps.map((st) => ({ ...st, checked: pretend.checked.has(st.id) })) };
-    }
-    holder.replaceChildren(missionSheet(day, mission, { onToggle: toggle, onSpeak: listen, onClose: close, again: drawn }));
+    if (pretend) mission = pretended(mission);
+    holder.replaceChildren(missionSheet(day, mission, { onMark: toggle, onSpeak: listen, onClose: close, again: drawn, current }));
     drawn = true;
   }
 
-  // The step changes as soon as it is tapped (03/11: waiting for the server, a tap
-  // seemed lost and children tapped twice). Taps go in a queue, in order: tapping
-  // another step while one is saving is not lost (04/11). The panel is drawn again
-  // from the server's answer once nothing else is waiting.
-  let queue = Promise.resolve();
-  let waiting = 0;
-  const wanted = new Map(); // step id → checked, as last tapped
-  let celebrated = false; // the last step came: what is still queued does not matter
-
-  function toggle(step, card) {
-    if (pretend) return toggleOnlyHere(step);
-    const checked = !(wanted.get(step.id) ?? step.checked);
-    wanted.set(step.id, checked);
-    card?.classList.toggle("step-card--done", checked);
-    waiting += 1;
-    queue = queue.then(() => send(step.id, checked)).finally(() => { waiting -= 1; });
+  // In a trial, marked as the trial says, whatever today's real state is.
+  function pretended(mission) {
+    const has = (id) => pretend.checked.has(id);
+    const tasks = mission.tasks.map((task) => {
+      const steps = task.steps.map((st) => ({ ...st, checked: has(st.id) }));
+      return { ...task, steps, checked: task.marks_itself ? has(task.id) : steps.every((st) => st.checked) };
+    });
+    const done = marksOf(mission).filter(has).length;
+    return { ...mission, state: "open", tasks, done };
   }
 
-  async function send(stepId, checked) {
+  // It changes as soon as it is tapped (03/11: waiting for the server, a tap seemed
+  // lost and children tapped twice). Taps go in a queue, in order: tapping another one
+  // while one is saving is not lost (04/11). The panel is drawn again from the server's
+  // answer once nothing else is waiting.
+  let queue = Promise.resolve();
+  let waiting = 0;
+  const wanted = new Map(); // id → checked, as last tapped
+  let celebrated = false; // the last one came: what is still queued does not matter
+
+  // element: the square, or the card of a task without steps.
+  function toggle(item, element) {
+    if (pretend) return toggleOnlyHere(item);
+    const checked = !(wanted.get(item.id) ?? item.checked);
+    wanted.set(item.id, checked);
+    element?.classList.toggle(element.classList.contains("square") ? "square--done" : "task-card--done", checked);
+    // The last square of a card completes it at once.
+    const card = element?.closest(".task-card");
+    if (card && element.classList.contains("square")) {
+      card.classList.toggle("task-card--done", ![...card.querySelectorAll(".square")].some((sq) => !sq.classList.contains("square--done")));
+    }
+    waiting += 1;
+    queue = queue.then(() => send(item.id, checked)).finally(() => { waiting -= 1; });
+  }
+
+  async function send(itemId, checked) {
     if (closed || celebrated) return;
     try {
-      const result = await api("PUT", `${base}/missions/${missionId}/steps/${stepId}`, { json: { checked } });
+      const result = await api("PUT", `${base}/missions/${missionId}/marks/${itemId}`, { json: { checked } });
       day = result.today;
       onDay(day);
       if (result.completed) {
@@ -82,14 +103,14 @@ export async function openMission(container, childId, missionId, { day = null, o
     }
   }
 
-  // A trial: the step changes here only; the last one, the celebration (no stars).
-  function toggleOnlyHere(step) {
+  // A trial: it changes here only; the last one, the celebration (no stars).
+  function toggleOnlyHere(item) {
     if (celebrated) return;
     const checked = new Set(pretend.checked);
-    if (checked.has(step.id)) checked.delete(step.id);
-    else checked.add(step.id);
+    if (checked.has(item.id)) checked.delete(item.id);
+    else checked.add(item.id);
     pretend.checked = checked;
-    const ids = day.missions.find((m) => m.id === missionId).steps.map((st) => st.id);
+    const ids = marksOf(day.missions.find((m) => m.id === missionId));
     pretend.onChange(checked, ids);
     if (ids.every((id) => checked.has(id))) {
       celebrated = true;
@@ -100,9 +121,10 @@ export async function openMission(container, childId, missionId, { day = null, o
     draw();
   }
 
-  function listen(step) {
-    speak(step.text);
-    if (!pretend) note("step_spoken", step);
+  // 🔊 on a card: the task and its steps.
+  function listen(task) {
+    speak([task.text, ...task.steps.map((st) => st.text)]);
+    if (!pretend) note("step_spoken", task);
   }
 
   function close() {
