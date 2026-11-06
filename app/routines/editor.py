@@ -1,4 +1,4 @@
-"""Configurar → Rutinas (rutinas-3.html): creating and editing routines.
+"""A mission's routine: creating and editing it (its parts are the mission's tasks).
 
 Every change is checked as a whole routine (the times must add up) and
 against the other routines (two must not ring at the same time). A change
@@ -13,17 +13,14 @@ from pydantic import ValidationError
 from app.children.repository import ChildrenRepository
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
-from app.images.libraries import ImageLibraries, photo_filename, photo_ref
-from app.images.photos import validate_photo
-from app.images.rules import ImageRules
 from app.missions.repository import WEEKDAYS, MissionsRepository
-from app.routines.repository import Part, Routine, RoutinesRepository, card_positions, hhmm, minute_of
+from app.routines.repository import (
+    Part, Routine, RoutinesRepository, card_positions, hhmm, minute_of, music_kept, settled,
+)
 from app.songs.repository import SongsRepository
-from app.storage.photo_store import PhotoStore
 
 UNSET = object()
 TRIAL_LEAD_SECONDS = 20  # "Probar desde aquí" starts this long before the part
-NEW_ROUTINE_DAYS = WEEKDAYS[:5]
 NEW_PART_MINUTES = 5
 TIMING = ("anchor", "starts", "ends", "alarm", "alarm_before")
 
@@ -38,15 +35,11 @@ class RoutinesEditor:
         routines: RoutinesRepository,
         children: ChildrenRepository,
         missions: MissionsRepository,
-        libraries: ImageLibraries,
-        photos: PhotoStore,
         events: EventLog,
     ):
         self._routines = routines
         self._children = children
         self._missions = missions
-        self._photos = photos
-        self._images = ImageRules(libraries, photos)
         self._events = events
 
     def list_all(self) -> list[Routine]:
@@ -58,39 +51,45 @@ class RoutinesEditor:
             raise NotFoundError("Routine not found")
         return routine
 
-    def create(self, name: str, wake: str | None = None, *, starts: str | None = None,
+    def create(self, mission_id: str, wake: str | None = None, *, starts: str | None = None,
                ends: str | None = None) -> Routine:
-        """A new routine with one part, the rest is edited: it rings at `wake` and the part
-        starts five minutes later; or it starts at `starts` (ringing then); or it ends at
-        `ends`, at its goal, and its parts go backwards from there."""
-        doc = {"id": _new_id(), "name": name, "days": NEW_ROUTINE_DAYS}
+        """A mission's routine, with all its tasks, 5 minutes each: it rings at `wake` and
+        the first starts five minutes later; or it starts at `starts` (ringing then); or
+        it ends at `ends`, at its goal, and its parts go backwards from there."""
+        mission = self._missions.get(mission_id)
+        if mission is None:
+            raise NotFoundError("Mission not found")
+        if not mission.tasks:
+            raise InvalidError("The mission needs a task first")
+        if self._routines.of_mission(mission_id) is not None:
+            raise ConflictError("That mission already has its routine")
+        parts = [{"id": task.id, "minutes": NEW_PART_MINUTES} for task in mission.tasks]
+        doc = {"id": _new_id(), "mission_id": mission_id, "days": list(mission.days), "parts": parts}
         if ends:
-            doc |= {"anchor": "end", "wake": ends, "parts": [self._new_part("la primera parte", at=ends)],
-                    "goal": {"at": ends}}
+            parts[0]["at"] = ends
+            doc |= {"anchor": "end", "wake": ends, "goal": {"at": ends}}
         elif starts:
-            doc |= {"wake": starts, "parts": [self._new_part("la primera parte", at=starts)]}
+            parts[0]["at"] = starts
+            doc |= {"wake": starts}
         else:
-            start = hhmm((minute_of(wake) + NEW_PART_MINUTES) % (24 * 60))
-            doc |= {"wake": wake, "parts": [self._new_part("la primera parte", at=start)]}
+            parts[0]["at"] = hhmm((minute_of(wake) + NEW_PART_MINUTES) % (24 * 60))
+            doc |= {"wake": wake}
         with self._routines.atomic():
-            routine = self._valid(doc, check_others=True)
+            routine = self._valid(self._routines.resolve(doc), check_others=True)
             self._routines.add(routine)
         self._log("created", routine)
         return routine
 
-    def update(self, routine_id: str, *, name=UNSET, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
+    def update(self, routine_id: str, *, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
                offsets=UNSET, notices=UNSET, greeting=UNSET, last_countdown=UNSET, early_goal=UNSET,
-               warn_about=UNSET, image=UNSET, **timing) -> Routine:
+               warn_about=UNSET, **timing) -> Routine:
         """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`. The
         sentences (greeting, last_countdown, early_goal): None goes back to the usual one."""
         changes = {k: v for k, v in
-                   {"name": name, "days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
+                   {"days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
                     "offsets": offsets, "notices": notices, "greeting": greeting,
                     "last_countdown": last_countdown, "early_goal": early_goal, "warn_about": warn_about}.items()
                    if v is not UNSET}
-        current_image = self.get(routine_id).image
-        if image is not UNSET:  # a library image, or None: its first part's again
-            changes["image"] = self._images.check_new_image(current_image, image)
         if set(timing) - set(TIMING):
             raise TypeError(f"unknown: {set(timing) - set(TIMING)}")
         if timing:
@@ -98,6 +97,9 @@ class RoutinesEditor:
         if "days" in changes:
             if not changes["days"]:
                 raise InvalidError("One day at least")
+            mission = self._missions.get(self.get(routine_id).mission_id)
+            if not set(changes["days"]) <= set(mission.days):
+                raise InvalidError("Only days the mission has")
             changes["days"] = [d for d in WEEKDAYS if d in changes["days"]]
         if "wake" in changes:
             current = self.get(routine_id)
@@ -110,24 +112,7 @@ class RoutinesEditor:
                 parts[0]["at"] = hhmm((minute_of(changes["wake"]) + NEW_PART_MINUTES) % (24 * 60))
                 changes["parts"] = parts
         routine = self._change(routine_id, changes)
-        if "image" in changes:
-            self._images.drop_replaced_photo(current_image, routine.image)
-        self._log("changed", routine, {k: v for k, v in changes.items() if k in ("name", "days")}
-                  | ({"image": routine.image} if "image" in changes else {}))
-        return routine
-
-    def set_photo(self, routine_id: str, data: bytes, media_type: str) -> Routine:
-        """Its own icon, from an uploaded photo."""
-        extension = validate_photo(data, media_type)
-        old = self.get(routine_id).image
-        ref = photo_ref(self._photos.save(data, prefix=routine_id, extension=extension))
-        try:
-            routine = self._change(routine_id, {"image": ref})
-        except Exception:
-            self._photos.delete(photo_filename(ref))
-            raise
-        self._images.drop_replaced_photo(old, ref)
-        self._log("changed", routine, {"image": ref})
+        self._log("changed", routine, {k: v for k, v in changes.items() if k == "days"})
         return routine
 
     def _retimed(self, routine: Routine, anchor=None, starts=None, ends=None, alarm=None, alarm_before=None) -> dict:
@@ -170,13 +155,10 @@ class RoutinesEditor:
         with self._routines.atomic():
             routine = self.get(routine_id)
             self._routines.remove(routine_id)
-        for part in routine.parts:
-            self._photos.delete(photo_filename(part.image))
-        self._photos.delete(photo_filename(routine.image))
         self._log("deleted", routine)
 
     def set_kids(self, routine_id: str, kids: list[str]) -> Routine:
-        """Who it is for. Every child of the family listed means "every child"."""
+        """Who follows it. Every child of the family listed means "every child"."""
         children = [c.id for c in self._children.list()]
         if any(kid not in children for kid in kids) or len(set(kids)) != len(kids):
             raise InvalidError("Unknown or repeated child")
@@ -187,91 +169,14 @@ class RoutinesEditor:
         self._log("changed", routine)
         return routine
 
-    def set_mission(self, routine_id: str, child_id: str, mission_id: str | None) -> Routine:
-        """The child's mission in this routine, or none."""
-        if mission_id is not None:
-            mission = self._missions.get(mission_id)
-            if mission is None:
-                raise InvalidError("No such mission")
-        routine = self.get(routine_id)
-        routine = self._change(routine_id, {"missions": {**routine.missions, child_id: mission_id}})
-        self._log("changed", routine)
-        return routine
-
-    # ---------- parts ----------
-
-    def add_part(self, routine_id: str, name: str) -> Routine:
-        part = self._new_part(name)
-        routine = self.get(routine_id)
-        routine = self._change(routine_id, {"parts": [*map(_dump, routine.parts), part]})
-        self._log("created", routine, part=part["name"])
-        return routine
+    # ---------- parts: what is the routine's own, of each of the mission's tasks ----------
 
     def update_part(self, routine_id: str, part_id: str, **fields) -> Routine:
         routine = self.get(routine_id)
-        old = self._find_part(routine, part_id)
-        if fields.get("at") and (routine.anchor == "end" or part_id != routine.parts[0].id):
-            raise InvalidError("Only the pinned time stays put: the parts go one after the other")
-        if "image" in fields:
-            fields["image"] = self._images.check_new_image(old.image, fields["image"])
-            fields["image_suggested"] = False
-        if "tasks" in fields:
-            fields["tasks"] = [t.strip() for t in fields["tasks"] if t.strip()]
+        self._find_part(routine, part_id)
         parts = [_dump(p) | fields if p.id == part_id else _dump(p) for p in routine.parts]
         routine = self._change(routine_id, {"parts": parts})
-        self._images.drop_replaced_photo(old.image, self._find_part(routine, part_id).image)
-        self._log("changed", routine, part=self._find_part(routine, part_id).name)
-        return routine
-
-    def set_part_photo(self, routine_id: str, part_id: str, data: bytes, media_type: str) -> Routine:
-        extension = validate_photo(data, media_type)
-        routine = self.get(routine_id)
-        old = self._find_part(routine, part_id)
-        ref = photo_ref(self._photos.save(data, prefix=routine_id, extension=extension))
-        parts = [_dump(p) | {"image": ref, "image_suggested": False} if p.id == part_id else _dump(p)
-                 for p in routine.parts]
-        try:
-            routine = self._change(routine_id, {"parts": parts})
-        except Exception:
-            self._photos.delete(photo_filename(ref))
-            raise
-        self._images.drop_replaced_photo(old.image, ref)
-        self._log("changed", routine, {"image": ref}, part=old.name)
-        return routine
-
-    def delete_part(self, routine_id: str, part_id: str) -> Routine:
-        return self.delete_parts(routine_id, [part_id])
-
-    def delete_parts(self, routine_id: str, part_ids: list[str]) -> Routine:
-        """Remove one or several parts at once (one part at least must stay)."""
-        routine = self.get(routine_id)
-        gone = [self._find_part(routine, part_id) for part_id in dict.fromkeys(part_ids)]
-        if not gone:
-            raise InvalidError("Choose the parts to remove")
-        if len(gone) >= len(routine.parts):
-            raise InvalidError("A routine needs one part at least")
-        starts = {p.id: s for p, s, _ in routine.timeline()}
-        parts = [_dump(p) for p in routine.parts if p.id not in {g.id for g in gone}]
-        if parts[0]["at"] is None and not routine.manual:  # the new first one keeps its time
-            parts[0]["at"] = hhmm(starts[parts[0]["id"]])
-        routine = self._change(routine_id, {"parts": parts})
-        for part in gone:
-            self._photos.delete(photo_filename(part.image))
-            self._log("deleted", routine, part=part.name)
-        return routine
-
-    def reorder_parts(self, routine_id: str, part_ids: list[str]) -> Routine:
-        routine = self.get(routine_id)
-        if sorted(part_ids) != sorted(p.id for p in routine.parts):
-            raise InvalidError("The order must list every part exactly once")
-        by_id = {p.id: _dump(p) for p in routine.parts}
-        parts = [by_id[i] for i in part_ids]
-        old_first = by_id[routine.parts[0].id]
-        if parts[0]["at"] is None:
-            # The routine's start time goes with the new first part; the old first follows on.
-            parts[0]["at"], old_first["at"] = old_first["at"], None
-        routine = self._change(routine_id, {"parts": parts})
-        self._log("changed", routine)
+        self._log("changed", routine, part=self._find_part(routine, part_id).text)
         return routine
 
     # ---------- songs (rutinas-4, section 3) ----------
@@ -346,20 +251,15 @@ class RoutinesEditor:
 
     # ---------- helpers ----------
 
-    def _new_part(self, name: str, at: str | None = None) -> dict:
-        image, suggested = self._images.suggest(name)
-        return {"id": _new_id(), "name": name, "image": image, "image_suggested": suggested, "at": at,
-                "minutes": NEW_PART_MINUTES}
-
     def _change(self, routine_id: str, changes: dict) -> Routine:
         with self._routines.atomic():
             routine = self._valid({**self.get(routine_id).to_doc(), **changes}, check_others=True)
             self._routines.update(routine)
-        return routine
+            return self.get(routine_id)  # as it reads now: what comes from the mission again
 
     def _valid(self, doc: dict, check_others: bool) -> Routine:
         try:
-            routine = Routine.model_validate(_music_kept(_settled(doc)))
+            routine = Routine.model_validate(music_kept(settled(doc)))
         except ValidationError as err:
             raise InvalidError("The times do not add up") from err
         if check_others:
@@ -385,67 +285,15 @@ class RoutinesEditor:
     def remove_child_data(self, child_id: str) -> list[str]:
         """A child deleted: out of every routine (a routine left without children is for everyone)."""
         for routine in self._routines.list():
-            if child_id in routine.kids or child_id in routine.missions:
+            if child_id in routine.kids:
                 kids = [k for k in routine.kids if k != child_id]
-                missions = {k: v for k, v in routine.missions.items() if k != child_id}
-                self._routines.update(Routine.model_validate({**routine.to_doc(), "kids": kids, "missions": missions}))
+                self._routines.update(Routine.model_validate({**routine.to_doc(), "kids": kids}))
         return []
-
-
-def _settled(doc: dict) -> dict:
-    """Only the pinned time stays put (05/11): the parts have only their minutes, one
-    after the other. Starting at a time ("Empieza a las"): from the first part's time,
-    and the goal comes when they end (after checking the missions). Ending at a time
-    ("Termina a las"): the last ends at its goal; the first part (and when it rings, as
-    many minutes before as it was) moves to fit. Started by hand, as it is."""
-    if doc.get("wake") is None or not doc.get("parts"):
-        return doc
-    if doc.get("anchor") != "end":
-        parts = [{**part, "at": None} for part in doc["parts"]]
-        parts[0]["at"] = doc["parts"][0].get("at") or doc["wake"]
-        if not doc.get("goal"):
-            return {**doc, "parts": parts}
-        end = minute_of(parts[0]["at"]) + sum(part["minutes"] for part in parts) + doc["goal"].get("check_minutes", 0)
-        return {**doc, "parts": parts, "goal": {**doc["goal"], "at": hhmm(end % (24 * 60))}}
-    if not doc.get("goal"):
-        return doc
-    parts = [{**part, "at": None} for part in doc["parts"]]
-    first_at = doc["parts"][0].get("at")
-    lead = (minute_of(first_at) - minute_of(doc["wake"])) % (24 * 60) if first_at else 0
-    start = minute_of(doc["goal"]["at"]) - doc["goal"].get("check_minutes", 0) - sum(part["minutes"] for part in parts)
-    if start < 0:
-        return doc  # it would start the day before: refused as it is
-    parts[0]["at"] = hhmm(start)
-    return {**doc, "parts": parts, "wake": hhmm((start - lead) % (24 * 60))}
 
 
 def _rings_at_first_part(routine: Routine) -> bool:
     """The alarm rings right as the first part starts: a song there would sound with it."""
     return not routine.manual and routine.alarm and routine.alarm_before == 0
-
-
-def _music_kept(doc: dict) -> dict:
-    """After any change, each song still from a card to a card: without the alarm, from
-    the first part; a card gone, it goes (where it started) or ends there once (where
-    it ended); moved round so that two would meet, the earlier one plays just once."""
-    cards = card_positions(doc)
-    first = doc["parts"][0]["id"] if doc.get("parts") else None
-    kept, end = [], -2
-    music = [dict(m) for m in doc.get("music") or []]
-    for m in music:
-        if m["start"] == "alarm" and "alarm" not in cards:
-            m["start"] = first
-        if m.get("until") not in cards or cards[m["until"]] < cards.get(m["start"], 0) or m["until"] == "alarm":
-            m["until"] = None
-    for m in sorted((m for m in music if m["start"] in cards), key=lambda m: cards[m["start"]]):
-        start = cards[m["start"]]
-        if start <= end:
-            if kept and cards[kept[-1]["start"]] == start:
-                continue  # two from the same card: the first one stays
-            kept[-1]["until"] = None
-        kept.append(m)
-        end = cards[m["until"]] if m["until"] else start
-    return {**doc, "music": kept}
 
 
 def _dump(part: Part) -> dict:

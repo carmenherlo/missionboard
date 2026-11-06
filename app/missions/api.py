@@ -104,7 +104,8 @@ def get_missions_service(
     photos: PhotoStore = Depends(get_photo_store),
     events: EventLog = Depends(get_event_log),
 ) -> MissionsService:
-    return MissionsService(MissionsRepository(store), ChildrenRepository(store), libraries, photos, events)
+    return MissionsService(MissionsRepository(store), ChildrenRepository(store), libraries, photos, events,
+                           RoutinesRepository(store))
 
 
 def _changes(body: BaseModel, required: set[str] = frozenset()) -> dict:
@@ -122,7 +123,7 @@ def _media_type(content_type: str) -> str:
 
 class Presenter:
     """Turns missions into JSON: the URL of every image, the tones of its colour, how
-    much each child has switched on, and the routine that goes with it."""
+    much each child has switched on, and its routine."""
 
     def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries),
                  store: ConfigStore = Depends(get_config_store)):
@@ -132,12 +133,12 @@ class Presenter:
 
     def _context(self):
         if self._cache is None:
-            children = ChildrenRepository(self._store).list()
-            self._cache = (children, links.routines_by_mission(RoutinesRepository(self._store).list(), children))
+            self._cache = (ChildrenRepository(self._store).list(),
+                           links.routine_by_mission(RoutinesRepository(self._store).list()))
         return self._cache
 
     def __call__(self, mission: Mission) -> dict:
-        children, with_routines = self._context()
+        children, routines = self._context()
         data = asdict(mission)
         data["image_url"] = self._libraries.url(mission.image)
         data["colors"] = avatars.tones(mission.color)
@@ -150,10 +151,14 @@ class Presenter:
             {"id": c.id, "active": sum(mission.is_on(c.id, i.id) for i in mission.items()), "total": total}
             for c in children
         ]
-        data["routines"] = [{
-            "id": r.id, "name": r.name, "days": list(r.days), "manual": r.manual,
-            "start": None if r.manual else hhmm(r.starts), "end": None if r.manual else hhmm(r.ends),
-        } for r in with_routines.get(mission.id, [])]
+        routine = routines.get(mission.id)
+        data["routine"] = routine and {
+            "id": routine.id, "days": list(routine.days), "manual": routine.manual, "anchor": routine.anchor,
+            "kids": [c.id for c in links.kids_of(routine, children)], "every_child": not routine.kids,
+            "start": None if routine.manual else hhmm(routine.starts),
+            "end": None if routine.manual else hhmm(routine.timeline()[-1][2]),  # when its parts end
+            "goal": None if routine.manual else hhmm(routine.ends),
+        }
         return data
 
 

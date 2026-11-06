@@ -184,6 +184,8 @@
   list-style: none;
 }
 
+.routine__task img { width: 28px; height: 28px; vertical-align: middle; margin-right: var(--space-1); }
+
 .routine__task {
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--line);
@@ -295,11 +297,11 @@
 }
 
 .routine-kid--done {
-  background: var(--child-soft);
+  background: var(--mission-soft, var(--child-soft));
 }
 
 .routine-kid--done .routine-kid__progress {
-  color: var(--child-strong);
+  color: var(--mission-strong, var(--child-strong));
 }
 
 /* ---------- in the parents' zone: only a banner ---------- */

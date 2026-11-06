@@ -139,14 +139,13 @@ class DayService:
         checked = self._days.checked_steps(day, child.id)
         completed = self._days.completed_missions(day, child.id)
         opened = self._days.opened_missions(day, child.id)
-        routines = self._routines.list()
-        children = self._children.list()
+        routines = links.routine_by_mission(self._routines.list())
         missions = []
         for mission in self._missions.list():
             tasks = child_tasks(mission, child.id, weekday)
             if not tasks:  # not today, nothing of theirs today, or still being written
                 continue
-            schedule = links.schedule_on(mission, routines, children, child.id, weekday)
+            schedule = links.schedule_on(mission, routines.get(mission.id), child.id, weekday)
             item = MissionToday(mission, self._state(schedule, mission.id in completed, mission.id in opened, time),
                                 tasks, schedule=schedule)
             item.checked = checked.get(mission.id, set()) & set(item.marks)

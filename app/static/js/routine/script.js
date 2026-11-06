@@ -4,7 +4,7 @@
 // routine (part.say, goal.say, greeting, last_countdown, early_goal); left empty,
 // the usual one below.
 
-import { capital, hourWords, itIs, left, list, minutesWords } from "./words.js";
+import { capital, itIs, left, list, minutesWords } from "./words.js";
 
 export const USUAL = {
   lastCountdown: "Diez segundos para terminar.",
@@ -12,26 +12,37 @@ export const USUAL = {
   check: "Es hora de revisar las misiones.",
 };
 
-export const partOpening = (part) => part.say ?? `Comienza ${part.name}.`;
+// "Comienza el aseo. Contiene: dientes y cara.", with the steps some child of the routine
+// has on; in "Lo que dice la voz" it can be changed for a sentence of its own.
+export const usualOpening = (part) => [
+  `Comienza ${part.name}.`,
+  part.steps.length ? `Contiene: ${list(part.steps.map((step) => step.text)).toLowerCase()}.` : null,
+].filter(Boolean).join(" ");
 
-export const tasksSentence = (part) => (part.tasks.length ? `Las tareas son: ${list(part.tasks).toLowerCase()}.` : null);
+export const partOpening = (part) => part.say ?? usualOpening(part);
 
-// "El aseo dura cinco minutos y acabará a las siete y doce." With a sentence of its
-// own, which may not name the part: "Tenéis cinco minutos."
-export function partLength(part, { minutes, ends, manual, kids }) {
-  if (part.say) return `${kids === 1 ? "Tienes" : "Tenéis"} ${minutesWords(minutes)}.`;
-  return `${capital(part.name)} dura ${minutesWords(minutes)}${manual ? "" : ` y acabará a ${hourWords(ends)}`}.`;
+// "Tenéis siete minutos."
+export function partLength({ minutes, kids }) {
+  return `${kids === 1 ? "Tienes" : "Tenéis"} ${minutesWords(minutes)}.`;
 }
 
-// When a part starts: the time (not started by hand), its sentence, its tasks, how long.
-export function partStart(part, { time, minutes, ends, manual, kids }) {
+// When a part starts: the time (not started by hand), its sentence, how long.
+export function partStart(part, { time, minutes, manual, kids }) {
   return [
     ...(manual ? [] : [`${capital(itIs(time))}.`]),
     partOpening(part),
-    tasksSentence(part),
-    partLength(part, { minutes, ends, manual, kids }),
-  ].filter(Boolean);
+    partLength({ minutes, kids }),
+  ];
 }
+
+// How long a sentence takes to say, roughly (the editor warns if it does not fit).
+const WORDS_PER_SECOND = 2.5;
+
+export function spokenSeconds(sentences) {
+  return sentences.join(" ").split(/\s+/).filter(Boolean).length / WORDS_PER_SECOND;
+}
+
+export const doesNotFit = (part, minutes) => spokenSeconds([partOpening(part)]) > minutes * 60;
 
 // Before a part ends: "para que acabe el aseo", or, if the routine says so (warn_about:
 // "next", 04/11), "para que empiece vestirse". The last part has no next one: "acabe".

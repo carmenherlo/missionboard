@@ -1,6 +1,4 @@
 import { api } from "../../api.js";
-import { confirmBar } from "../../components/confirm-bar.js";
-import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
@@ -9,15 +7,15 @@ import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
 import * as script from "../../routine/script.js";
-import { minuteOf } from "../../routine/words.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { capital, routineError } from "./routine-edit.js";
+import { routineError } from "./routine-edit.js";
 
 const TEXT_SAVE_DELAY_MS = 600;
 const WARNING_CHOICES = [1, 2, 3, 5];
 
-// Like Editar paso: everything is saved on the spot.
+// A task in its routine: only what is the routine's own (its minutes, how the voice
+// says it, the warnings), saved on the spot. Its text and picture are the mission's.
 export async function viewRoutinePartEdit(routineId, partId) {
   const url = `api/routines/${routineId}`;
   const routineHref = `#/parents/config/routines/${routineId}`;
@@ -30,12 +28,10 @@ export async function viewRoutinePartEdit(routineId, partId) {
   const isFirst = () => routine.parts[0].id === partId;
   const partUrl = `${url}/parts/${partId}`;
   const status = saveStatus();
-  const title = h("span", {}, capital(part().name));
 
   function save(request) {
     return status.track(request).then((updated) => {
       routine = updated;
-      title.textContent = capital(part().name);
       refresh();
       return routine;
     }).catch((err) => {
@@ -46,27 +42,21 @@ export async function viewRoutinePartEdit(routineId, partId) {
   }
   const patch = (json) => save(api("PATCH", partUrl, { json })).catch(() => {});
 
-  // A text saved a moment after typing stops, and on leaving the field.
-  function textInput(value, onSave, attrs = {}) {
-    let timer = null;
-    const input = h("input", { type: "text", value: value ?? "", ...attrs });
-    const commit = () => {
-      clearTimeout(timer);
-      onSave(input.value.trim());
-    };
-    input.addEventListener("input", () => {
-      clearTimeout(timer);
-      timer = setTimeout(commit, TEXT_SAVE_DELAY_MS);
-    });
-    input.addEventListener("blur", commit);
-    return input;
-  }
+  // ---------- how the voice says it ----------
+  let timer = null;
+  const spoken = h("input", { type: "text", maxlength: 60, value: part().spoken ?? part().name });
+  const commit = () => {
+    clearTimeout(timer);
+    const value = spoken.value.trim();
+    if (value !== (part().spoken ?? part().name)) patch({ spoken: value });
+  };
+  spoken.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(commit, TEXT_SAVE_DELAY_MS);
+  });
+  spoken.addEventListener("blur", commit);
 
-  // ---------- name and when ----------
-  const nameInput = textInput(part().name, (name) => name && name !== part().name && patch({ name }), { maxlength: 60 });
-  const nameHint = h("span", { class: "hint" }, t.routinePart.nameHint);
-  // How long, with − / + as on its card (rutinas-7), and from when to when. Only its
-  // minutes (05/11): the parts go one after the other, and only the pinned time stays put.
+  // ---------- how long ----------
   const when = h("div", { class: "part-length" });
   function renderWhen() {
     const hint = routine.manual ? (isFirst() ? t.routinePart.firstByHand : t.routinePart.byHand)
@@ -85,44 +75,12 @@ export async function viewRoutinePartEdit(routineId, partId) {
 
   // ---------- what it says: seen here, changed in "Lo que dice la voz" (rutinas-5) ----------
   const says = h("p", { class: "voice-preview" });
+  const tooLong = h("p", { class: "notice" }, t.routinePart.tooLong);
   function renderSays() {
     const p = part();
-    says.textContent = `«${[script.partOpening(p), script.tasksSentence(p),
-      script.partLength(p, { minutes: p.minutes, ends: minuteOf(p.end), manual: routine.manual, kids: routine.kids.length }),
-    ].filter(Boolean).join(" ")}»`;
+    says.textContent = `«${script.partOpening(p)} ${script.partLength({ minutes: p.minutes, kids: routine.kids.length })}»`;
+    tooLong.hidden = !script.doesNotFit(p, p.minutes);
   }
-
-  const tasksList = h("ul", { class: "rows" });
-  function renderTasks() {
-    tasksList.replaceChildren(...part().tasks.map((task, index) =>
-      h("li", { class: "row row--compact" },
-        // Tap to correct it, there and then (06/11); left empty, it stays as it was: ✕ removes it.
-        h("input", {
-          class: "row__input", type: "text", maxlength: 60, value: task, "aria-label": t.routinePart.taskLabel,
-          onkeydown: (e) => { if (e.key === "Enter") e.target.blur(); },
-          onchange: (e) => {
-            const text = e.target.value.trim();
-            if (!text || text === task) { e.target.value = task; return; }
-            patch({ tasks: part().tasks.map((old, i) => (i === index ? text : old)) });
-          },
-        }),
-        h("button", {
-          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routinePart.removeTask(task),
-          onclick: () => patch({ tasks: part().tasks.filter((_, i) => i !== index) }),
-        }, icon("close")))));
-  }
-  const newTask = h("input", { type: "text", maxlength: 60, placeholder: t.routinePart.newTask });
-  const addTask = h("form", {
-    class: "row row--add", novalidate: true,
-    onsubmit: async (event) => {
-      event.preventDefault();
-      const task = newTask.value.trim();
-      if (!task) return;
-      await patch({ tasks: [...part().tasks, task] });
-      newTask.value = "";
-      newTask.focus();
-    },
-  }, newTask, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routinePart.addTask));
 
   // ---------- warnings ----------
   const warnings = h("div", { class: "chips" });
@@ -137,90 +95,39 @@ export async function viewRoutinePartEdit(routineId, partId) {
     }));
   }
 
-  // ---------- image: a picture with a pencil, as in Editar misión (rutinas-7) ----------
-  const imageBox = h("div", { class: "mission-image" });
-  const pickerBox = h("div", {}); // below the picture-and-name row, full width
-  let pickerOpen = false;
-  async function renderImage() {
-    const thumb = () => imageThumb(part().image_url, { size: "lg", label: part().name, suggested: part().image_suggested });
-    imageBox.replaceChildren(h("button", {
-      type: "button", class: "image-button", "aria-label": t.missionEdit.changeImage,
-      onclick: () => { pickerOpen = !pickerOpen; renderImage(); },
-    }, thumb(), h("span", { class: "icon-button image-button__pencil" }, icon("edit"))));
-    if (!pickerOpen) {
-      pickerBox.replaceChildren();
-      return;
-    }
-    const picker = await imagePicker({
-      initial: { ref: part().image, url: part().image_url },
-      onChange: async (choice) => {
-        await saveImageChoice(choice, {
-          patch: (ref) => save(api("PATCH", partUrl, { json: { image: ref } })),
-          upload: (file) => save(api("PUT", `${partUrl}/photo`, { body: file, contentType: file.type })),
-        }).catch(() => {});
-        // Only swap the picture, so the picker keeps its search and scroll.
-        imageBox.querySelector(".image-button").firstElementChild.replaceWith(thumb());
-      },
-    });
-    pickerBox.replaceChildren(picker.element);
-  }
-  renderImage();
-
-  // ---------- footer ----------
-  const footer = h("div", { class: "page-footer" });
-  function renderFooter() {
-    footer.replaceChildren(
-      h("button", { type: "button", class: "link-danger", onclick: showConfirm }, t.routinePart.delete),
-      h("div", { class: "form-actions" },
-        h("button", {
-          type: "button", class: "btn",
-          onclick: () => tryRoutine(routineId, routine.parts.findIndex((p) => p.id === partId)),
-        }, t.routinePart.tryFromHere),
-        h("a", { class: "btn btn--primary", href: routineHref }, t.common.done)));
-  }
-  function showConfirm() {
-    footer.replaceChildren(confirmBar({
-      message: t.routinePart.confirmDelete(part().name),
-      confirmLabel: t.routineEdit.confirmYes,
-      onCancel: renderFooter,
-      onConfirm: async () => {
-        try {
-          await api("DELETE", partUrl);
-          location.hash = routineHref;
-        } catch (err) {
-          status.fail(routineError(err));
-          renderFooter();
-        }
-      },
-    }));
-  }
-
   function refresh() {
     if (!part()) return;
     renderWhen();
     renderSays();
-    renderTasks();
     renderWarnings();
   }
   refresh();
-  renderFooter();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: routineHref, label: routine.name }),
+    parentsHeader(h("span", { class: "title-line" }, part().text, status.element), { href: routineHref, label: t.routineEdit.title(routine.name) }),
     h("main", { class: "page" },
       h("div", { class: "columns columns--equal" },
         h("div", { class: "stack" },
           panel(t.routinePart.panelPart,
-            h("div", { class: "mission-identity" }, imageBox, h("label", {}, t.routinePart.name, nameInput)),
-            nameHint,
-            pickerBox,
-            when),
-          panel(t.routinePart.tasks, tasksList, addTask)),
+            h("div", { class: "mission-identity" },
+              imageThumb(part().image_url, { size: "lg", label: part().text }),
+              h("label", {}, t.routinePart.spoken, spoken)),
+            h("span", { class: "hint" }, t.routinePart.spokenHint),
+            h("a", { class: "btn", href: `#/parents/config/missions/${routine.mission_id}/tasks/${partId}` }, t.routinePart.changeInMission),
+            when)),
         h("div", { class: "stack" },
           panel(t.routinePart.panelSay,
             says,
+            tooLong,
             h("a", { class: "btn", href: `${routineHref}/voice/${partId}` }, icon("speaker"), t.routinePart.changeSay),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.warnings), warnings,
               h("span", { class: "hint" }, t.routinePart.warningsHint))))),
-      footer));
+      h("div", { class: "page-footer" },
+        h("span", {}),
+        h("div", { class: "form-actions" },
+          h("button", {
+            type: "button", class: "btn",
+            onclick: () => tryRoutine(routineId, routine.parts.findIndex((p) => p.id === partId)),
+          }, t.routinePart.tryFromHere),
+          h("a", { class: "btn btn--primary", href: routineHref }, t.common.done)))));
 }

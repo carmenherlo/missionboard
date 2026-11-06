@@ -8,12 +8,15 @@ from dataclasses import replace
 
 from app.children import avatars
 from app.children.repository import ChildrenRepository
-from app.errors import InvalidError, NotFoundError
+from pydantic import ValidationError
+
+from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
 from app.images.rules import ImageRules
 from app.missions.repository import WEEKDAYS, Mission, MissionsRepository, Schedule, Step, Task
+from app.routines.repository import RoutinesRepository
 from app.storage.photo_store import PhotoStore
 
 TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -61,7 +64,9 @@ class MissionsService:
         libraries: ImageLibraries,
         photos: PhotoStore,
         events: EventLog,
+        routines: RoutinesRepository,
     ):
+        self._routines = routines
         self._missions = missions
         self._children = children
         self._photos = photos
@@ -111,6 +116,7 @@ class MissionsService:
             if color is not UNSET:
                 mission.color = _check_color(color)
             self._missions.update(mission)
+            self._check_routines()
         self._images.drop_replaced_photo(old.image, mission.image)
         changes = {
             field: getattr(mission, field)
@@ -125,6 +131,7 @@ class MissionsService:
         with self._missions.atomic():
             mission = self.get(mission_id)
             self._missions.remove(mission_id)
+            self._routines.remove_of_mission(mission_id)  # it is the mission's, and nothing without it
         for ref in [mission.image, *(item.image for item in mission.items())]:
             self._photos.delete(photo_filename(ref))
         self._log("mission", "deleted", mission)
@@ -159,6 +166,7 @@ class MissionsService:
             task = Task(id=_new_id(), text=text, image=image, image_suggested=suggested)
             mission.tasks.append(task)
             self._missions.update(mission)
+            self._check_routines()
         self._log("task", "created", mission, step=task)
         return mission
 
@@ -175,6 +183,7 @@ class MissionsService:
             if days is not UNSET:
                 task.days = self._task_days(mission, days)
             self._missions.update(mission)
+            self._check_routines()
         self._images.drop_replaced_photo(old.image, task.image)
         changes = {f: getattr(task, f) for f in ("text", "image") if getattr(task, f) != getattr(old, f)}
         if task.days != old.days:
@@ -197,9 +206,12 @@ class MissionsService:
         with self._missions.atomic():
             mission = self.get(mission_id)
             task = self._task(mission, task_id)
+            if len(mission.tasks) == 1 and self._routines.of_mission(mission_id):
+                raise ConflictError("The routine needs one task at least")
             mission.tasks.remove(task)
             self._forget(mission, {task.id, *(s.id for s in task.steps)})
             self._missions.update(mission)
+            self._check_routines()
         for ref in [task.image, *(s.image for s in task.steps)]:
             self._photos.delete(photo_filename(ref))
         self._log("task", "deleted", mission, step=task)
@@ -213,6 +225,7 @@ class MissionsService:
             by_id = {t.id: t for t in mission.tasks}
             mission.tasks = [by_id[task_id] for task_id in task_ids]
             self._missions.update(mission)
+            self._check_routines()
         if task_ids != old_ids:
             self._log("tasks", "reordered", mission, changes={"order": [t.text for t in mission.tasks]})
         return mission
@@ -327,6 +340,17 @@ class MissionsService:
         return []
 
     # ---------- helpers ----------
+
+    def _check_routines(self) -> None:
+        """A routine's parts are its mission's tasks: a change that would break its times,
+        or make it ring with another routine, is refused (nothing is saved)."""
+        try:
+            routines = self._routines.list()
+        except ValidationError as err:
+            raise InvalidError("It no longer fits in its routine") from err
+        for i, routine in enumerate(routines):
+            if any(routine.overlaps(other) for other in routines[i + 1:]):
+                raise ConflictError("Its routine would overlap with another one")
 
     @staticmethod
     def _forget(mission: Mission, item_ids: set[str]) -> None:

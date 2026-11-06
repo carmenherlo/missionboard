@@ -30,7 +30,12 @@ export function scheduleText(schedule) {
 export function missionPills(mission) {
   const steps = mission.tasks.reduce((sum, task) => sum + task.steps.length, 0);
   const size = [t.missions.tasks(mission.tasks.length), steps > 0 && t.missions.steps(steps)].filter(Boolean).join(" · ");
+  const { routine } = mission;
   return [
+    routine && h("span", { class: "pill pill--routine" }, mission.image_url && h("img", { src: mission.image_url, alt: "" }),
+      routine.manual ? t.missions.routineByHand
+        : routine.anchor === "end" ? t.missions.routineEnds(routine.end.replace(/^0/, ""))
+        : t.missions.routineStarts(routine.start.replace(/^0/, ""))),
     h("span", { class: "pill" }, daysText(mission.days)),
     mission.schedule
       ? h("span", { class: "pill" }, icon("clock"), scheduleText(mission.schedule))

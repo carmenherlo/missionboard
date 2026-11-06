@@ -2,8 +2,9 @@
 
 A routine is a talking schedule (see service.py): it rings at its wake-up
 time and then guides part after part, with the voice and a clock, until its
-goal. Ported from an earlier version of the app, where
-it was tested at home.
+goal. It goes with one mission, and its parts are that mission's tasks, in their
+order: only what is the routine's own is stored (minutes, what the voice says), and
+the rest is taken from the mission every time it is read, so they cannot drift apart.
 """
 
 from datetime import date, datetime
@@ -16,6 +17,9 @@ from app.missions.repository import WEEKDAYS
 from app.settings import TIME, time_from_yaml_number
 from app.storage import db
 from app.storage.config_store import ConfigStore
+
+
+NEW_PART_MINUTES = 5
 
 
 def card_positions(doc: dict) -> dict[str, int]:
@@ -40,23 +44,39 @@ def hhmm(minute: int) -> str:
     return f"{minute // 60:02d}:{minute % 60:02d}"
 
 
-class Part(BaseModel):
-    """A part of the routine: breakfast, washing… It starts at its own time ("at") or
-    right after the previous one, and lasts its minutes."""
+class PartStep(BaseModel):
+    """A step of the part's task that some child of the routine has on."""
 
     model_config = ConfigDict(extra="ignore", frozen=True)
 
-    id: str = Field(pattern=r"^[\w-]{1,64}$")
-    name: str = Field(min_length=1, max_length=60)  # with its article, as it is said: "el aseo"
+    text: str
     image: str | None = None
-    image_suggested: bool = False
+
+
+class Part(BaseModel):
+    """A part of the routine: one of the mission's tasks. It lasts its minutes, one part
+    right after the other; only the first has a time of its own ("at")."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    id: str = Field(pattern=r"^[\w-]{1,64}$")  # the task's
     at: str | None = Field(default=None, pattern=TIME)
     minutes: int = Field(ge=1, le=180)
-    say: str | None = None  # a sentence of its own instead of "Comienza el aseo."
-    tasks: tuple[str, ...] = ()
+    say: str | None = None  # a sentence of its own instead of "Comienza el aseo. Contiene: …"
+    spoken: str | None = Field(default=None, max_length=60)  # how the voice names it: "el aseo"
     warnings: tuple[int, ...] | None = None  # minutes before the end; None: the default
+    # From the mission, when it is read (see resolved):
+    text: str = ""  # the task's text, as on screen
+    name: str = "-"  # as the voice says it, inside sentences
+    image: str | None = None
+    image_suggested: bool = False
+    days: tuple[str, ...] = tuple(WEEKDAYS)  # the days its task is on
+    steps: tuple[PartStep, ...] = ()
 
     _at = field_validator("at", mode="before")(time_from_yaml_number)
+
+
+STORED_PART = ("id", "at", "minutes", "say", "spoken", "warnings")
 
 
 class Goal(BaseModel):
@@ -104,11 +124,11 @@ class Routine(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
     id: str = Field(pattern=r"^[\w-]{1,64}$")
-    name: str = Field(min_length=1, max_length=40)
-    image: str | None = None  # its own icon (05/11); None: its first part's
-    days: tuple[str, ...] = tuple(WEEKDAYS)
-    kids: tuple[str, ...] = ()  # child ids; empty: every child, also the ones added later
-    missions: dict[str, str | None] = {}  # each child's mission in this routine (by id)
+    mission_id: str
+    name: str = "-"  # the mission's
+    image: str | None = None  # the mission's
+    days: tuple[str, ...] = tuple(WEEKDAYS)  # always within the mission's
+    kids: tuple[str, ...] = ()  # who follows it (child ids); empty: every child, also the ones added later
     wake: str | None = Field(default=None, pattern=TIME)  # None: started by hand (R2)
     remind_every: int = Field(default=5, ge=0, le=30)
     # Which time stays put when the parts change: "start" (Empieza a las), or "end"
@@ -197,9 +217,24 @@ class Routine(BaseModel):
             doc["goal"]["at"] = shift(doc["goal"]["at"])
         return Routine.model_validate(doc)
 
+    def goes_on(self, weekday: str) -> bool:
+        """It is one of its days, and some task is on that day."""
+        return weekday in self.days and any(weekday in part.days for part in self.parts)
+
     def on(self, weekday: str) -> "Routine":
-        """The routine as it goes that day of the week (its offset applied)."""
-        return self.shifted(self.offsets.get(weekday, 0))
+        """The routine as it goes that day of the week (see goes_on): without the tasks
+        that are not on that day, its pinned time still in place, and its offset applied."""
+        kept = [part for part in self.parts if weekday in part.days]
+        routine = self
+        if len(kept) != len(self.parts):
+            doc = self.to_doc()
+            first_at = doc["parts"][0]["at"]
+            doc["parts"] = [p for p in doc["parts"] if weekday in p["days"]]
+            for part in doc["parts"]:
+                part["at"] = None
+            doc["parts"][0]["at"] = first_at
+            routine = Routine.model_validate(music_kept(settled(doc)))
+        return routine.shifted(self.offsets.get(weekday, 0))
 
     def timeline(self) -> list[tuple[Part, int, int]]:
         """Each part with its start and end, in minutes of the day (started by hand:
@@ -252,6 +287,8 @@ class Routine(BaseModel):
         if self.manual or other.manual:
             return False
         for day in set(self.days) & set(other.days):
+            if not self.goes_on(day) or not other.goes_on(day):
+                continue
             mine, theirs = self.on(day), other.on(day)
             if minute_of(mine.wake) < theirs.ends and minute_of(theirs.wake) < mine.ends:
                 return True
@@ -261,8 +298,103 @@ class Routine(BaseModel):
         return self.model_dump(mode="json")
 
 
+def settled(doc: dict) -> dict:
+    """Only the pinned time stays put (05/11): the parts have only their minutes, one
+    after the other. Starting at a time ("Empieza a las"): from the first part's time,
+    and the goal comes when they end (after checking the missions). Ending at a time
+    ("Termina a las"): the last ends at its goal; the first part (and when it rings, as
+    many minutes before as it was) moves to fit. Started by hand, as it is."""
+    if doc.get("wake") is None or not doc.get("parts"):
+        return doc
+    if doc.get("anchor") != "end":
+        parts = [{**part, "at": None} for part in doc["parts"]]
+        parts[0]["at"] = doc["parts"][0].get("at") or doc["wake"]
+        if not doc.get("goal"):
+            return {**doc, "parts": parts}
+        end = minute_of(parts[0]["at"]) + sum(part["minutes"] for part in parts) + doc["goal"].get("check_minutes", 0)
+        return {**doc, "parts": parts, "goal": {**doc["goal"], "at": hhmm(end % (24 * 60))}}
+    if not doc.get("goal"):
+        return doc
+    parts = [{**part, "at": None} for part in doc["parts"]]
+    first_at = doc["parts"][0].get("at")
+    lead = (minute_of(first_at) - minute_of(doc["wake"])) % (24 * 60) if first_at else 0
+    start = minute_of(doc["goal"]["at"]) - doc["goal"].get("check_minutes", 0) - sum(part["minutes"] for part in parts)
+    if start < 0:
+        return doc  # it would start the day before: refused as it is
+    parts[0]["at"] = hhmm(start)
+    return {**doc, "parts": parts, "wake": hhmm((start - lead) % (24 * 60))}
+
+
+def music_kept(doc: dict) -> dict:
+    """After any change, each song still from a card to a card: without the alarm, from
+    the first part; a card gone, it goes (where it started) or ends there once (where
+    it ended); moved round so that two would meet, the earlier one plays just once."""
+    cards = card_positions(doc)
+    first = doc["parts"][0]["id"] if doc.get("parts") else None
+    kept, end = [], -2
+    music = [dict(m) for m in doc.get("music") or []]
+    for m in music:
+        if m["start"] == "alarm" and "alarm" not in cards:
+            m["start"] = first
+        if m.get("until") not in cards or cards[m["until"]] < cards.get(m["start"], 0) or m["until"] == "alarm":
+            m["until"] = None
+    for m in sorted((m for m in music if m["start"] in cards), key=lambda m: cards[m["start"]]):
+        start = cards[m["start"]]
+        if start <= end:
+            if kept and cards[kept[-1]["start"]] == start:
+                continue  # two from the same card: the first one stays
+            kept[-1]["until"] = None
+        kept.append(m)
+        end = cards[m["until"]] if m["until"] else start
+    return {**doc, "music": kept}
+
+
+def resolved(stored: dict, mission: dict, children: list[str]) -> dict:
+    """A stored routine with what comes from its mission: its name and picture, and its
+    tasks as parts, in their order (a new one, 5 minutes). The steps are the ones some
+    child of the routine has on. The times settle again: tasks may have come or gone."""
+    own = {part["id"]: part for part in stored.get("parts") or []}
+    first_at = (stored.get("parts") or [{}])[0].get("at")
+    kids = stored.get("kids") or children
+    off = mission.get("off") or {}
+    mission_days = mission.get("days") or WEEKDAYS
+    parts = []
+    for task in mission["tasks"]:
+        part = own.get(task["id"], {})
+        parts.append({
+            **{key: part.get(key) for key in STORED_PART},
+            "id": task["id"],
+            "at": None,
+            "minutes": part.get("minutes") or NEW_PART_MINUTES,
+            "text": task["text"],
+            "name": part.get("spoken") or task["text"][:1].lower() + task["text"][1:],
+            "image": task.get("image"),
+            "image_suggested": bool(task.get("image_suggested")),
+            "days": [d for d in mission_days if not task.get("days") or d in task["days"]],
+            "steps": [
+                {"text": step["text"], "image": step.get("image")}
+                for step in task.get("steps") or []
+                if not kids or any(step["id"] not in off.get(kid, ()) for kid in kids)
+            ],
+        })
+    if stored.get("wake") is not None:
+        parts[0]["at"] = first_at or stored["wake"]
+    return music_kept(settled({
+        **stored, "name": mission["name"], "image": mission.get("image"), "parts": parts,
+        "days": [d for d in stored.get("days") or WEEKDAYS if d in mission_days],
+    }))
+
+
+def _stored(routine: Routine) -> dict:
+    """Only what is the routine's own: the rest comes from its mission when it is read."""
+    doc = routine.to_doc()
+    del doc["name"], doc["image"]
+    doc["parts"] = [{key: part[key] for key in STORED_PART} for part in doc["parts"]]
+    return doc
+
+
 class RoutinesRepository:
-    """The `routines` list of config.yaml."""
+    """The `routines` list of config.yaml, read together with their missions."""
 
     def __init__(self, store: ConfigStore):
         self._store = store
@@ -270,23 +402,43 @@ class RoutinesRepository:
     def atomic(self):
         return self._store.edit()
 
+    def resolve(self, stored: dict) -> dict:
+        """A routine not saved yet, as it would be read (its mission must have tasks)."""
+        doc = self._store.load()
+        mission = next(m for m in doc["missions"] if m["id"] == stored["mission_id"])
+        return resolved(stored, mission, [c["id"] for c in doc["children"]])
+
     def list(self) -> list[Routine]:
-        return [Routine.model_validate(entry) for entry in self._store.load().get("routines") or []]
+        doc = self._store.load()
+        missions = {m["id"]: m for m in doc["missions"]}
+        children = [c["id"] for c in doc["children"]]
+        return [
+            Routine.model_validate(resolved(entry, missions[entry["mission_id"]], children))
+            for entry in doc.get("routines") or []
+            if missions.get(entry["mission_id"], {}).get("tasks")  # mission without tasks: not a routine yet
+        ]
 
     def get(self, routine_id: str) -> Routine | None:
         return next((r for r in self.list() if r.id == routine_id), None)
 
+    def of_mission(self, mission_id: str) -> Routine | None:
+        return next((r for r in self.list() if r.mission_id == mission_id), None)
+
     def add(self, routine: Routine) -> None:
         with self._store.edit() as doc:
-            doc.setdefault("routines", []).append(routine.to_doc())
+            doc.setdefault("routines", []).append(_stored(routine))
 
     def update(self, routine: Routine) -> None:
         with self._store.edit() as doc:
-            doc["routines"] = [routine.to_doc() if r["id"] == routine.id else r for r in doc["routines"]]
+            doc["routines"] = [_stored(routine) if r["id"] == routine.id else r for r in doc["routines"]]
 
     def remove(self, routine_id: str) -> None:
         with self._store.edit() as doc:
             doc["routines"] = [r for r in doc["routines"] if r["id"] != routine_id]
+
+    def remove_of_mission(self, mission_id: str) -> None:
+        with self._store.edit() as doc:
+            doc["routines"] = [r for r in doc.get("routines") or [] if r["mission_id"] != mission_id]
 
 
 class RunsRepository:

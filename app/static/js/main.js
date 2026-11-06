@@ -64,10 +64,10 @@ const routes = [
   [parentsPath("/missions/:mission"), (ids) => viewMissionEdit(ids.mission), "parents", "mission_edit"],
   [parentsPath("/missions/:mission/tasks/:step"), (ids) => viewTaskEdit(ids.mission, ids.step), "parents", "task_edit"],
   [parentsPath("/missions/:mission/steps/:step"), (ids) => viewStepEdit(ids.mission, ids.step), "parents", "step_edit"],
+  [parentsPath("/missions/:mission/routine"), (ids) => viewRoutineNew(ids.mission), "parents", "routine_new"],
   [parentsPath("/missions/:mission/children/:child"),
     (ids) => viewMissionChild(ids.mission, ids.child), "parents", "mission_child"],
   [parentsPath("/routines"), () => viewRoutinesList(), "parents", "routines"],
-  [parentsPath("/routines/new"), () => viewRoutineNew(), "parents", "routine_new"],
   // From a routine (?from=<id>), "←" goes back to it (05/11), not to the list of routines.
   [parentsPath("/routines/songs(\\?from=(?<routine>[\\w-]+))?"), (ids) => viewSongsList(ids.routine), "parents", "songs"],
   [parentsPath("/routines/:routine"), (ids) => viewRoutineEdit(ids.routine), "parents", "routine_edit"],

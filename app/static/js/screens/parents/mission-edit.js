@@ -15,6 +15,7 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { WEEKDAYS, daysLongText, daysText } from "./mission-summary.js";
+import { routineError } from "./routine-edit.js";
 
 const NAME_SAVE_DELAY_MS = 600;
 const LIST_HREF = "#/parents/config/missions";
@@ -45,6 +46,10 @@ export async function viewMissionEdit(missionId) {
       if (updated) mission = updated;
       titleName.textContent = mission.name;
       return mission;
+    }).catch((err) => {
+      // What would not fit in its routine (or make it ring with another) says so.
+      if (err?.status === 409 || err?.status === 422) status.fail(routineError(err));
+      throw err;
     });
   }
   const patch = (json) => save(api("PATCH", missionUrl, { json }));
@@ -130,6 +135,7 @@ export async function viewMissionEdit(missionId) {
           await patch({ days }).catch(() => {});
           renderDays();
           renderTasks();
+          renderRoutine();
         },
       }, t.days[day]);
     }));
@@ -172,7 +178,30 @@ export async function viewMissionEdit(missionId) {
       h("div", { class: "times" },
         h("label", { class: "time" }, t.missionEdit.from, start),
         h("label", { class: "time" }, t.missionEdit.to, end)),
-      h("p", { class: "hint" }, t.missionEdit.endOptional));
+      h("p", { class: "hint" }, t.missionEdit.endOptional),
+      mission.routine && h("p", { class: "hint" }, t.missionEdit.forWhoElse));
+  }
+
+  // ---------- its routine ----------
+  const routineBox = h("div", {});
+  function renderRoutine() {
+    const { routine } = mission;
+    if (!routine) {
+      routineBox.replaceChildren(
+        h("p", { class: "hint" }, t.missionEdit.routineHint),
+        mission.tasks.length
+          ? h("a", { class: "btn", href: `${editHref}/routine` }, icon("plus"), t.missionEdit.createRoutine)
+          : h("p", { class: "hint" }, t.routineEdit.tasksMissing));
+      return;
+    }
+    const short = (time) => time?.replace(/^0/, "");
+    const names = routine.every_child ? t.missionEdit.everyone
+      : children.filter((c) => routine.kids.includes(c.id)).map((c) => c.name).join(", ");
+    routineBox.replaceChildren(h("div", { class: "routine-line" },
+      h("span", { class: "routine-line__text" },
+        h("b", {}, routine.manual ? t.missionEdit.routineByHand : t.missionEdit.routineTime(routine.anchor, short(routine.start), short(routine.end))),
+        h("span", { class: "hint" }, t.missionEdit.routineDetail(names, short(routine.start), short(routine.goal), daysText(routine.days)))),
+      h("a", { class: "btn", href: `#/parents/config/routines/${routine.id}` }, t.missionEdit.editRoutine, icon("next"))));
   }
 
   // ---------- children ----------
@@ -322,6 +351,7 @@ export async function viewMissionEdit(missionId) {
   renderColors();
   renderDays();
   renderSchedule();
+  renderRoutine();
   renderKids();
   renderTasks();
   renderFooter();
@@ -338,6 +368,7 @@ export async function viewMissionEdit(missionId) {
           panel(t.missionEdit.panelSchedule,
             h("div", { class: "field" }, scheduleBox, scheduleError),
             h("div", { class: "field" }, h("span", { class: "field__label" }, t.missionEdit.days), daysBox, daysSummary, daysError)),
+          panel(t.missionEdit.panelRoutine, routineBox),
           panel(t.missionEdit.panelChildren,
             children.length ? [h("p", { class: "hint" }, t.missionEdit.childrenHint), kidsBox] : h("p", { class: "hint" }, t.missionEdit.noChildren))),
         panel(tasksTitle, tasksEmpty, tasksList, addTask)),

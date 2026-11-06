@@ -1,11 +1,7 @@
-"""Which routine each mission goes with: a mission chosen for a child in a routine
-follows the routine's hours on the routine's days; its own hours count on the others.
-
-- A routine that rings at a time: the mission opens when its first part starts and
-  closes at its goal (at the latest, when the margin for checking ends).
-- One started by hand: open all day, on the routine's days.
-- In two routines (one on weekdays, one at the weekend): each day, the routines of
-  that day; two on the same day, from the first one's start to the last one's end.
+"""What a mission's routine means for its hours: two schedules, never one per child.
+For a child who follows the routine, on the days it goes, the routine's: from its first
+part to its goal (at the latest, when the margin for checking ends); started by hand,
+open all day. For everyone else, and on the other days, the mission's.
 """
 
 from app.children.repository import Child
@@ -18,27 +14,19 @@ def kids_of(routine: Routine, children: list[Child]) -> list[Child]:
     return [c for c in children if not routine.kids or c.id in routine.kids]
 
 
-def routines_by_mission(routines: list[Routine], children: list[Child]) -> dict[str, list[Routine]]:
-    """Each mission's routines: the ones where it is a child's mission (and the child is in it)."""
-    found: dict[str, list[Routine]] = {}
-    for routine in routines:
-        kids = {c.id for c in kids_of(routine, children)}
-        for child_id, mission_id in routine.missions.items():
-            if mission_id and child_id in kids:
-                found.setdefault(mission_id, []).append(routine)
-    return found
+def follows(routine: Routine, child_id: str) -> bool:
+    return not routine.kids or child_id in routine.kids
 
 
-def schedule_on(mission: Mission, routines: list[Routine], children: list[Child], child_id: str,
-                weekday: str) -> Schedule | None:
-    """A child's hours for a mission that day: the routine's, if they follow it and it
-    goes that day; else the mission's. None: open all day."""
-    kids = {c.id: c for c in children}
-    today = [r.on(weekday) for r in routines
-             if weekday in r.days and r.missions.get(child_id) == mission.id
-             and child_id in kids and kids[child_id] in kids_of(r, children)]
-    if not today:
+def routine_by_mission(routines: list[Routine]) -> dict[str, Routine]:
+    return {routine.mission_id: routine for routine in routines}
+
+
+def schedule_on(mission: Mission, routine: Routine | None, child_id: str, weekday: str) -> Schedule | None:
+    """A child's hours for a mission that day. None: open all day."""
+    if routine is None or not follows(routine, child_id) or not routine.goes_on(weekday):
         return mission.schedule
-    if any(r.manual for r in today):
+    today = routine.on(weekday)
+    if today.manual:
         return None
-    return Schedule(start=hhmm(min(r.starts for r in today)), end=hhmm(max(r.ends for r in today)))
+    return Schedule(start=hhmm(today.starts), end=hhmm(today.ends))

@@ -170,7 +170,7 @@ export async function viewRoutineMusic(routineId, musicId) {
     const rows = h("ul", { class: "rows" }, m.songs.map((id, index) => {
       const one = songs.find((s) => s.id === id);
       return one && h("li", { class: "row row--sortable row--compact", "data-id": String(index) },
-        h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
+        h("span", { class: "drag-handle", "aria-label": t.missions.dragLabel }, icon("drag")),
         h("span", { class: "row__icon row__icon--sm" }, icon("music")),
         h("span", { class: "row__text" }, one.name,
           h("span", { class: "row__detail" }, h("span", { class: "pill pill--muted" }, length(one.seconds)))),

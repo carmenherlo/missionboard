@@ -14,7 +14,8 @@ from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
-from app.missions.repository import WEEKDAYS
+from app.children import avatars
+from app.missions.repository import WEEKDAYS, MissionsRepository, child_tasks
 from app.routines.links import kids_of
 from app.routines.repository import Part, Routine, RoutinesRepository, RunsRepository, minute_of
 from app.settings import SettingsRepository
@@ -26,7 +27,7 @@ NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
 @dataclass
 class Person:
     child: Child
-    mission: dict | None  # {"id", "name", "done", "total", "completed"}; None: no such mission today
+    mission: dict  # {"id", "name", "done", "total", "completed", "marks", "colors"}
 
 
 @dataclass
@@ -57,7 +58,9 @@ class RoutinesService:
         settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
+        missions: MissionsRepository,
     ):
+        self._missions = missions
         self._routines = routines
         self._runs = runs
         self._children = children
@@ -83,10 +86,10 @@ class RoutinesService:
             if minute < start + stored.length:
                 kids = json.loads(run["kids"] or "[]")
                 people = [p for p in self.people(stored) if p.child.id in kids]
-                return Current(stored.started_at(int(start)), day, minute, run, people,
+                return Current(stored.on(weekday).started_at(int(start)), day, minute, run, people,
                                settings.routine_warn_minutes, started=start)
         for stored in self._routines.list():
-            if weekday not in stored.days or stored.manual:
+            if not stored.goes_on(weekday) or stored.manual:
                 continue
             routine = stored.on(weekday)
             if not minute_of(routine.wake) <= minute < routine.ends:
@@ -106,7 +109,7 @@ class RoutinesService:
         started = None
         if routine.manual:
             started, routine = minute, routine.started_at(int(minute))
-        return Current(routine, app_day(now, settings.day_starts_at), minute, run, self.people(routine),
+        return Current(routine, app_day(now, settings.day_starts_at), minute, run, self.people(routine, trial=True),
                        settings.routine_warn_minutes, started=started)
 
     def notices(self) -> list[dict]:
@@ -116,7 +119,7 @@ class RoutinesService:
         weekday = WEEKDAYS[day.weekday()]
         found = []
         for stored in self._routines.list():
-            if stored.manual or weekday not in stored.days or self._runs.get(day, stored.id)["finished_at"]:
+            if stored.manual or not stored.goes_on(weekday) or self._runs.get(day, stored.id)["finished_at"]:
                 continue
             routine = stored.on(weekday)
             for notice in routine.notices:
@@ -132,7 +135,7 @@ class RoutinesService:
             date = (now + timedelta(days=ahead)).date()
             weekday = WEEKDAYS[date.weekday()]
             for stored in self._routines.list():
-                if stored.manual or weekday not in stored.days:
+                if stored.manual or not stored.goes_on(weekday):
                     continue
                 routine = stored.on(weekday)
                 wake = minute_of(routine.wake)
@@ -148,7 +151,8 @@ class RoutinesService:
         settings = self._settings.settings()
         weekday = WEEKDAYS[app_day(self._clock.now(), settings.day_starts_at).weekday()]
         children = self._children.list()
-        return [(r, kids_of(r, children)) for r in self._routines.list() if r.manual and weekday in r.days]
+        routines = [r for r in self._routines.list() if r.manual and r.goes_on(weekday)]
+        return [(r.on(weekday), kids_of(r, children)) for r in routines]
 
     def start(self, routine_id: str, kids: list[str]) -> None:
         """Start a routine by hand with the children who have come home."""
@@ -214,18 +218,25 @@ class RoutinesService:
             raise ConflictError("That routine is not going on now")
         return current
 
-    def people(self, routine: Routine) -> list[Person]:
-        """The routine's children, each with their mission of the routine today."""
+    def people(self, routine: Routine, trial: bool = False) -> list[Person]:
+        """The routine's children with something to do: each with their part of its
+        mission today. The goal only waits for them. In a trial, whatever the day: all
+        they have of it, to try it on any day."""
         people = []
         for child in kids_of(routine, self._children.list()):
-            today = self._days.today(child.id)
-            mission_id = routine.missions.get(child.id)
-            item = next((m for m in today.missions if m.mission.id == mission_id), None)
-            mission = None
-            if item:
-                total = len(item.marks)
-                done = total if item.state == DONE else len(item.checked)
-                mission = {"id": item.mission.id, "name": item.mission.name, "done": done, "total": total,
-                           "completed": item.state == DONE}
-            people.append(Person(child, mission))
+            item = next((m for m in self._days.today(child.id).missions if m.mission.id == routine.mission_id), None)
+            if item is not None:
+                done = len(item.marks) if item.state == DONE else len(item.checked)
+                mission, marks, completed = item.mission, item.marks, item.state == DONE
+            elif trial:
+                mission = self._missions.get(routine.mission_id)
+                marks = [mark for task in child_tasks(mission, child.id) for mark in task.marks]
+                done, completed = 0, False
+            else:
+                continue
+            if marks:
+                people.append(Person(child, {
+                    "id": mission.id, "name": mission.name, "done": done, "total": len(marks), "completed": completed,
+                    "marks": marks, "colors": avatars.tones(mission.color),
+                }))
         return people

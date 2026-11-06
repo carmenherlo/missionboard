@@ -310,9 +310,8 @@ def _v13_to_v14(doc: dict) -> dict:
 
 def _v14_to_v15(doc: dict) -> dict:
     """One list of missions for the family, with tasks and steps: nothing is converted."""
-    routines = [{**r, "missions": {}} for r in doc.get("routines") or []]
     rest = {k: v for k, v in doc.items() if k != "templates"}
-    return {**rest, "version": 15, "missions": [], "routines": routines}
+    return {**rest, "version": 15, "missions": [], "routines": []}
 
 
 _MIGRATIONS = {

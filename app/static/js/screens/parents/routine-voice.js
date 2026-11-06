@@ -38,7 +38,7 @@ export async function viewRoutineVoice(routineId, focus = null) {
   const patchPart = (part, json) => save(api("PATCH", `${url}/parts/${part.id}`, { json }));
 
   function draw() {
-    groups.replaceChildren(...scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }).map((group) =>
+    groups.replaceChildren(...scriptOf(routine, songs, { patchRoutine, patchPart }).map((group) =>
       h("section", { class: "panel", id: `voice-${group.id}` },
         h("h2", { class: "panel__title" }, group.title),
         h("ul", { class: "rows" }, ...group.lines.map((line, index) => {
@@ -56,7 +56,7 @@ export async function viewRoutineVoice(routineId, focus = null) {
         ? h("span", { class: `voice-line__tag${mine ? " voice-line__tag--mine" : ""}` },
           mine ? t.routineVoice.changed : t.routineVoice.kinds[line.kind])
         : h("span", {}),
-      line.kind !== "sound" && line.text
+      line.kind !== "sound" && line.kind !== "warning" && line.text
         ? h("button", {
           type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routineVoice.listen,
           onclick: () => say(line.text),
@@ -110,8 +110,8 @@ export async function viewRoutineVoice(routineId, focus = null) {
 }
 
 // The routine as a list of groups (the alarm, each part, the goal), each with its lines:
-// { when, kind: "own" | "tasks" | "auto" | "sound", text, edit?, href? }.
-function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
+// { when, kind: "own" | "warning" | "auto" | "sound", text, edit? }.
+function scriptOf(routine, songs, { patchRoutine, patchPart }) {
   const manual = routine.manual;
   const kids = routine.kids.length;
   // A moment as said on its line: "6:34:44", or from the start when started by hand ("min 5").
@@ -166,12 +166,11 @@ function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
     }
     if (!manual) lines.push(auto(from, `${capital(itIs(from))}.`));
     lines.push(own(from, script.partOpening(part), {
-      value: part.say, usual: `Comienza ${part.name}.`, label: t.routineVoice.openingLabel(part.name),
+      value: part.say, usual: script.usualOpening(part), label: t.routineVoice.openingLabel(part.name),
       save: (value) => patchPart(part, { say: value }),
     }));
-    const tasks = script.tasksSentence(part);
-    if (tasks) lines.push({ when: when(from), kind: "tasks", text: tasks, href: `${routineHref}/parts/${part.id}` });
-    lines.push(auto(from, script.partLength(part, { minutes, ends: to, manual, kids })));
+    if (script.doesNotFit(part, minutes)) lines.push({ when: when(from), kind: "warning", text: t.routinePart.tooLong });
+    lines.push(auto(from, script.partLength({ minutes, kids })));
     for (const n of (part.warnings ?? (minutes > 2 ? [USUAL_WARNING] : [])).filter((w) => w < minutes).sort((a, b) => b - a)) {
       lines.push(auto(to - n, script.partWarning(part, n, script.nextFor(routine, routine.parts, index))));
     }
@@ -186,7 +185,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }) {
     if (last && manual) {
       lines.push(auto(to, t.routineVoice.byHandDone), auto(to, t.routineVoice.byHandTimeUp));
     }
-    groups.push({ id: part.id, title: `${manual ? when(from) : part.start.replace(/^0/, "")} · ${capital(part.name)}`, lines, end: to });
+    groups.push({ id: part.id, title: `${manual ? when(from) : part.start.replace(/^0/, "")} · ${part.text}`, lines, end: to });
   });
 
   // The goal: its sentence when the last part ends, and how long is left until its time.

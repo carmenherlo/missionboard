@@ -1,12 +1,12 @@
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Header, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, require_parent
 from app.errors import InvalidError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
@@ -14,7 +14,6 @@ from app.missions.repository import MissionsRepository
 from app.routines.editor import TIMING, RoutinesEditor
 from app.routines.repository import TIME, Routine, RoutinesRepository, RunsRepository, hhmm
 from app.routines.service import NOTES, Current, RoutinesService, kids_of
-from app.storage.photo_store import PhotoStore
 from app.settings import SettingsRepository
 from app.songs.repository import SongsRepository
 from app.storage.config_store import ConfigStore
@@ -35,14 +34,13 @@ def _not_blank(value):
 
 
 class RoutineCreate(BaseModel):
-    """Rings at `wake` (its first part 5 minutes later), starts at `starts`, or ends at `ends` (its goal)."""
+    """A mission's routine. Rings at `wake` (its first part 5 minutes later), starts at
+    `starts`, or ends at `ends` (its goal)."""
 
-    name: str = Field(max_length=40)
+    mission_id: str
     wake: str | None = Field(default=None, pattern=TIME)
     starts: str | None = Field(default=None, pattern=TIME)
     ends: str | None = Field(default=None, pattern=TIME)
-
-    _name = field_validator("name")(_not_blank)
 
     @model_validator(mode="after")
     def one_time(self) -> "RoutineCreate":
@@ -75,7 +73,6 @@ class NoticeIn(BaseModel):
 
 
 class RoutinePatch(BaseModel):
-    name: str | None = Field(default=None, max_length=40)
     days: list[str] | None = None
     wake: str | None = Field(default=None, pattern=TIME)
     remind_every: int | None = Field(default=None, ge=0, le=30)
@@ -91,9 +88,7 @@ class RoutinePatch(BaseModel):
     last_countdown: str | None = Field(default=None, max_length=200)
     early_goal: str | None = Field(default=None, max_length=200)
     warn_about: Literal["end", "next"] | None = None
-    image: str | None = None  # a library image; null: its first part's (photos are uploaded)
 
-    _name = field_validator("name")(_not_blank)
     _sentences = field_validator("greeting", "last_countdown", "early_goal")(_blank_is_usual)
 
 
@@ -101,38 +96,19 @@ class KidsIn(BaseModel):
     kids: list[str]
 
 
-class MissionIn(BaseModel):
-    mission_id: str | None = None
-
-
-class PartCreate(BaseModel):
-    name: str = Field(max_length=60)
-
-    _name = field_validator("name")(_not_blank)
-
-
 class PartPatch(BaseModel):
-    name: str | None = Field(default=None, max_length=60)
-    image: str | None = None
-    at: str | None = Field(default=None, pattern=TIME)
+    """What is the routine's own of each task. Its text, picture and order: in the mission."""
+
     minutes: int | None = Field(default=None, ge=1, le=180)
-    say: str | None = Field(default=None, max_length=200)
-    tasks: list[str] | None = None
+    say: str | None = Field(default=None, max_length=300)
+    spoken: str | None = Field(default=None, max_length=60)
     warnings: list[int] | None = None
 
-    _name = field_validator("name")(_not_blank)
-
-
-class OrderIn(BaseModel):
-    ids: list[str]
+    _spoken = field_validator("spoken")(lambda v: (v or "").strip() or None)
 
 
 class StartIn(BaseModel):
     kids: list[str]
-
-
-class PartsIn(BaseModel):
-    ids: list[str]
 
 
 class NoteIn(BaseModel):
@@ -155,19 +131,16 @@ def get_routines_service(
     events: EventLog = Depends(get_event_log),
 ) -> RoutinesService:
     return RoutinesService(
-        RoutinesRepository(store), runs, ChildrenRepository(store), days, SettingsRepository(store), clock, events
+        RoutinesRepository(store), runs, ChildrenRepository(store), days, SettingsRepository(store), clock, events,
+        MissionsRepository(store),
     )
 
 
 def get_routines_editor(
     store: ConfigStore = Depends(get_config_store),
-    libraries: ImageLibraries = Depends(get_image_libraries),
-    photos: PhotoStore = Depends(get_photo_store),
     events: EventLog = Depends(get_event_log),
 ) -> RoutinesEditor:
-    return RoutinesEditor(
-        RoutinesRepository(store), ChildrenRepository(store), MissionsRepository(store), libraries, photos, events
-    )
+    return RoutinesEditor(RoutinesRepository(store), ChildrenRepository(store), MissionsRepository(store), events)
 
 
 def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository) -> dict:
@@ -175,6 +148,7 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
     return {
         "id": routine.id,
         "name": routine.name,
+        "mission_id": routine.mission_id,
         "day": current.day.isoformat(),
         "now": current.minute,  # minute of the day by the household's clock, with seconds
         "manual": current.started is not None,  # started by hand: a timer instead of the clock
@@ -184,10 +158,12 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
         "alarm": routine.alarm,
         "parts": [
             {
+                "id": part.id,
                 "name": part.name,
+                "text": part.text,
                 "image_url": libraries.url(part.image),
                 "say": part.say,
-                "tasks": list(part.tasks),
+                "steps": [{"text": step.text, "image_url": libraries.url(step.image)} for step in part.steps],
                 "warnings": current.warnings(part),
                 "start": hhmm(start),
                 "end": hhmm(end),
@@ -248,7 +224,7 @@ def next_ring(routines: RoutinesService = Depends(get_routines_service), clock=D
     routine, ring = found
     return {"id": routine.id, "name": routine.name, "at": f"{ring:%H:%M}",
             "in_days": (ring.date() - clock.now().date()).days,
-            "image_url": libraries.url(routine.image or routine.parts[0].image)}
+            "image_url": libraries.url(routine.image)}
 
 
 @router.get("/by-hand")
@@ -293,8 +269,7 @@ def finish(routine_id: str, routines: RoutinesService = Depends(get_routines_ser
 
 
 class Editing:
-    """A routine for its editor: as stored, with each part's times worked out,
-    and the warnings worth showing (a child's mission closing before it ends)."""
+    """A routine for its editor: with each part's times worked out and every picture's address."""
 
     def __init__(
         self,
@@ -318,11 +293,11 @@ class Editing:
             "minutes": routine.length,
             "parts": [
                 {**part.model_dump(mode="json"), "image_url": self._libraries.url(part.image),
-                 "start": hhmm(start), "end": hhmm(end)}
+                 "start": hhmm(start), "end": hhmm(end),
+                 "steps": [{"text": s.text, "image_url": self._libraries.url(s.image)} for s in part.steps]}
                 for part, start, end in timeline
             ],
-            # Its icon: its own, or its first part's (05/11)
-            "image_url": self._libraries.url(routine.image or routine.parts[0].image),
+            "image_url": self._libraries.url(routine.image),
         }
 
 
@@ -334,7 +309,7 @@ def list_routines(editor: RoutinesEditor = Depends(get_routines_editor), present
 @router.post("", status_code=201, dependencies=parent_only)
 def create_routine(body: RoutineCreate, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
-    return present(editor.create(body.name, body.wake, starts=body.starts, ends=body.ends))
+    return present(editor.create(body.mission_id, body.wake, starts=body.starts, ends=body.ends))
 
 
 @router.get("/{routine_id}")
@@ -346,7 +321,7 @@ def get_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routines_e
 def update_routine(routine_id: str, body: RoutinePatch, editor: RoutinesEditor = Depends(get_routines_editor),
                    present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "days", "remind_every", "offsets", "notices", "warn_about", *TIMING):  # wake: null means "by hand"
+    for required in ("days", "remind_every", "offsets", "notices", "warn_about", *TIMING):  # wake: null means "by hand"
         if changes.get(required, "") is None:
             changes.pop(required)
     if changes.get("goal") is not None:
@@ -367,45 +342,13 @@ def set_kids(routine_id: str, body: KidsIn, editor: RoutinesEditor = Depends(get
     return present(editor.set_kids(routine_id, body.kids))
 
 
-@router.put("/{routine_id}/missions/{child_id}", dependencies=parent_only)
-def set_mission(routine_id: str, child_id: str, body: MissionIn,
-                editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
-    return present(editor.set_mission(routine_id, child_id, body.mission_id))
-
-
-@router.post("/{routine_id}/parts", status_code=201, dependencies=parent_only)
-def add_part(routine_id: str, body: PartCreate, editor: RoutinesEditor = Depends(get_routines_editor),
-             present: Editing = Depends()):
-    return present(editor.add_part(routine_id, body.name))
-
-
-@router.post("/{routine_id}/parts/delete", dependencies=parent_only)
-def delete_parts(routine_id: str, body: PartsIn, editor: RoutinesEditor = Depends(get_routines_editor),
-                 present: Editing = Depends()):
-    """Remove several parts at once (the ones chosen in "Seleccionar")."""
-    return present(editor.delete_parts(routine_id, body.ids))
-
-
-@router.put("/{routine_id}/parts/order", dependencies=parent_only)
-def reorder_parts(routine_id: str, body: OrderIn, editor: RoutinesEditor = Depends(get_routines_editor),
-                  present: Editing = Depends()):
-    return present(editor.reorder_parts(routine_id, body.ids))
-
-
 @router.patch("/{routine_id}/parts/{part_id}", dependencies=parent_only)
 def update_part(routine_id: str, part_id: str, body: PartPatch,
                 editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("name", "minutes", "tasks"):
-        if changes.get(required, "") is None:
-            changes.pop(required)
+    if changes.get("minutes", "") is None:
+        changes.pop("minutes")
     return present(editor.update_part(routine_id, part_id, **changes))
-
-
-@router.delete("/{routine_id}/parts/{part_id}", dependencies=parent_only)
-def delete_part(routine_id: str, part_id: str, editor: RoutinesEditor = Depends(get_routines_editor),
-                present: Editing = Depends()):
-    return present(editor.delete_part(routine_id, part_id))
 
 
 class MusicCreate(BaseModel):
@@ -444,21 +387,6 @@ def update_music(routine_id: str, music_id: str, body: MusicPatch, editor: Routi
 def delete_music(routine_id: str, music_id: str, editor: RoutinesEditor = Depends(get_routines_editor),
                  present: Editing = Depends()):
     return present(editor.delete_music(routine_id, music_id))
-
-
-@router.put("/{routine_id}/photo", dependencies=parent_only)
-async def upload_photo(routine_id: str, request: Request, content_type: str = Header(),
-                       editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
-    """Its own icon, from a photo (as the parts')."""
-    media_type = content_type.split(";")[0].strip().lower()
-    return present(editor.set_photo(routine_id, await request.body(), media_type))
-
-
-@router.put("/{routine_id}/parts/{part_id}/photo", dependencies=parent_only)
-async def upload_part_photo(routine_id: str, part_id: str, request: Request, content_type: str = Header(),
-                            editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
-    media_type = content_type.split(";")[0].strip().lower()
-    return present(editor.set_part_photo(routine_id, part_id, await request.body(), media_type))
 
 
 @router.get("/{routine_id}/trial", dependencies=parent_only)

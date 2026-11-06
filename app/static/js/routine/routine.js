@@ -36,6 +36,7 @@ import { onSay, quiet, say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { openMission } from "../screens/child/mission-flow.js";
+import { missionStyle } from "../screens/child/ring.js";
 import { t } from "../texts.js";
 import { confetti } from "../effects/confetti.js";
 import { tokenMs } from "../effects/motion.js";
@@ -276,12 +277,9 @@ export function startRoutines() {
     renderPeople();
   }
 
-  // "Sin hacer" · "✓ Hecha": all its steps, or none (its steps from the kid's day).
-  async function pretendAll(person, done) {
-    if (!done) return setPretend(person.child.id, []);
-    const day = await api("GET", `api/children/${person.child.id}/today`).catch(() => null);
-    const mission = day?.missions.find((m) => m.id === person.mission.id);
-    if (showing && mission) setPretend(person.child.id, mission.steps.map((st) => st.id));
+  // "Sin hacer" · "✓ Hecha": everything they mark, or nothing.
+  function pretendAll(person, done) {
+    setPretend(person.child.id, done ? person.mission.marks : []);
   }
 
   // Back in time: the missions as they were then (and an early goal not yet come).
@@ -840,10 +838,12 @@ export function startRoutines() {
       view.count.hidden = !showing.count || data.manual; // the timer counts in its middle already
       view.count.dataset.beat = String((showing.count ?? 0) % 2); // a new number: its jump again (effects.css)
     }
-    const tasks = phase.kind === "part" ? phase.part.tasks : [];
+    // The part's steps, as a reminder, under the clock.
+    const steps = phase.kind === "part" ? phase.part.steps : [];
     if (view.tasks.dataset.key !== showing.phaseKey) {
       view.tasks.dataset.key = showing.phaseKey;
-      view.tasks.replaceChildren(...tasks.map((task) => h("li", { class: "routine__task" }, task)));
+      view.tasks.replaceChildren(...steps.map((step) => h("li", { class: "routine__task" },
+        step.image_url && h("img", { src: step.image_url, alt: "" }), step.text)));
     }
     // What comes next, with the time each one starts.
     const coming = parts()
@@ -870,7 +870,8 @@ export function startRoutines() {
         h("button", {
           type: "button",
           class: `routine-kid${mission?.completed ? " routine-kid--done" : ""}${waiting ? " routine-kid--waiting" : ""}`,
-          style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
+          // The ring of their avatar in their colour; how their mission goes, in its colour.
+          style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}; ${mission ? missionStyle(mission.colors) : ""}`,
           disabled: !mission,
           onclick: () => openKid(person),
         },
@@ -894,8 +895,10 @@ export function startRoutines() {
       checked: new Set(showing.pretend.get(person.child.id)),
       onChange: (checked) => setPretend(person.child.id, checked),
     } : null;
+    const phase = phaseAt(now());
     showing.mission = await openMission(showing.view.over, person.child.id, person.mission.id, {
       pretend,
+      current: phase.kind === "part" ? phase.part.id : null, // the task going on stands out
       onClose: () => {
         if (!showing) return;
         showing.mission = null;

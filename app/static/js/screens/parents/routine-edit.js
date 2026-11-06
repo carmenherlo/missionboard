@@ -1,13 +1,10 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { confirmBar } from "../../components/confirm-bar.js";
-import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
-import { sortable } from "../../components/sortable.js";
 import { stepper } from "../../components/stepper.js";
-import { undoBar } from "../../components/undo-bar.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
@@ -18,7 +15,6 @@ import { addSongForm, ringsAtFirstPart, songWraps } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const LIST_HREF = "#/parents/config/routines";
-const TEXT_SAVE_DELAY_MS = 600;
 const GOAL_AFTER_MINUTES = 10; // a new goal: this long after the last part
 const DEFAULT_WAKE = "07:00"; // back from "by hand" to ringing at a time
 const CHECK_CHOICES = [3, 5, 10]; // minutes to check the missions before the goal
@@ -37,20 +33,17 @@ export function routineError(err) {
 // Like Editar misión: panels that save every change on the spot.
 export async function viewRoutineEdit(routineId) {
   const url = `api/routines/${routineId}`;
-  const [first, children, templates, songs] = await Promise.all([
-    api("GET", url), api("GET", "api/children"), api("GET", "api/templates"), api("GET", "api/songs"), loadAvatars()]);
+  const [first, children, songs] = await Promise.all([
+    api("GET", url), api("GET", "api/children"), api("GET", "api/songs"), loadAvatars()]);
   let routine = first;
-  const missionsOf = Object.fromEntries(await Promise.all(
-    children.map(async (c) => [c.id, await api("GET", `api/children/${c.id}/missions`)])));
+  const mission = await api("GET", `api/missions/${routine.mission_id}`);
+  const missionHref = `#/parents/config/missions/${routine.mission_id}`;
 
   const status = saveStatus();
-  const title = h("span", {}, routine.name);
   // Every change comes back as the whole routine; a refused one says why.
   function save(request) {
-    flushDelete(); // a part let go in the bin: gone for good before anything else changes
     return status.track(request).then((updated) => {
       routine = updated;
-      title.textContent = routine.name;
       refresh();
       return routine;
     }).catch((err) => {
@@ -61,47 +54,7 @@ export async function viewRoutineEdit(routineId) {
   }
   const patch = (json) => save(api("PATCH", url, { json })).catch(() => {});
 
-  // ---------- the routine: name, days, when it rings ----------
-  let nameTimer = null;
-  const nameInput = h("input", { type: "text", maxlength: 40, value: routine.name });
-  const saveName = () => {
-    clearTimeout(nameTimer);
-    const name = nameInput.value.trim();
-    if (name && name !== routine.name) patch({ name });
-  };
-  nameInput.addEventListener("input", () => {
-    clearTimeout(nameTimer);
-    nameTimer = setTimeout(saveName, TEXT_SAVE_DELAY_MS);
-  });
-  nameInput.addEventListener("blur", saveName);
-  // Its icon (05/11), as a mission's: a picture with a pencil that opens the picker below.
-  // None of its own ("Ninguna"): its first part's.
-  const imageBox = h("div", { class: "mission-image" });
-  const pickerBox = h("div", {});
-  let pickerOpen = false;
-  async function renderImage() {
-    const thumb = () => imageThumb(routine.image_url, { size: "lg", label: routine.name });
-    imageBox.replaceChildren(h("button", {
-      type: "button", class: "image-button", "aria-label": t.missionEdit.changeImage,
-      onclick: () => { pickerOpen = !pickerOpen; renderImage(); },
-    }, thumb(), h("span", { class: "icon-button image-button__pencil" }, icon("edit"))));
-    if (!pickerOpen) {
-      pickerBox.replaceChildren();
-      return;
-    }
-    const picker = await imagePicker({
-      initial: { ref: routine.image ?? routine.parts[0].image, url: routine.image_url }, // opens on the one it shows
-      onChange: async (choice) => {
-        await saveImageChoice(choice, {
-          patch: (ref) => save(api("PATCH", url, { json: { image: ref } })),
-          upload: (file) => save(api("PUT", `${url}/photo`, { body: file, contentType: file.type })),
-        }).catch(() => {});
-        imageBox.querySelector(".image-button").firstElementChild.replaceWith(thumb());
-      },
-    });
-    pickerBox.replaceChildren(picker.element);
-  }
-  renderImage();
+  // ---------- the routine: days, when it rings ----------
   // "Empieza a las" or "Termina a las": the time that stays put when the parts change.
   const anchorBox = h("div", {});
   const whenLabel = h("span", {});
@@ -200,47 +153,18 @@ export async function viewRoutineEdit(routineId) {
     daysBox.replaceChildren(...WEEKDAYS.map((day) => {
       const on = routine.days.includes(day);
       return h("button", {
-        type: "button", class: `chip chip--day${on ? " chip--on" : ""}`,
+        type: "button", class: `chip chip--day${on ? " chip--on" : ""}`, disabled: !mission.days.includes(day),
         "aria-pressed": String(on), "aria-label": t.dayNames[day], title: t.dayNames[day],
         onclick: () => patch({ days: on ? routine.days.filter((d) => d !== day) : [...routine.days, day] }),
       }, t.days[day]);
     }));
   }
 
-  // ---------- who it is for, each with their mission ----------
+  // ---------- who follows it ----------
   const kidsList = h("ul", { class: "rows" });
-  const kidsConfirm = h("div", {});
-  // A mission into the routine, or out of it (rutinas-8): if its own hours change, say so first.
-  function chooseMission(child, missionId) {
-    const missions = missionsOf[child.id];
-    const before = missions.find((m) => m.id === routine.missions[child.id]);
-    const after = missions.find((m) => m.id === missionId);
-    const hours = (m) => m.schedule.end ? t.routineEdit.ownFromTo(m.schedule.start, m.schedule.end) : t.routineEdit.ownFrom(m.schedule.start);
-    const routineHours = routine.manual ? t.missionEdit.allDay : `${shortTime(routine.starts)}–${shortTime(routine.ends)}`;
-    const messages = [
-      after?.schedule && t.routineEdit.joinsRoutine(after.name, child.name, hours(after), routineHours, daysLongText(routine.days)),
-      before && before !== after && (before.schedule
-        ? t.routineEdit.leavesRoutine(before.name, hours(before)) : t.routineEdit.leavesRoutineOpen(before.name)),
-    ].filter(Boolean);
-    const go = () => save(api("PUT", `${url}/missions/${child.id}`, { json: { mission_id: missionId || null } }))
-      .then(() => { kidsConfirm.replaceChildren(); }).catch(() => {});
-    if (!messages.length) return go();
-    kidsConfirm.replaceChildren(confirmBar({
-      message: messages[0], detail: messages[1], confirmLabel: t.routineEdit.confirmMission,
-      onCancel: () => { kidsConfirm.replaceChildren(); renderKids(); },
-      onConfirm: go,
-    }));
-    return null;
-  }
   function renderKids() {
     kidsList.replaceChildren(...children.map((child) => {
       const inIt = routine.kids.includes(child.id);
-      const select = h("select", {
-        disabled: !inIt, "aria-label": t.routineEdit.missionOf(child.name),
-        onchange: (e) => chooseMission(child, e.target.value),
-      },
-        h("option", { value: "" }, t.routineEdit.noMission),
-        missionsOf[child.id].map((m) => h("option", { value: m.id, selected: routine.missions[child.id] === m.id }, m.name)));
       return h("li", { class: "row row--compact" },
         h("input", {
           type: "checkbox", checked: inIt, "aria-label": t.routineEdit.inRoutine(child.name),
@@ -250,12 +174,11 @@ export async function viewRoutineEdit(routineId) {
           },
         }),
         avatar(child, { size: "sm" }),
-        h("span", { class: "row__text" }, child.name),
-        select);
+        h("span", { class: "row__text" }, child.name));
     }));
   }
 
-  // ---------- the parts, in order ----------
+  // ---------- its tasks: they are the mission's, here only their minutes ----------
   // Between two cards that do not move, like Scratch's blocks: the alarm opens the
   // routine and the goal closes it. The pin marks the time that stays put.
   const alarmCard = h("div", { "data-card": "alarm" });
@@ -306,138 +229,34 @@ export async function viewRoutineEdit(routineId) {
           : h("span", { class: "routine-card__time" }, shortTime(routine.goal.at))),
     ].filter(Boolean));
   }
-  const partsTitle = h("span", {});
   const partsList = h("ul", { class: "rows" });
-  sortable(partsList, {
-    onEnd: (ids) => save(api("PUT", `${url}/parts/order`, { json: { ids } })).catch(() => {}),
-    trash: { label: t.common.dropToDelete, onDrop: (id) => dropPart(id) },
-  });
-  // Let go in the bin (rutinas-7): out of sight at once, and gone for good once
-  // "Deshacer" goes by (or anything else is saved, or the screen changes).
-  let pendingDelete = null; // { id, bar }
-  function dropPart(id) {
-    flushDelete();
-    const part = routine.parts.find((p) => p.id === id);
-    if (!part || routine.parts.length - 1 < 1) return;
-    const bar = undoBar({
-      message: t.common.deleted(capital(part.name)),
-      onUndo: () => { pendingDelete = null; renderParts(); },
-      onTimeout: flushDelete,
-    });
-    pendingDelete = { id, bar };
-    renderParts();
-  }
-  function flushDelete() {
-    if (!pendingDelete) return;
-    const { id, bar } = pendingDelete;
-    pendingDelete = null;
-    bar.close();
-    save(api("POST", `${url}/parts/delete`, { json: { ids: [id] } })).catch(() => {});
-  }
-  // "Seleccionar": a box on each part instead of its handle, and one bin for all
-  // the chosen ones (after importing, the new parts come chosen: easy to drop).
-  let selected = null; // null: not selecting; else the chosen part ids
-  const partsTools = h("div", { class: "form-actions form-actions--start" });
-  function renderPartsTools() {
-    if (!selected) {
-      partsTools.replaceChildren(h("button", {
-        type: "button", class: "btn", onclick: () => { selected = new Set(); renderParts(); },
-      }, icon("check"), t.routineEdit.select));
-      return;
-    }
-    const count = selected.size;
-    partsTools.replaceChildren(
-      h("button", {
-        type: "button", class: "btn btn--danger", disabled: count === 0,
-        onclick: () => partsTools.replaceChildren(confirmBar({
-          message: t.routineEdit.confirmDeleteParts(count),
-          confirmLabel: t.routineEdit.confirmYes,
-          onCancel: renderPartsTools,
-          onConfirm: async () => {
-            await save(api("POST", `${url}/parts/delete`, { json: { ids: [...selected] } }));
-            selected = null;
-            renderParts();
-          },
-        })),
-      }, icon("trash"), t.routineEdit.deleteSelected(count)),
-      h("button", { type: "button", class: "btn", onclick: () => { selected = null; renderParts(); } }, t.common.cancel));
-  }
+  const someDaysDiffer = h("p", { class: "hint" }, t.routineEdit.someDaysDiffer);
   function renderParts() {
-    partsTitle.textContent = t.routineEdit.panelParts(routine.parts.length);
     renderCards();
-    if (selected) selected = new Set([...selected].filter((id) => routine.parts.some((p) => p.id === id)));
-    renderPartsTools();
-    partsList.replaceChildren(...routine.parts.filter((part) => part.id !== pendingDelete?.id).map((part) =>
-      h("li", {
-        class: `row row--sortable row--compact${selected ? " row--selectable" : " row--covered"}`, "data-id": part.id, "data-card": part.id,
-        onclick: selected && ((e) => {
-          if (e.target.closest("a")) return;
-          if (selected.has(part.id)) selected.delete(part.id);
-          else selected.add(part.id);
-          renderParts();
-        }),
-      },
-        selected
-          ? h("input", { type: "checkbox", checked: selected.has(part.id), "aria-label": part.name, tabindex: -1 })
-          : h("span", { class: "drag-handle", "aria-label": t.childMissions.dragLabel }, icon("drag")),
-        imageThumb(part.image_url, { size: "sm", label: part.name, suggested: part.image_suggested }),
-        // The whole card opens the part (rutinas-7); the handle and − / + do not.
-        h(selected ? "span" : "a", {
-          class: `row__text${selected ? "" : " row__cover"}`,
-          href: selected ? undefined : `${LIST_HREF}/${routineId}/parts/${part.id}`,
-          "aria-label": selected ? undefined : t.routineEdit.editPartNamed(part.name),
-        }, capital(part.name),
+    someDaysDiffer.hidden = !routine.parts.some((part) => routine.days.some((day) => !part.days.includes(day)));
+    partsList.replaceChildren(...routine.parts.map((part) =>
+      h("li", { class: "row row--compact row--covered", "data-id": part.id, "data-card": part.id },
+        imageThumb(part.image_url, { size: "sm", label: part.text, suggested: part.image_suggested }),
+        // The whole card opens it; − / + do not.
+        h("a", {
+          class: "row__text row__cover",
+          href: `${LIST_HREF}/${routineId}/parts/${part.id}`,
+          "aria-label": t.routineEdit.editPartNamed(part.text),
+        }, part.text,
+          part.steps.length > 0 && h("span", { class: "step-reminders", "aria-hidden": "true" },
+            part.steps.map((step) => step.image_url
+              ? h("img", { src: step.image_url, alt: "" })
+              : h("span", { class: "step-reminders__letter" }, step.text.charAt(0).toUpperCase()))),
           !routine.manual && h("span", { class: "row__detail" },
             h("span", { class: "pill pill--muted" }, t.routineEdit.partStarts(shortTime(part.start))))),
-        selected
-          ? h("span", { class: "pill pill--muted" }, t.routine.minutes(part.minutes))
-          : stepper({
-            value: part.minutes, min: 1, max: MAX_PART_MINUTES, format: t.routine.minutes,
-            label: t.routineEdit.minutesOf(part.name),
-            onChange: (minutes) => save(api("PATCH", `${url}/parts/${part.id}`, { json: { minutes } })).catch(() => {}),
-          }),
-        !selected && h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
+        stepper({
+          value: part.minutes, min: 1, max: MAX_PART_MINUTES, format: t.routine.minutes,
+          label: t.routineEdit.minutesOf(part.text),
+          onChange: (minutes) => save(api("PATCH", `${url}/parts/${part.id}`, { json: { minutes } })).catch(() => {}),
+        }),
+        h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
     wrapSongs(routine, songs, cardsBox);
   }
-  const newPart = h("input", { type: "text", maxlength: 60, placeholder: t.routineEdit.newPart });
-  const addPart = h("form", {
-    class: "row row--add", novalidate: true,
-    onsubmit: async (event) => {
-      event.preventDefault();
-      const name = newPart.value.trim();
-      if (!name) return;
-      try {
-        await save(api("POST", `${url}/parts`, { json: { name } }));
-        newPart.value = "";
-      } catch {
-        // the status says why; the text stays to try again
-      }
-      newPart.focus();
-    },
-  }, newPart, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.routineEdit.addPart));
-
-  // The steps of a mission or template as parts: a copy to start from.
-  const importSelect = h("select", { "aria-label": t.routineEdit.importFrom },
-    h("option", { value: "" }, t.routineEdit.importFrom),
-    children.map((child) => missionsOf[child.id].length > 0 && h("optgroup", { label: child.name },
-      missionsOf[child.id].map((m) => h("option", { value: m.id }, m.name)))),
-    templates.length > 0 && h("optgroup", { label: t.templates.title },
-      templates.map((m) => h("option", { value: m.id }, m.name))));
-  const importParts = h("div", { class: "form-actions form-actions--start" }, importSelect,
-    h("button", {
-      type: "button", class: "btn",
-      onclick: () => {
-        if (!importSelect.value) return;
-        const before = new Set(routine.parts.map((p) => p.id));
-        save(api("POST", `${url}/parts/import`, { json: { mission_id: importSelect.value } }))
-          .then(() => {
-            importSelect.value = "";
-            // The new parts come chosen: if some are not wanted, one tap on the bin.
-            selected = new Set(routine.parts.map((p) => p.id).filter((id) => !before.has(id)));
-            renderParts();
-          }).catch(() => {});
-      },
-    }, t.routineEdit.import));
 
   // ---------- what the warnings before a part ends say (out of the script, 06/11) ----------
   const warnBox = h("div", { class: "stack stack--tight" });
@@ -514,16 +333,17 @@ export async function viewRoutineEdit(routineId) {
       h("div", { class: "form-actions" },
         h("a", { class: "btn", href: `${LIST_HREF}/${routineId}/voice` }, icon("speaker"), t.routineEdit.voice),
         h("button", { type: "button", class: "btn", onclick: () => tryRoutine(routineId) }, t.routines.tryNow),
-        h("a", { class: "btn btn--primary", href: LIST_HREF }, t.common.done)));
+        h("a", { class: "btn btn--primary", href: missionHref }, t.common.done)));
   }
   function showConfirm() {
     footer.replaceChildren(confirmBar({
       message: t.routineEdit.confirmDelete(routine.name),
+      detail: t.routineEdit.confirmDeleteDetail,
       confirmLabel: t.routineEdit.confirmYes,
       onCancel: renderFooter,
       onConfirm: async () => {
         await api("DELETE", url);
-        location.hash = LIST_HREF;
+        location.hash = missionHref;
       },
     }));
   }
@@ -566,20 +386,18 @@ export async function viewRoutineEdit(routineId) {
   renderFooter();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: LIST_HREF, label: t.routines.title }),
+    parentsHeader(h("span", { class: "title-line" }, t.routineEdit.title(routine.name), status.element), { href: missionHref, label: routine.name }),
     h("main", { class: "page" },
       h("div", { class: "columns columns--parts" },
         h("div", { class: "stack" },
           panel(t.routineEdit.panelRoutine,
-            h("div", { class: "mission-identity" }, imageBox, h("label", {}, t.routines.name, nameInput)),
-            pickerBox,
-            h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineEdit.days), daysBox, daysSummary)),
+            h("div", { class: "field" }, daysBox, daysSummary, h("p", { class: "hint" }, t.routineEdit.onlyMissionDays))),
           panel(t.routineEdit.panelWhen, modeBox, timed),
           timedPanels,
-          panel(t.routineEdit.panelKids, kidsList, kidsConfirm, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
+          panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
-          panel(partsTitle, partsTools, cardsBox,
-            addPart, importParts),
+          panel(t.routineEdit.panelParts(routine.name), cardsBox, someDaysDiffer,
+            h("a", { class: "btn btn--start", href: missionHref }, t.routineEdit.changeInMission, icon("next"))),
           panel(t.routineEdit.warnTitle, warnBox),
           // Each thing in its own panel (04/11): the songs apart, like the goal.
           songsPanel,

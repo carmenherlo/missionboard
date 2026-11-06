@@ -7,7 +7,7 @@ import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { daysText } from "./mission-summary.js";
 
-// Like Plantillas: a card per routine with what matters at a glance.
+// A quick way to the missions' routines: each one is created from its mission.
 export async function viewRoutinesList() {
   const routines = await api("GET", "api/routines");
 
@@ -39,6 +39,6 @@ export async function viewRoutinesList() {
         h("p", { class: "hint" }, routines.length ? t.routines.hint : t.routines.empty),
         h("div", { class: "form-actions" },
           h("a", { class: "btn", href: "#/parents/config/routines/songs" }, icon("music"), t.songs.open),
-          h("a", { class: "btn btn--primary", href: "#/parents/config/routines/new" }, icon("plus"), t.routines.add))),
+          h("a", { class: "btn", href: "#/parents/config/missions" }, t.routines.toMissions))),
       routines.length ? list : null));
 }

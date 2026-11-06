@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from tests.conftest import PARENT
-from tests.test_missions import create_child
+from tests.test_missions import add_step, add_task, create_child, create_mission
 from tests.test_settings import FixedClock
-from tests.test_today import check, descriptions, mission
+from tests.test_today import descriptions, mark
 
 MADRID = timezone(timedelta(hours=1))
 MONDAY = datetime(2026, 11, 2, 17, 0, 10, tzinfo=MADRID)
@@ -27,14 +27,14 @@ def client(data_dir, clock):
 @pytest.fixture
 def landing(client):
     """"Aterrizaje": started by hand, two parts of 3 and 4 minutes."""
-    routine = client.post("/api/routines", json={"name": "Aterrizaje", "wake": "16:00"}, headers=PARENT).json()
+    mission = create_mission(client, name="Aterrizaje").json()
+    add_task(client, mission["id"], "Guardar las cosas")
+    tasks = add_task(client, mission["id"], "Lavarse las manos").json()["tasks"]
+    routine = client.post("/api/routines", json={"mission_id": mission["id"], "wake": "16:00"}, headers=PARENT).json()
     url = f"/api/routines/{routine['id']}"
     client.patch(url, json={"wake": None}, headers=PARENT)
-    client.patch(f"{url}/parts/{routine['parts'][0]['id']}", json={"name": "guardar las cosas", "minutes": 3},
-                 headers=PARENT)
-    client.post(f"{url}/parts", json={"name": "lavarse las manos"}, headers=PARENT)
-    second = client.get(url).json()["parts"][1]
-    client.patch(f"{url}/parts/{second['id']}", json={"minutes": 4}, headers=PARENT)
+    client.patch(f"{url}/parts/{tasks[0]['id']}", json={"minutes": 3}, headers=PARENT)
+    client.patch(f"{url}/parts/{tasks[1]['id']}", json={"minutes": 4}, headers=PARENT)
     return client.get(url).json()
 
 
@@ -80,13 +80,14 @@ def test_it_ends_and_can_start_again(client, landing):
     assert start(client, landing, [bea["id"]]).status_code == 204
 
 
-def test_each_child_with_their_mission(client, landing):
+def test_each_child_with_their_mission_and_it_is_open_all_day(client, landing):
     bea = create_child(client)
-    aterrizaje = mission(client, bea, "Aterrizaje", steps=("Zapatos",))
-    client.put(f"/api/routines/{landing['id']}/missions/{bea['id']}", json={"mission_id": aterrizaje["id"]},
-               headers=PARENT)
+    mission = client.get(f"/api/missions/{landing['mission_id']}").json()
+    day = client.get(f"/api/children/{bea['id']}/today").json()
+    assert day["missions"][0]["state"] == "open" and day["missions"][0]["schedule"] is None
     start(client, landing, [bea["id"]])
-    check(client, bea, aterrizaje, 0)
+    for task in mission["tasks"]:
+        mark(client, bea, mission, task["id"])
     assert client.get("/api/routines/current").json()["people"][0]["mission"]["completed"] is True
 
 

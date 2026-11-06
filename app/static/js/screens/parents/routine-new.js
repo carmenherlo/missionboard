@@ -5,14 +5,17 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
-const LIST_HREF = "#/parents/config/routines";
-
-// Creating something new: a short form with a button that says what it does.
-// A routine is thought of by its end ("a las 7:30 en la puerta"): "Termina a las" comes first.
-export function viewRoutineNew() {
+// A mission's routine: a short form with a button that says what it does. It is
+// thought of by its end ("a las 7:30 en la puerta"): "Termina a las" comes first.
+export async function viewRoutineNew(missionId) {
+  const mission = await api("GET", `api/missions/${missionId}`);
+  const missionHref = `#/parents/config/missions/${missionId}`;
+  if (mission.routine) {
+    location.replace(`#/parents/config/routines/${mission.routine.id}`);
+    return;
+  }
   let ending = true;
-  const name = h("input", { type: "text", maxlength: 40, placeholder: t.routines.namePlaceholder });
-  const time = h("input", { type: "time", value: "07:30" });
+  const time = h("input", { type: "time", value: mission.schedule?.end ?? "07:30" });
   const error = h("p", { class: "form-error", role: "alert" });
   const anchor = h("div", {});
   const timeLabel = h("span", {});
@@ -32,39 +35,30 @@ export function viewRoutineNew() {
   async function onsubmit(event) {
     event.preventDefault();
     error.textContent = "";
-    if (!name.value.trim()) {
-      error.textContent = t.routines.missingName;
-      name.focus();
-      return;
-    }
     if (!time.value) {
       error.textContent = t.routines.missingWake;
       return;
     }
-    const json = ending
-      ? { name: name.value.trim(), ends: time.value }
-      : { name: name.value.trim(), starts: time.value };
+    const json = { mission_id: missionId, ...(ending ? { ends: time.value } : { starts: time.value }) };
     try {
       const routine = await api("POST", "api/routines", { json });
-      location.hash = `${LIST_HREF}/${routine.id}`;
+      location.hash = `#/parents/config/routines/${routine.id}`;
     } catch (err) {
-      error.textContent = err.status === 409 ? t.routines.overlaps : errorMessage(err);
+      error.textContent = err.status === 409 ? t.routines.overlaps : err.status === 422 ? t.routines.badTimes : errorMessage(err);
     }
   }
 
   renderAnchor();
   render(
-    parentsHeader(t.routines.newTitle, { href: LIST_HREF, label: t.routines.title }),
+    parentsHeader(t.routines.newTitle(mission.name), { href: missionHref, label: mission.name }),
     h("main", { class: "page" },
       h("form", { class: "stack", novalidate: true, onsubmit },
         panel(null,
-          h("label", {}, t.routines.name, name),
           anchor,
           h("div", { class: "times" }, h("label", { class: "time" }, timeLabel, time)),
           hint),
         error,
         h("div", { class: "form-actions" },
-          h("a", { class: "btn", href: LIST_HREF }, t.common.cancel),
+          h("a", { class: "btn", href: missionHref }, t.common.cancel),
           h("button", { class: "btn btn--primary", type: "submit" }, t.routines.create)))));
-  name.focus();
 }

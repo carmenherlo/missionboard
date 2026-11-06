@@ -4,9 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from app.storage.config_migrations import upgrade
 from tests.conftest import PARENT
-from tests.test_routines_editor import MADRID, URL, edit
+from tests.test_routines import make_morning
+from tests.test_routines_editor import MADRID, edit
 from tests.test_settings import FixedClock
 
 MP3 = b"ID3" + b"\x00" * 64
@@ -21,6 +21,11 @@ def clock():
 def client(data_dir, clock):
     with TestClient(create_app(data_dir, clock=clock)) as c:
         yield c
+
+
+@pytest.fixture(autouse=True)
+def morning(client):
+    return make_morning(client)
 
 
 def upload(client, name="¡A correr!", data=MP3, seconds=190.4):
@@ -55,7 +60,7 @@ def test_only_songs_and_only_parents(client):
 def test_a_song_deleted_leaves_the_routines(client, data_dir):
     song = upload(client).json()
     edit(client, "POST", "/music", song=song["id"], start=part_ids(client)[0])
-    assert client.get("/api/songs").json()[0]["used_in"] == ["Mañana"]
+    assert client.get("/api/songs").json()[0]["used_in"] == ["Despegue"]
     assert client.delete(f"/api/songs/{song['id']}", headers=PARENT).status_code == 204
     assert edit(client, "GET").json()["music"] == []
     assert not (data_dir / "sounds" / song["file"]).exists()
@@ -100,11 +105,12 @@ def test_the_songs_follow_the_cards(client):
     later = next(m for m in music if m["start"] == parts[2])
     edit(client, "PATCH", f"/music/{later['id']}", until=parts[4])
     # The part where it ended goes: it plays once
-    routine = edit(client, "DELETE", f"/parts/{parts[4]}").json()
-    assert next(m for m in routine["music"] if m["start"] == parts[2])["until"] is None
+    mission = f"/api/missions/{edit(client, 'GET').json()['mission_id']}"
+    client.delete(f"{mission}/tasks/{parts[4]}", headers=PARENT)
+    assert next(m for m in edit(client, "GET").json()["music"] if m["start"] == parts[2])["until"] is None
     # The part where it started goes: so does the song
-    routine = edit(client, "DELETE", f"/parts/{parts[2]}").json()
-    assert [m["start"] for m in routine["music"]] == [parts[0]]
+    client.delete(f"{mission}/tasks/{parts[2]}", headers=PARENT)
+    assert [m["start"] for m in edit(client, "GET").json()["music"]] == [parts[0]]
 
 
 def test_the_screen_gets_where_each_song_plays(client, clock):
@@ -116,11 +122,6 @@ def test_the_screen_gets_where_each_song_plays(client, clock):
     on = client.get("/api/routines/current").json()
     assert on["music"] == [{"id": music["id"], "songs": [{"name": "¡A correr!", "url": song["url"], "seconds": 190.4}],
                             "start": 0, "until": 1, "after_voice": False, "loud": False}]
-
-
-def test_v10_routines_get_their_songs():
-    doc = upgrade({"version": 10, "routines": [{"id": "manana", "parts": []}]})
-    assert doc["songs"] == [] and doc["routines"][0]["music"] == []
 
 
 def test_an_opus_song_is_ogg(client):
@@ -139,11 +140,6 @@ def test_songs_one_after_the_other(client):
     assert edit(client, "GET").json()["music"][0]["songs"] == [second]
     client.delete(f"/api/songs/{second}", headers=PARENT)  # left without songs: gone
     assert edit(client, "GET").json()["music"] == []
-
-
-def test_v12_a_song_becomes_a_list():
-    doc = upgrade({"version": 12, "routines": [{"id": "m", "parts": [], "music": [{"id": "a", "song": "x", "start": "p"}]}]})
-    assert doc["routines"][0]["music"] == [{"id": "a", "songs": ["x"], "start": "p"}]
 
 
 def test_no_song_where_the_alarm_rings(client):

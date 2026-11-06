@@ -41,12 +41,9 @@ def get_children_service(
     photos: PhotoStore = Depends(get_photo_store),
     missions: MissionsService = Depends(get_missions_service),
     events: EventLog = Depends(get_event_log),
-    libraries: ImageLibraries = Depends(get_image_libraries),
     clock=Depends(get_clock),
 ) -> ChildrenService:
-    routines = RoutinesEditor(
-        RoutinesRepository(store), ChildrenRepository(store), MissionsRepository(store), libraries, photos, events
-    )
+    routines = RoutinesEditor(RoutinesRepository(store), ChildrenRepository(store), MissionsRepository(store), events)
     settings = SettingsRepository(store).settings()
 
     def welcome(child: Child) -> None:
