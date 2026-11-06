@@ -65,7 +65,7 @@ def public_child(child: Child) -> dict:
 @router.get("/avatars")
 def list_avatars(libraries: ImageLibraries = Depends(get_image_libraries)):
     presets = [{**preset, "image_url": libraries.url(preset["image"])} for preset in avatars.PRESETS]
-    return {"presets": presets, "palette": avatars.PALETTE}
+    return {"presets": presets, "palette": avatars.PALETTE, "mission_colors": avatars.MISSION_COLORS}
 
 
 @router.get("/children")

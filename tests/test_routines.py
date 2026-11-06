@@ -8,9 +8,9 @@ from app.main import create_app
 from app.storage.config_migrations import CURRENT_VERSION, upgrade
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
-from tests.test_missions import add_step, create_child, create_mission
+from tests.test_missions import create_child
 from tests.test_settings import FixedClock
-from tests.test_today import check, descriptions
+from tests.test_today import check, descriptions, mission
 
 MADRID = timezone(timedelta(hours=1))
 MONDAY = datetime(2026, 11, 2, 7, 2, 30, tzinfo=MADRID)  # the morning routine, in "el aseo"
@@ -76,10 +76,7 @@ def test_it_is_on_from_its_wake_up_until_its_goal_on_its_days(client, clock, mom
 def test_each_child_with_their_mission_of_the_routine(client):
     bea = create_child(client)
     alex = create_child(client, name="Alex", preset="dinosaur")
-    despegue = create_mission(client, bea["id"], name="Despegue").json()
-    for text in ("Vestirse", "Desayunar"):
-        add_step(client, despegue["id"], text)
-    despegue = client.get(f"/api/missions/{despegue['id']}").json()
+    despegue = mission(client, bea, "Despegue", steps=("Vestirse", "Desayunar"))
     client.put(f"/api/routines/manana/missions/{bea['id']}", json={"mission_id": despegue["id"]}, headers=PARENT)
     check(client, bea, despegue, 0)
     people = current(client)["people"]
@@ -88,7 +85,7 @@ def test_each_child_with_their_mission_of_the_routine(client):
         "id": despegue["id"], "name": "Despegue", "done": 1, "total": 2, "completed": False,
     }
     assert people[0]["colors"]["color"] == bea["color"]
-    assert people[1]["mission"] is None  # Alex has no mission in this routine
+    assert people[1]["mission"] is None  # no mission chosen for Alex in this routine
     check(client, bea, despegue, 1)
     assert current(client)["people"][0]["mission"]["completed"] is True
 

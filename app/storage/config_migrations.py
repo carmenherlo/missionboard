@@ -7,7 +7,7 @@ import live defaults, so they keep producing the same result forever.
 
 import copy
 
-CURRENT_VERSION = 14
+CURRENT_VERSION = 15
 
 
 class ConfigVersionError(Exception):
@@ -308,6 +308,13 @@ def _v13_to_v14(doc: dict) -> dict:
     return {**doc, "version": 14, "routines": routines}
 
 
+def _v14_to_v15(doc: dict) -> dict:
+    """One list of missions for the family, with tasks and steps: nothing is converted."""
+    routines = [{**r, "missions": {}} for r in doc.get("routines") or []]
+    rest = {k: v for k, v in doc.items() if k != "templates"}
+    return {**rest, "version": 15, "missions": [], "routines": routines}
+
+
 _MIGRATIONS = {
     1: _v1_to_v2,
     2: _v2_to_v3,
@@ -322,6 +329,7 @@ _MIGRATIONS = {
     11: _v11_to_v12,
     12: _v12_to_v13,
     13: _v13_to_v14,
+    14: _v14_to_v15,
 }
 
 

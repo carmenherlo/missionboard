@@ -8,7 +8,7 @@ from app.main import create_app
 from app.storage.config_migrations import upgrade
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
-from tests.test_missions import add_step, create_child, create_mission, patch, saved, upload
+from tests.test_missions import add_task, create_child, create_mission, patch, saved, upload
 from tests.test_settings import FixedClock
 from tests.test_today import descriptions
 
@@ -97,25 +97,24 @@ def test_times_that_do_not_add_up_are_refused(client, body):
 
 def test_who_it_is_for_and_their_mission(client):
     bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
-    despegue = create_mission(client, bea["id"], name="Despegue").json()
+    despegue = create_mission(client, name="Despegue").json()
     routine = edit(client, "PUT", "/kids", kids=[bea["id"]]).json()
     assert routine["every_child"] is False and routine["kids"] == [bea["id"]]
     assert edit(client, "PUT", "/kids", kids=[alex["id"], bea["id"]]).json()["every_child"] is True
     assert edit(client, "PUT", "/kids", kids=[]).status_code == 422
     assert edit(client, "PUT", f"/missions/{bea['id']}", mission_id=despegue["id"]).json()["missions"] == {
         bea["id"]: despegue["id"]}
-    assert edit(client, "PUT", f"/missions/{alex['id']}", mission_id=despegue["id"]).status_code == 422
+    assert edit(client, "PUT", f"/missions/{alex['id']}", mission_id="nope").status_code == 422
     assert edit(client, "PUT", f"/missions/{bea['id']}", mission_id=None).json()["missions"] == {bea["id"]: None}
 
 
-def test_a_mission_in_a_routine_follows_its_days_and_hours(client, clock):
-    # rutinas-8: its own schedule (9:00 to 10:00, every day) is kept but does not count
+def test_a_mission_in_a_routine_follows_its_hours_on_its_days(client, clock):
     bea = create_child(client)
-    despegue = create_mission(client, bea["id"], name="Despegue").json()
-    add_step(client, despegue["id"], "Vestirse")
+    despegue = create_mission(client, name="Despegue").json()
+    task = add_task(client, despegue["id"], "Vestirse").json()["tasks"][0]
     patch(client, despegue["id"], schedule={"start": "09:00", "end": "10:00"})
     edit(client, "PUT", f"/missions/{bea['id']}", mission_id=despegue["id"])
-    mission = client.get(f"/api/children/{bea['id']}/missions").json()[0]
+    mission = client.get(f"/api/missions/{despegue['id']}").json()
     assert mission["schedule"] == {"start": "09:00", "end": "10:00"}  # kept, for when it leaves
     assert [(r["name"], r["start"], r["end"]) for r in mission["routines"]] == [("Mañana", "06:35", "07:30")]
 
@@ -127,7 +126,7 @@ def test_a_mission_in_a_routine_follows_its_days_and_hours(client, clock):
     assert state(datetime(2026, 11, 2, 6, 0, tzinfo=MADRID)) == "upcoming"  # Monday: opens with the routine
     assert state(datetime(2026, 11, 2, 7, 0, tzinfo=MADRID)) == "open"
     assert state(datetime(2026, 11, 2, 7, 45, tzinfo=MADRID)) == "closed"  # after the goal
-    assert state(datetime(2026, 11, 7, 7, 0, tzinfo=MADRID)) is None  # Saturday: no routine, no mission
+    assert state(datetime(2026, 11, 7, 7, 0, tzinfo=MADRID)) == "upcoming"  # Saturday: no routine, its own hours
     # Out of the routine: its own hours again
     edit(client, "PUT", f"/missions/{bea['id']}", mission_id=None)
     assert state(datetime(2026, 11, 2, 7, 0, tzinfo=MADRID)) == "upcoming"
@@ -234,19 +233,6 @@ def test_trial_from_a_part(client):
 # ---------- migration 7 → 8 ----------
 
 
-def test_v7_routines_get_each_childs_mission_by_name():
-    doc = {
-        "version": 7,
-        "children": [{"id": "b"}, {"id": "a"}],
-        "missions": [{"id": "m1", "child_id": "b", "name": "Despegue"}, {"id": "m2", "child_id": "a", "name": "Otra"}],
-        "routines": [{"id": "manana", "name": "Mañana", "kids": [], "mission": "Despegue", "wake": "06:30",
-                      "parts": [{"name": "uno", "at": "06:35", "minutes": 5}]}],
-    }
-    routine = upgrade(doc)["routines"][0]
-    assert routine["kids"] == [] and routine["missions"] == {"b": "m1", "a": None}
-    assert "mission" not in routine and routine["parts"][0]["id"] == "manana-1"
-
-
 # ---------- moved on some days ----------
 
 
@@ -285,25 +271,6 @@ def test_notices_before_it_rings(client, clock):
     clock.moment = datetime(2026, 11, 3, 5, 0, tzinfo=MADRID)  # Tuesday: they move with it
     assert client.get("/api/routines/notices").json()["notices"][0]["at"] == 6 * 60 + 25
     assert edit(client, "PATCH", notices=[{"minutes": 0, "say": "x"}]).status_code == 422
-
-
-# ---------- parts from a mission ----------
-
-
-def test_import_the_steps_of_a_mission_or_template(client):
-    new = client.post("/api/routines", json={"name": "Tarde", "wake": "17:00"}, headers=PARENT).json()
-    url = f"/api/routines/{new['id']}/parts/import"
-    routine = client.post(url, json={"mission_id": "aterrizaje"}, headers=PARENT).json()  # a sample template
-    names = [p["name"] for p in routine["parts"]][1:]
-    assert names == ["quitarse los zapatos", "lavarse las manos", "merendar", "hacer los deberes"]
-    assert routine["parts"][1]["image"] == "fluent/running-shoe" and routine["parts"][1]["minutes"] == 5
-    bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Noche").json()
-    add_step(client, mission["id"], "Pijama")
-    assert client.post(url, json={"mission_id": mission["id"]}, headers=PARENT).json()["parts"][-1]["name"] == "pijama"
-    assert client.post(url, json={"mission_id": "nope"}, headers=PARENT).status_code == 404
-    # Into the morning routine: its goal comes later (4 parts of 5 minutes)
-    assert edit(client, "POST", "/parts/import", mission_id="aterrizaje").json()["goal"]["at"] == "07:50"
 
 
 def test_remove_several_parts_at_once(client):

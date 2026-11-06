@@ -223,7 +223,7 @@ class RoutinesService:
             item = next((m for m in today.missions if m.mission.id == mission_id), None)
             mission = None
             if item:
-                total = len(item.mission.steps)
+                total = len(item.marks)
                 done = total if item.state == DONE else len(item.checked)
                 mission = {"id": item.mission.id, "name": item.mission.name, "done": done, "total": total,
                            "completed": item.state == DONE}

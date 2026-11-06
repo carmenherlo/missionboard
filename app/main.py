@@ -28,7 +28,6 @@ from app.settings import SettingsRepository
 from app.storage import db
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
-from app.templates import api as templates_api
 from app.voice import api as voice_api
 from app.voice.service import MODEL_NAME, Voice
 from app.today import api as today_api
@@ -110,7 +109,6 @@ def create_app(
     app.include_router(parents_api.router)
     app.include_router(children_api.router)
     app.include_router(missions_api.router)
-    app.include_router(templates_api.router)
     app.include_router(prizes_api.router)
     app.include_router(images_api.router)
     app.include_router(events_api.router)

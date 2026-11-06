@@ -53,6 +53,8 @@ PRESETS = [
 ]
 
 PALETTE_COLORS = {entry["color"] for entry in PALETTE}
+# What a mission can be: every colour but the two that are only for rings.
+MISSION_COLORS = [entry["color"] for entry in PALETTE if entry["id"] not in ("peach", "brown")]
 _BY_COLOR = {entry["color"]: entry for entry in PALETTE}
 
 
@@ -65,4 +67,6 @@ def tones(color: str) -> dict:
     if entry is None:
         return {"color": color, "strong": color, "soft": color, "on": "#ffffff"}
     return {key: entry[key] for key in ("color", "strong", "soft", "on")}
+
+
 PRESETS_BY_ID = {preset["id"]: preset for preset in PRESETS}

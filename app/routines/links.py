@@ -1,6 +1,5 @@
-"""Which routine each mission goes with (rutinas-8): a mission chosen for a child in
-a routine follows the routine's days and hours, not its own. Its own schedule is kept,
-unused, for when it leaves the routine.
+"""Which routine each mission goes with: a mission chosen for a child in a routine
+follows the routine's hours on the routine's days; its own hours count on the others.
 
 - A routine that rings at a time: the mission opens when its first part starts and
   closes at its goal (at the latest, when the margin for checking ends).
@@ -10,7 +9,7 @@ unused, for when it leaves the routine.
 """
 
 from app.children.repository import Child
-from app.missions.repository import WEEKDAYS, Mission, Schedule
+from app.missions.repository import Mission, Schedule
 from app.routines.repository import Routine, hhmm
 
 
@@ -30,19 +29,16 @@ def routines_by_mission(routines: list[Routine], children: list[Child]) -> dict[
     return found
 
 
-def days_of(mission: Mission, routines: list[Routine]) -> tuple[str, ...]:
-    """Its days: the routines' days if it goes with any, else its own."""
-    if not routines:
-        return mission.days
-    return tuple(sorted({day for r in routines for day in r.days}, key=WEEKDAYS.index))
-
-
-def schedule_on(mission: Mission, routines: list[Routine], weekday: str) -> Schedule | None:
-    """Its hours that day: the routines' (moved days included), else its own. None: open all day."""
-    if not routines:
+def schedule_on(mission: Mission, routines: list[Routine], children: list[Child], child_id: str,
+                weekday: str) -> Schedule | None:
+    """A child's hours for a mission that day: the routine's, if they follow it and it
+    goes that day; else the mission's. None: open all day."""
+    kids = {c.id: c for c in children}
+    today = [r.on(weekday) for r in routines
+             if weekday in r.days and r.missions.get(child_id) == mission.id
+             and child_id in kids and kids[child_id] in kids_of(r, children)]
+    if not today:
         return mission.schedule
-    today = [r.on(weekday) for r in routines if weekday in r.days]
-    if not today or any(r.manual for r in today):
+    if any(r.manual for r in today):
         return None
     return Schedule(start=hhmm(min(r.starts for r in today)), end=hhmm(max(r.ends for r in today)))
-

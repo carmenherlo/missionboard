@@ -2,10 +2,13 @@
 happens when they check a step. The rules are here; the screens only show them.
 
 States of a mission today (paso-4.html, "Las reglas del día"):
-- done: every step checked today. It stays done until tomorrow.
-- open: no schedule, or inside it. Steps can be checked and unchecked.
+- done: everything the child checks, checked today. It stays done until tomorrow.
+- open: no schedule, or inside it, or opened by a parent for today (it counts for
+  its star and the prize). Things can be checked and unchecked.
 - upcoming: before its start time. It cannot be opened yet.
 - closed: past its end time without being done. No star.
+Which hours count: for a child who follows the mission's routine, on the routine's
+days, the routine's; for everyone else, and on other days, the mission's.
 The focus (the big one on the route) is the first open mission in route
 order ("¡Ahora!"); if none is open, the next upcoming one, with its time.
 
@@ -23,7 +26,7 @@ from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
-from app.missions.repository import WEEKDAYS, Mission, MissionsRepository, Schedule
+from app.missions.repository import WEEKDAYS, ChildTask, Mission, MissionsRepository, Schedule, child_tasks
 from app.prizes.repository import Prize, PrizesRepository
 from app.routines import links
 from app.routines.repository import RoutinesRepository
@@ -41,10 +44,24 @@ NOTES = ("mission_opened", "step_spoken", "mission_locked", "prize_locked")
 class MissionToday:
     mission: Mission
     state: str
-    checked: set[str] = field(default_factory=set)
+    tasks: list[ChildTask]  # what this child has of it today
+    checked: set[str] = field(default_factory=set)  # what they have checked, of `marks`
     focus: bool = False
-    schedule: Schedule | None = None  # today's hours: its own, or its routine's (rutinas-8)
-    routines: list = field(default_factory=list)  # the routines it goes with
+    schedule: Schedule | None = None  # the hours that count for them today
+
+    @property
+    def marks(self) -> list[str]:
+        return [mark for task in self.tasks for mark in task.marks]
+
+    def item(self, item_id: str):
+        """A task or step this child has today."""
+        for task in self.tasks:
+            if task.task.id == item_id:
+                return task.task
+            for step in task.steps:
+                if step.id == item_id:
+                    return step
+        return None
 
 
 @dataclass
@@ -121,23 +138,19 @@ class DayService:
 
         checked = self._days.checked_steps(day, child.id)
         completed = self._days.completed_missions(day, child.id)
+        opened = self._days.opened_missions(day, child.id)
+        routines = self._routines.list()
+        children = self._children.list()
         missions = []
-        # A mission in a routine goes by the routine's days and hours (rutinas-8)
-        with_routines = links.routines_by_mission(self._routines.list(), self._children.list())
-        for mission in self._missions.list_for_child(child.id):
-            routines = with_routines.get(mission.id, [])
-            # Not today, or nothing to check yet (a mission still being written)
-            if weekday not in links.days_of(mission, routines) or not mission.steps:
+        for mission in self._missions.list():
+            tasks = child_tasks(mission, child.id, weekday)
+            if not tasks:  # not today, nothing of theirs today, or still being written
                 continue
-            step_ids = {s.id for s in mission.steps}
-            schedule = links.schedule_on(mission, routines, weekday)
-            missions.append(MissionToday(
-                mission=mission,
-                state=self._state(schedule, mission.id in completed, time),
-                checked=checked.get(mission.id, set()) & step_ids,
-                schedule=schedule,
-                routines=routines,
-            ))
+            schedule = links.schedule_on(mission, routines, children, child.id, weekday)
+            item = MissionToday(mission, self._state(schedule, mission.id in completed, mission.id in opened, time),
+                                tasks, schedule=schedule)
+            item.checked = checked.get(mission.id, set()) & set(item.marks)
+            missions.append(item)
 
         focus = next((m for m in missions if m.state == OPEN), None)
         focus = focus or next((m for m in missions if m.state == UPCOMING), None)
@@ -175,29 +188,30 @@ class DayService:
         self._events.child_did("prize_spun", today.child, prize=prize.text)
         return SpinResult(self.today(child_id), prize)
 
-    def set_step(self, child_id: str, mission_id: str, step_id: str, checked: bool) -> StepResult:
-        """Check or uncheck a step. Checking the last one completes the mission (once a day)."""
+    def set_mark(self, child_id: str, mission_id: str, item_id: str, checked: bool) -> StepResult:
+        """Check or uncheck a step, or a task without steps. The last one completes the
+        mission (once a day). Checking a task that has steps does nothing by itself."""
         today = self.today(child_id)
         item = self._mission_today(today, mission_id)
-        step = next((s for s in item.mission.steps if s.id == step_id), None)
-        if step is None:
-            raise NotFoundError("Step not found")
+        target = item.item(item_id)
+        if target is None or item_id not in item.marks:
+            raise NotFoundError("Nothing to check with that id")
         if item.state == DONE:
             if not checked:
                 raise ConflictError("The mission is already done today")
             return StepResult(today, completed=False, stars_earned=0)
         if item.state != OPEN:
             raise ConflictError("The mission is not open now")
-        if (step_id in item.checked) == checked:
+        if (item_id in item.checked) == checked:
             return StepResult(today, completed=False, stars_earned=0)
 
         now = self._clock.now()
-        self._days.set_step(today.day, today.child.id, mission_id, step_id, checked, now)
+        self._days.set_step(today.day, today.child.id, mission_id, item_id, checked, now)
         self._events.child_did(
-            "step_checked" if checked else "step_unchecked", today.child, mission=item.mission, step=step
+            "step_checked" if checked else "step_unchecked", today.child, mission=item.mission, step=target
         )
 
-        all_checked = (item.checked | {step_id}) >= {s.id for s in item.mission.steps}
+        all_checked = (item.checked | {item_id}) >= set(item.marks)
         stars = 0
         if checked and all_checked:
             stars = self._settings.settings().stars_per_mission
@@ -210,8 +224,18 @@ class DayService:
             self._events.child_did("prize_unlocked", today.child)
         return StepResult(after, completed=checked and all_checked, stars_earned=stars)
 
+    def open_today(self, child_id: str, mission_id: str) -> Today:
+        """A parent opens a closed or upcoming mission for this child, only today: it
+        can be done and gives its star. It goes to the log; the child sees no option."""
+        today = self.today(child_id)
+        item = self._mission_today(today, mission_id)
+        if item.state in (UPCOMING, CLOSED):
+            self._days.open_mission(today.day, today.child.id, mission_id, self._clock.now())
+            self._events.config_changed("mission", "opened_today", child=today.child, mission=item.mission)
+        return self.today(child_id)
+
     def note(self, child_id: str, kind: str, mission_id: str | None = None, step_id: str | None = None) -> None:
-        """Something only worth logging: a mission opened, a step listened to,
+        """Something only worth logging: a mission opened, a task listened to,
         a mission touched while it is not open, or the prize while locked."""
         today = self.today(child_id)
         if kind == "prize_locked":
@@ -221,7 +245,7 @@ class DayService:
         if mission_id is None:
             raise NotFoundError("Mission not found today")
         item = self._mission_today(today, mission_id)
-        step = next((s for s in item.mission.steps if s.id == step_id), None) if step_id else None
+        step = item.item(step_id) if step_id else None
         if step_id and step is None:
             raise NotFoundError("Step not found")
         schedule = item.schedule
@@ -236,9 +260,11 @@ class DayService:
     # ---------- helpers ----------
 
     @staticmethod
-    def _state(schedule: Schedule | None, done: bool, time: str) -> str:
+    def _state(schedule: Schedule | None, done: bool, opened: bool, time: str) -> str:
         if done:
             return DONE
+        if opened:
+            return OPEN
         if schedule and time < schedule.start:
             return UPCOMING
         if schedule and schedule.end and time >= schedule.end:

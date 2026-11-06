@@ -3,12 +3,13 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, Header, Request
 from pydantic import BaseModel, Field, field_validator
 
+from app.children import avatars
 from app.children.repository import ChildrenRepository
 from app.deps import get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import Mission, MissionsRepository, Schedule
-from app.missions.service import MissionEditor, MissionsService
+from app.missions.service import MissionsService
 from app.routines import links
 from app.routines.repository import RoutinesRepository, hhmm
 from app.storage.config_store import ConfigStore
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/api", tags=["missions"])
 parent_only = [Depends(require_parent)]
 
 MISSION_NAME_MAX = 40
+TASK_TEXT_MAX = 60
 STEP_TEXT_MAX = 60
 
 
@@ -26,6 +28,10 @@ def _not_blank(value: str) -> str:
     if not value:
         raise ValueError("Must not be empty")
     return value
+
+
+def _not_blank_or_none(value: str | None) -> str | None:
+    return value if value is None else _not_blank(value)
 
 
 class ScheduleIn(BaseModel):
@@ -47,8 +53,23 @@ class MissionPatch(BaseModel):
     image: str | None = None
     days: list[str] | None = None
     schedule: ScheduleIn | None = None
+    color: str | None = None
 
-    _name = field_validator("name")(lambda v: v if v is None else _not_blank(v))
+    _name = field_validator("name")(_not_blank_or_none)
+
+
+class TaskCreate(BaseModel):
+    text: str = Field(max_length=TASK_TEXT_MAX)
+
+    _text = field_validator("text")(_not_blank)
+
+
+class TaskPatch(BaseModel):
+    text: str | None = Field(default=None, max_length=TASK_TEXT_MAX)
+    image: str | None = None
+    days: list[str] | None = None  # null: the mission's days
+
+    _text = field_validator("text")(_not_blank_or_none)
 
 
 class StepCreate(BaseModel):
@@ -61,11 +82,20 @@ class StepPatch(BaseModel):
     text: str | None = Field(default=None, max_length=STEP_TEXT_MAX)
     image: str | None = None
 
-    _text = field_validator("text")(lambda v: v if v is None else _not_blank(v))
+    _text = field_validator("text")(_not_blank_or_none)
+
+
+class StepPlace(BaseModel):
+    task_id: str
+    position: int = Field(ge=0)
 
 
 class OrderIn(BaseModel):
     ids: list[str]
+
+
+class ActiveIn(BaseModel):
+    active: bool
 
 
 def get_missions_service(
@@ -91,157 +121,161 @@ def _media_type(content_type: str) -> str:
 
 
 class Presenter:
-    """Turns missions into JSON, adding the URL of every image, and the routines each
-    one goes with (rutinas-8: then the routine's days and hours count, not its own)."""
+    """Turns missions into JSON: the URL of every image, the tones of its colour, how
+    much each child has switched on, and the routine that goes with it."""
 
     def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries),
                  store: ConfigStore = Depends(get_config_store)):
         self._libraries = libraries
         self._store = store
-        self._links = None
+        self._cache = None
+
+    def _context(self):
+        if self._cache is None:
+            children = ChildrenRepository(self._store).list()
+            self._cache = (children, links.routines_by_mission(RoutinesRepository(self._store).list(), children))
+        return self._cache
 
     def __call__(self, mission: Mission) -> dict:
+        children, with_routines = self._context()
         data = asdict(mission)
         data["image_url"] = self._libraries.url(mission.image)
-        for step in data["steps"]:
-            step["image_url"] = self._libraries.url(step["image"])
-        if self._links is None:
-            self._links = links.routines_by_mission(RoutinesRepository(self._store).list(),
-                                                    ChildrenRepository(self._store).list())
+        data["colors"] = avatars.tones(mission.color)
+        for task in data["tasks"]:
+            task["image_url"] = self._libraries.url(task["image"])
+            for step in task["steps"]:
+                step["image_url"] = self._libraries.url(step["image"])
+        total = len(mission.items())
+        data["children"] = [
+            {"id": c.id, "active": sum(mission.is_on(c.id, i.id) for i in mission.items()), "total": total}
+            for c in children
+        ]
         data["routines"] = [{
             "id": r.id, "name": r.name, "days": list(r.days), "manual": r.manual,
-            "image_url": self._libraries.url(r.image or r.parts[0].image),
             "start": None if r.manual else hhmm(r.starts), "end": None if r.manual else hhmm(r.ends),
-        } for r in self._links.get(mission.id, [])]
+        } for r in with_routines.get(mission.id, [])]
         return data
 
 
-@router.get("/children/{child_id}/missions")
-def list_missions(
-    child_id: str,
-    missions: MissionsService = Depends(get_missions_service),
-    present: Presenter = Depends(),
-):
-    return [present(m) for m in missions.list_for_child(child_id)]
+@router.get("/missions")
+def list_missions(missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+    return [present(m) for m in missions.list()]
 
 
-@router.post("/children/{child_id}/missions", status_code=201, dependencies=parent_only)
-def create_mission(
-    child_id: str,
-    body: MissionCreate,
-    missions: MissionsService = Depends(get_missions_service),
-    present: Presenter = Depends(),
-):
-    return present(missions.create(child_id, body.name, body.image))
+@router.post("/missions", status_code=201, dependencies=parent_only)
+def create_mission(body: MissionCreate, missions: MissionsService = Depends(get_missions_service),
+                   present: Presenter = Depends()):
+    return present(missions.create(body.name, body.image))
 
 
-@router.put("/children/{child_id}/missions/order", dependencies=parent_only)
-def reorder_missions(
-    child_id: str,
-    body: OrderIn,
-    missions: MissionsService = Depends(get_missions_service),
-    present: Presenter = Depends(),
-):
-    return [present(m) for m in missions.reorder(child_id, body.ids)]
+@router.put("/missions/order", dependencies=parent_only)
+def reorder_missions(body: OrderIn, missions: MissionsService = Depends(get_missions_service),
+                     present: Presenter = Depends()):
+    return [present(m) for m in missions.reorder(body.ids)]
 
 
-def add_editing_routes(router: APIRouter, prefix: str, get_editor) -> None:
-    """Routes to edit one mission-like item and its steps, at <prefix>/{item_id}.
-
-    Children's missions and templates are edited the same way; get_editor
-    is the dependency that gives the service for each of them.
-    """
-
-    @router.get(prefix + "/{item_id}")
-    def get_item(item_id: str, editor: MissionEditor = Depends(get_editor), present: Presenter = Depends()):
-        return present(editor.get(item_id))
-
-    @router.patch(prefix + "/{item_id}", dependencies=parent_only)
-    def update_item(
-        item_id: str,
-        body: MissionPatch,
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        changes = _changes(body, required={"name", "days"})
-        if "schedule" in changes and changes["schedule"] is not None:
-            changes["schedule"] = Schedule(**changes["schedule"].model_dump())
-        return present(editor.update(item_id, **changes))
-
-    @router.delete(prefix + "/{item_id}", status_code=204, dependencies=parent_only)
-    def delete_item(item_id: str, editor: MissionEditor = Depends(get_editor)) -> None:
-        editor.delete(item_id)
-
-    @router.put(prefix + "/{item_id}/photo", dependencies=parent_only)
-    async def upload_item_photo(
-        item_id: str,
-        request: Request,
-        content_type: str = Header(),
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        """Upload the raw image as the request body (no multipart needed)."""
-        data = await request.body()
-        return present(editor.set_photo(item_id, data, _media_type(content_type)))
-
-    @router.post(prefix + "/{item_id}/steps", status_code=201, dependencies=parent_only)
-    def add_step(
-        item_id: str,
-        body: StepCreate,
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        return present(editor.add_step(item_id, body.text))
-
-    @router.put(prefix + "/{item_id}/steps/order", dependencies=parent_only)
-    def reorder_steps(
-        item_id: str,
-        body: OrderIn,
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        return present(editor.reorder_steps(item_id, body.ids))
-
-    @router.patch(prefix + "/{item_id}/steps/{step_id}", dependencies=parent_only)
-    def update_step(
-        item_id: str,
-        step_id: str,
-        body: StepPatch,
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        return present(editor.update_step(item_id, step_id, **_changes(body, required={"text"})))
-
-    @router.post(prefix + "/{item_id}/steps/delete", dependencies=parent_only)
-    def delete_steps(
-        item_id: str,
-        body: OrderIn,
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        """Remove several steps at once (the ones chosen in "Seleccionar")."""
-        return present(editor.delete_steps(item_id, body.ids))
-
-    @router.delete(prefix + "/{item_id}/steps/{step_id}", dependencies=parent_only)
-    def delete_step(
-        item_id: str,
-        step_id: str,
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        return present(editor.delete_step(item_id, step_id))
-
-    @router.put(prefix + "/{item_id}/steps/{step_id}/photo", dependencies=parent_only)
-    async def upload_step_photo(
-        item_id: str,
-        step_id: str,
-        request: Request,
-        content_type: str = Header(),
-        editor: MissionEditor = Depends(get_editor),
-        present: Presenter = Depends(),
-    ):
-        data = await request.body()
-        return present(editor.set_step_photo(item_id, step_id, data, _media_type(content_type)))
+@router.get("/missions/{mission_id}")
+def get_mission(mission_id: str, missions: MissionsService = Depends(get_missions_service),
+                present: Presenter = Depends()):
+    return present(missions.get(mission_id))
 
 
-add_editing_routes(router, "/missions", get_missions_service)
+@router.patch("/missions/{mission_id}", dependencies=parent_only)
+def update_mission(mission_id: str, body: MissionPatch, missions: MissionsService = Depends(get_missions_service),
+                   present: Presenter = Depends()):
+    changes = _changes(body, required={"name", "days", "color"})
+    if changes.get("schedule") is not None:
+        changes["schedule"] = Schedule(**changes["schedule"].model_dump())
+    return present(missions.update(mission_id, **changes))
+
+
+@router.delete("/missions/{mission_id}", status_code=204, dependencies=parent_only)
+def delete_mission(mission_id: str, missions: MissionsService = Depends(get_missions_service)) -> None:
+    missions.delete(mission_id)
+
+
+@router.put("/missions/{mission_id}/photo", dependencies=parent_only)
+async def upload_mission_photo(mission_id: str, request: Request, content_type: str = Header(),
+                               missions: MissionsService = Depends(get_missions_service),
+                               present: Presenter = Depends()):
+    """Upload the raw image as the request body (no multipart needed)."""
+    return present(missions.set_photo(mission_id, await request.body(), _media_type(content_type)))
+
+
+# ---------- tasks ----------
+
+
+@router.post("/missions/{mission_id}/tasks", status_code=201, dependencies=parent_only)
+def add_task(mission_id: str, body: TaskCreate, missions: MissionsService = Depends(get_missions_service),
+             present: Presenter = Depends()):
+    return present(missions.add_task(mission_id, body.text))
+
+
+@router.put("/missions/{mission_id}/tasks/order", dependencies=parent_only)
+def reorder_tasks(mission_id: str, body: OrderIn, missions: MissionsService = Depends(get_missions_service),
+                  present: Presenter = Depends()):
+    return present(missions.reorder_tasks(mission_id, body.ids))
+
+
+@router.patch("/missions/{mission_id}/tasks/{task_id}", dependencies=parent_only)
+def update_task(mission_id: str, task_id: str, body: TaskPatch,
+                missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+    return present(missions.update_task(mission_id, task_id, **_changes(body, required={"text"})))
+
+
+@router.delete("/missions/{mission_id}/tasks/{task_id}", dependencies=parent_only)
+def delete_task(mission_id: str, task_id: str, missions: MissionsService = Depends(get_missions_service),
+                present: Presenter = Depends()):
+    return present(missions.delete_task(mission_id, task_id))
+
+
+@router.put("/missions/{mission_id}/tasks/{task_id}/photo", dependencies=parent_only)
+async def upload_task_photo(mission_id: str, task_id: str, request: Request, content_type: str = Header(),
+                            missions: MissionsService = Depends(get_missions_service),
+                            present: Presenter = Depends()):
+    return present(missions.set_task_photo(mission_id, task_id, await request.body(), _media_type(content_type)))
+
+
+# ---------- steps ----------
+
+
+@router.post("/missions/{mission_id}/tasks/{task_id}/steps", status_code=201, dependencies=parent_only)
+def add_step(mission_id: str, task_id: str, body: StepCreate,
+             missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+    return present(missions.add_step(mission_id, task_id, body.text))
+
+
+@router.patch("/missions/{mission_id}/steps/{step_id}", dependencies=parent_only)
+def update_step(mission_id: str, step_id: str, body: StepPatch,
+                missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+    return present(missions.update_step(mission_id, step_id, **_changes(body, required={"text"})))
+
+
+@router.delete("/missions/{mission_id}/steps/{step_id}", dependencies=parent_only)
+def delete_step(mission_id: str, step_id: str, missions: MissionsService = Depends(get_missions_service),
+                present: Presenter = Depends()):
+    return present(missions.delete_step(mission_id, step_id))
+
+
+@router.put("/missions/{mission_id}/steps/{step_id}/place", dependencies=parent_only)
+def place_step(mission_id: str, step_id: str, body: StepPlace,
+               missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+    """Order a step within its task, or drag it to another one."""
+    return present(missions.place_step(mission_id, step_id, body.task_id, body.position))
+
+
+@router.put("/missions/{mission_id}/steps/{step_id}/photo", dependencies=parent_only)
+async def upload_step_photo(mission_id: str, step_id: str, request: Request, content_type: str = Header(),
+                            missions: MissionsService = Depends(get_missions_service),
+                            present: Presenter = Depends()):
+    return present(missions.set_step_photo(mission_id, step_id, await request.body(), _media_type(content_type)))
+
+
+# ---------- each child ----------
+
+
+@router.put("/missions/{mission_id}/children/{child_id}/items/{item_id}", dependencies=parent_only)
+def set_active(mission_id: str, child_id: str, item_id: str, body: ActiveIn,
+               missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+    """Switch a task or a step on or off for one child."""
+    return present(missions.set_active(mission_id, child_id, item_id, body.active))

@@ -7,7 +7,7 @@ from app.children.repository import ChildrenRepository
 from app.clock import Clock, app_day, today
 from app.events import texts
 from app.events.repository import Event, EventsRepository
-from app.missions.repository import MissionList
+from app.missions.repository import MissionsRepository
 from app.settings import SettingsRepository
 
 
@@ -58,7 +58,7 @@ class EventLog:
         self, type_: str, child: Named, *, mission=None, step=None, stars=None, locked=None, prize=None
     ) -> None:
         """Something a child did on their route: mission_opened, step_checked,
-        step_unchecked, mission_completed (with its stars), step_spoken,
+        step_unchecked (a step, or a task without steps), mission_completed (with its stars), step_spoken,
         mission_locked (with why: ("opens", "19:30") or ("closed", "17:00")),
         prize_unlocked, prize_locked, prize_spun (with the prize's text)."""
         if stars is not None:
@@ -147,13 +147,11 @@ class ScreenLog:
         self,
         log: EventLog,
         children: ChildrenRepository,
-        missions: MissionList,
-        templates: MissionList,
+        missions: MissionsRepository,
     ):
         self._log = log
         self._children = children
         self._missions = missions
-        self._templates = templates
 
     def opened(
         self,
@@ -163,10 +161,7 @@ class ScreenLog:
         mission_id: str | None = None,
         step_id: str | None = None,
     ) -> None:
-        # A template is shown where a mission would be.
-        mission = mission_id and (self._missions.get(mission_id) or self._templates.get(mission_id))
-        if mission and mission.child_id and not child_id:
-            child_id = mission.child_id
+        mission = mission_id and self._missions.get(mission_id)
         child = child_id and self._children.get(child_id)
-        step = step_id and mission and next((s for s in mission.steps if s.id == step_id), None)
+        step = step_id and mission and mission.item(step_id)
         self._log.screen_opened(zone, screen, child=child or None, mission=mission or None, step=step or None)

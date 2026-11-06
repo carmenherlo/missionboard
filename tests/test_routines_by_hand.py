@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from tests.conftest import PARENT
-from tests.test_missions import add_step, create_child, create_mission
+from tests.test_missions import create_child
 from tests.test_settings import FixedClock
-from tests.test_today import check, descriptions
+from tests.test_today import check, descriptions, mission
 
 MADRID = timezone(timedelta(hours=1))
 MONDAY = datetime(2026, 11, 2, 17, 0, 10, tzinfo=MADRID)
@@ -82,13 +82,11 @@ def test_it_ends_and_can_start_again(client, landing):
 
 def test_each_child_with_their_mission(client, landing):
     bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Aterrizaje").json()
-    add_step(client, mission["id"], "Zapatos")
-    client.put(f"/api/routines/{landing['id']}/missions/{bea['id']}", json={"mission_id": mission["id"]},
+    aterrizaje = mission(client, bea, "Aterrizaje", steps=("Zapatos",))
+    client.put(f"/api/routines/{landing['id']}/missions/{bea['id']}", json={"mission_id": aterrizaje["id"]},
                headers=PARENT)
     start(client, landing, [bea["id"]])
-    mission = client.get(f"/api/missions/{mission['id']}").json()
-    check(client, bea, mission, 0)
+    check(client, bea, aterrizaje, 0)
     assert client.get("/api/routines/current").json()["people"][0]["mission"]["completed"] is True
 
 

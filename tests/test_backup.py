@@ -29,7 +29,7 @@ def zipped(files: dict) -> bytes:
 
 def test_a_copy_has_everything(client):
     bea = create_child(client)
-    mission = create_mission(client, bea["id"]).json()
+    mission = create_mission(client).json()
     upload(client, f"/api/missions/{mission['id']}/photo")
     names = zipfile.ZipFile(io.BytesIO(download(client))).namelist()
     assert {"config.yaml", "missionboard.db", "missionboard-backup.json"} <= set(names)
@@ -40,14 +40,14 @@ def test_a_copy_has_everything(client):
 
 def test_put_a_copy_back(client, data_dir):
     bea = create_child(client)
-    create_mission(client, bea["id"], name="Despegue")
+    create_mission(client, name="Despegue")
     copy = download(client)
     client.delete(f"/api/children/{bea['id']}", headers=PARENT)
     create_child(client, name="Alex", preset="dinosaur")
     response = restore(client, copy)
     assert response.status_code == 200
     assert [c["name"] for c in client.get("/api/children").json()] == ["Bea"]
-    assert [m["name"] for m in client.get(f"/api/children/{bea['id']}/missions").json()] == ["Despegue"]
+    assert [m["name"] for m in client.get("/api/missions").json()] == ["Despegue"]
     # What there was is kept, in case
     kept = data_dir / "backups" / response.json()["kept"]
     assert kept.exists() and "config.yaml" in zipfile.ZipFile(kept).namelist()

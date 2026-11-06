@@ -8,7 +8,8 @@ BACKGROUND_EXTENSIONS = (".webp", ".png", ".jpg", ".jpeg")
 
 
 class DayRepository:
-    """What each child has done each app day, and their stars (SQLite)."""
+    """What each child has done each app day, and their stars (SQLite). `step_checks`
+    keeps whatever they check: a step, or a task without steps."""
 
     def __init__(self, data_dir: Path):
         self._data_dir = data_dir
@@ -32,6 +33,22 @@ class DayRepository:
                 (day.isoformat(), child_id),
             ).fetchall()
         return {row["mission_id"] for row in rows}
+
+    def opened_missions(self, day: date, child_id: str) -> set[str]:
+        """Missions a parent has opened for this child, only today."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT mission_id FROM mission_openings WHERE day = ? AND child_id = ?",
+                (day.isoformat(), child_id),
+            ).fetchall()
+        return {row["mission_id"] for row in rows}
+
+    def open_mission(self, day: date, child_id: str, mission_id: str, at: datetime) -> None:
+        with db.connect(self._data_dir) as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO mission_openings (day, child_id, mission_id, at) VALUES (?, ?, ?, ?)",
+                (day.isoformat(), child_id, mission_id, at.isoformat(timespec="seconds")),
+            )
 
     def set_step(self, day: date, child_id: str, mission_id: str, step_id: str, checked: bool, at: datetime):
         with db.connect(self._data_dir) as conn:

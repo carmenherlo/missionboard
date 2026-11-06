@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
-from tests.test_missions import add_step, create_child, create_mission, patch
+from tests.test_missions import add_step, add_task, create_child, create_mission, patch
 from tests.test_settings import FixedClock
 
 MADRID = timezone(timedelta(hours=1))
@@ -37,12 +37,16 @@ def bea(client):
 
 
 def mission(client, child, name, steps=("Uno", "Dos"), **fields):
-    created = create_mission(client, child["id"], name=name).json()
-    for text in steps:
-        add_step(client, created["id"], text)
+    """A mission with one task, with those steps ("steps" in what it returns: that task's)."""
+    created = create_mission(client, name=name).json()
+    if steps:
+        task = add_task(client, created["id"], "Tarea").json()["tasks"][0]
+        for text in steps:
+            add_step(client, created["id"], task["id"], text)
     if fields:
         patch(client, created["id"], **fields)
-    return client.get(f"/api/missions/{created['id']}").json()
+    found = client.get(f"/api/missions/{created['id']}").json()
+    return {**found, "steps": found["tasks"][0]["steps"] if steps else []}
 
 
 def today(client, child):
@@ -55,10 +59,17 @@ def states(client, child):
     return {m["name"]: m["state"] for m in today(client, child)["missions"]}
 
 
-def check(client, child, mission, step_index, checked=True):
-    step_id = mission["steps"][step_index]["id"]
-    url = f"/api/children/{child['id']}/today/missions/{mission['id']}/steps/{step_id}"
+def mark(client, child, mission, item_id, checked=True):
+    url = f"/api/children/{child['id']}/today/missions/{mission['id']}/marks/{item_id}"
     return client.put(url, json={"checked": checked})
+
+
+def check(client, child, mission, step_index, checked=True):
+    return mark(client, child, mission, mission["steps"][step_index]["id"], checked)
+
+
+def steps_of(day_mission):
+    return [s for task in day_mission["tasks"] for s in task["steps"]]
 
 
 def note(client, child, kind, mission, step_index=None):
@@ -70,6 +81,11 @@ def note(client, child, kind, mission, step_index=None):
 
 def descriptions(client, limit=20):
     return [e["description"] for e in client.get(f"/api/events?limit={limit}", headers=PARENT).json()["latest"]]
+
+
+def set_active(client, mission, child, item_id, active):
+    url = f"/api/missions/{mission['id']}/children/{child['id']}/items/{item_id}"
+    return client.put(url, json={"active": active}, headers=PARENT)
 
 
 # ---------- which missions, in which state ----------
@@ -86,7 +102,8 @@ def test_the_route_has_todays_missions_in_order(client, bea):
     assert day["child"]["name"] == "Bea"
     assert day["colors"] == {"color": "#9471e7", "strong": "#66558e", "soft": "#e9ddff", "on": "#ffffff"}
     assert day["stars"] == 0
-    assert [s["text"] for s in day["missions"][0]["steps"]] == ["Uno", "Dos"]
+    assert [s["text"] for s in steps_of(day["missions"][0])] == ["Uno", "Dos"]
+    assert day["missions"][0]["colors"]["color"] == "#f6d700"  # its own colour: the first free one
     assert day["star_url"].endswith("/star.svg")
 
 
@@ -109,8 +126,8 @@ def test_the_focus_is_the_first_open_mission_or_else_the_next_one(client, bea, c
 
     clock.moment = MONDAY.replace(hour=18)
     merienda = day["missions"][1]
-    for index in range(2):
-        check(client, bea, {**merienda, "id": merienda["id"]}, index)
+    for step in steps_of(merienda):
+        mark(client, bea, merienda, step["id"])
     day = today(client, bea)
     assert [m["name"] for m in day["missions"] if m["focus"]] == ["Alunizaje"]
     assert day["focus_is_now"] is False
@@ -137,7 +154,7 @@ def test_checking_every_step_completes_the_mission_and_gives_its_star(client, be
     despegue = mission(client, bea, "Despegue")
     first = check(client, bea, despegue, 0).json()
     assert first["completed"] is False and first["stars_earned"] == 0
-    assert [s["checked"] for s in first["today"]["missions"][0]["steps"]] == [True, False]
+    assert [s["checked"] for s in steps_of(first["today"]["missions"][0])] == [True, False]
 
     last = check(client, bea, despegue, 1).json()
     assert last["completed"] is True and last["stars_earned"] == 1
@@ -165,7 +182,7 @@ def test_unchecking_before_finishing(client, bea):
     check(client, bea, despegue, 0)
     response = check(client, bea, despegue, 0, checked=False)
     assert response.status_code == 200
-    assert [s["checked"] for s in response.json()["today"]["missions"][0]["steps"]] == [False, False]
+    assert [s["checked"] for s in steps_of(response.json()["today"]["missions"][0])] == [False, False]
     assert descriptions(client, limit=1) == ["Bea desmarcó «Uno» en «Despegue»"]
 
 
@@ -185,12 +202,10 @@ def test_a_mission_that_is_not_open_cannot_be_checked(client, bea):
     assert check(client, bea, deberes, 0).status_code == 409
 
 
-def test_another_childs_mission_or_an_unknown_step(client, bea):
-    alex = create_child(client, name="Alex", preset="dinosaur")
-    suya = mission(client, alex, "Suya")
-    assert check(client, bea, suya, 0).status_code == 404
-    url = f"/api/children/{alex['id']}/today/missions/{suya['id']}/steps/nope"
-    assert client.put(url, json={"checked": True}).status_code == 404
+def test_an_unknown_mark_or_a_task_with_steps(client, bea):
+    uno = mission(client, bea, "Uno")
+    assert mark(client, bea, uno, "nope").status_code == 404
+    assert mark(client, bea, uno, uno["tasks"][0]["id"]).status_code == 404  # it has steps: they are checked
 
 
 def test_a_new_day_starts_empty_and_keeps_the_stars(client, bea, clock):
@@ -201,7 +216,7 @@ def test_a_new_day_starts_empty_and_keeps_the_stars(client, bea, clock):
     clock.moment = MONDAY + timedelta(days=1)
     day = today(client, bea)
     assert {m["name"]: m["state"] for m in day["missions"]} == {"Despegue": "open", "Otra": "open"}
-    assert not any(s["checked"] for m in day["missions"] for s in m["steps"])
+    assert not any(s["checked"] for m in day["missions"] for s in steps_of(m))
     assert day["stars"] == 1
 
 
@@ -243,6 +258,105 @@ def test_a_bad_note_is_refused(client, bea):
     assert note(client, bea, "dancing", merienda).status_code == 422
     body = {"kind": "step_spoken", "mission_id": merienda["id"], "step_id": "nope"}
     assert client.post(f"/api/children/{bea['id']}/today/notes", json=body).status_code == 404
+
+
+# ---------- what each child has ----------
+
+
+def test_every_mission_is_of_every_child_with_what_they_have_on(client, bea):
+    alex = create_child(client, name="Alex", preset="dinosaur")
+    despegue = mission(client, bea, "Despegue", steps=("Dientes", "Cara"))
+    set_active(client, despegue, alex, despegue["steps"][1]["id"], False)
+    assert [s["text"] for s in steps_of(today(client, bea)["missions"][0])] == ["Dientes", "Cara"]
+    theirs = today(client, alex)["missions"][0]
+    assert [s["text"] for s in steps_of(theirs)] == ["Dientes"] and theirs["total"] == 1
+    # One step left for Alex: checking it completes theirs, not Bea's
+    assert check(client, alex, despegue, 0).json()["completed"] is True
+    assert check(client, alex, despegue, 1).status_code == 404
+    assert today(client, bea)["missions"][0]["state"] == "open"
+
+
+def test_a_task_without_steps_on_is_checked_itself(client, bea):
+    despegue = mission(client, bea, "Despegue", steps=("Dientes",))
+    task = despegue["tasks"][0]
+    set_active(client, despegue, bea, despegue["steps"][0]["id"], False)
+    card = today(client, bea)["missions"][0]["tasks"][0]
+    assert card["marks_itself"] is True and card["steps"] == [] and card["checked"] is False
+    assert mark(client, bea, despegue, task["id"]).json()["completed"] is True
+    assert today(client, bea)["missions"][0]["tasks"][0]["checked"] is True
+
+
+def test_a_task_with_everything_off_is_gone_and_with_nothing_the_mission_too(client, bea):
+    despegue = mission(client, bea, "Despegue", steps=("Dientes",))
+    set_active(client, despegue, bea, despegue["steps"][0]["id"], False)
+    set_active(client, despegue, bea, despegue["tasks"][0]["id"], False)
+    assert today(client, bea)["missions"] == []
+
+
+def test_the_counter_counts_what_the_child_checks(client, bea):
+    despegue = mission(client, bea, "Despegue", steps=("Dientes", "Cara"))
+    alone = add_task(client, despegue["id"], "Despertarse").json()["tasks"][1]
+    check(client, bea, despegue, 0)
+    mark(client, bea, despegue, alone["id"])
+    found = today(client, bea)["missions"][0]
+    assert (found["done"], found["total"]) == (2, 3)
+    assert [t["checked"] for t in found["tasks"]] == [False, True]
+    assert check(client, bea, despegue, 1).json()["completed"] is True
+
+
+# ---------- days of the tasks ----------
+
+
+def patch_task(client, mission, task_id, **fields):
+    return client.patch(f"/api/missions/{mission['id']}/tasks/{task_id}", json=fields, headers=PARENT)
+
+
+def test_a_task_with_its_own_days(client, bea):
+    alunizaje = mission(client, bea, "Alunizaje", steps=("Uno",))  # Monday
+    other = add_task(client, alunizaje["id"], "Ropa").json()["tasks"][1]
+    assert patch_task(client, alunizaje, other["id"], days=["tue"]).status_code == 200
+    assert [t["text"] for t in today(client, bea)["missions"][0]["tasks"]] == ["Tarea"]
+    assert patch_task(client, alunizaje, other["id"], days=None).json()["tasks"][1]["days"] is None
+    assert len(today(client, bea)["missions"][0]["tasks"]) == 2
+
+
+def test_only_days_of_the_mission_and_no_task_that_day_no_mission(client, bea):
+    alunizaje = mission(client, bea, "Alunizaje", steps=("Uno",), days=["mon", "tue"])
+    task = alunizaje["tasks"][0]
+    assert patch_task(client, alunizaje, task["id"], days=["sun"]).status_code == 422
+    patch_task(client, alunizaje, task["id"], days=["tue"])
+    assert today(client, bea)["missions"] == []
+    # All of the mission's days are the same as having none of its own
+    assert patch_task(client, alunizaje, task["id"], days=["mon", "tue"]).json()["tasks"][0]["days"] is None
+
+
+def test_a_task_loses_the_days_the_mission_loses(client, bea):
+    alunizaje = mission(client, bea, "Alunizaje", steps=("Uno",), days=["mon", "tue"])
+    patch_task(client, alunizaje, alunizaje["tasks"][0]["id"], days=["mon"])
+    patch(client, alunizaje["id"], days=["tue"])
+    assert today(client, bea)["missions"] == []
+
+
+# ---------- opening a mission only today ----------
+
+
+def test_a_parent_opens_a_mission_only_today_with_its_star(client, bea, clock):
+    deberes = mission(client, bea, "Deberes", steps=("Uno",), schedule={"start": "15:00", "end": "17:00"})
+    url = f"/api/children/{bea['id']}/today/missions/{deberes['id']}/open"
+    assert client.post(url).status_code == 401
+    assert client.post(url, headers=PARENT).json()["missions"][0]["state"] == "open"
+    assert descriptions(client, limit=1) == ["Abriste «Deberes» solo por hoy para Bea"]
+    alex = create_child(client, name="Alex", preset="dinosaur")
+    assert states(client, alex) == {"Deberes": "closed"}  # only for that child
+    assert check(client, bea, deberes, 0).json()["stars_earned"] == 1
+    clock.moment = MONDAY + timedelta(days=1)
+    assert states(client, bea) == {"Deberes": "closed"}
+
+
+def test_an_upcoming_mission_can_be_opened_too(client, bea):
+    alunizaje = mission(client, bea, "Alunizaje", schedule={"start": "19:30"})
+    url = f"/api/children/{bea['id']}/today/missions/{alunizaje['id']}/open"
+    assert client.post(url, headers=PARENT).json()["missions"][0]["state"] == "open"
 
 
 # ---------- moment of the day and its picture ----------

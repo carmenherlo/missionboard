@@ -116,6 +116,16 @@ MIGRATIONS: list[str] = [
     );
     CREATE INDEX purchases_child ON purchases (child_id)
     """,
+    # 7 · A mission a parent has opened for a child, only that day.
+    """
+    CREATE TABLE mission_openings (
+        day TEXT NOT NULL,
+        child_id TEXT NOT NULL,
+        mission_id TEXT NOT NULL,
+        at TEXT NOT NULL,
+        PRIMARY KEY (day, child_id, mission_id)
+    )
+    """,
 ]
 
 

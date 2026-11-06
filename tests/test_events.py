@@ -10,7 +10,7 @@ from app.main import create_app
 from app.storage import db
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
-from tests.test_missions import add_step, create_child, create_mission, patch, upload
+from tests.test_missions import add_step, add_task, create_child, create_mission, patch, upload
 from tests.test_settings import FixedClock
 
 MADRID = timezone(timedelta(hours=1))
@@ -95,64 +95,72 @@ def test_changing_the_code_is_logged_without_the_code(client, data_dir):
 
 
 def test_each_saved_change_is_logged_with_its_new_value(client):
-    bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Aterrizaje").json()
+    create_child(client)
+    mission = create_mission(client, name="Aterrizaje").json()
     patch(client, mission["id"], days=["mon", "tue", "wed", "thu"])
     patch(client, mission["id"], schedule={"start": "17:00", "end": "18:30"})
     patch(client, mission["id"], name="Merienda", schedule=None)
     assert descriptions(client) == [
-        "Cambiaste «Merienda» de Bea · nombre: Merienda · horario: siempre abierta",
-        "Cambiaste «Aterrizaje» de Bea · horario: 17:00–18:30",
-        "Cambiaste «Aterrizaje» de Bea · días: L M X J",
-        "Creaste «Aterrizaje» para Bea",
+        "Cambiaste «Merienda» · nombre: Merienda · horario: siempre abierta",
+        "Cambiaste «Aterrizaje» · horario: 17:00–18:30",
+        "Cambiaste «Aterrizaje» · días: L M X J",
+        "Creaste «Aterrizaje»",
         "Añadiste a Bea",
     ]
     event = latest(client)[2]
     assert event["type"] == "config_changed" and event["subject"] == "mission" and event["action"] == "changed"
-    assert event["child_id"] == bea["id"] and event["mission_id"] == mission["id"]
+    assert event["child_id"] is None and event["mission_id"] == mission["id"]
     assert event["detail"] == "días: L M X J"
 
 
 def test_saving_the_same_value_logs_nothing(client):
-    bea = create_child(client)
-    mission = create_mission(client, bea["id"]).json()
+    create_child(client)
+    mission = create_mission(client).json()
     patch(client, mission["id"], days=mission["days"])
-    client.put(f"/api/children/{bea['id']}/missions/order", json={"ids": [mission["id"]]}, headers=PARENT)
+    client.put("/api/missions/order", json={"ids": [mission["id"]]}, headers=PARENT)
     assert len(latest(client)) == 2
 
 
 def test_old_events_keep_the_names_they_had(client):
     bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Despegue").json()
+    mission = create_mission(client, name="Despegue").json()
     patch(client, mission["id"], name="Mañana")
     client.delete(f"/api/missions/{mission['id']}", headers=PARENT)
     client.delete(f"/api/children/{bea['id']}", headers=PARENT)
     assert descriptions(client) == [
         "Borraste a Bea",
-        "Borraste «Mañana» de Bea",
-        "Cambiaste «Mañana» de Bea · nombre: Mañana",
-        "Creaste «Despegue» para Bea",
+        "Borraste «Mañana»",
+        "Cambiaste «Mañana» · nombre: Mañana",
+        "Creaste «Despegue»",
         "Añadiste a Bea",
     ]
 
 
-def test_steps_and_their_order(client):
+def test_tasks_steps_and_their_order(client):
     bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Alunizaje").json()
-    first = add_step(client, mission["id"], "Ducharse").json()["steps"][0]
-    second = add_step(client, mission["id"], "Leer un cuento").json()["steps"][1]
-    client.patch(f"/api/missions/{mission['id']}/steps/{first['id']}", json={"text": "Ducha"}, headers=PARENT)
-    order = {"ids": [second["id"], first["id"]]}
-    client.put(f"/api/missions/{mission['id']}/steps/order", json=order, headers=PARENT)
-    client.delete(f"/api/missions/{mission['id']}/steps/{first['id']}", headers=PARENT)
-    assert descriptions(client, limit=5) == [
-        "Quitaste «Ducha» de «Alunizaje» de Bea",
-        "Ordenaste los pasos de «Alunizaje» de Bea · orden: Leer un cuento, Ducha",
-        "Cambiaste «Ducha» de «Alunizaje» de Bea · texto: Ducha",
-        "Añadiste «Leer un cuento» a «Alunizaje» de Bea",
-        "Añadiste «Ducharse» a «Alunizaje» de Bea",
+    mission = create_mission(client, name="Alunizaje").json()
+    base = f"/api/missions/{mission['id']}"
+    task = add_task(client, mission["id"], "Aseo").json()["tasks"][0]
+    other = add_task(client, mission["id"], "Cena").json()["tasks"][1]
+    first = add_step(client, mission["id"], task["id"], "Ducharse").json()["tasks"][0]["steps"][0]
+    client.patch(f"{base}/steps/{first['id']}", json={"text": "Ducha"}, headers=PARENT)
+    client.put(f"{base}/steps/{first['id']}/place", json={"task_id": other["id"], "position": 0}, headers=PARENT)
+    client.put(f"{base}/children/{bea['id']}/items/{first['id']}", json={"active": False}, headers=PARENT)
+    client.put(f"{base}/tasks/order", json={"ids": [other["id"], task["id"]]}, headers=PARENT)
+    client.delete(f"{base}/steps/{first['id']}", headers=PARENT)
+    client.delete(f"{base}/tasks/{task['id']}", headers=PARENT)
+    assert descriptions(client, limit=9) == [
+        "Quitaste la tarea «Aseo» de «Alunizaje»",
+        "Quitaste el paso «Ducha» de «Alunizaje»",
+        "Ordenaste las tareas de «Alunizaje» · orden: Cena, Aseo",
+        "Apagaste «Ducha» de «Alunizaje» a Bea",
+        "Ordenaste los pasos de «Alunizaje» · orden: Ducha",
+        "Cambiaste el paso «Ducha» de «Alunizaje» · texto: Ducha",
+        "Añadiste el paso «Ducharse» a «Alunizaje»",
+        "Añadiste la tarea «Cena» a «Alunizaje»",
+        "Añadiste la tarea «Aseo» a «Alunizaje»",
     ]
-    assert latest(client)[0]["step_text"] == "Ducha"
+    assert latest(client)[1]["step_text"] == "Ducha"
 
 
 def test_children_and_their_avatar(client):
@@ -166,37 +174,18 @@ def test_children_and_their_avatar(client):
 
 
 def test_images_are_logged_without_their_reference(client):
-    bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Despegue").json()
+    mission = create_mission(client, name="Despegue").json()
     patch(client, mission["id"], image="fluent/books")
     upload(client, f"/api/missions/{mission['id']}/photo")
     assert descriptions(client, limit=2) == [
-        "Cambiaste «Despegue» de Bea · imagen cambiada",
-        "Cambiaste «Despegue» de Bea · imagen cambiada",
-    ]
-
-
-def test_templates(client):
-    bea = create_child(client)
-    alex = create_child(client, name="Alex", preset="dinosaur")
-    client.post("/api/templates/despegue/apply", json={"child_ids": [bea["id"], alex["id"]]}, headers=PARENT)
-    client.patch("/api/templates/despegue", json={"days": ["sat", "sun"]}, headers=PARENT)
-    client.post("/api/templates/despegue/steps", json={"text": "Abrigarse"}, headers=PARENT)
-    mission = create_mission(client, bea["id"], name="Despegue").json()
-    client.post(f"/api/missions/{mission['id']}/template", headers=PARENT)
-    assert descriptions(client, limit=6) == [
-        "Guardaste la misión de Bea como plantilla «Despegue (2)»",
-        "Creaste «Despegue» para Bea",
-        "Añadiste «Abrigarse» a la plantilla «Despegue»",
-        "Cambiaste la plantilla «Despegue» · días: S D",
-        "Aplicaste la plantilla «Despegue» a Alex",
-        "Aplicaste la plantilla «Despegue» a Bea",
+        "Cambiaste «Despegue» · imagen cambiada",
+        "Cambiaste «Despegue» · imagen cambiada",
     ]
 
 
 def test_a_failed_change_logs_nothing(client):
-    bea = create_child(client)
-    mission = create_mission(client, bea["id"]).json()
+    create_child(client)
+    mission = create_mission(client).json()
     assert patch(client, mission["id"], days=[]).status_code == 422
     assert len(latest(client)) == 2
 
@@ -205,38 +194,36 @@ def test_a_failed_change_logs_nothing(client):
 
 
 def test_a_screen_is_logged_with_the_names_of_what_it_shows(client):
-    bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Alunizaje").json()
-    step = add_step(client, mission["id"], "Leer un cuento").json()["steps"][0]
+    mission = create_mission(client, name="Alunizaje").json()
+    task = add_task(client, mission["id"], "Dormir").json()["tasks"][0]
+    step = add_step(client, mission["id"], task["id"], "Leer un cuento").json()["tasks"][0]["steps"][0]
     response = open_screen(client, screen="step_edit", mission_id=mission["id"], step_id=step["id"])
     assert response.status_code == 204
     event = latest(client)[0]
     assert event["type"] == "screen_opened" and event["subject"] == "step_edit"
-    assert event["child_name"] == "Bea" and event["mission_name"] == "Alunizaje"
+    assert event["mission_name"] == "Alunizaje"
     assert event["step_text"] == "Leer un cuento"
-    assert event["description"] == "Abriste Editar paso «Leer un cuento» de «Alunizaje» (Bea)"
+    assert event["description"] == "Abriste Editar «Leer un cuento» de «Alunizaje»"
 
 
 def test_screens_read_as_their_titles(client):
     bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Ducha").json()
+    mission = create_mission(client, name="Ducha").json()
     open_screen(client, screen="child_missions", child_id=bea["id"])
     open_screen(client, screen="mission_edit", mission_id=mission["id"])
-    open_screen(client, screen="template_apply", mission_id="despegue")
+    open_screen(client, screen="mission_child", child_id=bea["id"], mission_id=mission["id"])
     assert descriptions(client, limit=3) == [
-        "Abriste Aplicar «Despegue»",
-        "Abriste Editar misión «Ducha» de Bea",
+        "Abriste «Ducha» de Bea",
+        "Abriste Editar «Ducha»",
         "Abriste Misiones de Bea",
     ]
 
 
 def test_screens_without_the_parent_code(client):
     assert client.post("/api/events/screen", json={"zone": None, "screen": "home"}).status_code == 204
-    open_screen(client, screen="template_edit", mission_id="despegue")
     open_screen(client, screen="mission_edit", mission_id="gone")
     assert descriptions(client) == [
         "Abriste Editar misión",
-        "Abriste Editar plantilla «Despegue»",
         "Se abrió el inicio",
     ]
 
@@ -271,7 +258,7 @@ def test_latest_comes_newest_first_and_limited(client):
 
 def test_csv_for_a_spreadsheet_in_spanish(client):
     bea = create_child(client)
-    mission = create_mission(client, bea["id"], name="Aterrizaje; tarde").json()
+    mission = create_mission(client, name="Aterrizaje; tarde").json()
     patch(client, mission["id"], days=["mon", "tue"])
     response = export(client)
     assert response.headers["content-type"] == "text/csv; charset=utf-8"
@@ -279,8 +266,8 @@ def test_csv_for_a_spreadsheet_in_spanish(client):
     header, *rows = csv_rows(client)
     assert header[0] == "día" and len(rows) == 3  # in the order they happened
     assert rows[2] == [
-        "2026-11-03", "19:41:08", "padres", "config_changed", "Bea", "Aterrizaje; tarde", "",
-        "días: L M", "Cambiaste «Aterrizaje; tarde» de Bea · días: L M",
+        "2026-11-03", "19:41:08", "padres", "config_changed", "", "Aterrizaje; tarde", "",
+        "días: L M", "Cambiaste «Aterrizaje; tarde» · días: L M",
     ]
 
 

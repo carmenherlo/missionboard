@@ -15,7 +15,6 @@ from app.routines.editor import TIMING, RoutinesEditor
 from app.routines.repository import TIME, Routine, RoutinesRepository, RunsRepository, hhmm
 from app.routines.service import NOTES, Current, RoutinesService, kids_of
 from app.storage.photo_store import PhotoStore
-from app.templates.repository import TemplatesRepository
 from app.settings import SettingsRepository
 from app.songs.repository import SongsRepository
 from app.storage.config_store import ConfigStore
@@ -130,10 +129,6 @@ class OrderIn(BaseModel):
 
 class StartIn(BaseModel):
     kids: list[str]
-
-
-class ImportIn(BaseModel):
-    mission_id: str
 
 
 class PartsIn(BaseModel):
@@ -382,12 +377,6 @@ def set_mission(routine_id: str, child_id: str, body: MissionIn,
 def add_part(routine_id: str, body: PartCreate, editor: RoutinesEditor = Depends(get_routines_editor),
              present: Editing = Depends()):
     return present(editor.add_part(routine_id, body.name))
-
-
-@router.post("/{routine_id}/parts/import", dependencies=parent_only)
-def import_parts(routine_id: str, body: ImportIn, editor: RoutinesEditor = Depends(get_routines_editor),
-                 store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
-    return present(editor.import_parts(routine_id, body.mission_id, TemplatesRepository(store)))
 
 
 @router.post("/{routine_id}/parts/delete", dependencies=parent_only)

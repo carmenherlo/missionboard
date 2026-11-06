@@ -7,17 +7,17 @@ from pydantic import BaseModel, Field
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries
+from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, require_parent
 from app.errors import NotFoundError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
-from app.missions.repository import MissionsRepository
+from app.missions.repository import ChildTask, MissionsRepository
 from app.prizes.repository import PrizesRepository
 from app.routines.repository import RoutinesRepository
 from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 from app.today.repository import BackgroundStore, DayRepository
-from app.today.service import NOTES, DayService, Today
+from app.today.service import NOTES, DayService, MissionToday, Today
 
 # The children's zone: no parent code.
 router = APIRouter(prefix="/api", tags=["today"])
@@ -86,25 +86,36 @@ class Presenter:
                     "id": item.mission.id,
                     "name": item.mission.name,
                     "image_url": self._libraries.url(item.mission.image),
+                    "colors": avatars.tones(item.mission.color),
                     "state": item.state,
                     "focus": item.focus,
                     "schedule": (  # today's: its own, or its routine's (rutinas-8)
                         {"start": item.schedule.start, "end": item.schedule.end}
                         if item.schedule else None
                     ),
-                    "steps": [
-                        {
-                            "id": step.id,
-                            "text": step.text,
-                            "image_url": self._libraries.url(step.image),
-                            "checked": item.state == "done" or step.id in item.checked,
-                        }
-                        for step in item.mission.steps
-                    ],
+                    "total": len(item.marks),
+                    "done": len(item.marks) if item.state == "done" else len(item.checked),
+                    "tasks": [self._task(item, task) for task in item.tasks],
                 }
                 for item in today.missions
             ],
             "prize": self._prize(today),
+        }
+
+    def _task(self, item: MissionToday, task: ChildTask) -> dict:
+        """A task for its card: `marks_itself` when the child checks the card, without steps."""
+        done = item.state == "done"
+        return {
+            "id": task.task.id,
+            "text": task.task.text,
+            "image_url": self._libraries.url(task.task.image),
+            "marks_itself": not task.steps,
+            "checked": done or set(task.marks) <= item.checked,
+            "steps": [
+                {"id": s.id, "text": s.text, "image_url": self._libraries.url(s.image),
+                 "checked": done or s.id in item.checked}
+                for s in task.steps
+            ],
         }
 
     def _prize(self, today: Today) -> dict | None:
@@ -127,18 +138,25 @@ def get_today(child_id: str, days: DayService = Depends(get_day_service), presen
     return present(days.today(child_id))
 
 
-@router.put("/children/{child_id}/today/missions/{mission_id}/steps/{step_id}")
-def set_step(
+@router.put("/children/{child_id}/today/missions/{mission_id}/marks/{item_id}")
+def set_mark(
     child_id: str,
     mission_id: str,
-    step_id: str,
+    item_id: str,
     body: StepIn,
     days: DayService = Depends(get_day_service),
     present: Presenter = Depends(),
 ):
-    """Check or uncheck a step; says whether that completed the mission."""
-    result = days.set_step(child_id, mission_id, step_id, body.checked)
+    """Check or uncheck a step (or a task without steps); says whether that completed the mission."""
+    result = days.set_mark(child_id, mission_id, item_id, body.checked)
     return {"completed": result.completed, "stars_earned": result.stars_earned, "today": present(result.today)}
+
+
+@router.post("/children/{child_id}/today/missions/{mission_id}/open", dependencies=[Depends(require_parent)])
+def open_today(child_id: str, mission_id: str, days: DayService = Depends(get_day_service),
+               present: Presenter = Depends()):
+    """A parent opens a closed or upcoming mission, only today (holding it on the route)."""
+    return present(days.open_today(child_id, mission_id))
 
 
 @router.post("/children/{child_id}/today/prize/spin")

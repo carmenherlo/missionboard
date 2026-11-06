@@ -11,7 +11,6 @@ from app.events.repository import Event
 from app.events.service import EventLog, ScreenLog
 from app.missions.repository import MissionsRepository
 from app.storage.config_store import ConfigStore
-from app.templates.repository import TemplatesRepository
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 
@@ -32,7 +31,7 @@ def get_screen_log(
     store: ConfigStore = Depends(get_config_store),
     log: EventLog = Depends(get_event_log),
 ) -> ScreenLog:
-    return ScreenLog(log, ChildrenRepository(store), MissionsRepository(store), TemplatesRepository(store))
+    return ScreenLog(log, ChildrenRepository(store), MissionsRepository(store))
 
 
 def _public(event: Event) -> dict:
