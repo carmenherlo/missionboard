@@ -23,7 +23,7 @@ from app.storage.db import DB_FILENAME
 
 BACKUPS_DIRNAME = "backups"
 NOT_COPIED = {BACKUPS_DIRNAME, "voices", "voice-cache"}  # made or downloaded again
-REMOVED_FOLDERS = ("photos", "backgrounds")
+REMOVED_FOLDERS = ("photos", "backgrounds")  # the backgrounds are the app's now
 
 
 def run(data_dir: Path, now: datetime, with_samples: bool = False) -> bool:

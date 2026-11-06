@@ -20,27 +20,26 @@ def time_from_yaml_number(value):
     return value
 
 
-class Moment(BaseModel):
-    """A moment of the day, by its light: from `start` until the next one starts.
-
-    `name` is also the file of its illustration (personal/backgrounds/<name>.png).
-    Later each season will bring its own list (pictures and times).
-    """
+class Season(BaseModel):
+    """From its date until the next season starts: its sunrise and sunset say the moments
+    of the day. `name` is also the folder of its pictures, in static/backgrounds/."""
 
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(pattern=r"^[a-z0-9-]{1,30}$")
-    start: str = Field(pattern=TIME)
+    start: str = Field(pattern=r"^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$")  # MM-DD
+    sunrise: str = Field(pattern=TIME)
+    sunset: str = Field(pattern=TIME)
 
-    _start = field_validator("start", mode="before")(time_from_yaml_number)
+    _sunrise = field_validator("sunrise", mode="before")(time_from_yaml_number)
+    _sunset = field_validator("sunset", mode="before")(time_from_yaml_number)
 
 
-DEFAULT_MOMENTS = (
-    Moment(name="amanecer", start="06:00"),
-    Moment(name="dia", start="10:00"),
-    Moment(name="tarde", start="15:00"),
-    Moment(name="atardecer", start="17:30"),
-    Moment(name="noche", start="19:00"),
+DEFAULT_SEASONS = (
+    Season(name="primavera", start="03-20", sunrise="07:00", sunset="20:00"),
+    Season(name="verano", start="06-21", sunrise="06:00", sunset="21:30"),
+    Season(name="otono", start="09-23", sunrise="07:30", sunset="19:00"),
+    Season(name="invierno", start="12-21", sunrise="08:30", sunset="16:30"),
 )
 
 
@@ -51,22 +50,22 @@ class Settings(BaseModel):
     daily_prize_spins: int = Field(default=1, ge=0)
     starting_stars: int = Field(default=0, ge=0)  # what a new child starts with
     day_starts_at: str = Field(default="00:00", pattern=TIME)
-    moments: tuple[Moment, ...] = DEFAULT_MOMENTS
+    seasons: tuple[Season, ...] = DEFAULT_SEASONS
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)
 
     _day_starts_at = field_validator("day_starts_at", mode="before")(time_from_yaml_number)
 
-    @field_validator("moments")
+    @field_validator("seasons")
     @classmethod
-    def moments_in_order(cls, moments):
-        starts = [m.start for m in moments]
-        if not moments or starts != sorted(set(starts)):
-            raise ValueError("moments must be a non-empty list in order of start time, each a different time")
-        if len({m.name for m in moments}) != len(moments):
-            raise ValueError("each moment needs its own name")
-        return moments
+    def seasons_in_order(cls, seasons):
+        starts = [season.start for season in seasons]
+        if not seasons or starts != sorted(set(starts)):
+            raise ValueError("seasons must be a non-empty list in order of start date, each a different date")
+        if len({season.name for season in seasons}) != len(seasons):
+            raise ValueError("each season needs its own name")
+        return seasons
 
 
 class Features(BaseModel):

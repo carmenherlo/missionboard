@@ -5,6 +5,8 @@ import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.settings import DEFAULT_SEASONS
+from app.today.api import background_url
 from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
@@ -360,37 +362,51 @@ def test_an_upcoming_mission_can_be_opened_too(client, bea):
     assert client.post(url, headers=PARENT).json()["missions"][0]["state"] == "open"
 
 
-# ---------- moment of the day and its picture ----------
+# ---------- the season, the moment of the day and its picture ----------
 
 
+@pytest.mark.parametrize("moment, season", [
+    (datetime(2026, 1, 15, 12, 0, tzinfo=MADRID), "invierno"),  # the last of the list goes on
+    (datetime(2026, 3, 19, 12, 0, tzinfo=MADRID), "invierno"),
+    (datetime(2026, 3, 20, 12, 0, tzinfo=MADRID), "primavera"),
+    (datetime(2026, 7, 1, 12, 0, tzinfo=MADRID), "verano"),
+    (datetime(2026, 9, 23, 12, 0, tzinfo=MADRID), "otono"),
+    (datetime(2026, 12, 21, 12, 0, tzinfo=MADRID), "invierno"),
+])
+def test_the_season(client, bea, clock, moment, season):
+    clock.moment = moment
+    assert f"/{season}/" in today(client, bea)["background_url"]
+
+
+# Autumn: sunrise at 7:30, sunset at 19:00; 2 hours either way.
 @pytest.mark.parametrize("time, moment", [
-    ((5, 59), "noche"), ((6, 0), "amanecer"), ((12, 0), "dia"), ((17, 10), "tarde"),
-    ((17, 30), "atardecer"), ((23, 0), "noche"),
+    ((5, 29), "noche"), ((5, 30), "manana"), ((9, 29), "manana"), ((9, 30), "dia"), ((16, 59), "dia"),
+    ((17, 0), "tarde"), ((20, 59), "tarde"), ((21, 0), "noche"), ((23, 59), "noche"), ((0, 0), "noche"),
 ])
 def test_the_moment_of_the_day(client, bea, clock, time, moment):
     clock.moment = MONDAY.replace(hour=time[0], minute=time[1])
-    assert today(client, bea)["moment"] == moment
+    day = today(client, bea)
+    assert day["moment"] == moment
+    assert day["background_url"] == f"static/backgrounds/otono/{moment}.webp"
+    assert client.get(day["background_url"]).status_code == 200
 
 
-def test_the_moments_can_be_changed_in_the_settings(data_dir, clock):
-    write_config(data_dir, {"moments": [{"name": "dia", "start": "08:00"}, {"name": "noche", "start": "20:00"}]})
+def test_every_season_has_its_four_pictures():
+    for season in DEFAULT_SEASONS:
+        for moment in ("manana", "dia", "tarde", "noche"):
+            assert background_url(season.name, moment), (season.name, moment)
+
+
+def test_the_seasons_can_be_changed_in_the_settings_and_with_no_picture_no_background(data_dir, clock):
+    write_config(data_dir, {"seasons": [{"name": "siempre", "start": "01-01", "sunrise": "08:00", "sunset": "20:00"}]})
     with TestClient(create_app(data_dir, clock=clock)) as client:
-        assert today(client, create_child(client))["moment"] == "dia"
+        day = today(client, create_child(client))
+        assert day["moment"] == "dia" and day["background_url"] is None
 
 
-def test_moments_out_of_order_stop_the_app(data_dir, clock):
-    write_config(data_dir, {"moments": [{"name": "noche", "start": "20:00"}, {"name": "dia", "start": "08:00"}]})
+def test_seasons_out_of_order_stop_the_app(data_dir, clock):
+    write_config(data_dir, {"seasons": [{"name": "b", "start": "06-01", "sunrise": "08:00", "sunset": "20:00"},
+                                        {"name": "a", "start": "01-01", "sunrise": "08:00", "sunset": "20:00"}]})
     with pytest.raises(Exception):
         with TestClient(create_app(data_dir, clock=clock)):
             pass
-
-
-def test_the_background_of_the_moment(client, bea, data_dir):
-    assert today(client, bea)["background_url"] is None  # 17:10: tarde, no picture yet
-    (data_dir / "backgrounds").mkdir()
-    (data_dir / "backgrounds" / "tarde.png").write_bytes(b"\x89PNG fake")
-    url = today(client, bea)["background_url"]
-    assert url.startswith("api/backgrounds/tarde?v=")
-    assert client.get(url).content == b"\x89PNG fake"
-    assert client.get("/api/backgrounds/noche").status_code == 404
-    assert client.get("/api/backgrounds/..%2Fconfig").status_code == 404

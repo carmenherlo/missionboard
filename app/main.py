@@ -32,7 +32,7 @@ from app.storage.photo_store import PhotoStore
 from app.voice import api as voice_api
 from app.voice.service import MODEL_NAME, Voice
 from app.today import api as today_api
-from app.today.repository import BackgroundStore, DayRepository
+from app.today.repository import DayRepository
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "personal"
@@ -97,7 +97,6 @@ def create_app(
     app.state.clock = clock or SystemClock()
     app.state.events_repository = EventsRepository(data_dir)
     app.state.day_repository = DayRepository(data_dir)
-    app.state.background_store = BackgroundStore(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
     app.state.purchases_repository = PurchasesRepository(data_dir)
     # The natural voice (app/voice/): its model in personal/voices/ or where

@@ -29,8 +29,8 @@ from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, ChildTask, Mission, MissionsRepository, Schedule, child_tasks
 from app.prizes.repository import Prize, PrizesRepository
 from app.routines import links
-from app.routines.repository import RoutinesRepository
-from app.settings import Moment, SettingsRepository
+from app.routines.repository import RoutinesRepository, minute_of
+from app.settings import Season, SettingsRepository
 from app.today.repository import DayRepository
 
 DONE, OPEN, UPCOMING, CLOSED = "done", "open", "upcoming", "closed"
@@ -76,7 +76,8 @@ class PrizeToday:
 class Today:
     child: Child
     day: date
-    moment: Moment
+    season: Season
+    moment: str  # manana, dia, tarde or noche
     missions: list[MissionToday]
     stars: int
     prize: PrizeToday | None = None  # None: no prize at the end of the route
@@ -99,10 +100,23 @@ class SpinResult:
     prize: Prize
 
 
-def current_moment(moments: tuple[Moment, ...], time: str) -> Moment:
-    """The last moment that has started; before the first one, the night goes on."""
-    started = [m for m in moments if m.start <= time]
-    return started[-1] if started else moments[-1]
+TRANSITION_MINUTES = 120  # the morning and the evening: this long before and after the sun
+
+
+def current_season(seasons: tuple[Season, ...], day: date) -> Season:
+    """The last one that has started; in January, the last of the list goes on."""
+    started = [season for season in seasons if season.start <= day.strftime("%m-%d")]
+    return started[-1] if started else seasons[-1]
+
+
+def current_moment(season: Season, time: str) -> str:
+    """Morning and evening around the sunrise and the sunset, day between them, night the rest."""
+    now, sunrise, sunset = minute_of(time), minute_of(season.sunrise), minute_of(season.sunset)
+    if sunrise - TRANSITION_MINUTES <= now < sunrise + TRANSITION_MINUTES:
+        return "manana"
+    if sunset - TRANSITION_MINUTES <= now < sunset + TRANSITION_MINUTES:
+        return "tarde"
+    return "dia" if sunrise < now < sunset else "noche"
 
 
 class DayService:
@@ -158,7 +172,8 @@ class DayService:
         return Today(
             child=child,
             day=day,
-            moment=current_moment(settings.moments, time),
+            season=(season := current_season(settings.seasons, day)),
+            moment=current_moment(season, time),
             missions=missions,
             stars=self._days.stars(child.id),
             prize=self._prize_today(day, child, missions),

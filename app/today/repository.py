@@ -4,8 +4,6 @@ from pathlib import Path
 from app.children.repository import Child
 from app.storage import db
 
-BACKGROUND_EXTENSIONS = (".webp", ".png", ".jpg", ".jpeg")
-
 
 class DayRepository:
     """What each child has done each app day, and their stars (SQLite). `step_checks`
@@ -120,26 +118,3 @@ class DayRepository:
             return conn.execute(
                 "SELECT COALESCE(SUM(amount), 0) FROM star_movements WHERE child_id = ?", (child_id,)
             ).fetchone()[0]
-
-
-class BackgroundStore:
-    """The illustrations of the moments of the day, in personal/backgrounds/<moment>.<ext>.
-
-    They live with the family's data, outside the repo: they can be changed
-    (or drawn again) without touching the code.
-    """
-
-    def __init__(self, data_dir: Path):
-        self._dir = data_dir / "backgrounds"
-
-    def path(self, name: str) -> Path | None:
-        for extension in BACKGROUND_EXTENSIONS:
-            candidate = self._dir / f"{name}{extension}"
-            if candidate.is_file():
-                return candidate
-        return None
-
-    def version(self, name: str) -> int | None:
-        """Changes when the file changes, so the browser fetches the new one."""
-        path = self.path(name)
-        return int(path.stat().st_mtime) if path else None

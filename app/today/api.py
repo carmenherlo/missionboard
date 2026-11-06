@@ -1,14 +1,13 @@
+from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
 from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, require_parent
-from app.errors import NotFoundError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import ChildTask, MissionsRepository
@@ -16,12 +15,13 @@ from app.prizes.repository import PrizesRepository
 from app.routines.repository import RoutinesRepository
 from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
-from app.today.repository import BackgroundStore, DayRepository
+from app.today.repository import DayRepository
 from app.today.service import NOTES, DayService, MissionToday, Today
 
 # The children's zone: no parent code.
 router = APIRouter(prefix="/api", tags=["today"])
 
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 STAR_IMAGE = "fluent/star"
 CELEBRATION_STAR_IMAGE = "fluent/glowing-star"
 PRIZE_IMAGE = "fluent/wrapped-gift"
@@ -41,10 +41,6 @@ def get_day_repository(request: Request) -> DayRepository:
     return request.app.state.day_repository
 
 
-def get_background_store(request: Request) -> BackgroundStore:
-    return request.app.state.background_store
-
-
 def get_day_service(
     store: ConfigStore = Depends(get_config_store),
     days: DayRepository = Depends(get_day_repository),
@@ -57,26 +53,25 @@ def get_day_service(
     )
 
 
+def background_url(season: str, moment: str) -> str | None:
+    """The app's own pictures (static/backgrounds/); if one is missing, none is shown."""
+    relative = f"backgrounds/{season}/{moment}.webp"
+    return f"static/{relative}" if (STATIC_DIR / relative).is_file() else None
+
+
 class Presenter:
     """Turns a child's day into JSON, with the address of every image."""
 
-    def __init__(
-        self,
-        libraries: ImageLibraries = Depends(get_image_libraries),
-        backgrounds: BackgroundStore = Depends(get_background_store),
-    ):
+    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries)):
         self._libraries = libraries
-        self._backgrounds = backgrounds
 
     def __call__(self, today: Today) -> dict:
-        moment = today.moment.name
-        version = self._backgrounds.version(moment)
         return {
             "child": public_child(today.child),
             "colors": avatars.tones(today.child.color),
             "day": today.day.isoformat(),
-            "moment": moment,
-            "background_url": f"api/backgrounds/{moment}?v={version}" if version else None,
+            "moment": today.moment,
+            "background_url": background_url(today.season.name, today.moment),
             "stars": today.stars,
             "star_url": self._libraries.url(STAR_IMAGE),
             "celebration_star_url": self._libraries.url(CELEBRATION_STAR_IMAGE),
@@ -169,11 +164,3 @@ def spin(child_id: str, days: DayService = Depends(get_day_service), present: Pr
 @router.post("/children/{child_id}/today/notes", status_code=204)
 def note(child_id: str, body: NoteIn, days: DayService = Depends(get_day_service)) -> None:
     days.note(child_id, body.kind, body.mission_id, body.step_id)
-
-
-@router.get("/backgrounds/{name}")
-def background(name: str, backgrounds: BackgroundStore = Depends(get_background_store)):
-    path = backgrounds.path(name) if name.replace("-", "").isalnum() else None
-    if path is None:
-        raise NotFoundError("Background not found")
-    return FileResponse(path)
