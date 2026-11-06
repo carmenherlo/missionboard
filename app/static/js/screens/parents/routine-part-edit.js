@@ -96,7 +96,16 @@ export async function viewRoutinePartEdit(routineId, partId) {
   function renderTasks() {
     tasksList.replaceChildren(...part().tasks.map((task, index) =>
       h("li", { class: "row row--compact" },
-        h("span", { class: "row__text" }, task),
+        // Tap to correct it, there and then (06/11); left empty, it stays as it was: ✕ removes it.
+        h("input", {
+          class: "row__input", type: "text", maxlength: 60, value: task, "aria-label": t.routinePart.taskLabel,
+          onkeydown: (e) => { if (e.key === "Enter") e.target.blur(); },
+          onchange: (e) => {
+            const text = e.target.value.trim();
+            if (!text || text === task) { e.target.value = task; return; }
+            patch({ tasks: part().tasks.map((old, i) => (i === index ? text : old)) });
+          },
+        }),
         h("button", {
           type: "button", class: "icon-button icon-button--ghost", "aria-label": t.routinePart.removeTask(task),
           onclick: () => patch({ tasks: part().tasks.filter((_, i) => i !== index) }),

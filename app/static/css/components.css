@@ -1675,3 +1675,23 @@ select.pick {
 .icon--dayNight path:last-child {
   fill: currentColor;
 }
+
+
+/* A row whose text is corrected right there (a part's tasks): it looks like text
+   until it is touched. */
+.row input.row__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+}
+
+.row input.row__input:focus {
+  border-color: var(--outline);
+  background: var(--surface);
+  outline: none;
+}

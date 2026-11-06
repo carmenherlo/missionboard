@@ -11,6 +11,7 @@ import { undoBar } from "../../components/undo-bar.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
+import * as script from "../../routine/script.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { addSongForm, ringsAtFirstPart, songWraps } from "./routine-music.js";
@@ -150,7 +151,7 @@ export async function viewRoutineEdit(routineId) {
   const goalPanel = h("div", {});
   function renderMode() {
     const manual = routine.manual;
-    modeBox.replaceChildren(...[h("div", { class: "tabs" },
+    modeBox.replaceChildren(...[h("div", { class: "tabs tabs--wrap" },
       [[false, t.routineEdit.timed], [true, t.routineEdit.byHand]].map(([value, label]) =>
         h("button", {
           type: "button", class: `tab${manual === value ? " tab--on" : ""}`, "aria-pressed": String(manual === value),
@@ -163,7 +164,7 @@ export async function viewRoutineEdit(routineId) {
   }
   function renderWhen() {
     const ending = routine.anchor === "end";
-    anchorBox.replaceChildren(h("div", { class: "tabs" },
+    anchorBox.replaceChildren(h("div", { class: "tabs tabs--wrap" },
       [["start", t.routineEdit.anchorStart], ["end", t.routineEdit.anchorEnd]].map(([value, label]) =>
         h("button", {
           type: "button", class: `tab${routine.anchor === value ? " tab--on" : ""}`,
@@ -394,7 +395,8 @@ export async function viewRoutineEdit(routineId) {
             value: part.minutes, min: 1, max: MAX_PART_MINUTES, format: t.routine.minutes,
             label: t.routineEdit.minutesOf(part.name),
             onChange: (minutes) => save(api("PATCH", `${url}/parts/${part.id}`, { json: { minutes } })).catch(() => {}),
-          }))));
+          }),
+        !selected && h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
     wrapSongs(routine, songs, cardsBox);
   }
   const newPart = h("input", { type: "text", maxlength: 60, placeholder: t.routineEdit.newPart });
@@ -436,6 +438,21 @@ export async function viewRoutineEdit(routineId) {
           }).catch(() => {});
       },
     }, t.routineEdit.import));
+
+  // ---------- what the warnings before a part ends say (out of the script, 06/11) ----------
+  const warnBox = h("div", { class: "stack stack--tight" });
+  function renderWarnAbout() {
+    const [first, second] = routine.parts;
+    warnBox.replaceChildren(
+      h("div", { class: "tabs tabs--wrap" }, [["end", t.routineEdit.warnEnd], ["next", t.routineEdit.warnNext]].map(([value, label]) =>
+        h("button", {
+          type: "button", class: `tab${routine.warn_about === value ? " tab--on" : ""}`,
+          "aria-pressed": String(routine.warn_about === value),
+          onclick: () => routine.warn_about !== value && patch({ warn_about: value }),
+        }, routine.warn_about === value && icon("check"), label))),
+      h("p", { class: "voice-preview" }, `«${script.partWarning(first, 1, routine.warn_about === "next" ? second : null)}»`),
+      h("p", { class: "hint" }, t.routineEdit.warnHint));
+  }
 
   // ---------- the goal ----------
   const goalBox = h("div", { class: "stack stack--tight" });
@@ -542,6 +559,7 @@ export async function viewRoutineEdit(routineId) {
     renderKids();
     renderParts();
     addSong.draw(routine, songs);
+    renderWarnAbout();
     renderGoal();
   }
   refresh();
@@ -550,7 +568,7 @@ export async function viewRoutineEdit(routineId) {
   render(
     parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: LIST_HREF, label: t.routines.title }),
     h("main", { class: "page" },
-      h("div", { class: "columns" },
+      h("div", { class: "columns columns--parts" },
         h("div", { class: "stack" },
           panel(t.routineEdit.panelRoutine,
             h("div", { class: "mission-identity" }, imageBox, h("label", {}, t.routines.name, nameInput)),
@@ -562,6 +580,7 @@ export async function viewRoutineEdit(routineId) {
         h("div", { class: "stack" },
           panel(partsTitle, partsTools, cardsBox,
             addPart, importParts),
+          panel(t.routineEdit.warnTitle, warnBox),
           // Each thing in its own panel (04/11): the songs apart, like the goal.
           songsPanel,
           goalPanel)),

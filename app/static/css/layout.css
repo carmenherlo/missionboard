@@ -97,6 +97,11 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
+  /* Editar rutina: the parts need the room (name, − / + and arrow on one card). */
+  .columns--parts {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  }
+
   .side-panel {
     position: sticky;
     top: 1rem;

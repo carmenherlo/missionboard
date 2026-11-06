@@ -1,5 +1,4 @@
 import { api } from "../../api.js";
-import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
 import { say } from "../../components/speech.js";
 import { h, render } from "../../dom.js";
@@ -26,7 +25,6 @@ export async function viewRoutineVoice(routineId, focus = null) {
   const groups = h("div", { class: "stack" });
   // How the warnings before a part ends are said (04/11): "para que acabe el aseo" or
   // "para que empiece vestirse".
-  const warnBox = h("div", { class: "stack stack--tight" });
   let editing = null; // the key of the line being changed
 
   function save(request) {
@@ -39,19 +37,7 @@ export async function viewRoutineVoice(routineId, focus = null) {
   const patchRoutine = (json) => save(api("PATCH", url, { json }));
   const patchPart = (part, json) => save(api("PATCH", `${url}/parts/${part.id}`, { json }));
 
-  function drawWarnings() {
-    warnBox.replaceChildren(
-      h("div", { class: "tabs" }, [["end", t.routineVoice.warnEnd], ["next", t.routineVoice.warnNext]].map(([value, label]) =>
-        h("button", {
-          type: "button", class: `tab${routine.warn_about === value ? " tab--on" : ""}`,
-          "aria-pressed": String(routine.warn_about === value),
-          onclick: () => routine.warn_about !== value && patchRoutine({ warn_about: value }),
-        }, routine.warn_about === value && icon("check"), label))),
-      h("p", { class: "hint" }, t.routineVoice.warnHint));
-  }
-
   function draw() {
-    drawWarnings();
     groups.replaceChildren(...scriptOf(routine, songs, { patchRoutine, patchPart, routineHref }).map((group) =>
       h("section", { class: "panel", id: `voice-${group.id}` },
         h("h2", { class: "panel__title" }, group.title),
@@ -118,7 +104,6 @@ export async function viewRoutineVoice(routineId, focus = null) {
     h("main", { class: "page" },
       h("div", { class: "stack" },
         h("p", { class: "hint" }, routine.manual ? t.routineVoice.hintByHand : t.routineVoice.hint),
-        panel(t.routineVoice.warnTitle, warnBox),
         groups,
         h("div", { class: "form-actions" }, h("a", { class: "btn btn--primary", href: routineHref }, t.common.done)))));
   if (focus) document.getElementById(`voice-${focus}`)?.scrollIntoView({ block: "start" });
