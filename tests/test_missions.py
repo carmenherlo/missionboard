@@ -12,7 +12,7 @@ ALL_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
 def create_child(client, name="Bea", preset="unicorn"):
-    body = {"name": name, "avatar_type": "preset", "preset": preset}
+    body = {"name": name, "preset": preset}
     return client.post("/api/children", json=body, headers=PARENT).json()
 
 

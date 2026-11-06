@@ -7,9 +7,7 @@ from app.storage.config_store import ConfigStore
 class Child:
     id: str
     name: str
-    avatar_type: str
     preset: str | None
-    photo: str | None
     color: str
 
 

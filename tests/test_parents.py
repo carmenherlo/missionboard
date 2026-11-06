@@ -36,7 +36,7 @@ def test_change_code(client, data_dir):
 def test_change_code_keeps_children(client):
     client.post(
         "/api/children",
-        json={"name": "Bea", "avatar_type": "preset", "preset": "unicorn"},
+        json={"name": "Bea", "preset": "unicorn"},
         headers=PARENT,
     )
     change_code(client, "2468")

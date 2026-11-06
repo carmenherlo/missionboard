@@ -49,6 +49,7 @@ class Settings(BaseModel):
 
     stars_per_mission: int = Field(default=1, ge=0)
     daily_prize_spins: int = Field(default=1, ge=0)
+    starting_stars: int = Field(default=0, ge=0)  # what a new child starts with
     day_starts_at: str = Field(default="00:00", pattern=TIME)
     moments: tuple[Moment, ...] = DEFAULT_MOMENTS
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"

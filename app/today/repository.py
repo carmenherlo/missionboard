@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from pathlib import Path
 
+from app.children.repository import Child
 from app.storage import db
 
 BACKGROUND_EXTENSIONS = (".webp", ".png", ".jpg", ".jpeg")
@@ -67,6 +68,17 @@ class DayRepository:
                      at.isoformat(timespec="seconds")),
                 )
         return bool(inserted)
+
+    def add_starting_stars(self, child: Child, stars: int, day: date, at: datetime) -> None:
+        """What a new child starts with (settings.starting_stars)."""
+        if not stars:
+            return
+        with db.connect(self._data_dir) as conn:
+            conn.execute(
+                "INSERT INTO star_movements (child_id, child_name, amount, reason, day, at)"
+                " VALUES (?, ?, ?, 'starting_stars', ?, ?)",
+                (child.id, child.name, stars, day.isoformat(), at.isoformat(timespec="seconds")),
+            )
 
     def prize_spins(self, day: date, child_id: str) -> list[dict]:
         """The prizes the child won today, in order: {"prize_id", "text", "image"}."""

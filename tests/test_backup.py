@@ -29,7 +29,8 @@ def zipped(files: dict) -> bytes:
 
 def test_a_copy_has_everything(client):
     bea = create_child(client)
-    upload(client, f"/api/children/{bea['id']}/photo")
+    mission = create_mission(client, bea["id"]).json()
+    upload(client, f"/api/missions/{mission['id']}/photo")
     names = zipfile.ZipFile(io.BytesIO(download(client))).namelist()
     assert {"config.yaml", "missionboard.db", "missionboard-backup.json"} <= set(names)
     assert any(n.startswith("photos/") for n in names)

@@ -157,12 +157,10 @@ def test_steps_and_their_order(client):
 
 def test_children_and_their_avatar(client):
     bea = create_child(client)
-    body = {"name": "Beatriz", "avatar_type": "preset", "preset": "fox"}
+    body = {"name": "Beatriz", "preset": "fox"}
     client.put(f"/api/children/{bea['id']}", json=body, headers=PARENT)
-    upload(client, f"/api/children/{bea['id']}/photo")
     assert descriptions(client) == [
-        "Cambiaste a Beatriz · avatar: foto nueva",
-        "Cambiaste a Beatriz · nombre: Beatriz · avatar: zorro · color: #e77300",
+        "Cambiaste a Beatriz · nombre: Beatriz · avatar: zorro",
         "Añadiste a Bea",
     ]
 

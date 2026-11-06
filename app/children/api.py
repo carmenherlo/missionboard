@@ -1,14 +1,13 @@
 from dataclasses import asdict
-from typing import Literal
 
-from fastapi import APIRouter, Depends, Header, Request
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, field_validator
 
 from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.children.service import ChildData, ChildrenService
-from app.deps import get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.clock import app_day
+from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.api import get_missions_service
@@ -16,6 +15,7 @@ from app.missions.repository import MissionsRepository
 from app.missions.service import MissionsService
 from app.routines.editor import RoutinesEditor
 from app.routines.repository import RoutinesRepository
+from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 
@@ -24,9 +24,7 @@ router = APIRouter(prefix="/api", tags=["children"])
 
 class ChildIn(BaseModel):
     name: str = Field(max_length=30)
-    avatar_type: Literal["preset", "photo"]
-    preset: str | None = None
-    color: str | None = None
+    preset: str
 
     @field_validator("name")
     @classmethod
@@ -38,30 +36,36 @@ class ChildIn(BaseModel):
 
 
 def get_children_service(
+    request: Request,
     store: ConfigStore = Depends(get_config_store),
     photos: PhotoStore = Depends(get_photo_store),
     missions: MissionsService = Depends(get_missions_service),
     events: EventLog = Depends(get_event_log),
     libraries: ImageLibraries = Depends(get_image_libraries),
+    clock=Depends(get_clock),
 ) -> ChildrenService:
     routines = RoutinesEditor(
         RoutinesRepository(store), ChildrenRepository(store), MissionsRepository(store), libraries, photos, events
     )
-    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions, routines])
+    settings = SettingsRepository(store).settings()
+
+    def welcome(child: Child) -> None:
+        now = clock.now()
+        request.app.state.day_repository.add_starting_stars(
+            child, settings.starting_stars, app_day(now, settings.day_starts_at), now)
+
+    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions, routines], welcome=welcome)
 
 
 def public_child(child: Child) -> dict:
-    """A child as the screens get it: with the address of their photo."""
-    return {
-        **asdict(child),
-        "photo_url": f"api/children/{child.id}/photo?v={child.photo}" if child.photo else None,
-    }
+    """A child as the screens get it."""
+    return asdict(child)
 
 
 @router.get("/avatars")
 def list_avatars(libraries: ImageLibraries = Depends(get_image_libraries)):
     presets = [{**preset, "image_url": libraries.url(preset["image"])} for preset in avatars.PRESETS]
-    return {"presets": presets, "palette": avatars.PALETTE, "picker_columns": avatars.PICKER_COLUMNS}
+    return {"presets": presets, "palette": avatars.PALETTE}
 
 
 @router.get("/children")
@@ -84,20 +88,3 @@ def update_child(
 @router.delete("/children/{child_id}", status_code=204, dependencies=[Depends(require_parent)])
 def delete_child(child_id: str, children: ChildrenService = Depends(get_children_service)) -> None:
     children.delete(child_id)
-
-
-@router.put("/children/{child_id}/photo", dependencies=[Depends(require_parent)])
-async def upload_photo(
-    child_id: str,
-    request: Request,
-    content_type: str = Header(),
-    children: ChildrenService = Depends(get_children_service),
-):
-    """Upload the raw image as the request body (no multipart needed)."""
-    media_type = content_type.split(";")[0].strip().lower()
-    return public_child(children.set_photo(child_id, await request.body(), media_type))
-
-
-@router.get("/children/{child_id}/photo")
-def get_photo(child_id: str, children: ChildrenService = Depends(get_children_service)):
-    return FileResponse(children.photo_path(child_id))

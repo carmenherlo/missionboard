@@ -1,7 +1,7 @@
 """Built-in avatars and the fixed colour palette.
 
-Every preset owns one palette colour and can only be used by one child.
-Children with a photo pick any palette colour, even one already in use.
+Every preset owns one palette colour and can only be used by one child: the
+colour of their ring comes from their animal.
 Each preset's picture is an image reference from the image libraries.
 """
 
@@ -22,12 +22,10 @@ PALETTE = [
     {"id": "red", "label": "Rojo", "color": "#d3372f", "strong": "#904a43", "soft": "#ffdad5", "on": "#ffffff"},
     {"id": "dark-blue", "label": "Azul oscuro", "color": "#244d99", "strong": "#244d99", "soft": "#d9e2ff", "on": "#ffffff"},
     {"id": "turquoise", "label": "Turquesa", "color": "#00978c", "strong": "#006a62", "soft": "#9df2e7", "on": "#ffffff"},
+    # Only for the rings of the animals of these colours (06/11).
+    {"id": "peach", "label": "Melocotón", "color": "#f2a36c", "strong": "#8a5a3c", "soft": "#ffe0cc", "on": "#1a1b21"},
+    {"id": "brown", "label": "Marrón", "color": "#8d5a3b", "strong": "#6b4226", "soft": "#f0dccb", "on": "#ffffff"},
 ]
-
-# The colour picker: six columns in rainbow order, the basic colours on top
-# and each extra under the basic one it looks like, so two colours of the
-# same column are easy to spot (better not to give them to two siblings).
-PICKER_COLUMNS = [["orange", "red"], ["yellow"], ["green", "turquoise"], ["blue", "dark-blue"], ["lilac"], ["pink"]]
 
 _COLOR = {entry["id"]: entry["color"] for entry in PALETTE}
 
@@ -35,16 +33,17 @@ _COLOR = {entry["id"]: entry["color"] for entry in PALETTE}
 # plenty to choose from (to be replaced by the family's own drawings). In the
 # picker's rainbow order. An animal is only for one child; a colour may repeat.
 _ANIMALS = [
-    ("orange", [("fox", "Zorro", "fox"), ("tiger", "Tigre", "tiger-face"), ("hamster", "Hámster", "hamster")]),
-    ("red", [("ladybug", "Mariquita", "lady-beetle"), ("crab", "Cangrejo", "crab")]),
+    ("orange", [("fox", "Zorro", "fox"), ("tiger", "Tigre", "tiger-face")]),
+    ("peach", [("hamster", "Hámster", "hamster")]),
+    ("red", [("ladybug", "Mariquita", "lady-beetle"), ("butterfly", "Mariposa", "butterfly")]),
     ("yellow", [("lion", "León", "lion"), ("chick", "Pollito", "baby-chick"), ("bee", "Abeja", "honeybee")]),
     ("green", [("dinosaur", "Dinosaurio", "t-rex"), ("frog", "Rana", "frog"), ("turtle", "Tortuga", "turtle")]),
     ("turquoise", [("fish", "Pez tropical", "tropical-fish")]),
-    ("blue", [("dolphin", "Delfín", "dolphin"), ("whale", "Ballena", "spouting-whale"),
-              ("butterfly", "Mariposa", "butterfly")]),
-    ("dark-blue", [("owl", "Búho", "owl"), ("penguin", "Pingüino", "penguin")]),
+    ("blue", [("dolphin", "Delfín", "dolphin"), ("whale", "Ballena", "spouting-whale")]),
+    ("dark-blue", [("penguin", "Pingüino", "penguin")]),
+    ("brown", [("owl", "Búho", "owl")]),
     ("lilac", [("unicorn", "Unicornio", "unicorn"), ("jellyfish", "Medusa", "jellyfish")]),
-    ("pink", [("octopus", "Pulpo", "octopus"), ("pig", "Cerdito", "pig-face"), ("flamingo", "Flamenco", "flamingo")]),
+    ("pink", [("crab", "Cangrejo", "crab"), ("octopus", "Pulpo", "octopus"), ("pig", "Cerdito", "pig-face"), ("flamingo", "Flamenco", "flamingo")]),
 ]
 
 PRESETS = [

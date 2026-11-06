@@ -1,6 +1,5 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
-import { colorPicker, suggestedColor } from "../../components/color-picker.js";
 import { saveStatus } from "../../components/save-status.js";
 import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
@@ -8,7 +7,6 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
-const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const NAME_SAVE_DELAY_MS = 600;
 
 // New child: short form with an "Añadir niño" button.
@@ -22,20 +20,15 @@ export async function viewChildForm(childId) {
     return;
   }
 
-  // Presets are exclusive to one child; colours may repeat.
+  // Each animal is for one child, and brings the colour of their ring.
   const siblings = children.filter((c) => c.id !== childId);
   const usedPresets = new Set(siblings.map((c) => c.preset));
-  const suggested = suggestedColor(catalog.palette, siblings);
   const form = {
     name: existing?.name ?? "",
-    avatar_type: existing?.avatar_type ?? null,
     preset: existing?.preset ?? null,
     color: existing?.color ?? null,
-    photoFile: null,
-    photoPreview: null,
   };
   let pickerOpen = !existing;
-  let hasSavedPhoto = Boolean(existing?.photo_url);
   const status = existing ? saveStatus() : null;
   let nameTimer = null;
 
@@ -55,9 +48,7 @@ export async function viewChildForm(childId) {
 
   function refreshPreview() {
     preview.replaceChildren(
-      avatar(
-        { ...form, name: form.name, photo_url: existing?.photo_url },
-        { size: "lg", photoUrl: form.photoPreview ?? undefined }),
+      avatar(form, { size: "lg" }),
       h("button", {
         class: "icon-button avatar-edit__pencil", type: "button", "aria-label": t.childForm.changeAvatar,
         onclick: () => { pickerOpen = !pickerOpen; refreshPicker(); },
@@ -65,32 +56,7 @@ export async function viewChildForm(childId) {
   }
 
   function choosePreset(preset) {
-    Object.assign(form, { avatar_type: "preset", preset: preset.id, color: preset.color });
-    form.photoFile = null;
-    form.photoPreview = null;
-    refreshAll();
-    autosave();
-  }
-
-  function choosePhoto(file) {
-    if (!file) return;
-    if (!PHOTO_TYPES.includes(file.type)) {
-      error.textContent = t.childForm.badPhotoType;
-      return;
-    }
-    error.textContent = "";
-    if (form.photoPreview) URL.revokeObjectURL(form.photoPreview);
-    form.avatar_type = "photo";
-    form.preset = null;
-    form.color ??= suggested; // a new child starts with the suggested colour, already chosen
-    form.photoFile = file;
-    form.photoPreview = URL.createObjectURL(file);
-    refreshAll();
-    autosave();
-  }
-
-  function chooseColor(color) {
-    form.color = color;
+    Object.assign(form, { preset: preset.id, color: preset.color });
     refreshAll();
     autosave();
   }
@@ -102,7 +68,7 @@ export async function viewChildForm(childId) {
     }
     const presets = catalog.presets.map((preset) => {
       const taken = usedPresets.has(preset.id);
-      const selected = form.avatar_type === "preset" && form.preset === preset.id;
+      const selected = form.preset === preset.id;
       return h("button", {
         type: "button",
         class: `choice${selected ? " choice--selected" : ""}`,
@@ -114,36 +80,7 @@ export async function viewChildForm(childId) {
          h("span", { class: "choice__label" }, preset.label));
     });
 
-    const fileInput = h("input", {
-      type: "file", accept: PHOTO_TYPES.join(","), hidden: true,
-      onchange: (e) => choosePhoto(e.target.files[0]),
-    });
-    const photoButton = h("button", {
-      type: "button",
-      class: `choice${form.avatar_type === "photo" ? " choice--selected" : ""}`,
-      onclick: () => fileInput.click(),
-    }, h("span", { class: "avatar avatar--md avatar--photo-choice" }, icon("photo")),
-       h("span", { class: "choice__label" }, t.childForm.ownPhoto), fileInput);
-
-    const sections = [
-      h("h2", {}, t.childForm.chooseAvatar),
-      h("div", { class: "choices" }, presets, photoButton),
-    ];
-
-    if (form.avatar_type === "photo") {
-      sections.push(
-        h("h2", {}, t.childForm.chooseColor),
-        colorPicker({
-          palette: catalog.palette,
-          columns: catalog.picker_columns,
-          chosen: form.color,
-          suggested,
-          siblings,
-          onChoose: chooseColor,
-        }),
-        h("p", { class: "hint" }, t.childForm.colorHint));
-    }
-    picker.replaceChildren(...sections);
+    picker.replaceChildren(h("h2", {}, t.childForm.chooseAvatar), h("div", { class: "choices" }, presets));
   }
 
   function refreshAll() {
@@ -154,44 +91,15 @@ export async function viewChildForm(childId) {
 
   function validate() {
     if (!form.name.trim()) return t.childForm.missingName;
-    if (!form.avatar_type) return t.childForm.missingAvatar;
-    if (form.avatar_type === "photo" && !form.photoFile && !hasSavedPhoto) {
-      return t.childForm.missingPhoto;
-    }
-    if (!form.color) return t.childForm.missingColor;
+    if (!form.preset) return t.childForm.missingAvatar;
     return null;
   }
 
-  // Set after the first successful save, so a retry (e.g. failed photo upload)
-  // updates the same child instead of creating a duplicate.
-  let savedId = existing?.id ?? null;
-
-  // Saves the form as it is now. An existing child gets the new photo first,
-  // so the avatar type and colour saved next refer to it.
   async function saveForm() {
-    const payload = {
-      name: form.name,
-      avatar_type: form.avatar_type,
-      preset: form.preset,
-      color: form.color,
-    };
-    const upload = (id) => api("PUT", `api/children/${id}/photo`, {
-      body: form.photoFile, contentType: form.photoFile.type,
-    });
-    if (savedId && form.photoFile) {
-      await upload(savedId);
-      form.photoFile = null;
-    }
-    const saved = savedId
-      ? await api("PUT", `api/children/${savedId}`, { json: payload })
-      : await api("POST", "api/children", { json: payload });
-    savedId = saved.id;
-    if (form.photoFile) {
-      await upload(saved.id);
-      form.photoFile = null;
-    }
-    hasSavedPhoto = form.avatar_type === "photo";
-    return saved;
+    const payload = { name: form.name, preset: form.preset };
+    return existing
+      ? api("PUT", `api/children/${existing.id}`, { json: payload })
+      : api("POST", "api/children", { json: payload });
   }
 
   async function autosave() {
