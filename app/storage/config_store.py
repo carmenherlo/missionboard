@@ -40,6 +40,11 @@ class ConfigStore:
                 shutil.copy2(self.path, self.path.with_name(f"{self.path.name}.v{version}.bak"))
                 self._write(upgraded)
 
+    def replace(self, doc: dict) -> None:
+        """A whole new document (starting from scratch)."""
+        with self._lock:
+            self._write(doc)
+
     @contextmanager
     def lock(self):
         """Nobody reads or writes the file meanwhile (putting a copy back)."""

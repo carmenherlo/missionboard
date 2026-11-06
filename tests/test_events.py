@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.storage import db
+from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import add_step, add_task, create_child, create_mission, patch, upload
@@ -273,7 +274,7 @@ def test_csv_for_a_spreadsheet_in_spanish(client):
 
 def test_the_day_starts_at_the_configured_time(data_dir, clock):
     data_dir.mkdir(parents=True)
-    config_path(data_dir).write_text(yaml.safe_dump({"version": 4, "settings": {"day_starts_at": "04:00"}}))
+    config_path(data_dir).write_text(yaml.safe_dump({"version": CURRENT_VERSION, "settings": {"day_starts_at": "04:00"}}))
     clock.moment = datetime(2026, 11, 4, 0, 30, tzinfo=MADRID)
     with TestClient(create_app(data_dir, clock=clock)) as client:
         open_screen(client, screen="config")

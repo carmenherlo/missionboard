@@ -26,7 +26,7 @@ def test_defaults_without_file(tmp_path):
 
 def test_values_from_file(tmp_path):
     repo = repo_with(tmp_path, {
-        "version": 2,
+        "version": CURRENT_VERSION,
         "settings": {"stars_per_mission": 2, "day_starts_at": "04:30"},
         "features": {"shop": False},
     })
@@ -37,12 +37,12 @@ def test_values_from_file(tmp_path):
 
 def test_unquoted_time_from_yaml(tmp_path):
     tmp_path.mkdir(parents=True, exist_ok=True)
-    config_path(tmp_path).write_text("version: 2\nsettings:\n  day_starts_at: 4:30\n")
+    config_path(tmp_path).write_text(f"version: {CURRENT_VERSION}\nsettings:\n  day_starts_at: 4:30\n")
     assert SettingsRepository(ConfigStore(tmp_path)).settings().day_starts_at == "04:30"
 
 
 def test_missing_keys_take_defaults(tmp_path):
-    repo = repo_with(tmp_path, {"version": 2, "settings": {}, "features": {}})
+    repo = repo_with(tmp_path, {"version": CURRENT_VERSION, "settings": {}, "features": {}})
     assert repo.settings() == Settings()
     assert repo.features() == Features()
 
@@ -57,19 +57,19 @@ def test_missing_keys_take_defaults(tmp_path):
     ],
 )
 def test_invalid_values_are_rejected(tmp_path, section, values):
-    repo = repo_with(tmp_path, {"version": 2, section: values})
+    repo = repo_with(tmp_path, {"version": CURRENT_VERSION, section: values})
     with pytest.raises(ValidationError):
         repo.settings() if section == "settings" else repo.features()
 
 
 def test_app_refuses_to_start_with_invalid_settings(tmp_path):
-    repo_with(tmp_path, {"version": 2, "settings": {"stars_per_mission": -1}})
+    repo_with(tmp_path, {"version": CURRENT_VERSION, "settings": {"stars_per_mission": -1}})
     with pytest.raises(ValidationError):
         with TestClient(create_app(tmp_path)):
             pass
 
 
-def test_startup_upgrades_config(tmp_path):
+def test_startup_starts_from_scratch_with_an_old_file(tmp_path):
     repo_with(tmp_path, {"version": 1, "parents": {"code": "1111"}, "children": []})
     with TestClient(create_app(tmp_path)):
         pass

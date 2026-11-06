@@ -9,7 +9,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app import errors
 from app.children import api as children_api
-from app.clock import Clock, SystemClock
+from app.children.repository import ChildrenRepository
+from app.clock import Clock, SystemClock, app_day
 from app.events import api as events_api
 from app.events.repository import EventsRepository
 from app.images import api as images_api
@@ -25,7 +26,7 @@ from app.songs.repository import SoundFiles
 from app.shop.repository import PurchasesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
-from app.storage import db
+from app.storage import db, fresh_start
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 from app.voice import api as voice_api
@@ -63,14 +64,23 @@ def create_app(
     data_dir: Path | None = None,
     clock: Clock | None = None,
     libraries: list[Library] | None = None,
+    samples: bool = False,
 ) -> FastAPI:
+    """`samples`: a new installation brings the examples (only the real app, below)."""
     data_dir = data_dir or Path(os.environ.get("MISSIONBOARD_DATA_DIR", DEFAULT_DATA_DIR))
     config_store = ConfigStore(data_dir)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        now = app.state.clock.now()
+        with_examples = fresh_start.run(data_dir, now, with_samples=samples)
         config_store.migrate()
         db.migrate(data_dir)
+        if with_examples:
+            settings = SettingsRepository(config_store).settings()
+            for child in ChildrenRepository(config_store).list():
+                app.state.day_repository.add_starting_stars(
+                    child, settings.starting_stars, app_day(now, settings.day_starts_at), now)
         # Fail at startup, not mid-use, if settings were mistyped by hand.
         settings = SettingsRepository(config_store)
         settings.settings()
@@ -127,4 +137,4 @@ def create_app(
     return app
 
 
-app = create_app()
+app = create_app(samples=True)

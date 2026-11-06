@@ -1,0 +1,14 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M10 2.5h12l6.5 4.2c.5.3.7 1 .4 1.5l-2.3 3.9c-.3.5-1 .7-1.5.4L23 11.2V17H9v-5.8l-1.6 1.300c-.5.3-1.2.1-1.500-.4L3.600 8.200c-.3-.5-.1-1.200.4-1.500L10 2.500z" fill="url(#paint0)"/>
+<path d="M12.500 2.500h7c0 1.900-1.600 3.500-3.500 3.500s-3.500-1.600-3.500-3.500z" fill="#3F5FBF"/>
+<path d="M9 17h14l1.300 11.800c.1.600-.4 1.200-1 1.200h-4.200c-.5 0-.9-.4-1-.9L16.500 21h-1l-1.600 8.100c-.1.500-.5.9-1 .9H8.700c-.6 0-1.100-.6-1-1.200L9 17z" fill="url(#paint1)"/>
+<path d="M16 6v11" stroke="#3F5FBF" stroke-linecap="round"/>
+<path d="M12.500 9.200l.5 1.100 1.200.1-.9.800.3 1.200-1.100-.6-1.100.6.300-1.200-.9-.800 1.200-.1.500-1.100z" fill="#FFD84D"/>
+<path d="M20 11.700l.4.900 1 .1-.7.600.2 1-.9-.5-.9.500.2-1-.7-.6 1-.1.400-.9z" fill="#FFD84D"/>
+<path d="M12 21.500l.4.900 1 .1-.7.600.2 1-.9-.5-.9.500.2-1-.7-.6 1-.1.400-.9z" fill="#FFD84D"/>
+<path d="M20.500 22.500l.4.900 1 .1-.7.600.2 1-.9-.5-.9.500.2-1-.7-.6 1-.1.400-.9z" fill="#FFD84D"/>
+<defs>
+<linearGradient id="paint0" x1="16" y1="2.500" x2="16" y2="17" gradientUnits="userSpaceOnUse"><stop stop-color="#8FB2FF"/><stop offset="1" stop-color="#6A86F0"/></linearGradient>
+<linearGradient id="paint1" x1="16" y1="17" x2="16" y2="30" gradientUnits="userSpaceOnUse"><stop stop-color="#7B96F5"/><stop offset="1" stop-color="#5C72E0"/></linearGradient>
+</defs>
+</svg>

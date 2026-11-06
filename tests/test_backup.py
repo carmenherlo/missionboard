@@ -35,7 +35,7 @@ def test_a_copy_has_everything(client):
     assert {"config.yaml", "missionboard.db", "missionboard-backup.json"} <= set(names)
     assert any(n.startswith("photos/") for n in names)
     manifest = json.loads(zipfile.ZipFile(io.BytesIO(download(client))).read("missionboard-backup.json"))
-    assert manifest["app"] == "missionboard" and manifest["config_version"] >= 14
+    assert manifest["app"] == "missionboard" and manifest["config_version"] >= 16
 
 
 def test_put_a_copy_back(client, data_dir):
@@ -79,8 +79,8 @@ def test_nothing_outside_its_folders(client, data_dir):
     assert (data_dir / "photos" / "ok.jpg").exists()
 
 
-def test_an_old_copy_is_brought_up_to_date(client):
-    old = yaml.safe_dump({"version": 13, "children": [{"id": "c1", "name": "Bea", "avatar_type": "preset",
-                                                       "preset": "unicorn", "color": "#9471e7"}]})
-    assert restore(client, zipped({"config.yaml": old, "missionboard-backup.json": "{}"})).status_code == 200
+def test_a_copy_from_before_family_missions_is_refused(client):
+    create_child(client)
+    old = yaml.safe_dump({"version": 13, "children": [{"id": "c1", "name": "Antes", "preset": "unicorn", "color": "#9471e7"}]})
+    assert restore(client, zipped({"config.yaml": old, "missionboard-backup.json": "{}"})).status_code == 422
     assert [c["name"] for c in client.get("/api/children").json()] == ["Bea"]

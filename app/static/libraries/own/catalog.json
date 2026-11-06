@@ -1,0 +1,11 @@
+{
+  "id": "own",
+  "name": "Propios",
+  "license": "MIT (the licence of this repository)",
+  "featured": [
+    {"name": "Ropa", "items": ["pajamas"]}
+  ],
+  "items": [
+    {"id": "pajamas", "name": "pijama", "keywords": ["pijama", "dormir", "noche", "ropa"]}
+  ]
+}

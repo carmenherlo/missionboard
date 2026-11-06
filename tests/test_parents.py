@@ -2,6 +2,7 @@ import pytest
 import yaml
 
 from app.parents.repository import DEFAULT_PARENT_CODE
+from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 
@@ -15,7 +16,7 @@ def test_unlock_with_wrong_code(client):
 
 
 def test_unlock_uses_code_from_config(client, data_dir):
-    config_path(data_dir).write_text(yaml.safe_dump({"parents": {"code": "9876"}}))
+    config_path(data_dir).write_text(yaml.safe_dump({"version": CURRENT_VERSION, "parents": {"code": "9876"}}))
     assert client.post("/api/parents/unlock", json={"code": "9876"}).status_code == 204
     assert client.post("/api/parents/unlock", json={"code": DEFAULT_PARENT_CODE}).status_code == 401
 

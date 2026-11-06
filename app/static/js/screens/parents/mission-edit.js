@@ -199,7 +199,7 @@ export async function viewMissionEdit(missionId) {
       : children.filter((c) => routine.kids.includes(c.id)).map((c) => c.name).join(", ");
     routineBox.replaceChildren(h("div", { class: "routine-line" },
       h("span", { class: "routine-line__text" },
-        h("b", {}, routine.manual ? t.missionEdit.routineByHand : t.missionEdit.routineTime(routine.anchor, short(routine.start), short(routine.end))),
+        h("b", {}, routine.manual ? t.missionEdit.routineByHand : t.missionEdit.routineTime(routine.anchor, short(routine.start), short(routine.goal))),
         h("span", { class: "hint" }, t.missionEdit.routineDetail(names, short(routine.start), short(routine.goal), daysText(routine.days)))),
       h("a", { class: "btn", href: `#/parents/config/routines/${routine.id}` }, t.missionEdit.editRoutine, icon("next"))));
   }

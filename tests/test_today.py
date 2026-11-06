@@ -5,6 +5,7 @@ import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import add_step, add_task, create_child, create_mission, patch
@@ -16,7 +17,7 @@ MONDAY = datetime(2026, 11, 2, 17, 10, tzinfo=MADRID)  # a Monday, in the aftern
 
 def write_config(data_dir, settings):
     data_dir.mkdir(parents=True)
-    doc = {"version": 5, "children": [], "missions": [], "templates": [], "settings": settings}
+    doc = {"version": CURRENT_VERSION, "settings": settings}
     config_path(data_dir).write_text(yaml.safe_dump(doc))
 
 

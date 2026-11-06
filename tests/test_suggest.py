@@ -17,7 +17,7 @@ from app.images.suggest import best_match, words
         ("Despegue", "fluent/rocket"),
         ("Merendar", "fluent/glass-of-milk"),
         ("Peinarse", None),
-        ("Ponerse el pijama", None),  # not "poner la mesa"
+        ("Ponerse el pijama", "own/pajamas"),  # not "poner la mesa"
     ],
 )
 def test_suggestions_for_common_steps(text, ref):

@@ -5,7 +5,7 @@ from app.images.libraries import LIBRARIES, ImageLibraries, photo_filename
 
 def test_catalog_endpoint(client):
     libraries = client.get("/api/images").json()["libraries"]
-    assert [lib["id"] for lib in libraries] == ["fluent"]
+    assert [lib["id"] for lib in libraries] == ["fluent", "own"]
     fluent = libraries[0]
     assert fluent["base_url"] == "static/libraries/fluent"
     assert len(fluent["items"]) > 1000

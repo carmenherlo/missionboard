@@ -4,13 +4,10 @@ import yaml
 from app.storage import config_migrations, db
 from app.storage.config_store import ConfigStore, config_path
 
-V1_FILE = {
-    "version": 1,
+CURRENT = {
+    "version": config_migrations.CURRENT_VERSION,
     "parents": {"code": "1111"},
-    "children": [
-        {"id": "4ca2bf6b", "name": "Noa", "avatar_type": "preset", "preset": "unicorn",
-         "photo": None, "color": "#9d4edd"},
-    ],
+    "children": [{"id": "4ca2bf6b", "name": "Noa", "preset": "unicorn", "color": "#9471e7"}],
 }
 
 
@@ -26,31 +23,20 @@ def read_yaml(data_dir):
 # ---------- config.yaml migrations ----------
 
 
-def test_v1_file_is_upgraded_and_backed_up(tmp_path):
-    write_yaml(tmp_path, V1_FILE)
+def test_a_migration_is_applied_and_the_old_file_kept(tmp_path, monkeypatch):
+    version = config_migrations.CURRENT_VERSION
+    write_yaml(tmp_path, CURRENT)
+    monkeypatch.setattr(config_migrations, "CURRENT_VERSION", version + 1)
+    monkeypatch.setitem(config_migrations._MIGRATIONS, version, lambda doc: {**doc, "version": version + 1, "new": True})
     ConfigStore(tmp_path).migrate()
-
     doc = read_yaml(tmp_path)
-    assert doc["version"] == config_migrations.CURRENT_VERSION
-    assert doc["parents"] == V1_FILE["parents"]
-    assert doc["children"] == [{**V1_FILE["children"][0], "color": "#9471e7"}]  # the unicorn is lilac since v5
-    assert doc["settings"]["stars_per_mission"] == 1
-    assert doc["features"]["games"] is False
-    assert yaml.safe_load((tmp_path / "config.yaml.v1.bak").read_text()) == V1_FILE
-
-
-def test_migrate_keeps_hand_written_settings(tmp_path):
-    write_yaml(tmp_path, {**V1_FILE, "settings": {"stars_per_mission": 3}})
-    ConfigStore(tmp_path).migrate()
-    assert read_yaml(tmp_path)["settings"]["stars_per_mission"] == 3
+    assert doc["version"] == version + 1 and doc["new"] is True and doc["parents"] == CURRENT["parents"]
+    assert yaml.safe_load((tmp_path / f"config.yaml.v{version}.bak").read_text()) == CURRENT
 
 
 def test_migrate_current_file_does_nothing(tmp_path):
-    write_yaml(tmp_path, V1_FILE)
-    store = ConfigStore(tmp_path)
-    store.migrate()
-    (tmp_path / "config.yaml.v1.bak").unlink()
-    store.migrate()
+    write_yaml(tmp_path, CURRENT)
+    ConfigStore(tmp_path).migrate()
     assert not list(tmp_path.glob("*.bak"))
 
 
@@ -59,16 +45,20 @@ def test_migrate_without_file_creates_nothing(tmp_path):
     assert not config_path(tmp_path).exists()
 
 
-def test_file_without_version_counts_as_v1(tmp_path):
-    write_yaml(tmp_path, {"parents": {"code": "9876"}})
+def test_missing_keys_of_a_hand_written_file_are_filled(tmp_path):
+    write_yaml(tmp_path, {"version": config_migrations.CURRENT_VERSION, "parents": {"code": "9876"}})
     doc = ConfigStore(tmp_path).load()
-    assert doc["version"] == config_migrations.CURRENT_VERSION
-    assert doc["parents"]["code"] == "9876"
-    assert doc["children"] == []
+    assert doc["parents"]["code"] == "9876" and doc["children"] == []
+
+
+def test_a_file_from_before_family_missions_is_not_converted(tmp_path):
+    write_yaml(tmp_path, {"parents": {"code": "9876"}})
+    with pytest.raises(config_migrations.ConfigTooOldError):
+        ConfigStore(tmp_path).load()
 
 
 def test_newer_file_is_refused(tmp_path):
-    write_yaml(tmp_path, {**V1_FILE, "version": config_migrations.CURRENT_VERSION + 1})
+    write_yaml(tmp_path, {**CURRENT, "version": config_migrations.CURRENT_VERSION + 1})
     with pytest.raises(config_migrations.ConfigVersionError):
         ConfigStore(tmp_path).migrate()
 
@@ -159,43 +149,3 @@ def test_newer_db_is_refused(tmp_path):
     db.migrate(tmp_path, MIGRATIONS)
     with pytest.raises(db.SchemaVersionError):
         db.migrate(tmp_path, MIGRATIONS[:1])
-
-
-def test_v2_file_gets_missions(tmp_path):
-    write_yaml(tmp_path, {**V1_FILE, "version": 2, "settings": {}, "features": {}})
-    ConfigStore(tmp_path).migrate()
-    doc = read_yaml(tmp_path)
-    assert doc["version"] == config_migrations.CURRENT_VERSION
-    assert doc["missions"] == [] and "templates" not in doc
-    assert [c["id"] for c in doc["children"]] == ["4ca2bf6b"]
-    assert (tmp_path / "config.yaml.v2.bak").is_file()
-
-
-def test_v4_file_moves_the_children_to_the_new_palette(tmp_path):
-    def child(id, color, preset=None):
-        avatar = {"avatar_type": "preset", "preset": preset} if preset else {"avatar_type": "photo", "preset": None}
-        return {"id": id, "name": id, "photo": None, "color": color, **avatar}
-
-    children = [
-        child("fox", "#f8961e", preset="fox"),
-        child("owl", "#8d6e63", preset="owl"),
-        child("lion-was-edited", "#e63946", preset="lion"),  # an animal always takes its own colour
-        child("photo-purple", "#9d4edd"),
-        child("photo-brown", "#8D6E63"),
-        child("photo-unknown", "#123456"),  # not from the old palette: left as it was
-    ]
-    write_yaml(tmp_path, {**V1_FILE, "version": 4, "settings": {}, "features": {}, "missions": [],
-                          "templates": [], "children": children})
-    ConfigStore(tmp_path).migrate()
-    doc = read_yaml(tmp_path)
-    assert doc["version"] == config_migrations.CURRENT_VERSION
-    assert {c["id"]: c["color"] for c in doc["children"]} == {
-        "fox": "#e77300",
-        "owl": "#244d99",
-        "lion-was-edited": "#f6d700",
-        "photo-purple": "#9471e7",
-        "photo-brown": "#d3372f",
-        "photo-unknown": "#123456",
-    }
-    assert [c["name"] for c in doc["children"]] == [c["name"] for c in children]
-    assert (tmp_path / "config.yaml.v4.bak").is_file()

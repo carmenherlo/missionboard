@@ -52,6 +52,7 @@ class Library:
 
 LIBRARIES = [
     Library("fluent", STATIC_DIR / "libraries" / "fluent", "static/libraries/fluent"),
+    Library("own", STATIC_DIR / "libraries" / "own", "static/libraries/own"),  # what Fluent does not have
 ]
 
 

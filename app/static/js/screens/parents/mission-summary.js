@@ -34,7 +34,7 @@ export function missionPills(mission) {
   return [
     routine && h("span", { class: "pill pill--routine" }, mission.image_url && h("img", { src: mission.image_url, alt: "" }),
       routine.manual ? t.missions.routineByHand
-        : routine.anchor === "end" ? t.missions.routineEnds(routine.end.replace(/^0/, ""))
+        : routine.anchor === "end" ? t.missions.routineEnds(routine.goal.replace(/^0/, ""))
         : t.missions.routineStarts(routine.start.replace(/^0/, ""))),
     h("span", { class: "pill" }, daysText(mission.days)),
     mission.schedule

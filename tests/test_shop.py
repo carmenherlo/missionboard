@@ -3,6 +3,7 @@ import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import create_child, saved
@@ -108,8 +109,7 @@ def test_unknown_child_or_item(client, bea):
 
 def test_the_shop_can_be_switched_off(data_dir, clock):
     data_dir.mkdir(parents=True)
-    doc = {"version": 9, "children": [], "missions": [], "templates": [], "prizes": [], "routines": [],
-           "shop": [{"id": "x", "text": "X", "price": 1}], "features": {"shop": False}}
+    doc = {"version": CURRENT_VERSION, "shop": [{"id": "x", "text": "X", "price": 1}], "features": {"shop": False}}
     config_path(data_dir).write_text(yaml.safe_dump(doc))
     with TestClient(create_app(data_dir, clock=clock)) as client:
         bea = create_child(client)

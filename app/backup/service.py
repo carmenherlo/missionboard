@@ -8,7 +8,8 @@ automatic .bak copies of the migrations.
 
 Putting one back is all or nothing: the copy is first checked in a folder of its
 own (it opens, its versions are not newer than this app, its routines add up,
-after bringing it to today's version); only then is what there was kept as a copy
+after bringing it to today's version; one from before family missions cannot be used);
+only then is what there was kept as a copy
 in backups/, and replaced.
 """
 

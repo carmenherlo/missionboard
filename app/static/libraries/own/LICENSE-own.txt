@@ -1,0 +1,2 @@
+The drawings in this folder were made for this project and are under the same MIT
+licence as the rest of the repository (see LICENSE at its root).

@@ -3,6 +3,7 @@ import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import PNG, create_child, photo_files, saved, upload
@@ -153,9 +154,7 @@ def test_the_prize_won_keeps_its_name_if_the_prize_changes(client, bea):
 
 def test_more_spins_a_day_in_the_settings(data_dir, clock):
     write_config(data_dir, {"daily_prize_spins": 2})
-    doc = yaml.safe_load(config_path(data_dir).read_text())
     with TestClient(create_app(data_dir, clock=clock)) as client:
-        assert doc["version"] == 5  # written as 5: the samples come with the migration
         bea = create_child(client)
         finish(client, bea, mission(client, bea, "Uno"))
         spin(client, bea)
@@ -168,7 +167,7 @@ def test_more_spins_a_day_in_the_settings(data_dir, clock):
 @pytest.mark.parametrize("settings", [{"features": {"daily_prize": False}}, {"prizes": []}])
 def test_no_prize_on_the_route(data_dir, clock, settings):
     data_dir.mkdir(parents=True)
-    doc = {"version": 6, "children": [], "missions": [], "templates": [], "prizes": [], "settings": {}}
+    doc = {"version": CURRENT_VERSION}
     doc["prizes"] = settings.get("prizes", [{"id": "p", "text": "Algo"}])
     doc["features"] = settings.get("features", {})
     config_path(data_dir).write_text(yaml.safe_dump(doc))
