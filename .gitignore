@@ -1,4 +1,5 @@
-# Real family data: never in the repo
+# Real family data: never in the repo (data/ is its older name, still in use on some machines)
+personal/
 data/
 
 # Private notes: the plan, the sketches and the project's working notes stay local

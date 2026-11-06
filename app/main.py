@@ -35,7 +35,7 @@ from app.today import api as today_api
 from app.today.repository import BackgroundStore, DayRepository
 
 STATIC_DIR = Path(__file__).parent / "static"
-DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
+DEFAULT_DATA_DIR = Path(__file__).parent.parent / "personal"
 
 # The app's own code must never be stale after an update: the browser asks
 # the server every time (a quick "not modified" when nothing changed).
@@ -91,7 +91,7 @@ def create_app(
     app.state.background_store = BackgroundStore(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
     app.state.purchases_repository = PurchasesRepository(data_dir)
-    # The natural voice (app/voice/): its model in data/voices/ or where
+    # The natural voice (app/voice/): its model in personal/voices/ or where
     # MISSIONBOARD_VOICE_MODEL says (the Docker image brings it).
     model = Path(os.environ.get("MISSIONBOARD_VOICE_MODEL", data_dir / "voices" / MODEL_NAME))
     app.state.voice = Voice(model, data_dir / "voice-cache")

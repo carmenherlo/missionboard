@@ -35,7 +35,7 @@ Requirements: Python 3.12.
 ```bash
 python -m venv .venv && source .venv/bin/activate   # or a conda environment
 pip install -r requirements.txt -r requirements-dev.txt
-MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
+MISSIONBOARD_DATA_DIR=personal uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 ```
 
 Open <http://localhost:8002/>. The default parents' code is **1234**: change it in
@@ -48,7 +48,7 @@ prints the address to open from a tablet on the same network.
 
 Without a voice model the app uses the device's speech synthesis. To use Piper,
 put [`es_ES-sharvard-medium.onnx`](https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium)
-and its `.onnx.json` in `data/voices/`, or point `MISSIONBOARD_VOICE_MODEL` at the
+and its `.onnx.json` in `personal/voices/`, or point `MISSIONBOARD_VOICE_MODEL` at the
 `.onnx` file. The Docker image downloads it on build.
 
 ## Docker
@@ -57,12 +57,12 @@ and its `.onnx.json` in `data/voices/`, or point `MISSIONBOARD_VOICE_MODEL` at t
 docker compose up -d --build
 ```
 
-The app listens on port 8003 and keeps its data in `./data` (mounted at `/srv/data`).
+The app listens on port 8003 and keeps its data in `./personal` (mounted at `/srv/data`).
 
 ## Data
 
 Everything the family sets up and does lives in one folder (`MISSIONBOARD_DATA_DIR`,
-`data/` by default), never in the repository:
+`personal/` by default), never in the repository:
 
 | Path | What |
 |---|---|

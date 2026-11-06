@@ -1,4 +1,4 @@
-"""Uploaded images, stored as files in data/photos/."""
+"""Uploaded images, stored as files in personal/photos/."""
 
 import secrets
 from pathlib import Path

@@ -23,7 +23,7 @@ def time_from_yaml_number(value):
 class Moment(BaseModel):
     """A moment of the day, by its light: from `start` until the next one starts.
 
-    `name` is also the file of its illustration (data/backgrounds/<name>.png).
+    `name` is also the file of its illustration (personal/backgrounds/<name>.png).
     Later each season will bring its own list (pictures and times).
     """
 

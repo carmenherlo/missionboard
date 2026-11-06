@@ -3,7 +3,7 @@
 # missionboard conda environment. Code changes (CSS, JS, Python) show up on reload.
 #
 # Usage: bash dev.sh   → http://localhost:8002/ (and from the tablet, on the home network)
-#   the family's data from data/
+#   the family's data from personal/
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -20,7 +20,7 @@ case "${1:-}" in
 esac
 
 port=8002
-export MISSIONBOARD_DATA_DIR=data
+export MISSIONBOARD_DATA_DIR=personal
 
 # Activate the environment here, so it works without activating it first.
 if [[ "${CONDA_DEFAULT_ENV:-}" != "missionboard" ]]; then

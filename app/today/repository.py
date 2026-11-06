@@ -106,7 +106,7 @@ class DayRepository:
 
 
 class BackgroundStore:
-    """The illustrations of the moments of the day, in data/backgrounds/<moment>.<ext>.
+    """The illustrations of the moments of the day, in personal/backgrounds/<moment>.<ext>.
 
     They live with the family's data, outside the repo: they can be changed
     (or drawn again) without touching the code.
