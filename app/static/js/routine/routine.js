@@ -59,6 +59,7 @@ const AFTER_ZERO_MS = 1000; // after the countdown's last pip, the voice waits t
 const DONE_MS = 30_000; // started by hand: "¡Hecho!" (or "¡Se acabó el tiempo!") stays this long
 const TRIAL_SPEEDS = [1, 10, 20]; // "Probar ahora": how fast its clock can go
 const TRIAL_JUMP_LEAD_S = 20; // "Siguiente" lands this long before the next part (its countdown is heard)
+const TOO_LATE_TO_START_S = 30; // less than this left of a part: no announcing its start
 const JUST_STARTED_S = 5; // "Atrás" this soon after a part starts: to the one before it
 const HOLD_HINT_MS = 2500; // a quick tap on "Cerrar": "Mantén pulsado para cerrar", this long
 
@@ -481,6 +482,9 @@ export function startRoutines() {
       const ringFirst = phase.index === 0 && !data.manual && data.alarm && !data.stopped
         && minuteOf(data.wake) === part.from && time - part.from < 1;
       // Started by hand, the time of day does not matter: only how long.
+      // Landed in its last seconds ("Siguiente", "Probar desde aquí", opened late): its start is
+      // over; "Diez segundos…" would cut it right away, in the transcript but barely heard (06/11).
+      if (!counted && (phase.to - time) * 60 < TOO_LATE_TO_START_S && time - part.from > JUST_STARTED_S / 60) return;
       const sentences = script.partStart(part, {
         time, minutes: Math.round(part.to - part.from), ends: part.to, manual: data.manual, kids: data.people.length,
       });

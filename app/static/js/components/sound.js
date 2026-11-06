@@ -76,6 +76,27 @@ addEventListener("pointerdown", () => {
   unlockListeners.clear();
 }, { once: true, capture: true });
 
+// A sound file played by the audio engine (the voice, 06/11): once a tap has started the
+// engine it may sound at any time, also in a page inside another one (a Home Assistant
+// panel), where the browser refuses <audio> without a tap at that very moment.
+export async function decodeClip(file) {
+  return context().decodeAudioData(file);
+}
+
+// { done: a promise for when it ends, pause(): stop it }
+export function playClip(clip, level) {
+  const ctx = context();
+  const gain = ctx.createGain();
+  gain.gain.value = level;
+  gain.connect(ctx.destination);
+  const source = ctx.createBufferSource();
+  source.buffer = clip;
+  source.connect(gain);
+  const done = new Promise((resolve) => { source.onended = resolve; });
+  source.start();
+  return { done, pause: () => source.stop() };
+}
+
 export function soundLocked() {
   return !audio || audio.state !== "running";
 }

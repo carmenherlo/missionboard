@@ -329,7 +329,7 @@ export const t = {
     goalCard: "La meta",
     panelSong: "Canción",
     panelSongs: "Canciones (una detrás de otra)",
-    addAfter: "Añadir detrás",
+    addAfter: "Añadir",
     takeOut: (name) => `Quitar «${name}» de aquí`,
     lastsTogether: (length) => `Duran ${length} entre todas.`,
     afterVoice: "Empieza cuando la voz termina de hablar",

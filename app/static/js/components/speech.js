@@ -7,7 +7,7 @@
 // If neither is there, canSpeak() is false and the screens hide the 🔊.
 // Its volume is the "voice" channel of sound.js.
 import { api } from "../api.js";
-import { isOff, volume } from "./sound.js";
+import { decodeClip, isOff, playClip, soundLocked, volume } from "./sound.js";
 
 const PAUSE_MS = 350; // between the sentences of one say()
 
@@ -64,6 +64,9 @@ async function sayNaturally(parts, turn) {
 }
 
 async function playEach(parts, turn) {
+  // With the audio engine running (a tap since the page loaded), through it: it works in a
+  // page inside another too (06/11: <audio> was refused in a Home Assistant panel, in silence).
+  if (!soundLocked()) return playWithEngine(parts, turn);
   // All of them asked for at once: the next one is ready when the last ends.
   const sounds = parts.map((part) => new Audio(`api/voice?text=${encodeURIComponent(part)}`));
   for (const [index, sound] of sounds.entries()) {
@@ -80,6 +83,30 @@ async function playEach(parts, turn) {
       if (turn === saying) sayWithTablet(parts.slice(index)); // the rest, with the tablet's voice
       return;
     }
+    await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
+  }
+}
+
+async function playWithEngine(parts, turn) {
+  const url = (part) => `api/voice?text=${encodeURIComponent(part)}`;
+  // All of them asked for at once: the next one is ready when the last ends.
+  const clips = parts.map((part) => fetch(url(part)).then((res) => {
+    if (!res.ok) throw new Error(`voice: ${res.status}`);
+    return res.arrayBuffer();
+  }).then(decodeClip));
+  clips.forEach((clip) => clip.catch(() => {})); // each failure is dealt with at its turn
+  for (const [index, loading] of clips.entries()) {
+    try {
+      const clip = await loading;
+      if (turn !== saying) return;
+      const sound = playClip(clip, Math.min(1, volume("voice")));
+      playing = sound;
+      await sound.done;
+    } catch {
+      if (turn === saying) sayWithTablet(parts.slice(index)); // the rest, with the tablet's voice
+      return;
+    }
+    if (turn !== saying) return;
     await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
   }
 }
