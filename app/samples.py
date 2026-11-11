@@ -42,7 +42,7 @@ def _mission(mission_id: str, name: str, image: str, color: str, days: list[str]
 
 
 MISSIONS = [
-    _mission("despegue", "Despegue", "rocket", "#2193d6", WEEKDAYS, "07:00", "09:00", [
+    _mission("despegue", "Despegue", "rocket", "#2193d6", WEEKDAYS, "06:00", "09:00", [
         ("Despertarse", "sleeping-face"),
         ("Desayunar", "bowl-with-spoon"),
         ("Recoger el desayuno", "fork-and-knife-with-plate"),
@@ -78,17 +78,17 @@ def _part(part_id: str, minutes: int, spoken: str | None = None, say: str | None
 ROUTINES = [
     {
         "id": "despegue-rutina", "mission_id": "despegue", "days": WEEKDAYS, "kids": ["bea", "alex"],
-        "wake": "06:30", "anchor": "end", "alarm": True, "remind_every": 5, "offsets": {}, "notices": [], "music": [],
+        "wake": "06:35", "anchor": "end", "alarm": True, "remind_every": 5, "offsets": {}, "notices": [], "music": [],
         "greeting": "¡Buenos días!", "last_countdown": None, "early_goal": None, "warn_about": "end",
-        "goal": {"at": "07:30", "image": None, "say": "¡Es hora de salir!", "check_minutes": 5, "check_say": None},
+        "goal": {"at": "07:35", "image": None, "say": "¡Es hora de salir!", "check_minutes": 5, "check_say": None},
         "parts": [
-            _part("despegue-1", 5, say="Ahora toca despertarse.", at="06:35"),
+            _part("despegue-1", 10, say="Ahora toca despertarse.", at="06:40"),
             _part("despegue-2", 15, say="Ahora toca desayunar."),
-            _part("despegue-3", 5, say="Ahora toca recoger el desayuno."),
+            _part("despegue-3", 3, say="Ahora toca recoger el desayuno."),
             _part("despegue-4", 7, spoken="el aseo"),
-            _part("despegue-5", 6, say="Ahora toca vestirse: ropa y reloj."),
+            _part("despegue-5", 5, say="Ahora toca vestirse: ropa y reloj."),
             _part("despegue-6", 5, say="Ahora toca acicalarse: peinarse y colonia."),
-            _part("despegue-7", 7, say="Ahora toca prepararse para salir: gorro, bufanda, abrigo, guantes y mochila."),
+            _part("despegue-7", 5, say="Ahora toca prepararse para salir: gorro, bufanda, abrigo, guantes y mochila."),
         ],
     },
     {

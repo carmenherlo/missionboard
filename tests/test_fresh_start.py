@@ -13,7 +13,7 @@ from tests.conftest import PARENT
 from tests.test_settings import FixedClock
 
 MADRID = timezone(timedelta(hours=1))
-MONDAY = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
+MONDAY = datetime(2026, 11, 2, 6, 45, tzinfo=MADRID)
 OLD = {"version": 14, "parents": {"code": "9999"},
        "children": [{"id": "x", "name": "De antes", "preset": "fox", "color": "#e77300"}],
        "missions": [{"id": "m", "child_id": "x", "name": "Vieja", "steps": []}],
@@ -131,17 +131,17 @@ def test_each_child_starts_with_five_stars_and_so_does_a_new_one(examples):
 
 def test_the_morning_of_the_examples(examples, clock):
     client = examples
-    on = client.get("/api/routines/current").json()  # Monday 6:40
-    assert on["name"] == "Despegue" and on["wake"] == "06:30" and on["alarm"] is True
-    assert on["parts"][0]["start"] == "06:35" and on["goal"]["at"] == "07:30"
+    on = client.get("/api/routines/current").json()  # Monday 6:45
+    assert on["name"] == "Despegue" and on["wake"] == "06:35" and on["alarm"] is True
+    assert on["parts"][0]["start"] == "06:40" and on["parts"][-1]["end"] == "07:30" and on["goal"]["at"] == "07:35"
     assert [p["child"]["name"] for p in on["people"]] == ["Bea", "Alex"]
     assert on["music"] == []
     states = {
         c["name"]: client.get(f"/api/children/{c['id']}/today").json()["missions"][0]
         for c in client.get("/api/children").json()
     }
-    assert states["Bea"]["state"] == "open" and states["Bea"]["schedule"] == {"start": "06:35", "end": "07:30"}
-    assert states["Noa"]["state"] == "upcoming" and states["Noa"]["schedule"] == {"start": "07:00", "end": "09:00"}
+    assert states["Bea"]["state"] == "open" and states["Bea"]["schedule"] == {"start": "06:40", "end": "07:35"}
+    assert states["Noa"]["state"] == "open" and states["Noa"]["schedule"] == {"start": "06:00", "end": "09:00"}
 
 
 def test_the_night_of_the_examples(examples, clock):
