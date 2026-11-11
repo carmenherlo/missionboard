@@ -162,6 +162,8 @@
   /* Home (05/11: bigger, more inviting): each child's avatar grows with the screen,
      up to three side by side on a tablet in landscape. */
   --home-avatar-size: clamp(150px, min(24vw, 38vh), 300px);
+  --home-avatar-size-4: clamp(110px, min(17vw, 34vh), 260px); /* four children, in one row */
+  --home-avatar-size-many: clamp(90px, min(13vw, 30vh), 220px); /* five or more */
   /* How the home looks (inicio-ajustes.html, chosen in Ajustes): the background of the moment
      with a white veil (none, soft, or the route's), and the names on a white pill. */
   --home-veil-soft: rgb(255 255 255 / 0.25);

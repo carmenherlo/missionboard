@@ -169,12 +169,29 @@
   font-size: 2.25rem;
 }
 
+/* Four children or more: smaller, so they still fit in one row. */
+.children--4 {
+  --home-avatar-size: var(--home-avatar-size-4);
+  gap: 2rem;
+}
+
+.children--many {
+  --home-avatar-size: var(--home-avatar-size-many);
+  gap: 1.5rem;
+}
+
+.children--4 .child-card__name,
+.children--many .child-card__name {
+  font-size: 1.75rem;
+}
+
 /* The background of the moment behind the children (Ajustes → Inicio de los niños). */
 .home-look--scene {
   background: none;
 }
 
-.home-look--scene > :not(.child-scene) {
+/* Over the background; the corner buttons keep their own place, over everything. */
+.home-look--scene > :not(.child-scene, .corner-button, .home-tools) {
   z-index: 1;
 }
 

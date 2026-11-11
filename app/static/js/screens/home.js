@@ -18,7 +18,7 @@ export async function viewHome() {
   const showClock = homeScreen() === "clock";
   const dark = showClock && display().clockTheme === "dark";
   const grid = showClock ? clockScreen(children) : children.length
-    ? h("section", { class: "children" },
+    ? h("section", { class: `children${children.length >= 5 ? " children--many" : children.length === 4 ? " children--4" : ""}` },
         children.map((child) => homeKid(child, look, { href: `#/child/${child.id}` })))
     : h("div", { class: "home__empty" },
         h("p", { class: "empty" }, t.home.empty),
