@@ -44,7 +44,7 @@ Hace falta Python 3.12.
 ```bash
 python -m venv .venv && source .venv/bin/activate   # o un entorno de conda
 pip install -r requirements.txt -r requirements-dev.txt
-MISSIONBOARD_DATA_DIR=personal uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
+MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 ```
 
 Abre <http://localhost:8002/>. El código de padres por defecto es **1234**: cámbialo
@@ -59,7 +59,7 @@ la dirección para abrirla desde una tablet de la misma red.
 
 Sin modelo de voz, la app usa la voz del aparato. Para usar Piper, pon
 [`es_ES-sharvard-medium.onnx`](https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium)
-y su `.onnx.json` en `personal/voices/`, o indica el `.onnx` en `MISSIONBOARD_VOICE_MODEL`.
+y su `.onnx.json` en `data/voices/`, o indica el `.onnx` en `MISSIONBOARD_VOICE_MODEL`.
 La imagen de Docker lo descarga al construirse.
 
 ## Docker
@@ -68,12 +68,14 @@ La imagen de Docker lo descarga al construirse.
 docker compose up -d --build
 ```
 
-La app escucha en el puerto 8003 y guarda sus datos en `./personal` (montado en `/srv/data`).
+La app escucha en el puerto 8003 y guarda sus datos en `./data`.
 
 ## Los datos
 
-Todo lo que la familia configura y hace está en una carpeta (`MISSIONBOARD_DATA_DIR`,
-`personal/` por defecto), nunca en el repositorio:
+Todo lo que la familia configura y hace está en una carpeta de datos, nunca en el
+repositorio. Su ruta la da `MISSIONBOARD_DATA_DIR`: `data/` por defecto, `/srv/data` en
+la imagen de Docker (montada desde `./data`) y `/data` en el addon de Home Assistant (el
+almacenamiento persistente que Home Assistant asigna a cada addon).
 
 | Ruta | Qué hay |
 |---|---|

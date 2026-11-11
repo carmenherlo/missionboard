@@ -4,5 +4,5 @@ services:
     ports:
       - "8003:8003"
     volumes:
-      - ./personal:/srv/data
+      - ./data:/srv/data
     restart: unless-stopped

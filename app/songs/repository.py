@@ -1,5 +1,5 @@
 """The family's songs (rutinas-4, section 3): the `songs` list of config.yaml, and
-their files in personal/sounds/ (they are the family's, like the photos: never in the repo)."""
+their files in data/sounds/ (they are the family's, like the photos: never in the repo)."""
 
 import secrets
 from dataclasses import asdict, dataclass
@@ -14,7 +14,7 @@ SOUNDS_DIRNAME = "sounds"
 class Song:
     id: str
     name: str
-    file: str  # in personal/sounds/
+    file: str  # in data/sounds/
     seconds: float  # how long it lasts (measured by the browser that uploaded it)
 
 
@@ -45,7 +45,7 @@ class SongsRepository:
 
 
 class SoundFiles:
-    """The song files, in personal/sounds/."""
+    """The song files, in data/sounds/."""
 
     def __init__(self, data_dir: Path):
         self.directory = data_dir / SOUNDS_DIRNAME

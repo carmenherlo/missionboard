@@ -4,7 +4,7 @@ import pytest
 
 from app.voice.service import MODEL_NAME, Voice
 
-DEV_MODEL = Path(__file__).parent.parent / "personal" / "voices" / MODEL_NAME
+DEV_MODEL = Path(__file__).parent.parent / "data" / "voices" / MODEL_NAME
 
 
 def test_without_a_model_the_tablet_reads(client):
