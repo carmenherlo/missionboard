@@ -917,6 +917,14 @@
 
 .task-card__toggle--still { cursor: default; }
 
+/* A task without steps: the whole card is tapped to mark it. */
+.task-card--tap {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.task-card--tap .task-card__toggle--still { cursor: inherit; }
+
 .task-card__picture {
   display: grid;
   flex: none;

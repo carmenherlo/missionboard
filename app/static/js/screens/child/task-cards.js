@@ -36,15 +36,30 @@ function head(task, { onTap, disabled, trailing }) {
 }
 
 // A card as the child has it: with steps they mark the squares and it completes by
-// itself; without any, they mark the card. `current`: the task of the routine's part now.
+// itself; without any, the whole card is what they tap (not only its title).
+// `current`: the task of the routine's part now.
 export function childTaskCard(task, { locked, current, onMark, onSpeak }) {
+  const whole = task.marks_itself;
+  const tap = (e) => {
+    if (locked || e.target.closest(".task-card__speak")) return; // listening is not marking
+    onMark(task, e.currentTarget);
+  };
   return h("article", {
-    class: `task-card${task.checked ? " task-card--done" : ""}${current ? " task-card--current" : ""}`,
+    class: `task-card${task.checked ? " task-card--done" : ""}${current ? " task-card--current" : ""}${whole && !locked ? " task-card--tap" : ""}`,
     "data-task": task.id,
+    ...(whole ? {
+      role: "button", tabindex: locked ? "-1" : "0", "aria-pressed": String(Boolean(task.checked)),
+      "aria-disabled": String(Boolean(locked)), "aria-label": t.child.stepLabel(task.text, task.checked),
+      onclick: tap,
+      onkeydown: (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        tap(e);
+      },
+    } : {}),
   },
     head(task, {
-      onTap: task.marks_itself ? (item, card) => onMark(item, card) : null,
-      disabled: locked,
+      onTap: null,
       trailing: [
         canSpeak() && h("button", {
           type: "button", class: "task-card__speak", "aria-label": t.child.listen(task.text),
