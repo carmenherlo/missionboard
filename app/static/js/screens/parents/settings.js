@@ -10,36 +10,21 @@ import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { loadSettings, saveSettings, settingStepper } from "./settings-parts.js";
 
-const DAY = 24 * 60;
 const MOMENTS = ["manana", "dia", "tarde", "noche"];
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-const minuteOf = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
-const timeOf = (minute) => {
-  const m = ((minute % DAY) + DAY) % DAY;
-  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-};
 const seasonName = (season) => t.settings.seasons[season.name] ?? season.name;
 
-// When each background shows: the morning and the evening, `margin` around the sun
-// (as current_moment in app/today/service.py).
-function spans(season, margin) {
-  const sunrise = minuteOf(season.sunrise), sunset = minuteOf(season.sunset);
-  return {
-    manana: [sunrise - margin, sunrise + margin],
-    dia: [sunrise + margin, sunset - margin],
-    tarde: [sunset - margin, sunset + margin],
-    noche: [sunset + margin, sunrise - margin],
-  };
-}
+// When each background shows: from its time until the next one starts (as current_moment
+// in app/today/service.py); the night goes on past midnight until the morning.
+const until = (season, moment) => season[MOMENTS[(MOMENTS.indexOf(moment) + 1) % MOMENTS.length]];
 
 // The same rules as the server (Settings), said in words before saving.
-function problem(seasons, margin) {
+function problem(seasons) {
   if (new Set(seasons.map((s) => s.start)).size !== seasons.length) return t.settings.sameStart;
   for (const season of seasons) {
-    const light = minuteOf(season.sunset) - minuteOf(season.sunrise);
-    if (light <= 0) return t.settings.sunsetFirst(seasonName(season));
-    if (light <= 2 * margin || DAY - light <= 2 * margin) return t.settings.noDayLeft(seasonName(season));
+    const times = MOMENTS.map((moment) => season[moment]);
+    if (times.some((time, i) => i > 0 && time <= times[i - 1])) return t.settings.outOfOrder(seasonName(season));
   }
   return null;
 }
@@ -47,30 +32,36 @@ function problem(seasons, margin) {
 export async function viewSettings() {
   const { settings, now } = await loadSettings();
   const status = saveStatus();
-  let seasons = settings.seasons.map((season) => ({ ...season }));
-  let margin = settings.moment_margin_minutes;
+  const seasons = settings.seasons.map((season) => ({ ...season }));
   const redraws = [];
 
   function saveSeasons() {
     redraws.forEach((redraw) => redraw());
-    const wrong = problem(seasons, margin);
+    const wrong = problem(seasons);
     if (wrong) return status.fail(wrong);
     // In order of their start date, as the app reads them (a date moved past the next one).
     const sorted = [...seasons].sort((a, b) => a.start.localeCompare(b.start));
-    saveSettings(status, { seasons: sorted, moment_margin_minutes: margin });
+    saveSettings(status, { seasons: sorted });
   }
 
   function seasonCard(season) {
     const shots = h("div", { class: "season__shots" });
     const isNow = season.name === now.season;
-    redraws.push(() => {
-      const times = spans(season, margin);
-      shots.replaceChildren(...MOMENTS.map((moment) =>
-        h("figure", { class: `season__shot${isNow && moment === now.moment ? " season__shot--now" : ""}` },
-          h("img", { src: `static/backgrounds/${season.name}/${moment}.webp`, alt: "", loading: "lazy" }),
-          h("figcaption", {}, h("b", {}, t.settings.moments[moment]), " ",
-            t.settings.span(...times[moment].map(timeOf))))));
-    });
+    // Under each background, the time it starts; the time it ends follows the next one.
+    const ends = {};
+    shots.replaceChildren(...MOMENTS.map((moment) =>
+      h("figure", { class: `season__shot${isNow && moment === now.moment ? " season__shot--now" : ""}` },
+        h("img", { src: `static/backgrounds/${season.name}/${moment}.webp`, alt: "", loading: "lazy" }),
+        h("figcaption", {}, h("b", {}, t.settings.moments[moment])),
+        h("input", {
+          type: "time", class: "season__time", value: season[moment], required: true,
+          "aria-label": `${seasonName(season)} · ${t.settings.moments[moment]} · ${t.settings.from}`,
+          onchange: (e) => { if (!e.target.value) return; season[moment] = e.target.value; saveSeasons(); },
+        }),
+        ends[moment] = h("span", { class: "season__until" }))));
+    redraws.push(() => MOMENTS.forEach((moment) => {
+      ends[moment].textContent = t.settings.until(until(season, moment));
+    }));
 
     const [month, day] = season.start.split("-").map(Number);
     const daySelect = h("select", { "aria-label": `${seasonName(season)} · ${t.settings.day}` });
@@ -89,18 +80,10 @@ export async function viewSettings() {
     fillDays(day);
     daySelect.onchange = changeStart;
 
-    const sunTime = (field, label) => h("label", { class: "season__field" }, label,
-      h("input", {
-        type: "time", value: season[field], required: true,
-        onchange: (e) => { if (!e.target.value) return; season[field] = e.target.value; saveSeasons(); },
-      }));
-
     return h("div", { class: `season${isNow ? " season--now" : ""}` },
       h("div", { class: "season__head" },
         h("span", { class: "season__name" }, seasonName(season), " ", isNow && h("span", { class: "pill" }, t.settings.now)),
-        h("span", { class: "season__field" }, t.settings.starts, daySelect, monthSelect),
-        sunTime("sunrise", t.settings.sunrise),
-        sunTime("sunset", t.settings.sunset)),
+        h("span", { class: "season__field" }, t.settings.starts, daySelect, monthSelect)),
       shots);
   }
 
@@ -137,10 +120,6 @@ export async function viewSettings() {
         panel(t.settings.seasonsTitle,
           h("div", { class: "stack" },
             h("p", { class: "hint" }, t.settings.seasonsHint),
-            settingStepper({
-              label: t.settings.margin, value: margin, step: 30, min: 30, max: 240, format: t.settings.hours,
-              onChange: (n) => { margin = n; saveSeasons(); },
-            }),
             ...cards,
             resetBox)),
         h("p", { class: "note" }, t.settings.fileHint))));

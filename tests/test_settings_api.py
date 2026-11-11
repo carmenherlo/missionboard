@@ -41,7 +41,7 @@ def test_what_there_is_and_the_season_now(client):
     got = client.get("/api/settings", headers=PARENT).json()
     assert got["settings"]["stars_per_mission"] == 1 and got["features"]["shop"] is True
     assert [s["name"] for s in got["settings"]["seasons"]] == ["primavera", "verano", "otono", "invierno"]
-    assert got["now"] == {"season": "otono", "moment": "manana"}  # 7:02, two hours around the sunrise at 7:30
+    assert got["now"] == {"season": "otono", "moment": "manana"}  # 7:02: the morning starts at 5:30
 
 
 def test_a_change_is_saved_in_config_yaml_and_logged(client, data_dir):
@@ -58,7 +58,6 @@ def test_a_change_is_saved_in_config_yaml_and_logged(client, data_dir):
     {"stars_per_mission": -1},
     {"day_starts_at": "25:00"},
     {"routine_warn_minutes": 31},
-    {"moment_margin_minutes": 300},  # no day left in winter
 ])
 def test_a_value_that_does_not_do_is_not_saved(client, body):
     assert patch(client, **body).status_code == 422
@@ -71,15 +70,16 @@ def seasons(client):
 
 def test_seasons_changed_checked_and_back_to_the_apps(client):
     changed = seasons(client)
-    changed[2] = {**changed[2], "start": "10-01", "sunrise": "08:00"}
-    assert patch(client, seasons=changed, moment_margin_minutes=90).status_code == 200
-    assert seasons(client)[2] == {"name": "otono", "start": "10-01", "sunrise": "08:00", "sunset": "19:00"}
-    sunset_first = [*changed[:2], {**changed[2], "sunset": "07:00"}, changed[3]]
-    assert patch(client, seasons=sunset_first).status_code == 422
+    changed[2] = {**changed[2], "start": "10-01", "dia": "10:00"}
+    assert patch(client, seasons=changed).status_code == 200
+    assert seasons(client)[2] == {"name": "otono", "start": "10-01", "manana": "05:30", "dia": "10:00",
+                                  "tarde": "17:00", "noche": "21:00"}
+    night_first = [*changed[:2], {**changed[2], "noche": "16:00"}, changed[3]]
+    assert patch(client, seasons=night_first).status_code == 422
     out_of_order = [*changed[:2], {**changed[2], "start": "06-01"}, changed[3]]
     assert patch(client, seasons=out_of_order).status_code == 422
     got = client.post("/api/settings/seasons/reset", headers=PARENT).json()["settings"]
-    assert got["seasons"][2]["start"] == "09-23" and got["moment_margin_minutes"] == 120
+    assert got["seasons"][2]["start"] == "09-23" and got["seasons"][2]["dia"] == "09:30"
 
 
 def test_switches_that_do_something(client):

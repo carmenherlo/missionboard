@@ -1818,6 +1818,17 @@ select.pick {
   border-radius: var(--radius-sm);
 }
 
+.season__time {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--space-1);
+  text-align: center;
+}
+
+.season__until {
+  color: var(--muted);
+}
+
 .season__shot--now img {
   outline: 3px solid var(--primary);
   outline-offset: 1px;

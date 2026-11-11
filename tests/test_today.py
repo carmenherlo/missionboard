@@ -378,7 +378,7 @@ def test_the_season(client, bea, clock, moment, season):
     assert f"/{season}/" in today(client, bea)["background_url"]
 
 
-# Autumn: sunrise at 7:30, sunset at 19:00; 2 hours either way.
+# Autumn: the morning at 5:30, the day at 9:30, the evening at 17:00, the night at 21:00.
 @pytest.mark.parametrize("time, moment", [
     ((5, 29), "noche"), ((5, 30), "manana"), ((9, 29), "manana"), ((9, 30), "dia"), ((16, 59), "dia"),
     ((17, 0), "tarde"), ((20, 59), "tarde"), ((21, 0), "noche"), ((23, 59), "noche"), ((0, 0), "noche"),
@@ -398,25 +398,27 @@ def test_every_season_has_its_four_pictures():
 
 
 def test_the_seasons_can_be_changed_in_the_settings_and_with_no_picture_no_background(data_dir, clock):
-    write_config(data_dir, {"seasons": [{"name": "siempre", "start": "01-01", "sunrise": "08:00", "sunset": "20:00"}]})
+    write_config(data_dir, {"seasons": [{"name": "siempre", "start": "01-01", "manana": "06:00", "dia": "08:00",
+                                                     "tarde": "18:00", "noche": "20:00"}]})
     with TestClient(create_app(data_dir, clock=clock)) as client:
         day = today(client, create_child(client))
         assert day["moment"] == "dia" and day["background_url"] is None
 
 
-def test_the_margin_of_the_morning_and_the_evening_in_the_settings(data_dir, clock):
-    write_config(data_dir, {"moment_margin_minutes": 30})
+def test_each_moment_starts_at_its_time_in_the_settings(data_dir, clock):
+    write_config(data_dir, {"seasons": [{"name": "otono", "start": "01-01", "manana": "07:00", "dia": "08:30",
+                                         "tarde": "18:00", "noche": "20:00"}]})
     with TestClient(create_app(data_dir, clock=clock)) as client:
         bea = create_child(client)
-        clock.moment = MONDAY.replace(hour=8, minute=30)  # autumn: sunrise 7:30, margin 30 min
-        assert today(client, bea)["moment"] == "dia"
-        clock.moment = MONDAY.replace(hour=7, minute=10)
-        assert today(client, bea)["moment"] == "manana"
+        for (hour, minute), moment in [((6, 59), "noche"), ((7, 0), "manana"), ((8, 30), "dia"), ((20, 0), "noche")]:
+            clock.moment = MONDAY.replace(hour=hour, minute=minute)
+            assert today(client, bea)["moment"] == moment
 
 
 def test_seasons_out_of_order_stop_the_app(data_dir, clock):
-    write_config(data_dir, {"seasons": [{"name": "b", "start": "06-01", "sunrise": "08:00", "sunset": "20:00"},
-                                        {"name": "a", "start": "01-01", "sunrise": "08:00", "sunset": "20:00"}]})
+    write_config(data_dir, {"seasons": [
+        {"name": "b", "start": "06-01", "manana": "06:00", "dia": "08:00", "tarde": "18:00", "noche": "20:00"},
+        {"name": "a", "start": "01-01", "manana": "06:00", "dia": "08:00", "tarde": "18:00", "noche": "20:00"}]})
     with pytest.raises(Exception):
         with TestClient(create_app(data_dir, clock=clock)):
             pass

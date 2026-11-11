@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 16
+CURRENT_VERSION = 17
 
 
 class ConfigVersionError(Exception):
@@ -21,6 +21,41 @@ class ConfigTooOldError(Exception):
 
 
 _MIGRATIONS: dict[int, Callable[[dict], dict]] = {}
+
+
+def _hhmm(minute: int) -> str:
+    minute %= 24 * 60
+    return f"{minute // 60:02d}:{minute % 60:02d}"
+
+
+def _minutes(value) -> int:
+    if isinstance(value, int):  # YAML 1.1 read an unquoted 7:30 as 450
+        return value
+    return int(value[:2]) * 60 + int(value[3:])
+
+
+def _v16_to_v17(doc: dict) -> dict:
+    """Seasons: the start of each moment (morning, day, evening, night) instead of the
+    sunrise and the sunset with a margin around them; the margin goes away."""
+    settings = doc.get("settings") or {}
+    margin = settings.pop("moment_margin_minutes", 120)
+    seasons = []
+    for season in settings.get("seasons") or []:
+        if "sunrise" not in season:
+            seasons.append(season)
+            continue
+        sunrise, sunset = _minutes(season["sunrise"]), _minutes(season["sunset"])
+        seasons.append({"name": season["name"], "start": season["start"],
+                        "manana": _hhmm(sunrise - margin), "dia": _hhmm(sunrise + margin),
+                        "tarde": _hhmm(sunset - margin), "noche": _hhmm(sunset + margin)})
+    if seasons:
+        settings["seasons"] = seasons
+    doc["settings"] = settings
+    doc["version"] = 17
+    return doc
+
+
+_MIGRATIONS[16] = _v16_to_v17
 
 
 def upgrade(doc: dict) -> dict:

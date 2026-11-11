@@ -68,8 +68,9 @@ def test_missing_settings_are_written_into_the_file_and_kept(tmp_path):
     SettingsRepository(ConfigStore(tmp_path)).complete()
     doc = yaml.safe_load(config_path(tmp_path).read_text())
     assert doc["settings"]["starting_stars"] == 5 and doc["settings"]["mine"] == "x"  # theirs stays
-    assert doc["settings"]["stars_per_mission"] == 1 and doc["settings"]["moment_margin_minutes"] == 120
-    assert doc["settings"]["seasons"][3] == {"name": "invierno", "start": "12-21", "sunrise": "08:30", "sunset": "16:30"}
+    assert doc["settings"]["stars_per_mission"] == 1
+    assert doc["settings"]["seasons"][3] == {"name": "invierno", "start": "12-21", "manana": "06:30", "dia": "10:30",
+                                             "tarde": "14:30", "noche": "18:30"}
     assert doc["features"]["shop"] is False and doc["features"]["routines"] is True
     assert list(doc["settings"])[:2] == ["stars_per_mission", "daily_prize_spins"]
     # Written once; the defaults in a later version do not change the family's
@@ -112,3 +113,17 @@ def test_clock_is_injected(tmp_path):
 
 def test_default_clock_is_system_clock(tmp_path):
     assert isinstance(create_app(tmp_path).state.clock, SystemClock)
+
+
+def test_seasons_with_sunrise_and_sunset_become_the_start_of_each_moment(tmp_path):
+    """Migration 16 → 17: the margin around the sunrise and the sunset becomes four times."""
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    config_path(tmp_path).write_text(
+        "version: 16\nsettings:\n  moment_margin_minutes: 90\n  seasons:\n"
+        "  - {name: otono, start: 09-23, sunrise: 7:30, sunset: '19:00'}\n")
+    store = ConfigStore(tmp_path)
+    store.migrate()
+    doc = yaml.safe_load(config_path(tmp_path).read_text())
+    assert doc["version"] == CURRENT_VERSION and "moment_margin_minutes" not in doc["settings"]
+    assert doc["settings"]["seasons"] == [{"name": "otono", "start": "09-23", "manana": "06:00", "dia": "09:00",
+                                          "tarde": "17:30", "noche": "20:30"}]

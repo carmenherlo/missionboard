@@ -22,36 +22,38 @@ def time_from_yaml_number(value):
     return value
 
 
+MOMENTS = ("manana", "dia", "tarde", "noche")
+
+
 class Season(BaseModel):
-    """From its date until the next season starts: its sunrise and sunset say the moments
-    of the day. `name` is also the folder of its pictures, in static/backgrounds/."""
+    """From its date until the next season starts. Each moment of the day starts at its
+    time and lasts until the next one starts; the night goes on past midnight until the
+    morning. `name` is also the folder of its pictures, in static/backgrounds/."""
 
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(pattern=r"^[a-z0-9-]{1,30}$")
     start: str = Field(pattern=r"^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$")  # MM-DD
-    sunrise: str = Field(pattern=TIME)
-    sunset: str = Field(pattern=TIME)
+    manana: str = Field(pattern=TIME)
+    dia: str = Field(pattern=TIME)
+    tarde: str = Field(pattern=TIME)
+    noche: str = Field(pattern=TIME)
 
-    _sunrise = field_validator("sunrise", mode="before")(time_from_yaml_number)
-    _sunset = field_validator("sunset", mode="before")(time_from_yaml_number)
+    _times = field_validator(*MOMENTS, mode="before")(time_from_yaml_number)
 
     @model_validator(mode="after")
-    def sunrise_before_sunset(self):
-        if self.sunrise >= self.sunset:
-            raise ValueError(f"{self.name}: the sunrise must come before the sunset")
+    def moments_in_order(self):
+        times = [getattr(self, moment) for moment in MOMENTS]
+        if times != sorted(set(times)):
+            raise ValueError(f"{self.name}: the morning, day, evening and night must start in this order")
         return self
-
-    def minutes(self) -> tuple[int, int]:
-        """The sunrise and the sunset as minutes of the day."""
-        return tuple(int(t[:2]) * 60 + int(t[3:]) for t in (self.sunrise, self.sunset))
 
 
 DEFAULT_SEASONS = (
-    Season(name="primavera", start="03-20", sunrise="07:00", sunset="20:00"),
-    Season(name="verano", start="06-21", sunrise="06:00", sunset="21:30"),
-    Season(name="otono", start="09-23", sunrise="07:30", sunset="19:00"),
-    Season(name="invierno", start="12-21", sunrise="08:30", sunset="16:30"),
+    Season(name="primavera", start="03-20", manana="05:00", dia="09:00", tarde="18:00", noche="22:00"),
+    Season(name="verano", start="06-21", manana="04:00", dia="08:00", tarde="19:30", noche="23:30"),
+    Season(name="otono", start="09-23", manana="05:30", dia="09:30", tarde="17:00", noche="21:00"),
+    Season(name="invierno", start="12-21", manana="06:30", dia="10:30", tarde="14:30", noche="18:30"),
 )
 
 
@@ -63,8 +65,6 @@ class Settings(BaseModel):
     starting_stars: int = Field(default=0, ge=0)  # what a new child starts with
     day_starts_at: str = Field(default="00:00", pattern=TIME)
     seasons: tuple[Season, ...] = DEFAULT_SEASONS
-    # The morning and the evening: this long before and after the sunrise and the sunset.
-    moment_margin_minutes: int = Field(default=120, ge=0, le=360)
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)
@@ -80,16 +80,6 @@ class Settings(BaseModel):
         if len({season.name for season in seasons}) != len(seasons):
             raise ValueError("each season needs its own name")
         return seasons
-
-    @model_validator(mode="after")
-    def every_moment_shows(self):
-        """With the margin, each season still has some day and some night."""
-        margin = self.moment_margin_minutes
-        for season in self.seasons:
-            sunrise, sunset = season.minutes()
-            if sunset - sunrise <= 2 * margin or 24 * 60 - (sunset - sunrise) <= 2 * margin:
-                raise ValueError(f"{season.name}: with a margin of {margin} minutes there is no day or no night left")
-        return self
 
 
 class Features(BaseModel):

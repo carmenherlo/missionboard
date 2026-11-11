@@ -30,7 +30,7 @@ from app.missions.repository import WEEKDAYS, ChildTask, Mission, MissionsReposi
 from app.prizes.repository import Prize, PrizesRepository
 from app.routines import links
 from app.routines.repository import RoutinesRepository, minute_of
-from app.settings import Season, SettingsRepository
+from app.settings import MOMENTS, Season, SettingsRepository
 from app.today.repository import DayRepository
 
 DONE, OPEN, UPCOMING, CLOSED = "done", "open", "upcoming", "closed"
@@ -106,14 +106,10 @@ def current_season(seasons: tuple[Season, ...], day: date) -> Season:
     return started[-1] if started else seasons[-1]
 
 
-def current_moment(season: Season, time: str, margin: int = 120) -> str:
-    """Morning and evening around the sunrise and the sunset, day between them, night the rest."""
-    now, sunrise, sunset = minute_of(time), minute_of(season.sunrise), minute_of(season.sunset)
-    if sunrise - margin <= now < sunrise + margin:
-        return "manana"
-    if sunset - margin <= now < sunset + margin:
-        return "tarde"
-    return "dia" if sunrise < now < sunset else "noche"
+def current_moment(season: Season, time: str) -> str:
+    """The last moment that has started; before the morning, the night goes on."""
+    started = [moment for moment in MOMENTS if getattr(season, moment) <= time]
+    return started[-1] if started else "noche"
 
 
 class DayService:
@@ -170,7 +166,7 @@ class DayService:
             child=child,
             day=day,
             season=(season := current_season(settings.seasons, day)),
-            moment=current_moment(season, time, settings.moment_margin_minutes),
+            moment=current_moment(season, time),
             missions=missions,
             stars=self._days.stars(child.id),
             prize=self._prize_today(day, child, missions),

@@ -29,10 +29,8 @@ class SettingsService:
         return self._update("features", self._settings.features(), changes)
 
     def reset_seasons(self) -> Settings:
-        """Back to the app's dates, hours and margin ("Volver a las horas de la app")."""
-        default = Settings()
-        return self.update_settings({"seasons": DEFAULT_SEASONS,
-                                     "moment_margin_minutes": default.moment_margin_minutes})
+        """Back to the app's dates and hours ("Volver a las horas de la app")."""
+        return self.update_settings({"seasons": DEFAULT_SEASONS})
 
     def _update(self, section: str, old: BaseModel, changes: dict):
         try:

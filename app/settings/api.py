@@ -20,7 +20,6 @@ class SettingsPatch(BaseModel):
     starting_stars: int | None = None
     day_starts_at: str | None = None
     seasons: list[Season] | None = None
-    moment_margin_minutes: int | None = None
     routine_warn_minutes: int | None = None
 
 
@@ -46,7 +45,7 @@ def _present(service: SettingsService, clock: Clock) -> dict:
         "settings": settings.model_dump(mode="json"),
         "features": service.features().model_dump(mode="json"),
         "now": {"season": season.name,
-                "moment": current_moment(season, now.strftime("%H:%M"), settings.moment_margin_minutes)},
+                "moment": current_moment(season, now.strftime("%H:%M"))},
     }
 
 

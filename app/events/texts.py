@@ -38,10 +38,9 @@ _FIELDS = {
     "daily_prize_spins": lambda value: f"giros de la ruleta: {value}",
     "starting_stars": lambda value: f"estrellas de un niño nuevo: {value}",
     "day_starts_at": lambda value: f"el día empieza a las {value}",
-    "moment_margin_minutes": lambda value: f"mañana y tarde: {value} min",
     "routine_warn_minutes": lambda value: f"aviso antes de acabar cada parte: {value} min",
     "seasons": lambda value: "estaciones: " + " · ".join(
-        f"{SEASONS.get(s.name, s.name)} {s.start[3:]}/{s.start[:2]} {s.sunrise}–{s.sunset}" for s in value),
+        f"{SEASONS.get(s.name, s.name)} {s.start[3:]}/{s.start[:2]} {s.manana} {s.dia} {s.tarde} {s.noche}" for s in value),
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
     "routines": lambda value: "rutinas " + ("encendidas" if value else "apagadas"),
