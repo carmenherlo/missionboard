@@ -1,5 +1,5 @@
 """The family's songs (rutinas-4, section 3): the `songs` list of config.yaml, and
-their files in data/sounds/ (they are the family's, like the photos: never in the repo)."""
+their files in data/sounds/ (the family's, like the photos; the examples bring two, see app/samples.py)."""
 
 import secrets
 from dataclasses import asdict, dataclass

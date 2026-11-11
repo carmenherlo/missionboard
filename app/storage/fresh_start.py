@@ -5,7 +5,7 @@ and then the configuration and the history are removed. The song library stays (
 list and its files): songs are not easy to get again. Each family then has the
 examples of a new installation.
 
-With no config.yaml at all, a new installation: the examples (`with_samples`, only
+With no config.yaml at all, a new installation: the examples, with their songs (`with_samples`, only
 for the real app: tests start empty).
 """
 
@@ -20,6 +20,7 @@ from app import samples
 from app.storage.config_migrations import FIRST_VERSION, initial
 from app.storage.config_store import CONFIG_FILENAME, ConfigStore
 from app.storage.db import DB_FILENAME
+from app.songs.repository import SOUNDS_DIRNAME
 
 BACKUPS_DIRNAME = "backups"
 NOT_COPIED = {BACKUPS_DIRNAME, "voices", "voice-cache"}  # made or downloaded again
@@ -40,8 +41,20 @@ def run(data_dir: Path, now: datetime, with_samples: bool = False) -> bool:
     elif not with_samples:
         return False
     doc = samples.document() if with_samples else initial()
-    ConfigStore(data_dir).replace({**doc, "songs": songs})
+    if with_samples:
+        _copy_sample_songs(data_dir)
+    kept = {song["id"] for song in songs}
+    doc["songs"] = songs + [song for song in doc["songs"] if song["id"] not in kept]
+    ConfigStore(data_dir).replace(doc)
     return with_samples
+
+
+def _copy_sample_songs(data_dir: Path) -> None:
+    sounds = data_dir / SOUNDS_DIRNAME
+    sounds.mkdir(parents=True, exist_ok=True)
+    for song in samples.SONGS:
+        if not (sounds / song["file"]).exists():
+            shutil.copy2(samples.SOUNDS_DIR / song["file"], sounds / song["file"])
 
 
 def keep_a_copy(data_dir: Path, now: datetime) -> Path:

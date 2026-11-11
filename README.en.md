@@ -46,7 +46,7 @@ MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8
 Open <http://localhost:8002/>. The default parents' code is **1234**: change it in
 *Configurar → Código de padres*. A new installation comes with three example children
 (Bea, Alex and Noa) and three missions (Despegue, Aterrizaje and Alunizaje), with their
-routines, to change as you like.
+routines and two songs, to change as you like.
 
 `bash dev.sh` does the same with a conda environment named `missionboard` and
 prints the address to open from a tablet on the same network.
@@ -138,6 +138,9 @@ without frameworks or bundlers.
 | [Nunito](https://fonts.google.com/specimen/Nunito) (`app/static/fonts/nunito/`) | SIL Open Font License, see `OFL.txt` |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) (`piper-tts`, installed with pip) | See its repository |
 | Voice model `es_ES-sharvard-medium` (downloaded, not in the repository) | See its [model card](https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium) |
+
+The example songs (`app/samples_sounds/`: «Buenos días, solecito» and «Duerme,
+Estrellita») are published with the repository, under its MIT licence.
 
 Drawn for this project, under the repository's MIT licence: the pyjamas
 (`app/static/libraries/own/`) and the backgrounds (`app/static/backgrounds/`, with their

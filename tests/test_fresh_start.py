@@ -52,7 +52,8 @@ def test_an_old_file_is_kept_in_a_copy_and_everything_starts_again(data_dir, clo
         assert [m["name"] for m in client.get("/api/missions").json()] == ["Despegue", "Aterrizaje", "Alunizaje"]
         assert client.post("/api/parents/unlock", json={"code": "9999"}).status_code == 401
         assert client.post("/api/parents/unlock", json={"code": "1234"}).status_code == 204
-        assert [s["name"] for s in client.get("/api/songs").json()] == ["Canción"]  # the library stays
+        # The library stays, and the examples' songs join it
+        assert [s["name"] for s in client.get("/api/songs").json()] == ["Canción", "Buenos días, solecito", "Duerme, Estrellita"]
     doc = yaml.safe_load(config_path(data_dir).read_text())
     assert doc["version"] == CURRENT_VERSION and doc["parents"]["code"] == "1234"
     assert "templates" not in doc
@@ -135,13 +136,24 @@ def test_the_morning_of_the_examples(examples, clock):
     assert on["name"] == "Despegue" and on["wake"] == "06:35" and on["alarm"] is True
     assert on["parts"][0]["start"] == "06:40" and on["parts"][-1]["end"] == "07:30" and on["goal"]["at"] == "07:35"
     assert [p["child"]["name"] for p in on["people"]] == ["Bea", "Alex"]
-    assert on["music"] == []
+    assert [s["name"] for s in on["music"][0]["songs"]] == ["Buenos días, solecito"] and on["music"][0]["start"] == 0
     states = {
         c["name"]: client.get(f"/api/children/{c['id']}/today").json()["missions"][0]
         for c in client.get("/api/children").json()
     }
     assert states["Bea"]["state"] == "open" and states["Bea"]["schedule"] == {"start": "06:40", "end": "07:35"}
     assert states["Noa"]["state"] == "open" and states["Noa"]["schedule"] == {"start": "06:00", "end": "09:00"}
+
+
+def test_the_examples_songs_are_in_the_library_and_play(examples, data_dir):
+    client = examples
+    songs = client.get("/api/songs").json()
+    assert [s["name"] for s in songs] == ["Buenos días, solecito", "Duerme, Estrellita"]
+    for song in songs:
+        assert (data_dir / "sounds" / song["file"]).is_file()
+        assert client.get(song["url"]).content[4:8] == b"ftyp"  # an m4a
+    night = next(r for r in client.get("/api/routines").json() if r["name"] == "Alunizaje")
+    assert night["music"][0]["start"] == "goal" and night["music"][0]["after_voice"] is True
 
 
 def test_the_night_of_the_examples(examples, clock):

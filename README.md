@@ -49,8 +49,8 @@ MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8
 
 Abre <http://localhost:8002/>. El código de padres por defecto es **1234**: cámbialo
 en *Configurar → Código de padres*. Una instalación nueva trae de ejemplo tres niños
-(Bea, Alex y Noa) y tres misiones (Despegue, Aterrizaje y Alunizaje), con sus rutinas,
-para cambiarlos a tu gusto.
+(Bea, Alex y Noa) y tres misiones (Despegue, Aterrizaje y Alunizaje), con sus rutinas y
+dos canciones, para cambiarlos a tu gusto.
 
 `bash dev.sh` hace lo mismo con un entorno de conda llamado `missionboard`, y escribe
 la dirección para abrirla desde una tablet de la misma red.
@@ -143,6 +143,9 @@ frameworks ni empaquetadores.
 | [Nunito](https://fonts.google.com/specimen/Nunito) (`app/static/fonts/nunito/`) | SIL Open Font License, ver `OFL.txt` |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) (`piper-tts`, se instala con pip) | Ver su repositorio |
 | Modelo de voz `es_ES-sharvard-medium` (se descarga, no está en el repositorio) | Ver su [ficha](https://huggingface.co/rhasspy/piper-voices/tree/main/es/es_ES/sharvard/medium) |
+
+Las canciones de ejemplo (`app/samples_sounds/`: «Buenos días, solecito» y «Duerme,
+Estrellita») se publican con el repositorio, bajo su licencia MIT.
 
 Dibujados para este proyecto, con la licencia MIT del repositorio: el pijama
 (`app/static/libraries/own/`) y los fondos (`app/static/backgrounds/`, con sus programas

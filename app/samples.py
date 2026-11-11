@@ -1,12 +1,22 @@
 """What a new installation starts with: three children and three missions, for each
 family to change. Fixed ids, so what they refer to is easy to follow in config.yaml."""
 
+from pathlib import Path
+
 from app.storage.config_migrations import initial
 
 WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"]
 NOT_SATURDAY = [*WEEKDAYS, "sun"]
 NOT_SATURDAY_NOR_FRIDAY = ["mon", "tue", "wed", "thu", "sun"]  # the night before a day without school
 STARTING_STARS = 5
+
+# Example songs, in the repository: on a new installation they are copied to the
+# family's song library (data/sounds/), where they can be changed or deleted like any other.
+SOUNDS_DIR = Path(__file__).parent / "samples_sounds"
+SONGS = [
+    {"id": "buenos-dias-solecito", "name": "Buenos días, solecito", "file": "buenos-dias-solecito.m4a", "seconds": 131.2},
+    {"id": "duerme-estrellita", "name": "Duerme, Estrellita", "file": "duerme-estrellita.m4a", "seconds": 182.0},
+]
 
 CHILDREN = [
     {"id": "bea", "name": "Bea", "preset": "fox", "color": "#e77300"},
@@ -78,7 +88,9 @@ def _part(part_id: str, minutes: int, spoken: str | None = None, say: str | None
 ROUTINES = [
     {
         "id": "despegue-rutina", "mission_id": "despegue", "days": WEEKDAYS, "kids": ["bea", "alex"],
-        "wake": "06:35", "anchor": "end", "alarm": True, "remind_every": 5, "offsets": {}, "notices": [], "music": [],
+        "wake": "06:35", "anchor": "end", "alarm": True, "remind_every": 5, "offsets": {}, "notices": [],
+        "music": [{"id": "despegue-cancion", "songs": ["buenos-dias-solecito"], "start": "despegue-1", "until": None,
+                   "after_voice": False, "loud": False}],
         "greeting": "¡Buenos días!", "last_countdown": None, "early_goal": None, "warn_about": "end",
         "goal": {"at": "07:35", "image": None, "say": "¡Es hora de salir!", "check_minutes": 5, "check_say": None},
         "parts": [
@@ -93,7 +105,9 @@ ROUTINES = [
     },
     {
         "id": "alunizaje-rutina", "mission_id": "alunizaje", "days": NOT_SATURDAY, "kids": [],
-        "wake": "18:55", "anchor": "end", "alarm": False, "remind_every": 5, "offsets": {}, "notices": [], "music": [],
+        "wake": "18:55", "anchor": "end", "alarm": False, "remind_every": 5, "offsets": {}, "notices": [],
+        "music": [{"id": "alunizaje-cancion", "songs": ["duerme-estrellita"], "start": "goal", "until": None,
+                   "after_voice": True, "loud": False}],
         "greeting": None, "last_countdown": None, "early_goal": None, "warn_about": "end",
         "goal": {"at": "19:30", "image": None, "say": "¡A dormir! Buenas noches.", "check_minutes": 5, "check_say": None},
         "parts": [
@@ -115,4 +129,5 @@ def document() -> dict:
         "children": [dict(child) for child in CHILDREN],
         "missions": MISSIONS,
         "routines": ROUTINES,
+        "songs": [dict(song) for song in SONGS],
     }
