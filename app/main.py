@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import errors
+from app.avatars import api as avatars_api
 from app.children import api as children_api
 from app.children.repository import ChildrenRepository
 from app.clock import Clock, SystemClock, app_day
@@ -24,6 +25,7 @@ from app.shop import api as shop_api
 from app.songs import api as songs_api
 from app.backup import api as backup_api
 from app.songs.repository import SoundFiles
+from app.avatars.repository import AvatarFiles
 from app.shop.repository import PurchasesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
@@ -96,6 +98,7 @@ def create_app(
     app.state.data_dir = data_dir
     app.state.photo_store = PhotoStore(data_dir)
     app.state.sound_files = SoundFiles(data_dir)
+    app.state.avatar_files = AvatarFiles(data_dir)
     app.state.clock = clock or SystemClock()
     app.state.events_repository = EventsRepository(data_dir)
     app.state.day_repository = DayRepository(data_dir)
@@ -118,6 +121,7 @@ def create_app(
         return {"status": "ok"}
 
     app.include_router(parents_api.router)
+    app.include_router(avatars_api.router)
     app.include_router(children_api.router)
     app.include_router(missions_api.router)
     app.include_router(prizes_api.router)

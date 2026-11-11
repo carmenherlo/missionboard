@@ -119,6 +119,9 @@ SCREENS = {
     "songs": ("Canciones", None),
     "routine_music": ("Canción de una rutina", None),
     "prize_edit": ("Editar premio", None),
+    "avatars": ("Avatares", None),
+    "avatar_new": ("Subir avatar", None),
+    "avatar_edit": ("Editar avatar", None),
 }
 
 # config_changed, by (subject, action). Parents are the only ones who
@@ -161,6 +164,9 @@ _CONFIG = {
     ("song", "created"): "Subiste la canción «{mission}»",
     ("song", "changed"): "Cambiaste la canción «{mission}»",
     ("song", "deleted"): "Borraste la canción «{mission}»",
+    ("avatar", "created"): "Subiste el avatar «{mission}»",
+    ("avatar", "changed"): "Cambiaste el avatar «{mission}»",
+    ("avatar", "deleted"): "Borraste el avatar «{mission}»",
     ("settings", "changed"): "Cambiaste los ajustes",
     ("features", "changed"): "Cambiaste lo que está encendido",
 }

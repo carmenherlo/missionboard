@@ -2,7 +2,7 @@
 one back: to move to another device (or into Home Assistant) without losing anything.
 
 A copy is one .zip with the configuration, the database (the history: stars,
-missions done, the log) and the files the parents uploaded: photos and songs. Not the voice's cache or model (they are made again), nor the
+missions done, the log) and the files the parents uploaded: photos, songs and avatars. Not the voice's cache or model (they are made again), nor the
 automatic .bak copies of the migrations.
 
 Putting one back is all or nothing: the copy is first checked in a folder of its
@@ -29,7 +29,7 @@ from app.settings import SettingsRepository
 from app.storage import db
 from app.storage.config_store import CONFIG_FILENAME, ConfigStore
 
-FOLDERS = ("photos", "sounds")  # the files the parents uploaded
+FOLDERS = ("photos", "sounds", "avatars")  # the files the parents uploaded
 MANIFEST = "missionboard-backup.json"  # says what the zip is, and from which versions
 BACKUPS_DIRNAME = "backups"  # where what there was is kept before putting a copy back
 MAX_BYTES = 1024 * 1024 * 1024  # 1 GB: songs are up to 15 MB each

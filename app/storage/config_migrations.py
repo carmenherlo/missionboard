@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 17
+CURRENT_VERSION = 18
 
 
 class ConfigVersionError(Exception):
@@ -58,6 +58,16 @@ def _v16_to_v17(doc: dict) -> dict:
 _MIGRATIONS[16] = _v16_to_v17
 
 
+def _v17_to_v18(doc: dict) -> dict:
+    """The family's own avatars (avatares.html): an empty list to start with."""
+    doc.setdefault("avatars", [])
+    doc["version"] = 18
+    return doc
+
+
+_MIGRATIONS[17] = _v17_to_v18
+
+
 def upgrade(doc: dict) -> dict:
     """Return the document at CURRENT_VERSION. The input is not modified."""
     version = doc.get("version", 1)
@@ -86,6 +96,7 @@ def initial() -> dict:
         "missions": [],
         "routines": [],
         "songs": [],
+        "avatars": [],
         "prizes": [
             {"id": "guerra-de-cojines", "text": "Guerra de cojines", "image": None, "image_suggested": False},
             {"id": "elegir-la-cena", "text": "Elegir la cena", "image": "fluent/pizza", "image_suggested": False},

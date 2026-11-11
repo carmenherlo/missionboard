@@ -3,13 +3,12 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, field_validator
 
-from app.children import avatars
+from app.avatars.repository import AvatarsRepository
 from app.children.repository import Child, ChildrenRepository
 from app.children.service import ChildData, ChildrenService
 from app.clock import app_day
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.deps import get_clock, get_config_store, get_event_log, get_photo_store, require_parent
 from app.events.service import EventLog
-from app.images.libraries import ImageLibraries
 from app.missions.api import get_missions_service
 from app.missions.repository import MissionsRepository
 from app.missions.service import MissionsService
@@ -51,18 +50,13 @@ def get_children_service(
         request.app.state.day_repository.add_starting_stars(
             child, settings.starting_stars, app_day(now, settings.day_starts_at), now)
 
-    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions, routines], welcome=welcome)
+    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions, routines], welcome=welcome,
+                           family_avatars=AvatarsRepository(store))
 
 
 def public_child(child: Child) -> dict:
     """A child as the screens get it."""
     return asdict(child)
-
-
-@router.get("/avatars")
-def list_avatars(libraries: ImageLibraries = Depends(get_image_libraries)):
-    presets = [{**preset, "image_url": libraries.url(preset["image"])} for preset in avatars.PRESETS]
-    return {"presets": presets, "palette": avatars.PALETTE, "mission_colors": avatars.MISSION_COLORS}
 
 
 @router.get("/children")

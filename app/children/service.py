@@ -3,17 +3,12 @@ from dataclasses import dataclass, replace
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
+from app.avatars.repository import AvatarsRepository
 from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.storage.photo_store import PhotoStore
-
-
-def _avatar_label(child: Child) -> str:
-    """How the event log names an avatar: the animal."""
-    preset = avatars.PRESETS_BY_ID.get(child.preset or "")
-    return preset["label"].lower() if preset else "—"
 
 
 @dataclass
@@ -40,12 +35,14 @@ class ChildrenService:
         events: EventLog,
         dependents: Iterable[ChildDependent] = (),
         welcome: Callable[[Child], None] = lambda child: None,
+        family_avatars: AvatarsRepository | None = None,
     ):
         self._children = children
         self._photos = photos
         self._events = events
         self._dependents = list(dependents)
         self._welcome = welcome  # what a new child starts with (their first stars)
+        self._family_avatars = family_avatars  # the family's own, besides the app's animals
 
     def list(self) -> list[Child]:
         return self._children.list()
@@ -75,7 +72,7 @@ class ChildrenService:
         if child.name != old.name:
             changes["name"] = child.name
         if child.preset != old.preset:
-            changes["avatar"] = _avatar_label(child)
+            changes["avatar"] = self._avatar_label(child.preset)
         if changes:
             self._events.config_changed("child", "changed", child=child, changes=changes)
         return child
@@ -92,9 +89,22 @@ class ChildrenService:
             self._photos.delete(filename)
         self._events.config_changed("child", "deleted", child=child)
 
+    def _find_avatar(self, avatar_id: str) -> dict | None:
+        """An app animal or one of the family's: its id, name and colour."""
+        preset = avatars.PRESETS_BY_ID.get(avatar_id or "")
+        if preset is not None:
+            return preset
+        family = self._family_avatars.get(avatar_id) if self._family_avatars and avatar_id else None
+        return {"id": family.id, "label": family.name, "color": family.color} if family else None
+
+    def _avatar_label(self, avatar_id: str | None) -> str:
+        """How the event log names an avatar: the animal, or the family's avatar's name."""
+        found = self._find_avatar(avatar_id or "")
+        return found["label"].lower() if found else "—"
+
     def _check_preset(self, preset_id: str, child_id: str | None) -> dict:
-        """An existing animal, exclusive to one child. It brings the colour of their ring."""
-        preset = avatars.PRESETS_BY_ID.get(preset_id or "")
+        """An existing avatar, exclusive to one child. It brings the colour of their ring."""
+        preset = self._find_avatar(preset_id)
         if preset is None:
             raise InvalidError("Unknown preset")
         if any(c.preset == preset["id"] and c.id != child_id for c in self._children.list()):

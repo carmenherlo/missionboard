@@ -19,6 +19,7 @@ const GROUPS = [
   ]],
   [t.config.groupApp, [
     ["settings", "settings", t.config.settings],
+    ["avatars", "smile", t.config.avatars],
     ["code", "parentCode", t.config.parentCode],
     ["backup", "download", t.config.backup],
     ["log", "history", t.config.eventLog],

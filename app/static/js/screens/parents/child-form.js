@@ -5,6 +5,7 @@ import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
+import { handoff, uploadButton } from "./avatar-parts.js";
 import { childStarsPanel } from "./child-stars.js";
 import { parentsHeader } from "./common.js";
 
@@ -25,10 +26,13 @@ export async function viewChildForm(childId) {
   const siblings = children.filter((c) => c.id !== childId);
   const usedPresets = new Set(siblings.map((c) => c.preset));
   const form = {
-    name: existing?.name ?? "",
+    name: existing?.name ?? handoff.draft ?? "",
     preset: existing?.preset ?? null,
     color: existing?.color ?? null,
   };
+  // Back from Subir avatar: the avatar just added, for this child.
+  const added = [...catalog.family, ...catalog.presets].find((a) => a.id === handoff.added);
+  Object.assign(handoff, { added: null, draft: null });
   let pickerOpen = !existing;
   const status = existing ? saveStatus() : null;
   let nameTimer = null;
@@ -67,7 +71,7 @@ export async function viewChildForm(childId) {
       picker.replaceChildren();
       return;
     }
-    const presets = catalog.presets.map((preset) => {
+    const card = (preset) => {
       const taken = usedPresets.has(preset.id);
       const selected = form.preset === preset.id;
       return h("button", {
@@ -79,9 +83,19 @@ export async function viewChildForm(childId) {
       }, h("span", { class: "avatar avatar--md", style: `--child-color: ${preset.color}` },
            h("img", { src: preset.image_url, alt: "" })),
          h("span", { class: "choice__label" }, preset.label));
-    });
+    };
+    // "Subir avatar" comes back here with the new one chosen (and, for a new child, the name kept).
+    const here = existing ? `#/parents/config/children/${existing.id}` : "#/parents/config/children/new";
+    const upload = uploadButton("choice choice--add", here, [h("span", { class: "add-circle" }, icon("plus")), t.avatars.upload]);
+    upload.addEventListener("click", () => { handoff.draft = existing ? null : form.name; });
 
-    picker.replaceChildren(h("h2", {}, t.childForm.chooseAvatar), h("div", { class: "choices" }, presets));
+    // The family's first (avatares.html, question 4); the app's animals below.
+    picker.replaceChildren(
+      h("h2", {}, t.childForm.chooseAvatar),
+      h("h3", { class: "picker__group" }, t.childForm.groupFamily),
+      h("div", { class: "choices" }, catalog.family.map(card), upload),
+      h("h3", { class: "picker__group" }, t.childForm.groupApp),
+      h("div", { class: "choices" }, catalog.presets.map(card)));
   }
 
   function refreshAll() {
@@ -132,6 +146,10 @@ export async function viewChildForm(childId) {
   const starsPanel = existing ? await childStarsPanel(existing) : null;
 
   refreshAll();
+  if (added && !usedPresets.has(added.id)) {
+    pickerOpen = existing ? false : pickerOpen;
+    choosePreset(added);
+  }
   render(
     parentsHeader(
       existing ? h("span", { class: "title-line" }, title, status.element) : t.childForm.titleNew,

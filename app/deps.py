@@ -6,6 +6,7 @@ these functions hand them to the routes, and tests can override them.
 
 from fastapi import Depends, Header, HTTPException, Request
 
+from app.avatars.repository import AvatarFiles
 from app.clock import Clock
 from app.events.repository import EventsRepository
 from app.events.service import EventLog
@@ -28,6 +29,10 @@ def get_photo_store(request: Request) -> PhotoStore:
 
 def get_sound_files(request: Request) -> SoundFiles:
     return request.app.state.sound_files
+
+
+def get_avatar_files(request: Request) -> AvatarFiles:
+    return request.app.state.avatar_files
 
 
 def get_clock(request: Request) -> Clock:

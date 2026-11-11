@@ -3,14 +3,19 @@ import { h } from "../dom.js";
 
 let catalog = null;
 
-// Presets and palette, fetched once per page load.
+// The family's avatars, the app's animals and the palette, fetched once per page load
+// (and again after the family's change: forgetAvatars).
 export async function loadAvatars() {
   if (!catalog) catalog = await api("GET", "api/avatars");
   return catalog;
 }
 
+export function forgetAvatars() {
+  catalog = null;
+}
+
 function presetById(id) {
-  return catalog?.presets.find((p) => p.id === id);
+  return catalog?.family.find((p) => p.id === id) ?? catalog?.presets.find((p) => p.id === id);
 }
 
 // What is inside the avatar: their animal, or their initial.

@@ -1884,3 +1884,143 @@ select.pick {
 .toggle--off {
   opacity: 0.45;
 }
+
+/* ---------- Avatares (avatares.html) ---------- */
+
+/* Editar niño: the family's avatars, then the app's */
+.picker__group {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.choice__who {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+a.choice {
+  color: inherit;
+  text-decoration: none;
+}
+
+.choice--fixed {
+  cursor: default;
+}
+
+/* "Subir avatar": a card with a dashed edge and a big + */
+.choice--add {
+  border: 2px dashed var(--line);
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  justify-content: center;
+}
+
+.add-circle {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.add-circle .icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* The picture in the three sizes it is seen in */
+.avatar-sizes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) 4px;
+}
+
+.avatar-sizes .avatar:not(:has(img)) {
+  border-style: dashed;
+}
+
+/* The ring's colour: round swatches, the chosen one with a ring and a ✓ */
+.color-choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.color-choice__title {
+  margin: var(--space-1) 0 0;
+  font-weight: 700;
+}
+
+.color-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.color-dots--labelled {
+  padding-bottom: var(--space-4); /* room for "Sugerido" */
+}
+
+.color-dot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--child-color);
+  color: var(--surface);
+  cursor: pointer;
+}
+
+.color-dot--on {
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--child-color);
+}
+
+.color-dot .icon {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 0 2px var(--color-dot-check-shadow));
+}
+
+.color-dot__label {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.color-choice__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The browser's colour chooser, opened by "Otro color…" */
+.color-choice__other {
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+}
+
+.hint--warning {
+  color: var(--on-accent-soft);
+  font-weight: 700;
+}

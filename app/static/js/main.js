@@ -9,6 +9,9 @@ import { viewChildMissions, viewMissionChild } from "./screens/parents/mission-c
 import { viewChildForm } from "./screens/parents/child-form.js";
 import { viewChildrenList } from "./screens/parents/children-list.js";
 import { viewConfigIndex } from "./screens/parents/config-index.js";
+import { viewAvatarEdit } from "./screens/parents/avatar-edit.js";
+import { viewAvatarNew } from "./screens/parents/avatar-new.js";
+import { viewAvatarsList } from "./screens/parents/avatars-list.js";
 import { viewBackup } from "./screens/parents/backup.js";
 import { viewDisplaySettings } from "./screens/parents/display-settings.js";
 import { viewSettings } from "./screens/parents/settings.js";
@@ -55,6 +58,9 @@ const routes = [
   [parentsPath("/backup"), () => viewBackup(), "parents", "backup"],
   [parentsPath("/display"), () => viewDisplaySettings(), "parents", "display"],
   [parentsPath("/settings"), () => viewSettings(), "parents", "settings"],
+  [parentsPath("/avatars"), () => viewAvatarsList(), "parents", "avatars"],
+  [parentsPath("/avatars/new"), () => viewAvatarNew(), "parents", "avatar_new"],
+  [parentsPath("/avatars/:avatar"), (ids) => viewAvatarEdit(ids.avatar), "parents", "avatar_edit"],
   [parentsPath("/children"), () => viewChildrenList(), "parents", "children"],
   [parentsPath("/children/new"), () => viewChildForm(null), "parents", "child_new"],
   [parentsPath("/children/:child"), (ids) => viewChildForm(ids.child), "parents", "child_edit"],
