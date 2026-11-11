@@ -41,6 +41,7 @@ _FIELDS = {
     "routine_warn_minutes": lambda value: f"aviso antes de acabar cada parte: {value} min",
     "seasons": lambda value: "estaciones: " + " · ".join(
         f"{SEASONS.get(s.name, s.name)} {s.start[3:]}/{s.start[:2]} {s.manana} {s.dia} {s.tarde} {s.noche}" for s in value),
+    "home": lambda value: "aspecto del inicio cambiado",
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
     "routines": lambda value: "rutinas " + ("encendidas" if value else "apagadas"),

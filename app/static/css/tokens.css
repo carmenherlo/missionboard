@@ -161,6 +161,11 @@
   /* Home (05/11: bigger, more inviting): each child's avatar grows with the screen,
      up to three side by side on a tablet in landscape. */
   --home-avatar-size: clamp(150px, min(24vw, 38vh), 300px);
+  /* How the home looks (inicio-ajustes.html, chosen in Ajustes): the background of the moment
+     with a white veil (none, soft, or the route's), and the names on a white pill. */
+  --home-veil-soft: rgb(255 255 255 / 0.25);
+  --home-veil-route: var(--scene-veil-white);
+  --home-name-pill: rgb(255 255 255 / 0.85);
   /* The clock screen and rest mode (reloj.html). The rest colours: black, and the time
      barely there (enough to read it at night without lighting up the room). */
   --home-clock-size: min(56vh, 42vw, 460px);
@@ -207,6 +212,19 @@
   --shine-light-soft: rgb(255 248 220 / 0.6);
   --shine-band: 12%; /* how much of the ring's width the reflection covers */
   --celebration-glow-breath: 2.2s; /* the ring around the avatar in the celebration */
+  /* Home: each avatar's glow round its ring and light behind the animal, beating together.
+     Their colour comes from each child's colour; "white" is this one. */
+  --home-light: white;
+  --home-light-white: 60%; /* the white light is see-through */
+  --home-glow-1: 1; /* how wide the glow is: "Suave", "Más fuerte", "Mucho más" */
+  --home-glow-2: 1.6;
+  --home-glow-3: 2.3;
+  --home-solid-1: 40%; /* how full the light in the centre is */
+  --home-solid-2: 55%;
+  --home-solid-3: 70%;
+  --home-beat-fast: 2s; /* the beat: "Rápido", "Lento", "Muy lento" */
+  --home-beat-slow: 3.5s;
+  --home-beat-slower: 5s;
   --star-shine: 2.4s; /* the star won, shining */
   --appear: 220ms; /* panels and messages coming in */
   --state-hover: 8%; /* Material 3 state layer: the text's colour over what is touched */

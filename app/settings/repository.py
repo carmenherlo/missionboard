@@ -7,6 +7,8 @@ version changing a default does not change theirs. Invalid values stop the app
 at startup with a clear error instead of misbehaving later.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.storage.config_store import ConfigStore
@@ -57,6 +59,25 @@ DEFAULT_SEASONS = (
 )
 
 
+class HomeLook(BaseModel):
+    """How the children's home screen looks (inicio-ajustes.html): the background of the
+    moment, its white veil, the names on a pill, and each avatar's lights: a glow round its
+    ring and a light behind the animal, beating together. The glow's colour comes from each
+    child's own colour (their colour, paler, more intense, or white), never a fixed one."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    background: bool = True
+    veil: Literal[0, 25, 45] = 0  # % of white over the picture (the route has 45)
+    name_pill: bool = True
+    ring_glow: Literal["color", "pale", "vivid", "white", "none"] = "color"
+    ring_too: bool = True  # the ring itself in the glow's colour, not only the glow
+    centre_light: Literal["color", "white", "none"] = "white"
+    strength: Literal[1, 2, 3] = 2
+    beat_seconds: Literal[2, 3.5, 5] = 3.5
+    shine: bool = True  # a reflection goes once round each ring when the screen opens
+
+
 class Settings(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -65,6 +86,7 @@ class Settings(BaseModel):
     starting_stars: int = Field(default=0, ge=0)  # what a new child starts with
     day_starts_at: str = Field(default="00:00", pattern=TIME)
     seasons: tuple[Season, ...] = DEFAULT_SEASONS
+    home: HomeLook = HomeLook()
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)

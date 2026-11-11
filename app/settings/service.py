@@ -8,7 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.errors import InvalidError
 from app.events.service import EventLog
-from app.settings.repository import DEFAULT_SEASONS, Features, Settings, SettingsRepository
+from app.settings.repository import DEFAULT_SEASONS, Features, HomeLook, Settings, SettingsRepository
 
 
 class SettingsService:
@@ -31,6 +31,10 @@ class SettingsService:
     def reset_seasons(self) -> Settings:
         """Back to the app's dates and hours ("Volver a las horas de la app")."""
         return self.update_settings({"seasons": DEFAULT_SEASONS})
+
+    def reset_home(self) -> Settings:
+        """Back to how the app comes ("Volver a lo de la app")."""
+        return self.update_settings({"home": HomeLook()})
 
     def _update(self, section: str, old: BaseModel, changes: dict):
         try:

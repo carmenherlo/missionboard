@@ -136,6 +136,68 @@
 }
 @keyframes hold-fill { to { background-size: 100% 100%, auto; } }
 
+/* Home (inicio-ajustes.html): a glow round each ring and a light behind each animal, beating
+   together, the same in every child. Their colour comes from the child's colour, whichever it is. */
+.home-look .avatar-fx {
+  --ring-glow: var(--child-color);
+  --centre-glow: var(--child-color);
+  --centre-strength: var(--heartbeat-strength);
+  --glow-k: var(--home-glow-2);
+  --light-solid: var(--home-solid-2);
+  --beat: var(--home-beat-slow);
+}
+
+.home-look .avatar-fx > .avatar {
+  position: relative;
+}
+
+.home-look--ring-pale .avatar-fx { --ring-glow: color-mix(in oklch, var(--child-color) 60%, var(--home-light)); }
+.home-look--ring-white .avatar-fx { --ring-glow: var(--home-light); }
+/* More intense: brighter and more saturated (where the browser can work it out; else, its colour). */
+@supports (color: oklch(from red l c h)) {
+  .home-look--ring-vivid .avatar-fx { --ring-glow: oklch(from var(--child-color) calc(l + 0.12) calc(c * 1.25) h); }
+}
+.home-look--ring-too .avatar-fx { --ring-solid: var(--ring-glow); }
+.home-look--centre-white .avatar-fx { --centre-glow: var(--home-light); --centre-strength: var(--home-light-white); }
+.home-look--strength-1 .avatar-fx { --glow-k: var(--home-glow-1); --light-solid: var(--home-solid-1); }
+.home-look--strength-3 .avatar-fx { --glow-k: var(--home-glow-3); --light-solid: var(--home-solid-3); }
+.home-look--beat-fast .avatar-fx { --beat: var(--home-beat-fast); }
+.home-look--beat-slower .avatar-fx { --beat: var(--home-beat-slower); }
+
+.home-look--ring .avatar-fx > .avatar {
+  --glow: calc(var(--glow-k) * var(--glow-size, 1));
+  animation: home-ring var(--beat) ease-in-out infinite;
+}
+
+@keyframes home-ring {
+  0%, 100% {
+    box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--ring-solid, var(--child-color)),
+      0 0 calc(10px * var(--glow)) calc(2px * var(--glow)) color-mix(in srgb, var(--ring-glow) 75%, transparent),
+      0 0 calc(24px * var(--glow)) calc(6px * var(--glow)) color-mix(in srgb, var(--ring-glow) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--ring-solid, var(--child-color)),
+      0 0 calc(22px * var(--glow)) calc(6px * var(--glow)) var(--ring-glow),
+      0 0 calc(60px * var(--glow)) calc(18px * var(--glow)) color-mix(in srgb, var(--ring-glow) 70%, transparent);
+  }
+}
+
+.home-look--centre .avatar-fx::before {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    color-mix(in srgb, var(--centre-glow) var(--centre-strength), transparent) var(--light-solid), transparent);
+  animation: home-centre var(--beat) ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes home-centre {
+  0%, 100% { opacity: 0.3; transform: scale(0.88); }
+  50% { opacity: 0.85; transform: scale(1); }
+}
+
 /* Home: a child's card gives a little when it is pressed. */
 .child-card {
   transition: transform var(--appear) ease;
@@ -147,7 +209,7 @@
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .prize-won, .routine__count,
-  .ring::before, .avatar-fx::before, .fx-shine::after {
+  .ring::before, .avatar-fx::before, .fx-shine::after, .home-look .avatar-fx > .avatar {
     animation: none !important;
   }
   .fx-shine::after {

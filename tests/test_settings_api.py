@@ -41,7 +41,8 @@ def test_what_there_is_and_the_season_now(client):
     got = client.get("/api/settings", headers=PARENT).json()
     assert got["settings"]["stars_per_mission"] == 1 and got["features"]["shop"] is True
     assert [s["name"] for s in got["settings"]["seasons"]] == ["primavera", "verano", "otono", "invierno"]
-    assert got["now"] == {"season": "otono", "moment": "manana"}  # 7:02: the morning starts at 5:30
+    assert got["now"] == {"season": "otono", "moment": "manana",  # 7:02: the morning starts at 5:30
+                          "background_url": "static/backgrounds/otono/manana.webp"}
 
 
 def test_a_change_is_saved_in_config_yaml_and_logged(client, data_dir):
@@ -99,3 +100,19 @@ def test_routines_switched_off_do_not_ring_and_are_kept(client):
     assert [r["id"] for r in client.get("/api/routines").json()] == [routine["id"]]
     client.patch("/api/settings/features", json={"routines": True}, headers=PARENT)
     assert client.get("/api/routines/current").json() is not None
+
+
+def test_how_the_home_screen_looks_changed_in_ajustes_and_read_without_a_code(client, data_dir):
+    got = client.get("/api/home").json()  # the home screen: no parent code
+    assert got["look"] == {"background": True, "veil": 0, "name_pill": True, "ring_glow": "color", "ring_too": True,
+                           "centre_light": "white", "strength": 2, "beat_seconds": 3.5, "shine": True}
+    assert got["background_url"] == "static/backgrounds/otono/manana.webp"
+    look = {**got["look"], "ring_glow": "vivid", "veil": 25, "beat_seconds": 5}
+    assert patch(client, home=look).status_code == 200
+    assert client.get("/api/home").json()["look"]["ring_glow"] == "vivid"
+    assert yaml.safe_load(config_path(data_dir).read_text())["settings"]["home"]["veil"] == 25
+    assert descriptions(client)[0] == "Cambiaste los ajustes · aspecto del inicio cambiado"
+    for wrong in ({"veil": 30}, {"ring_glow": "gold"}, {"beat_seconds": 4}):
+        assert patch(client, home={**look, **wrong}).status_code == 422
+    client.post("/api/settings/home/reset", headers=PARENT)
+    assert client.get("/api/home").json()["look"]["ring_glow"] == "color"

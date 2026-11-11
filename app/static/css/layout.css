@@ -169,6 +169,61 @@
   font-size: 2.25rem;
 }
 
+/* The background of the moment behind the children (Ajustes → Inicio de los niños). */
+.home-look--scene {
+  background: none;
+}
+
+.home-look--scene > :not(.child-scene) {
+  z-index: 1;
+}
+
+.home-look--scene .children {
+  position: relative;
+}
+
+.home-look--veil-0 .child-scene__veil {
+  display: none;
+}
+
+.home-look--veil-25 .child-scene__veil {
+  background: var(--home-veil-soft);
+}
+
+.home-look--veil-45 .child-scene__veil {
+  background: var(--home-veil-route);
+}
+
+.home-look--pill .child-card__name {
+  padding: 2px 22px;
+  border-radius: 999px;
+  background: var(--home-name-pill);
+}
+
+/* Ajustes: the home in small, changing as the options are tapped. */
+.home-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  --glow-size: 0.5;
+}
+
+.home-preview .children {
+  gap: var(--space-4);
+}
+
+.home-preview .avatar--home {
+  --size: 96px;
+}
+
+.home-preview .child-card__name {
+  font-size: var(--text-md);
+}
+
 /* ---------- parents code screens ---------- */
 
 .lock {

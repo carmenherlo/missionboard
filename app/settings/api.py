@@ -4,12 +4,15 @@ from pydantic import BaseModel, ConfigDict
 from app.clock import Clock, app_day
 from app.deps import get_clock, get_config_store, get_event_log, require_parent
 from app.events.service import EventLog
-from app.settings.repository import Season, SettingsRepository
+from app.settings.repository import HomeLook, Season, SettingsRepository
 from app.settings.service import SettingsService
 from app.storage.config_store import ConfigStore
+from app.today.api import background_url
 from app.today.service import current_moment, current_season
 
 router = APIRouter(prefix="/api/settings", tags=["settings"], dependencies=[Depends(require_parent)])
+# The children's home screen reads how it looks: no parent code.
+home_router = APIRouter(prefix="/api/home", tags=["settings"])
 
 
 class SettingsPatch(BaseModel):
@@ -20,6 +23,7 @@ class SettingsPatch(BaseModel):
     starting_stars: int | None = None
     day_starts_at: str | None = None
     seasons: list[Season] | None = None
+    home: HomeLook | None = None
     routine_warn_minutes: int | None = None
 
 
@@ -37,15 +41,20 @@ def get_settings_service(
     return SettingsService(SettingsRepository(store), events)
 
 
-def _present(service: SettingsService, clock: Clock) -> dict:
-    settings = service.settings()
+def _now(settings, clock: Clock) -> dict:
+    """The season and the moment of the day now, and its picture."""
     now = clock.now()
     season = current_season(settings.seasons, app_day(now, settings.day_starts_at))
+    moment = current_moment(season, now.strftime("%H:%M"))
+    return {"season": season.name, "moment": moment, "background_url": background_url(season.name, moment)}
+
+
+def _present(service: SettingsService, clock: Clock) -> dict:
+    settings = service.settings()
     return {
         "settings": settings.model_dump(mode="json"),
         "features": service.features().model_dump(mode="json"),
-        "now": {"season": season.name,
-                "moment": current_moment(season, now.strftime("%H:%M"))},
+        "now": _now(settings, clock),
     }
 
 
@@ -76,3 +85,16 @@ def update_features(body: FeaturesPatch, service: SettingsService = Depends(get_
 def reset_seasons(service: SettingsService = Depends(get_settings_service), clock: Clock = Depends(get_clock)):
     service.reset_seasons()
     return _present(service, clock)
+
+
+@router.post("/home/reset")
+def reset_home(service: SettingsService = Depends(get_settings_service), clock: Clock = Depends(get_clock)):
+    service.reset_home()
+    return _present(service, clock)
+
+
+@home_router.get("")
+def home_look(store: ConfigStore = Depends(get_config_store), clock: Clock = Depends(get_clock)):
+    """How the home screen looks, and the picture of the moment for its background."""
+    settings = SettingsRepository(store).settings()
+    return {"look": settings.home.model_dump(mode="json"), "background_url": _now(settings, clock)["background_url"]}

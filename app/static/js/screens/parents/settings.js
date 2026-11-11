@@ -9,6 +9,7 @@ import { timeInput } from "../../components/time-input.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { homeLookPanel } from "./home-look-panel.js";
 import { loadSettings, saveSettings, settingStepper } from "./settings-parts.js";
 
 const MOMENTS = ["manana", "dia", "tarde", "noche"];
@@ -103,6 +104,7 @@ export async function viewSettings() {
   });
 
   const cards = seasons.map(seasonCard);
+  const homePanel = await homeLookPanel({ look: settings.home, picture: now.background_url, status, onReset: viewSettings });
   redraws.forEach((redraw) => redraw());
 
   render(
@@ -123,5 +125,6 @@ export async function viewSettings() {
             h("p", { class: "hint" }, t.settings.seasonsHint),
             ...cards,
             resetBox)),
+        homePanel,
         h("p", { class: "note" }, t.settings.fileHint))));
 }

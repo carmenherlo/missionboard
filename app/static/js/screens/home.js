@@ -1,5 +1,6 @@
 import { api, session } from "../api.js";
-import { avatar, loadAvatars } from "../components/avatar.js";
+import { loadAvatars } from "../components/avatar.js";
+import { homeKid, homeLookClasses, homeScene } from "../components/home-look.js";
 import { parentsCornerButton } from "../components/corner-button.js";
 import { fullscreenButton } from "../components/fullscreen-button.js";
 import { display, homeScreen, setDisplay } from "../display.js";
@@ -11,22 +12,22 @@ import { clockScreen } from "./clock.js";
 
 export async function viewHome() {
   session.parentCode = null;
-  const [children, byHand] = await Promise.all([api("GET", "api/children"), routinesByHand(), loadAvatars()]);
+  const [children, byHand, { look, background_url: picture }] = await Promise.all(
+    [api("GET", "api/children"), routinesByHand(), api("GET", "api/home"), loadAvatars()]);
   // The kids or the clock (reloj.html), as this tablet last chose.
   const showClock = homeScreen() === "clock";
   const dark = showClock && display().clockTheme === "dark";
   const grid = showClock ? clockScreen(children) : children.length
     ? h("section", { class: "children" },
-        children.map((child) =>
-          h("a", { class: "child-card", href: `#/child/${child.id}` },
-            avatar(child, { size: "home" }),
-            h("span", { class: "child-card__name" }, child.name))))
+        children.map((child) => homeKid(child, look, { href: `#/child/${child.id}` })))
     : h("div", { class: "home__empty" },
         h("p", { class: "empty" }, t.home.empty),
         h("p", { class: "note" }, t.home.emptyHint));
 
   render(
-    h("main", { class: `home${dark ? " home--dark" : ""}` },
+    // The kids with the background of the moment and their lights, as chosen in Ajustes; the clock, plain.
+    h("main", { class: `home${dark ? " home--dark" : ""}${showClock ? "" : ` ${homeLookClasses(look, !!picture)}`}` },
+      !showClock && homeScene(look, picture),
       // Top left: full screen, and ⏰ to start a routine by hand when there is one today.
       h("div", { class: "home-tools" },
         fullscreenButton(),
@@ -45,4 +46,19 @@ export async function viewHome() {
         }, icon("dayNight"))),
       parentsCornerButton("#/parents", t.home.parentsLabel),
       grid));
+  if (!showClock) followTheMoment(picture);
+}
+
+// The home stays open for hours: its picture follows the moment of the day (morning, day…).
+const CHECK_PICTURE_MS = 5 * 60 * 1000;
+let pictureTimer = null;
+
+function followTheMoment(shown) {
+  clearInterval(pictureTimer);
+  pictureTimer = setInterval(async () => {
+    const scene = document.querySelector(".home-look .child-scene__picture");
+    if (!scene) return clearInterval(pictureTimer); // another screen now
+    const { background_url: picture } = await api("GET", "api/home").catch(() => ({}));
+    if (picture && picture !== shown) scene.src = shown = picture;
+  }, CHECK_PICTURE_MS);
 }

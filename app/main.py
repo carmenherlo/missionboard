@@ -130,6 +130,7 @@ def create_app(
     app.include_router(songs_api.router)
     app.include_router(backup_api.router)
     app.include_router(settings_api.router)
+    app.include_router(settings_api.home_router)
 
     @app.get("/", include_in_schema=False)
     def index():
