@@ -19,6 +19,7 @@ from app.missions import api as missions_api
 from app.parents import api as parents_api
 from app.prizes import api as prizes_api
 from app.routines import api as routines_api
+from app.settings import api as settings_api
 from app.shop import api as shop_api
 from app.songs import api as songs_api
 from app.backup import api as backup_api
@@ -128,6 +129,7 @@ def create_app(
     app.include_router(shop_api.router)
     app.include_router(songs_api.router)
     app.include_router(backup_api.router)
+    app.include_router(settings_api.router)
 
     @app.get("/", include_in_schema=False)
     def index():

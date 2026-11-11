@@ -69,6 +69,10 @@ class RoutinesService:
         self._clock = clock
         self._events = events
 
+    def _live(self) -> list[Routine]:
+        """The routines that ring and start: none while they are switched off (features.routines)."""
+        return self._routines.list() if self._settings.features().routines else []
+
     def current(self) -> Current | None:
         """The routine going on at this moment, if any: one started by hand (until its
         time is up), or else one ringing by its time (finished ones stay away today)."""
@@ -77,7 +81,7 @@ class RoutinesService:
         day = app_day(now, settings.day_starts_at)
         minute = now.hour * 60 + now.minute + now.second / 60
         weekday = WEEKDAYS[day.weekday()]
-        for stored in self._routines.list():
+        for stored in self._live():
             run = self._runs.get(day, stored.id) if stored.manual else None
             if not run or not run["started_at"]:
                 continue
@@ -88,7 +92,7 @@ class RoutinesService:
                 people = [p for p in self.people(stored) if p.child.id in kids]
                 return Current(stored.on(weekday).started_at(int(start)), day, minute, run, people,
                                settings.routine_warn_minutes, started=start)
-        for stored in self._routines.list():
+        for stored in self._live():
             if not stored.goes_on(weekday) or stored.manual:
                 continue
             routine = stored.on(weekday)
@@ -118,7 +122,7 @@ class RoutinesService:
         day = app_day(self._clock.now(), settings.day_starts_at)
         weekday = WEEKDAYS[day.weekday()]
         found = []
-        for stored in self._routines.list():
+        for stored in self._live():
             if stored.manual or not stored.goes_on(weekday) or self._runs.get(day, stored.id)["finished_at"]:
                 continue
             routine = stored.on(weekday)
@@ -134,7 +138,7 @@ class RoutinesService:
         for ahead in range(days_ahead + 1):
             date = (now + timedelta(days=ahead)).date()
             weekday = WEEKDAYS[date.weekday()]
-            for stored in self._routines.list():
+            for stored in self._live():
                 if stored.manual or not stored.goes_on(weekday):
                     continue
                 routine = stored.on(weekday)
@@ -151,7 +155,7 @@ class RoutinesService:
         settings = self._settings.settings()
         weekday = WEEKDAYS[app_day(self._clock.now(), settings.day_starts_at).weekday()]
         children = self._children.list()
-        routines = [r for r in self._routines.list() if r.manual and r.goes_on(weekday)]
+        routines = [r for r in self._live() if r.manual and r.goes_on(weekday)]
         return [(r.on(weekday), kids_of(r, children)) for r in routines]
 
     def start(self, routine_id: str, kids: list[str]) -> None:

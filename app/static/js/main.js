@@ -11,6 +11,7 @@ import { viewChildrenList } from "./screens/parents/children-list.js";
 import { viewConfigIndex } from "./screens/parents/config-index.js";
 import { viewBackup } from "./screens/parents/backup.js";
 import { viewDisplaySettings } from "./screens/parents/display-settings.js";
+import { viewSettings } from "./screens/parents/settings.js";
 import { viewEventLog } from "./screens/parents/event-log.js";
 import { viewParentsLock } from "./screens/parents/lock.js";
 import { viewPrizeEdit } from "./screens/parents/prize-edit.js";
@@ -53,6 +54,7 @@ const routes = [
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],
   [parentsPath("/backup"), () => viewBackup(), "parents", "backup"],
   [parentsPath("/display"), () => viewDisplaySettings(), "parents", "display"],
+  [parentsPath("/settings"), () => viewSettings(), "parents", "settings"],
   [parentsPath("/children"), () => viewChildrenList(), "parents", "children"],
   [parentsPath("/children/new"), () => viewChildForm(null), "parents", "child_new"],
   [parentsPath("/children/:child"), (ids) => viewChildForm(ids.child), "parents", "child_edit"],

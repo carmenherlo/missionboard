@@ -1,14 +1,17 @@
 import { api, errorMessage } from "../../api.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
+import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { featurePanel, featureSwitch, loadSettings, saveFeatures } from "./settings-parts.js";
 
 // Like Premios del día, each item with its price in stars.
 export async function viewShopList() {
-  const items = await api("GET", "api/shop");
+  const [items, { features }] = await Promise.all([api("GET", "api/shop"), loadSettings()]);
+  const status = saveStatus();
 
   const text = h("input", { type: "text", maxlength: 40, placeholder: t.shop.newItem });
   const price = h("input", { type: "number", min: 1, max: 999, value: 5, "aria-label": t.shop.price });
@@ -29,9 +32,14 @@ export async function viewShopList() {
   }, text, price, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.shop.add));
 
   render(
-    parentsHeader(t.shop.title, { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.shop.title, status.element), { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
+        featurePanel(t.settings.shopTitle,
+          featureSwitch({
+            on: features.shop, onText: t.settings.shopOn, offText: t.settings.shopOff,
+            onChange: (on) => saveFeatures(status, { shop: on }),
+          })),
         h("p", { class: "hint" }, items.length ? t.shop.hint : t.shop.empty),
         panel(t.shop.count(items.length),
           items.length > 0 && h("ul", { class: "rows" }, items.map((item) =>

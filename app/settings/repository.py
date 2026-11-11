@@ -7,7 +7,7 @@ version changing a default does not change theirs. Invalid values stop the app
 at startup with a clear error instead of misbehaving later.
 """
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.storage.config_store import ConfigStore
 
@@ -35,6 +35,16 @@ class Season(BaseModel):
 
     _sunrise = field_validator("sunrise", mode="before")(time_from_yaml_number)
     _sunset = field_validator("sunset", mode="before")(time_from_yaml_number)
+
+    @model_validator(mode="after")
+    def sunrise_before_sunset(self):
+        if self.sunrise >= self.sunset:
+            raise ValueError(f"{self.name}: the sunrise must come before the sunset")
+        return self
+
+    def minutes(self) -> tuple[int, int]:
+        """The sunrise and the sunset as minutes of the day."""
+        return tuple(int(t[:2]) * 60 + int(t[3:]) for t in (self.sunrise, self.sunset))
 
 
 DEFAULT_SEASONS = (
@@ -70,6 +80,16 @@ class Settings(BaseModel):
         if len({season.name for season in seasons}) != len(seasons):
             raise ValueError("each season needs its own name")
         return seasons
+
+    @model_validator(mode="after")
+    def every_moment_shows(self):
+        """With the margin, each season still has some day and some night."""
+        margin = self.moment_margin_minutes
+        for season in self.seasons:
+            sunrise, sunset = season.minutes()
+            if sunset - sunrise <= 2 * margin or 24 * 60 - (sunset - sunrise) <= 2 * margin:
+                raise ValueError(f"{season.name}: with a margin of {margin} minutes there is no day or no night left")
+        return self
 
 
 class Features(BaseModel):
@@ -108,3 +128,8 @@ class SettingsRepository:
                 defaults = model.model_dump(mode="json")
                 doc[name] = {**{key: own.get(key, value) for key, value in defaults.items()},
                              **{key: value for key, value in own.items() if key not in defaults}}
+
+    def save(self, section: str, model: BaseModel) -> None:
+        """Write one section ("settings" or "features"); keys the app does not know stay."""
+        with self._store.edit() as doc:
+            doc[section] = {**(doc.get(section) or {}), **model.model_dump(mode="json")}

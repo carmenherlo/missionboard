@@ -1,15 +1,18 @@
 import { api, errorMessage } from "../../api.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
+import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { featurePanel, featureSwitch, loadSettings, saveFeatures, saveSettings, settingStepper } from "./settings-parts.js";
 
 // Like the steps of a mission: a list, "add" at the bottom, the pencil to edit.
 // No order to drag: the wheel picks at random.
 export async function viewPrizesList() {
-  const prizes = await api("GET", "api/prizes");
+  const [prizes, { settings, features }] = await Promise.all([api("GET", "api/prizes"), loadSettings()]);
+  const status = saveStatus();
 
   const input = h("input", { type: "text", maxlength: 40, placeholder: t.prizes.newPrize });
   const error = h("p", { class: "form-error", role: "alert" });
@@ -30,9 +33,18 @@ export async function viewPrizesList() {
   }, input, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.prizes.add));
 
   render(
-    parentsHeader(t.prizes.title, { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.prizes.title, status.element), { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
+        featurePanel(t.settings.prizeTitle,
+          featureSwitch({
+            on: features.daily_prize, onText: t.settings.prizeOn, offText: t.settings.prizeOff,
+            onChange: (on) => saveFeatures(status, { daily_prize: on }),
+          }),
+          settingStepper({
+            label: t.settings.spins, value: settings.daily_prize_spins, min: 1, max: 10,
+            onChange: (n) => saveSettings(status, { daily_prize_spins: n }),
+          })),
         h("p", { class: "hint" }, prizes.length ? t.prizes.hint : t.prizes.empty),
         panel(t.prizes.count(prizes.length),
           prizes.length > 0 && h("ul", { class: "rows" }, prizes.map((prize) =>

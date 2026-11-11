@@ -4,6 +4,8 @@ The log stores codes and names; the sentences are written here when the
 log is read, so they can be improved without touching stored events.
 """
 
+SEASONS = {"primavera": "primavera", "verano": "verano", "otono": "otoño", "invierno": "invierno"}
+
 DAYS = {"mon": "L", "tue": "M", "wed": "X", "thu": "J", "fri": "V", "sat": "S", "sun": "D"}
 
 # No zone: nobody in particular (the home screen, before a child picks their avatar).
@@ -31,6 +33,18 @@ _FIELDS = {
     "color": lambda value: f"color: {value}",
     "order": lambda value: "orden: " + ", ".join(value),
     "price": lambda value: f"precio: {value} {'estrella' if value == 1 else 'estrellas'}",
+    # Ajustes and the switches on each screen (ajustes.html)
+    "stars_per_mission": lambda value: f"estrellas por misión: {value}",
+    "daily_prize_spins": lambda value: f"giros de la ruleta: {value}",
+    "starting_stars": lambda value: f"estrellas de un niño nuevo: {value}",
+    "day_starts_at": lambda value: f"el día empieza a las {value}",
+    "moment_margin_minutes": lambda value: f"mañana y tarde: {value} min",
+    "routine_warn_minutes": lambda value: f"aviso antes de acabar cada parte: {value} min",
+    "seasons": lambda value: "estaciones: " + " · ".join(
+        f"{SEASONS.get(s.name, s.name)} {s.start[3:]}/{s.start[:2]} {s.sunrise}–{s.sunset}" for s in value),
+    "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
+    "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
+    "routines": lambda value: "rutinas " + ("encendidas" if value else "apagadas"),
 }
 
 
@@ -76,9 +90,10 @@ _ROUTINE = {
 SCREENS = {
     "home": ("el inicio", None),
     "child_today": ("la ruta de un niño", "la ruta de {child}"),
-    "event_log": ("Registro de la prueba", None),
+    "event_log": ("Registro", None),
     "backup": ("Copia de seguridad", None),
-    "display": ("Configuración avanzada", None),
+    "display": ("Pantalla", None),
+    "settings": ("Ajustes", None),
     "config": ("Configurar", None),
     "change_code": ("Código de padres", None),
     "children": ("Niños", None),
@@ -143,6 +158,8 @@ _CONFIG = {
     ("song", "created"): "Subiste la canción «{mission}»",
     ("song", "changed"): "Cambiaste la canción «{mission}»",
     ("song", "deleted"): "Borraste la canción «{mission}»",
+    ("settings", "changed"): "Cambiaste los ajustes",
+    ("features", "changed"): "Cambiaste lo que está encendido",
 }
 
 

@@ -1,4 +1,4 @@
-// Configurar → Configuración avanzada (reloj.html): this tablet's rest mode, the
+// Configurar → Pantalla (reloj.html; "Configuración avanzada" until ajustes.html): this tablet's rest mode, the
 // screen the app opens with, and the clock light or dark. Kept on the device (display.js), so it saves on the spot, here only.
 import { panel } from "../../components/panel.js";
 import { display, setDisplay } from "../../display.js";

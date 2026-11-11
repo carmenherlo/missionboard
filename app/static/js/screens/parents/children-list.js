@@ -1,11 +1,15 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
+import { panel } from "../../components/panel.js";
+import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { loadSettings, saveSettings, settingStepper } from "./settings-parts.js";
 
 export async function viewChildrenList() {
-  const [children] = await Promise.all([api("GET", "api/children"), loadAvatars()]);
+  const [children, { settings }] = await Promise.all([api("GET", "api/children"), loadSettings(), loadAvatars()]);
+  const status = saveStatus();
 
   function row(child) {
     const actions = h("div", { class: "row__actions" });
@@ -43,12 +47,16 @@ export async function viewChildrenList() {
   }
 
   render(
-    parentsHeader(t.children.title, { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.children.title, status.element), { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
       children.length
         ? h("ul", { class: "rows" }, children.map(row))
         : h("p", { class: "empty" }, t.children.empty),
       h("a", { class: "btn btn--primary btn--block", href: "#/parents/config/children/new" },
         t.children.add),
+      panel(t.settings.newChildTitle, settingStepper({
+        label: t.settings.startingStars, hint: t.settings.startingHint, value: settings.starting_stars, min: 0, max: 99,
+        onChange: (n) => saveSettings(status, { starting_stars: n }),
+      })),
       h("p", { class: "note" }, t.children.historyNote)));
 }
