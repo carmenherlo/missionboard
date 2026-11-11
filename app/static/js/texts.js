@@ -694,4 +694,12 @@ export const t = {
     cancel: "Cancelar",
     add: "Añadir niño",
   },
+  // Editar niño → Estrellas: stars given as a present
+  childStars: {
+    title: "Estrellas",
+    has: (n) => `Tiene ${n} ${n === 1 ? "estrella" : "estrellas"}`,
+    howMany: "Cuántas regalar",
+    give: (n) => `Regalar ${n} ${n === 1 ? "estrella" : "estrellas"}`,
+    given: (n, name) => `✓ Regalaste ${n} ${n === 1 ? "estrella" : "estrellas"} a ${name}.`,
+  },
 };

@@ -95,6 +95,15 @@ class DayRepository:
                 (child.id, child.name, stars, day.isoformat(), at.isoformat(timespec="seconds")),
             )
 
+    def give_stars(self, child: Child, stars: int, day: date, at: datetime) -> None:
+        """Stars a parent gives a child, as a present (Editar niño → Estrellas)."""
+        with db.connect(self._data_dir) as conn:
+            conn.execute(
+                "INSERT INTO star_movements (child_id, child_name, amount, reason, day, at)"
+                " VALUES (?, ?, ?, 'gift', ?, ?)",
+                (child.id, child.name, stars, day.isoformat(), at.isoformat(timespec="seconds")),
+            )
+
     def prize_spins(self, day: date, child_id: str) -> list[dict]:
         """The prizes the child won today, in order: {"prize_id", "text", "image"}."""
         with db.connect(self._data_dir) as conn:

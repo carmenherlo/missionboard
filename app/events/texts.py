@@ -42,6 +42,7 @@ _FIELDS = {
     "seasons": lambda value: "estaciones: " + " · ".join(
         f"{SEASONS.get(s.name, s.name)} {s.start[3:]}/{s.start[:2]} {s.manana} {s.dia} {s.tarde} {s.noche}" for s in value),
     "home": lambda value: "aspecto del inicio cambiado",
+    "gift": lambda value: stars_detail(value),
     "route": lambda value: "aspecto de la ruta cambiado",
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
@@ -130,6 +131,7 @@ _CONFIG = {
     ("mission", "changed"): "Cambiaste «{mission}»",
     ("mission", "deleted"): "Borraste «{mission}»",
     ("mission", "opened_today"): "Abriste «{mission}» solo por hoy para {child}",
+    ("stars", "given"): "Regalaste estrellas a {child}",
     ("missions", "reordered"): "Ordenaste las misiones",
     ("task", "created"): "Añadiste la tarea «{step}» a «{mission}»",
     ("task", "changed"): "Cambiaste la tarea «{step}» de «{mission}»",

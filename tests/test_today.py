@@ -422,3 +422,20 @@ def test_seasons_out_of_order_stop_the_app(data_dir, clock):
     with pytest.raises(Exception):
         with TestClient(create_app(data_dir, clock=clock)):
             pass
+
+
+def test_a_parent_gives_a_child_stars_as_a_present(tmp_path):
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    from tests.conftest import PARENT
+    with TestClient(create_app(tmp_path)) as client:
+        leo = client.post("/api/children", json={"name": "Leo", "preset": "lion"}, headers=PARENT).json()
+        before = client.get(f"/api/children/{leo['id']}/stars", headers=PARENT).json()["stars"]
+        assert client.post(f"/api/children/{leo['id']}/stars/gift", json={"stars": 3}).status_code == 401
+        got = client.post(f"/api/children/{leo['id']}/stars/gift", json={"stars": 3}, headers=PARENT)
+        assert got.json() == {"stars": before + 3}
+        assert client.get(f"/api/children/{leo['id']}/today").json()["stars"] == before + 3
+        for wrong in (0, -2, 51):
+            assert client.post(f"/api/children/{leo['id']}/stars/gift", json={"stars": wrong}, headers=PARENT).status_code == 422
+        assert client.post("/api/children/nobody/stars/gift", json={"stars": 1}, headers=PARENT).status_code == 404
+        assert "Regalaste estrellas a Leo · +3 estrellas" in client.get("/api/events", headers=PARENT).text

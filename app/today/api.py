@@ -23,6 +23,7 @@ router = APIRouter(prefix="/api", tags=["today"])
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 STAR_IMAGE = "fluent/star"
+MAX_GIFT = 50  # stars a parent can give at once
 CELEBRATION_STAR_IMAGE = "fluent/glowing-star"
 PRIZE_IMAGE = "fluent/wrapped-gift"
 
@@ -155,6 +156,21 @@ def open_today(child_id: str, mission_id: str, days: DayService = Depends(get_da
                present: Presenter = Depends()):
     """A parent opens a closed or upcoming mission, only today (holding it on the route)."""
     return present(days.open_today(child_id, mission_id))
+
+
+class GiftIn(BaseModel):
+    stars: int = Field(ge=1, le=MAX_GIFT)
+
+
+@router.get("/children/{child_id}/stars", dependencies=[Depends(require_parent)])
+def child_stars(child_id: str, days: DayService = Depends(get_day_service)):
+    return {"stars": days.stars(child_id)}
+
+
+@router.post("/children/{child_id}/stars/gift", dependencies=[Depends(require_parent)])
+def give_stars(child_id: str, body: GiftIn, days: DayService = Depends(get_day_service)):
+    """A parent gives the child some stars (Editar niño → Estrellas)."""
+    return {"stars": days.give_stars(child_id, body.stars)}
 
 
 @router.post("/children/{child_id}/today/prize/spin")

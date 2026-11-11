@@ -1611,6 +1611,13 @@ select.pick {
 
 
 /* The day / night icon: its right half filled. */
+/* Editar niño → Estrellas */
+.child-stars { display: grid; gap: var(--space-3); }
+.child-stars__now { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--text-lg); }
+.child-stars__now img { width: 32px; height: 32px; }
+.child-stars__gift { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.child-stars .hint { margin: 0; }
+
 .icon--paw { fill: currentColor; stroke: none; }
 
 .icon--dayNight path:last-child {

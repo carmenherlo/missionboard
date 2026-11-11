@@ -5,6 +5,7 @@ import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
+import { childStarsPanel } from "./child-stars.js";
 import { parentsHeader } from "./common.js";
 
 const NAME_SAVE_DELAY_MS = 600;
@@ -128,6 +129,7 @@ export async function viewChildForm(childId) {
   }
 
   const title = h("span", {}, existing ? existing.name : "");
+  const starsPanel = existing ? await childStarsPanel(existing) : null;
 
   refreshAll();
   render(
@@ -138,6 +140,7 @@ export async function viewChildForm(childId) {
       h("form", { class: "child-form", onsubmit },
         panel(null, preview, h("label", {}, t.childForm.name, nameInput)),
         panel(null, picker),
+        starsPanel,
         error,
         existing
           ? h("div", { class: "form-actions" },

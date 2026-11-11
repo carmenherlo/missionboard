@@ -241,6 +241,17 @@ class DayService:
             self._events.config_changed("mission", "opened_today", child=today.child, mission=item.mission)
         return self.today(child_id)
 
+    def stars(self, child_id: str) -> int:
+        return self._days.stars(self._child(child_id).id)
+
+    def give_stars(self, child_id: str, stars: int) -> int:
+        """A parent gives a child some stars, as a present; says how many they have now."""
+        child = self._child(child_id)
+        now = self._clock.now()
+        self._days.give_stars(child, stars, app_day(now, self._settings.settings().day_starts_at), now)
+        self._events.config_changed("stars", "given", child=child, changes={"gift": stars})
+        return self._days.stars(child.id)
+
     def note(self, child_id: str, kind: str, mission_id: str | None = None, step_id: str | None = None) -> None:
         """Something only worth logging: a mission opened, a task listened to,
         a mission touched while it is not open, or the prize while locked."""
