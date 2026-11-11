@@ -5,6 +5,7 @@ import { api } from "../../api.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
+import { timeInput } from "../../components/time-input.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
@@ -53,9 +54,9 @@ export async function viewSettings() {
       h("figure", { class: `season__shot${isNow && moment === now.moment ? " season__shot--now" : ""}` },
         h("img", { src: `static/backgrounds/${season.name}/${moment}.webp`, alt: "", loading: "lazy" }),
         h("figcaption", {}, h("b", {}, t.settings.moments[moment])),
-        h("input", {
-          type: "time", class: "season__time", value: season[moment], required: true,
-          "aria-label": `${seasonName(season)} · ${t.settings.moments[moment]} · ${t.settings.from}`,
+        timeInput({
+          class: "season__time", value: season[moment], required: true,
+          label: `${seasonName(season)} · ${t.settings.moments[moment]} · ${t.settings.from}`,
           onchange: (e) => { if (!e.target.value) return; season[moment] = e.target.value; saveSeasons(); },
         }),
         ends[moment] = h("span", { class: "season__until" }))));
@@ -96,8 +97,8 @@ export async function viewSettings() {
     })) }, t.settings.reset));
   showReset();
 
-  const dayStart = h("input", {
-    type: "time", value: settings.day_starts_at, required: true,
+  const dayStart = timeInput({
+    value: settings.day_starts_at, required: true, label: t.settings.dayStarts,
     onchange: (e) => e.target.value && saveSettings(status, { day_starts_at: e.target.value }),
   });
 

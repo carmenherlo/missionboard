@@ -10,6 +10,7 @@ import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
 import { sortable } from "../../components/sortable.js";
 import { undoBar } from "../../components/undo-bar.js";
+import { timeInput } from "../../components/time-input.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
@@ -160,8 +161,8 @@ export async function viewMissionEdit(missionId) {
       scheduleBox.replaceChildren(modes);
       return;
     }
-    const start = h("input", { type: "time", value: mission.schedule?.start ?? "", onchange: saveSchedule });
-    const end = h("input", { type: "time", value: mission.schedule?.end ?? "", onchange: saveSchedule });
+    const start = timeInput({ value: mission.schedule?.start ?? "", label: t.missionEdit.from, onchange: saveSchedule });
+    const end = timeInput({ value: mission.schedule?.end ?? "", label: t.missionEdit.to, onchange: saveSchedule });
     function saveSchedule() {
       scheduleError.textContent = "";
       if (!start.value) {

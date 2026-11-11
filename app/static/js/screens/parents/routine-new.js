@@ -1,5 +1,6 @@
 import { api, errorMessage } from "../../api.js";
 import { panel } from "../../components/panel.js";
+import { timeInput } from "../../components/time-input.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
@@ -15,7 +16,7 @@ export async function viewRoutineNew(missionId) {
     return;
   }
   let ending = true;
-  const time = h("input", { type: "time", value: mission.schedule?.end ?? "07:30" });
+  const time = timeInput({ value: mission.schedule?.end ?? "07:30", required: true, label: t.routineEdit.anchorEnd });
   const error = h("p", { class: "form-error", role: "alert" });
   const anchor = h("div", {});
   const timeLabel = h("span", {});

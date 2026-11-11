@@ -5,6 +5,7 @@ import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
 import { stepper } from "../../components/stepper.js";
+import { timeInput } from "../../components/time-input.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
@@ -58,8 +59,8 @@ export async function viewRoutineEdit(routineId) {
   // "Empieza a las" or "Termina a las": the time that stays put when the parts change.
   const anchorBox = h("div", {});
   const whenLabel = h("span", {});
-  const when = h("input", {
-    type: "time",
+  const when = timeInput({
+    required: true, label: t.routineEdit.anchorStart,
     onchange: (e) => e.target.value && patch(routine.anchor === "end" ? { ends: e.target.value } : { starts: e.target.value }),
     // "Termina a las": when the parts end and the missions are checked (05/11), not the goal's latest
   });
