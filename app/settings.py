@@ -1,7 +1,9 @@
 """Tunable rules (settings) and on/off switches (features) from config.yaml.
 
-The defaults live here. A key missing from the file takes its default,
-so adding a new setting needs no migration. Invalid values stop the app
+The defaults live here. A key missing from the file takes its default, so adding a
+new setting needs no migration; at startup the missing ones are written into the file
+(complete), so each family sees them there, can change them, and keeps them: a later
+version changing a default does not change theirs. Invalid values stop the app
 at startup with a clear error instead of misbehaving later.
 """
 
@@ -51,6 +53,8 @@ class Settings(BaseModel):
     starting_stars: int = Field(default=0, ge=0)  # what a new child starts with
     day_starts_at: str = Field(default="00:00", pattern=TIME)
     seasons: tuple[Season, ...] = DEFAULT_SEASONS
+    # The morning and the evening: this long before and after the sunrise and the sunset.
+    moment_margin_minutes: int = Field(default=120, ge=0, le=360)
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)
@@ -88,3 +92,19 @@ class SettingsRepository:
 
     def features(self) -> Features:
         return Features.model_validate(self._store.load().get("features") or {})
+
+    def complete(self) -> None:
+        """Write into config.yaml the settings and switches it does not have yet, with
+        today's defaults (in the models' order; what the family wrote stays as it is)."""
+        if not self._store.path.exists():
+            return  # nothing saved yet: it is written with the first change
+        doc = self._store.load()
+        sections = {"settings": Settings(), "features": Features()}
+        if all(set(type(model).model_fields) <= set(doc.get(name) or {}) for name, model in sections.items()):
+            return
+        with self._store.edit() as doc:
+            for name, model in sections.items():
+                own = doc.get(name) or {}
+                defaults = model.model_dump(mode="json")
+                doc[name] = {**{key: own.get(key, value) for key, value in defaults.items()},
+                             **{key: value for key, value in own.items() if key not in defaults}}

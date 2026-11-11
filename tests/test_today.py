@@ -404,6 +404,16 @@ def test_the_seasons_can_be_changed_in_the_settings_and_with_no_picture_no_backg
         assert day["moment"] == "dia" and day["background_url"] is None
 
 
+def test_the_margin_of_the_morning_and_the_evening_in_the_settings(data_dir, clock):
+    write_config(data_dir, {"moment_margin_minutes": 30})
+    with TestClient(create_app(data_dir, clock=clock)) as client:
+        bea = create_child(client)
+        clock.moment = MONDAY.replace(hour=8, minute=30)  # autumn: sunrise 7:30, margin 30 min
+        assert today(client, bea)["moment"] == "dia"
+        clock.moment = MONDAY.replace(hour=7, minute=10)
+        assert today(client, bea)["moment"] == "manana"
+
+
 def test_seasons_out_of_order_stop_the_app(data_dir, clock):
     write_config(data_dir, {"seasons": [{"name": "b", "start": "06-01", "sunrise": "08:00", "sunset": "20:00"},
                                         {"name": "a", "start": "01-01", "sunrise": "08:00", "sunset": "20:00"}]})

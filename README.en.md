@@ -94,8 +94,11 @@ the day; each season's dates and times are in `settings.seasons`.
   (configuration, history, photos, songs) and restores such a file,
   checking it first and keeping what there was in `backups/`. It is the way to move
   a family to another device.
-- `settings` and `features` in `config.yaml` can be edited by hand; invalid values
-  stop the app at start-up with a message.
+- `settings` and `features` in `config.yaml` can be edited by hand. On start-up the app
+  writes the missing ones with their defaults, so they are all in sight; the ones there
+  are left alone, also by updates. Invalid values stop the app at start-up with a
+  message. Among them, the seasons (`seasons`: start, sunrise and sunset) and the margin
+  of the morning and the evening around those times (`moment_margin_minutes`).
 
 ## Tests
 

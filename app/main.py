@@ -75,6 +75,7 @@ def create_app(
         now = app.state.clock.now()
         with_examples = fresh_start.run(data_dir, now, with_samples=samples)
         config_store.migrate()
+        SettingsRepository(config_store).complete()  # every setting in the file, to see and change
         db.migrate(data_dir)
         if with_examples:
             settings = SettingsRepository(config_store).settings()

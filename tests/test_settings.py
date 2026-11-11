@@ -62,6 +62,25 @@ def test_invalid_values_are_rejected(tmp_path, section, values):
         repo.settings() if section == "settings" else repo.features()
 
 
+def test_missing_settings_are_written_into_the_file_and_kept(tmp_path):
+    repo_with(tmp_path, {"version": CURRENT_VERSION, "settings": {"starting_stars": 5, "mine": "x"},
+                         "features": {"shop": False}})
+    SettingsRepository(ConfigStore(tmp_path)).complete()
+    doc = yaml.safe_load(config_path(tmp_path).read_text())
+    assert doc["settings"]["starting_stars"] == 5 and doc["settings"]["mine"] == "x"  # theirs stays
+    assert doc["settings"]["stars_per_mission"] == 1 and doc["settings"]["moment_margin_minutes"] == 120
+    assert doc["settings"]["seasons"][3] == {"name": "invierno", "start": "12-21", "sunrise": "08:30", "sunset": "16:30"}
+    assert doc["features"]["shop"] is False and doc["features"]["routines"] is True
+    assert list(doc["settings"])[:2] == ["stars_per_mission", "daily_prize_spins"]
+    # Written once; the defaults in a later version do not change the family's
+    assert SettingsRepository(ConfigStore(tmp_path)).settings() == Settings(starting_stars=5)
+
+
+def test_nothing_is_written_without_a_file(tmp_path):
+    SettingsRepository(ConfigStore(tmp_path)).complete()
+    assert not config_path(tmp_path).exists()
+
+
 def test_app_refuses_to_start_with_invalid_settings(tmp_path):
     repo_with(tmp_path, {"version": CURRENT_VERSION, "settings": {"stars_per_mission": -1}})
     with pytest.raises(ValidationError):

@@ -100,21 +100,18 @@ class SpinResult:
     prize: Prize
 
 
-TRANSITION_MINUTES = 120  # the morning and the evening: this long before and after the sun
-
-
 def current_season(seasons: tuple[Season, ...], day: date) -> Season:
     """The last one that has started; in January, the last of the list goes on."""
     started = [season for season in seasons if season.start <= day.strftime("%m-%d")]
     return started[-1] if started else seasons[-1]
 
 
-def current_moment(season: Season, time: str) -> str:
+def current_moment(season: Season, time: str, margin: int = 120) -> str:
     """Morning and evening around the sunrise and the sunset, day between them, night the rest."""
     now, sunrise, sunset = minute_of(time), minute_of(season.sunrise), minute_of(season.sunset)
-    if sunrise - TRANSITION_MINUTES <= now < sunrise + TRANSITION_MINUTES:
+    if sunrise - margin <= now < sunrise + margin:
         return "manana"
-    if sunset - TRANSITION_MINUTES <= now < sunset + TRANSITION_MINUTES:
+    if sunset - margin <= now < sunset + margin:
         return "tarde"
     return "dia" if sunrise < now < sunset else "noche"
 
@@ -173,7 +170,7 @@ class DayService:
             child=child,
             day=day,
             season=(season := current_season(settings.seasons, day)),
-            moment=current_moment(season, time),
+            moment=current_moment(season, time, settings.moment_margin_minutes),
             missions=missions,
             stars=self._days.stars(child.id),
             prize=self._prize_today(day, child, missions),

@@ -99,8 +99,11 @@ día; las fechas y las horas de cada estación están en `settings.seasons`.
   `.zip` (configuración, historial, fotos y música) y restaura un archivo
   así: primero lo comprueba, y lo que había se guarda en `backups/`. Es la forma de
   llevar una familia a otro aparato.
-- `settings` y `features` de `config.yaml` se pueden editar a mano; si un valor no
-  vale, la app no arranca y dice cuál.
+- `settings` y `features` de `config.yaml` se pueden editar a mano. Al arrancar, la app
+  escribe los que falten con su valor por defecto, para que estén todos a la vista; los
+  que ya estén no se tocan, tampoco al actualizar. Si un valor no vale, la app no arranca
+  y dice cuál. Entre ellos, las estaciones (`seasons`: inicio, amanecer y atardecer) y el
+  margen de la mañana y la tarde alrededor de esas horas (`moment_margin_minutes`).
 
 ## Tests
 
