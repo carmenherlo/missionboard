@@ -1611,6 +1611,8 @@ select.pick {
 
 
 /* The day / night icon: its right half filled. */
+.icon--paw { fill: currentColor; stroke: none; }
+
 .icon--dayNight path:last-child {
   fill: currentColor;
 }
@@ -1861,6 +1863,7 @@ select.pick {
   position: sticky;
   top: var(--space-3);
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* the preview never wider than its column */
   gap: var(--space-2);
 }
 

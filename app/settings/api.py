@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 from app.clock import Clock, app_day
 from app.deps import get_clock, get_config_store, get_event_log, require_parent
 from app.events.service import EventLog
-from app.settings.repository import HomeLook, Season, SettingsRepository
+from app.settings.repository import HomeLook, RouteLook, Season, SettingsRepository
 from app.settings.service import SettingsService
 from app.storage.config_store import ConfigStore
 from app.today.api import background_url
@@ -24,6 +24,7 @@ class SettingsPatch(BaseModel):
     day_starts_at: str | None = None
     seasons: list[Season] | None = None
     home: HomeLook | None = None
+    route: RouteLook | None = None
     routine_warn_minutes: int | None = None
 
 
@@ -90,6 +91,12 @@ def reset_seasons(service: SettingsService = Depends(get_settings_service), cloc
 @router.post("/home/reset")
 def reset_home(service: SettingsService = Depends(get_settings_service), clock: Clock = Depends(get_clock)):
     service.reset_home()
+    return _present(service, clock)
+
+
+@router.post("/route/reset")
+def reset_route(service: SettingsService = Depends(get_settings_service), clock: Clock = Depends(get_clock)):
+    service.reset_route()
     return _present(service, clock)
 
 

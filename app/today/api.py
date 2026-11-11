@@ -62,8 +62,10 @@ def background_url(season: str, moment: str) -> str | None:
 class Presenter:
     """Turns a child's day into JSON, with the address of every image."""
 
-    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries)):
+    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries),
+                 store: ConfigStore = Depends(get_config_store)):
         self._libraries = libraries
+        self._store = store
 
     def __call__(self, today: Today) -> dict:
         return {
@@ -76,6 +78,7 @@ class Presenter:
             "star_url": self._libraries.url(STAR_IMAGE),
             "celebration_star_url": self._libraries.url(CELEBRATION_STAR_IMAGE),
             "focus_is_now": today.focus_is_now,
+            "route_look": SettingsRepository(self._store).settings().route.model_dump(mode="json"),
             "missions": [
                 {
                     "id": item.mission.id,

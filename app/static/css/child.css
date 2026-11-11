@@ -35,6 +35,10 @@
   background: var(--scene-veil-white);
 }
 
+/* How much white over the picture (settings.route.veil): none, soft, or 45 % (the usual). */
+.child-screen--veil-0 .child-scene__veil { background: none; }
+.child-screen--veil-25 .child-scene__veil { background: var(--home-veil-soft); }
+
 /* ---------- top bar ---------- */
 
 .child-bar {
@@ -200,6 +204,110 @@
 .avatar--hero {
   --size: 200px;
 }
+
+/* ---------- the route as a wheel (route-wheel.js) ---------- */
+
+.route--wheel {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-content: stretch;
+  padding: 0 0 var(--space-5);
+}
+
+.drum-view {
+  display: grid;
+  place-items: center;
+  padding-bottom: 7rem; /* the names go below the rings */
+  perspective: var(--drum-perspective, 1950px);
+  touch-action: none; /* the finger turns the wheel, it does not scroll */
+  user-select: none;
+  cursor: grab;
+}
+
+.drum-view:active { cursor: grabbing; }
+
+.drum {
+  position: relative;
+  width: var(--drum-card);
+  height: var(--drum-card);
+  transform-style: preserve-3d;
+}
+
+/* Each stop faces out from the drum; only its ring and its name take taps. */
+.drum__stop {
+  position: absolute;
+  inset: calc(-1 * var(--drum-room));
+  padding: var(--drum-room);
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.drum__stop > * { pointer-events: auto; }
+
+.route--wheel .route-node {
+  --size: var(--drum-card);
+  width: var(--size);
+  height: var(--size);
+}
+
+/* Open: in colour (the glow is in effects.css). Not open yet, or not done: in black and white. */
+.route--wheel .route-node--open .ring__inner img { opacity: 1; filter: none; }
+.route--wheel:not(.route--grey) .route-node--upcoming .ring__inner img,
+.route--wheel:not(.route--grey) .route-node--closed .ring__inner img { filter: none; }
+.route--grey .route-node--upcoming .ring,
+.route--grey .route-node--closed .ring { filter: grayscale(1); }
+
+/* From a stop to the next, on the straight line between their rings. */
+.drum__joint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 14px;
+  margin-top: -7px;
+  color: var(--drum-joint-off);
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.drum__joint--done { color: color-mix(in srgb, var(--joint-color) var(--drum-joint-done), transparent); }
+
+.drum__joint--dots {
+  background: currentColor;
+  -webkit-mask: radial-gradient(circle, var(--mask-solid) 5px, transparent 6px) 0 50% / 20px 14px space no-repeat;
+  mask: radial-gradient(circle, var(--mask-solid) 5px, transparent 6px) 0 50% / 20px 14px space no-repeat;
+}
+
+/* Footprints: in zigzag, walking towards the next one. */
+.drum__joint--paws {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 60px;
+  margin-top: -30px;
+}
+
+.drum__joint--paws .icon { width: 34px; height: 34px; transform: rotate(90deg) translateX(var(--paw-side)); }
+.drum__joint--paws .icon:nth-child(odd) { --paw-side: -12px; }
+.drum__joint--paws .icon:nth-child(even) { --paw-side: 12px; }
+
+/* Which one is in the middle, as dots below. */
+.drum-marks {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.drum-marks span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--drum-mark);
+  box-shadow: 0 0 0 1px var(--drum-mark-edge);
+}
+
+.drum-marks .drum-marks__on { background: var(--child-color); }
 
 /* ---------- ring: the mission's picture, filled with the steps done ---------- */
 

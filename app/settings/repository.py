@@ -78,6 +78,26 @@ class HomeLook(BaseModel):
     shine: bool = True  # a reflection goes once round each ring when the screen opens
 
 
+class RouteLook(BaseModel):
+    """How a child's route looks (prueba-ruta-rueda.html): a wheel standing up that turns
+    on its vertical axis and always stops on a mission, or the line of before. The open
+    missions glow; from one to the next, footprints or dots in the colour of the one they
+    come from (grey if it was not done)."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    shape: Literal["wheel", "line"] = "wheel"
+    width: Literal["narrow", "normal", "wide", "widest"] = "normal"
+    spacing: Literal["close", "normal", "apart"] = "normal"
+    inertia: Literal["short", "medium", "long"] = "medium"
+    depth: Literal["much", "normal", "little"] = "normal"
+    tick: Literal["none", "soft", "loud"] = "soft"
+    ends: Literal["bounce", "loop"] = "bounce"
+    joint: Literal["paws", "dots"] = "paws"
+    grey: bool = True  # not open yet, or not done: in black and white
+    veil: Literal[0, 25, 45] = 45  # % of white over the picture
+
+
 class Settings(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -87,6 +107,7 @@ class Settings(BaseModel):
     day_starts_at: str = Field(default="00:00", pattern=TIME)
     seasons: tuple[Season, ...] = DEFAULT_SEASONS
     home: HomeLook = HomeLook()
+    route: RouteLook = RouteLook()
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)

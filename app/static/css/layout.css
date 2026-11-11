@@ -224,6 +224,28 @@
   font-size: var(--text-md);
 }
 
+/* Ajustes → La ruta de los niños: the first child's route, in small (it turns). */
+.route-preview.child-screen { /* over the child screen's own height (child.css) */
+  min-height: 0;
+  height: 340px; /* a fixed height: with an aspect ratio, its content would widen it */
+  border-radius: var(--radius-md);
+  --drum-card: 110px;
+  --drum-room: 50px;
+  --drum-glow: 0.7;
+  --route-focus-size: 90px;
+  --route-near-size: 50px;
+  --route-far-size: 40px;
+}
+
+.route-preview .route-node__label,
+.route-preview .route-node--focus .route-node__label { font-size: var(--text-sm); }
+.route-preview .route-node__tag { font-size: var(--text-sm); }
+.route-preview .drum-view { padding-bottom: 3rem; }
+.route-preview .drum__joint--paws .icon { width: 18px; height: 18px; }
+.route-preview .ring__star { width: 26px; height: 26px; top: -6px; right: -6px; }
+.route-preview .ring__star img { width: 18px; height: 18px; }
+.route-preview .route__message { display: none; }
+
 /* ---------- parents code screens ---------- */
 
 .lock {

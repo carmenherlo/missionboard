@@ -225,6 +225,20 @@
   --home-beat-fast: 2s; /* the beat: "Rápido", "Lento", "Muy lento" */
   --home-beat-slow: 3.5s;
   --home-beat-slower: 5s;
+
+  /* The route as a wheel (prueba-ruta-rueda.html): every stop as big; the open ones glow
+     like the avatars of the home (their mission's colour round the ring, white light in the
+     centre); from one to the next, footprints or dots, grey after one not done. */
+  --drum-card: min(300px, 40vh, 30vw);
+  --drum-room: 120px; /* room round each ring for its glow, so it is not cut off */
+  --drum-glow: var(--home-glow-2);
+  --drum-solid: var(--home-solid-2);
+  --drum-beat: var(--home-beat-slow);
+  --drum-joint-off: rgb(150 150 150 / 0.7);
+  --drum-joint-done: 70%; /* how much of the mission's colour (the rest, see-through) */
+  --drum-mark: rgb(255 255 255 / 0.8);
+  --drum-mark-edge: rgb(0 0 0 / 0.15);
+  --mask-solid: black; /* what a CSS mask keeps */
   --star-shine: 2.4s; /* the star won, shining */
   --appear: 220ms; /* panels and messages coming in */
   --state-hover: 8%; /* Material 3 state layer: the text's colour over what is touched */

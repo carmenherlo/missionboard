@@ -20,6 +20,7 @@ export async function viewChildToday(childId) {
   const [first] = await Promise.all([api("GET", base), loadAvatars()]);
   let day = first;
   let overlay = false; // a mission, its celebration or the wheel is open: no redrawing under it
+  let turned = null; // the stop the route's wheel was left on: kept when the screen is drawn again
 
   const screen = h("main", { class: "child-screen" });
   const note = (kind, mission, step) =>
@@ -30,6 +31,7 @@ export async function viewChildToday(childId) {
     const { color, soft, strong, on } = day.colors;
     screen.setAttribute("style",
       `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`);
+    screen.className = `child-screen child-screen--veil-${day.route_look.veil}`;
     screen.replaceChildren(
       h("div", { class: "child-scene", "aria-hidden": "true" },
         day.background_url && h("img", { class: "child-scene__picture", src: day.background_url, alt: "" }),
@@ -52,7 +54,9 @@ export async function viewChildToday(childId) {
         }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
       day.missions.length
-        ? routeView(day, { onOpen: openMission, onLocked: showLocked, onHold: holdMission, onPrize: openPrize, onPrizeLocked: showPrizeLocked })
+        ? routeView(day,
+            { onOpen: openMission, onLocked: showLocked, onHold: holdMission, onPrize: openPrize, onPrizeLocked: showPrizeLocked },
+            { at: turned, onTurn: (i) => { turned = i; } })
         : h("section", { class: "route route__empty" },
             avatar(day.child, { size: "hero" }), t.child.noMissions));
   }

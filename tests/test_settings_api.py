@@ -116,3 +116,20 @@ def test_how_the_home_screen_looks_changed_in_ajustes_and_read_without_a_code(cl
         assert patch(client, home={**look, **wrong}).status_code == 422
     client.post("/api/settings/home/reset", headers=PARENT)
     assert client.get("/api/home").json()["look"]["ring_glow"] == "color"
+
+
+def test_how_the_route_looks_changed_in_ajustes_and_sent_with_the_childs_day(client, data_dir):
+    look = client.get("/api/settings", headers=PARENT).json()["settings"]["route"]
+    assert look == {"shape": "wheel", "width": "normal", "spacing": "normal", "inertia": "medium", "depth": "normal",
+                    "tick": "soft", "ends": "bounce", "joint": "paws", "grey": True, "veil": 45}
+    child = client.post("/api/children", json={"name": "Leo", "preset": "lion"}, headers=PARENT).json()
+    assert client.get(f"/api/children/{child['id']}/today").json()["route_look"] == look  # no parent code
+    changed = {**look, "joint": "dots", "ends": "loop", "veil": 0}
+    assert patch(client, route=changed).status_code == 200
+    assert client.get(f"/api/children/{child['id']}/today").json()["route_look"]["joint"] == "dots"
+    assert yaml.safe_load(config_path(data_dir).read_text())["settings"]["route"]["ends"] == "loop"
+    assert descriptions(client)[0] == "Cambiaste los ajustes · aspecto de la ruta cambiado"
+    for wrong in ({"shape": "circle"}, {"veil": 30}, {"tick": "loud!"}):
+        assert patch(client, route={**changed, **wrong}).status_code == 422
+    client.post("/api/settings/route/reset", headers=PARENT)
+    assert client.get(f"/api/children/{child['id']}/today").json()["route_look"] == look

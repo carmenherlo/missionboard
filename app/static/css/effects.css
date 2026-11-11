@@ -198,6 +198,39 @@
   50% { opacity: 0.85; transform: scale(1); }
 }
 
+/* The route as a wheel: each open mission glows like the avatars of the home (a glow of its
+   colour round its ring, a white light behind the picture), all beating together. */
+.route--wheel .ring::before { display: none; } /* the line's heartbeat: here, the glow below */
+
+.route--wheel .route-node--open .ring {
+  border-radius: 50%;
+  animation: drum-ring var(--drum-beat) ease-in-out infinite;
+}
+
+@keyframes drum-ring {
+  0%, 100% {
+    box-shadow: 0 0 calc(10px * var(--drum-glow)) calc(2px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 75%, transparent),
+      0 0 calc(24px * var(--drum-glow)) calc(6px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 calc(22px * var(--drum-glow)) calc(6px * var(--drum-glow)) var(--mission-color),
+      0 0 calc(60px * var(--drum-glow)) calc(18px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 70%, transparent);
+  }
+}
+
+.route--wheel .route-node--open .ring__inner::before {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    color-mix(in srgb, var(--home-light) var(--home-light-white), transparent) var(--drum-solid), transparent);
+  animation: home-centre var(--drum-beat) ease-in-out infinite;
+  pointer-events: none;
+}
+
+.route--wheel .ring__inner img { position: relative; } /* over the light */
+
 /* Home: a child's card gives a little when it is pressed. */
 .child-card {
   transition: transform var(--appear) ease;
@@ -209,7 +242,8 @@
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .prize-won, .routine__count,
-  .ring::before, .avatar-fx::before, .fx-shine::after, .home-look .avatar-fx > .avatar {
+  .ring::before, .avatar-fx::before, .fx-shine::after, .home-look .avatar-fx > .avatar,
+  .route--wheel .route-node--open .ring, .route--wheel .route-node--open .ring__inner::before {
     animation: none !important;
   }
   .fx-shine::after {

@@ -10,6 +10,7 @@ import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { homeLookPanel } from "./home-look-panel.js";
+import { routeLookPanel } from "./route-look-panel.js";
 import { loadSettings, saveSettings, settingStepper } from "./settings-parts.js";
 
 const MOMENTS = ["manana", "dia", "tarde", "noche"];
@@ -105,6 +106,7 @@ export async function viewSettings() {
 
   const cards = seasons.map(seasonCard);
   const homePanel = await homeLookPanel({ look: settings.home, picture: now.background_url, status, onReset: viewSettings });
+  const routePanel = await routeLookPanel({ look: settings.route, status, onReset: viewSettings });
   redraws.forEach((redraw) => redraw());
 
   render(
@@ -126,5 +128,6 @@ export async function viewSettings() {
             ...cards,
             resetBox)),
         homePanel,
+        routePanel,
         h("p", { class: "note" }, t.settings.fileHint))));
 }

@@ -1,19 +1,35 @@
-// The route of the day: the missions in a row, joined by a thin line, and the
-// daily prize at the end. The stop in focus is big; the farther from it, the
-// smaller, and the longer the line next to it. What each state means is
-// decided by the server.
+// The route of the day: the missions in a row and the daily prize at the end.
+// Two shapes, chosen in Ajustes (settings.route): a wheel standing up that turns
+// (route-wheel.js), or a line, where the stop in focus is big and the farther
+// from it, the smaller. What each state means is decided by the server.
 import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { missionStyle, picture, ring } from "./ring.js";
+import { wheelView } from "./route-wheel.js";
 
 const HOLD_MS = 1000; // holding a mission that is not open: a parent opens it, only today
 
-export function routeView(day, { onOpen, onLocked, onHold, onPrize, onPrizeLocked }) {
-  const stops = [
+// options (the wheel's): at, the stop to start on; onTurn(i), told where it stopped.
+export function routeView(day, handlers, options) {
+  return day.route_look?.shape === "line" ? lineView(day, handlers) : wheelView(day, handlers, options);
+}
+
+// Every stop of the day: the missions and, at the end, the prize.
+export function routeStops(day) {
+  return [
     ...day.missions.map((mission) => ({ mission, done: mission.state === "done", focus: mission.focus })),
     ...(day.prize ? [{ prize: day.prize, done: day.prize.state === "won", focus: day.prize.state === "unlocked" }] : []),
   ];
+}
+
+// One stop drawn: a mission or the prize, as big as `distance` from the focus says.
+export function stopNode(stop, distance, day, handlers) {
+  return stop.mission ? missionNode(stop.mission, distance, day, handlers) : prizeNode(stop.prize, distance, handlers);
+}
+
+function lineView(day, { onOpen, onLocked, onHold, onPrize, onPrizeLocked }) {
+  const stops = routeStops(day);
   const focus = stops.findIndex((s) => s.focus);
   // Without a focus (all done) they all go at the middle size.
   const distance = (i) => (focus < 0 ? 1 : Math.abs(i - focus));
@@ -21,9 +37,7 @@ export function routeView(day, { onOpen, onLocked, onHold, onPrize, onPrizeLocke
   const line = h("div", { class: "route__line" });
   stops.forEach((stop, i) => {
     if (i > 0) line.append(link(i, focus, stops));
-    line.append(stop.mission
-      ? missionNode(stop.mission, distance(i), day, { onOpen, onLocked, onHold })
-      : prizeNode(stop.prize, distance(i), { onPrize, onPrizeLocked }));
+    line.append(stopNode(stop, distance(i), day, { onOpen, onLocked, onHold, onPrize, onPrizeLocked }));
   });
 
   const allDone = stops.every((s) => s.done);
