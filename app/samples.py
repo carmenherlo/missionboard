@@ -105,13 +105,13 @@ ROUTINES = [
     },
     {
         "id": "alunizaje-rutina", "mission_id": "alunizaje", "days": NOT_SATURDAY, "kids": [],
-        "wake": "18:55", "anchor": "end", "alarm": False, "remind_every": 5, "offsets": {}, "notices": [],
+        "wake": "18:50", "anchor": "end", "alarm": True, "remind_every": 5, "offsets": {}, "notices": [],
         "music": [{"id": "alunizaje-cancion", "songs": ["duerme-estrellita"], "start": "goal", "until": None,
                    "after_voice": True, "loud": False}],
         "greeting": None, "last_countdown": None, "early_goal": None, "warn_about": "end",
-        "goal": {"at": "19:30", "image": None, "say": "¡A dormir! Buenas noches.", "check_minutes": 5, "check_say": None},
+        "goal": {"at": "19:35", "image": None, "say": "¡A dormir! Buenas noches.", "check_minutes": 5, "check_say": None},
         "parts": [
-            _part("alunizaje-1", 5, say="Ahora toca recoger la cena.", at="18:55"),
+            _part("alunizaje-1", 5, say="Ahora toca recoger la cena.", at="19:00"),
             _part("alunizaje-2", 10, say="Ahora toca recoger la habitación."),
             _part("alunizaje-3", 5, say="Ahora toca preparar la ropa de mañana."),
             _part("alunizaje-4", 5, say="Ahora toca preparar la mochila."),

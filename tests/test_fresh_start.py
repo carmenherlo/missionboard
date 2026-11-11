@@ -160,13 +160,13 @@ def test_the_night_of_the_examples(examples, clock):
     client = examples
     clock.moment = MONDAY.replace(hour=19, minute=10)
     on = client.get("/api/routines/current").json()
-    assert on["name"] == "Alunizaje" and on["alarm"] is False and on["goal"]["at"] == "19:30"
-    assert len(on["parts"]) == 5 and on["parts"][0]["start"] == "18:55"
+    assert on["name"] == "Alunizaje" and on["alarm"] is True and on["wake"] == "18:50"
+    assert len(on["parts"]) == 5 and on["parts"][0]["start"] == "19:00" and on["goal"]["at"] == "19:35"
     assert len(on["people"]) == 3
     clock.moment = datetime(2026, 11, 6, 19, 10, tzinfo=MADRID)  # Friday: no clothes or bag to prepare
     on = client.get("/api/routines/current").json()
     assert [p["text"] for p in on["parts"]] == ["Recoger la cena", "Recoger la habitación", "Lavarse los dientes"]
-    assert on["parts"][0]["start"] == "19:05"
+    assert on["parts"][0]["start"] == "19:10"
     clock.moment = datetime(2026, 11, 7, 19, 10, tzinfo=MADRID)  # Saturday: not at all
     assert client.get("/api/routines/current").json() is None
     bea = client.get("/api/children").json()[0]
