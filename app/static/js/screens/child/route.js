@@ -96,10 +96,18 @@ function missionNode(mission, distance, day, { onOpen, onLocked, onHold }) {
 }
 
 // Held down for a moment: nothing to see for the child until then (the code is asked).
+// A tablet's own long press (Android: ~0.5 s, the `contextmenu` event) counts as the hold
+// too: by then it may have cancelled the pointer, and the timer with it.
 function holdable(onHold) {
   let timer = null;
   let fired = false;
   const cancel = () => clearTimeout(timer);
+  const fire = () => {
+    cancel();
+    if (fired) return;
+    fired = true;
+    onHold();
+  };
   return {
     fired: () => {
       const was = fired;
@@ -109,12 +117,15 @@ function holdable(onHold) {
     events: {
       onpointerdown: () => {
         fired = false;
-        timer = setTimeout(() => { fired = true; onHold(); }, HOLD_MS);
+        timer = setTimeout(fire, HOLD_MS);
       },
       onpointerup: cancel,
       onpointerleave: cancel,
       onpointercancel: cancel,
-      oncontextmenu: (e) => e.preventDefault(),
+      oncontextmenu: (e) => {
+        e.preventDefault();
+        fire();
+      },
     },
   };
 }

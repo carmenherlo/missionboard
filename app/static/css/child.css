@@ -124,6 +124,10 @@
   background: none;
   font: inherit;
   color: inherit;
+  /* Held down, a tablet would select the name or drag the picture, and cancel the hold. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   cursor: pointer;
 }
 
@@ -1115,4 +1119,9 @@
   z-index: 40;
   min-height: 0;
   overflow: hidden;
+}
+
+.route-node img {
+  -webkit-user-drag: none;
+  pointer-events: none; /* the finger is on the mission, never on its picture */
 }
