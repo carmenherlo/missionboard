@@ -210,7 +210,8 @@
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 6s; /* "¡Misión cumplida!" closes by itself after this */
   --celebration-star-delay: 700ms; /* then the star won pops up and flies to the avatar */
-  --star-flight: 1.8s; /* a star won: up big in the middle, then to where it stays */
+  --star-flight: 1.6s; /* a star won: in from outside the screen, tumbling, to where it stays */
+  --star-spark: 600ms; /* each spark of its trail */
   --landing-pause: 400ms; /* back on the route: before the star comes */
   --landing-glow: 900ms; /* the mission lighting up once its star is on it */
   --paw-step: 180ms; /* footprints lighting up one after another, towards the next stop */

@@ -274,6 +274,17 @@
   will-change: transform, opacity;
 }
 
+/* Its trail: little sparks that shrink and fade. */
+.star-spark {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 69;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--surface) 0 20%, var(--accent-vivid) 45%, transparent 70%);
+  pointer-events: none;
+}
+
 /* The celebration: the seat and the count wait for the star, then pop. */
 .celebration__star--waiting,
 .celebration__count--waiting { opacity: 0; animation: none; }
