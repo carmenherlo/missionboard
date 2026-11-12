@@ -308,10 +308,11 @@
 .route-node--lit .ring__star { animation: star-pop 500ms ease-out; }
 .route--wheel .route-node--lit .ring::before { animation: lit-up var(--landing-glow) ease-out; }
 
+/* It only brightens, stuck to the ring: growing, it came away from it, like a second halo. */
 @keyframes lit-up {
-  0% { opacity: 0; transform: scale(0.8); }
-  40% { opacity: 1; transform: scale(1.25); }
-  100% { opacity: var(--drum-done-glow); transform: scale(1); }
+  0% { opacity: 0; }
+  35% { opacity: 1; }
+  100% { opacity: var(--drum-done-glow); }
 }
 
 /* The way on, grey until the star is on; then each footprint takes the colour, walking. */
