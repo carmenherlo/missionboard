@@ -727,7 +727,7 @@ export function startRoutines() {
     const what = h("h2", { class: "routine__what" });
     const until = h("p", { class: "routine__until" });
     const clock = h("div", { class: "routine__clock" });
-    const count = h("span", { class: "routine__count", "aria-live": "off" });
+    const count = h("span", { class: "routine__count", "aria-live": "off", hidden: true }); // only in a countdown
     const tasks = h("ul", { class: "routine__tasks" });
     const next = h("p", { class: "routine__next" });
     const finish = h("div", { class: "routine__finish" });
