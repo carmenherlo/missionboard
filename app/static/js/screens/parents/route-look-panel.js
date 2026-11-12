@@ -8,6 +8,7 @@ import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { routeView } from "../child/route.js";
+import { trialStar } from "../child/star-landing.js";
 import { saveSettings } from "./settings-parts.js";
 
 export async function routeLookPanel({ look: saved, status, onReset }) {
@@ -18,6 +19,11 @@ export async function routeLookPanel({ look: saved, status, onReset }) {
   const options = h("div", { class: "stack stack--tight" });
   const preview = h("div", {});
   const resetBox = h("div", {});
+  // Seeing a star won without doing a whole mission (12/11): with the first child, nothing saved.
+  const trial = day?.missions.length > 0 && h("button", {
+    type: "button", class: "btn",
+    onclick: () => trialStar({ ...day, route_look: { ...look } }),
+  }, icon("play"), t.settings.trialStar);
 
   const change = (changes) => {
     Object.assign(look, changes);
@@ -50,6 +56,7 @@ export async function routeLookPanel({ look: saved, status, onReset }) {
       wheel && choice(t.settings.routeTick, "tick", t.settings.routeTicks),
       wheel && choice(t.settings.routeEnds, "ends", t.settings.routeEndsChoices),
       choice(t.settings.routeVeil, "veil", t.settings.routeVeils),
+      trial,
       resetBox));
     preview.replaceChildren(...children(day && day.missions.length
       ? [

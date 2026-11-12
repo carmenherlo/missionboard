@@ -235,6 +235,7 @@ export const t = {
     routeNoChild: "Añade un niño para ver aquí su ruta.",
     routeLineHint: "En línea: la de antes, con la misión de ahora grande en su sitio.",
     routeReset: "Volver a lo de la app",
+    trialStar: "Probar la estrella ganada",
     routeResetConfirm: "¿Volver a la ruta como viene con la app?",
     routeResetDetail: "Rueda normal, huellas, tic flojo, rebota al final, en blanco y negro las que faltan y velo como siempre.",
     routeResetYes: "Volver a lo de la app",

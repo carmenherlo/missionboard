@@ -6,6 +6,7 @@ import { sounds } from "../../components/sound.js";
 import { h } from "../../dom.js";
 import { flyStar } from "../../effects/star-flight.js";
 import { reducedMotion, tokenMs } from "../../effects/motion.js";
+import { showCelebration } from "./celebration.js";
 import { routeStops, routeView } from "./route.js";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -85,4 +86,25 @@ export async function showLanding(container, day, missionId) {
 function joint(section, day, missionId) {
   const i = stopIndex(day, missionId);
   return i < 0 ? null : section.querySelectorAll(".drum__joint")[i] ?? null;
+}
+
+// Ajustes → "Probar la estrella": the whole of it with a child's day as if a mission had just
+// been done (the first one not done yet), without changing anything: nothing marked, no star given.
+export async function trialStar(day) {
+  const mission = day.missions.find((m) => m.state !== "done") ?? day.missions[0];
+  if (!mission) return;
+  const pretended = {
+    ...day,
+    stars: day.stars + 1,
+    missions: day.missions.map((m) => (m.id === mission.id ? { ...m, state: "done", done: m.total, focus: false } : m)),
+  };
+  const { color, soft, strong, on } = day.colors;
+  const holder = h("div", {
+    class: "child-colors",
+    style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
+  });
+  document.body.append(holder);
+  await new Promise((resolve) => showCelebration(holder, pretended, 1, resolve));
+  await showLanding(holder, pretended, mission.id);
+  holder.remove();
 }
