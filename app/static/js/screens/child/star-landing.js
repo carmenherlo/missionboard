@@ -75,14 +75,16 @@ export async function landStar(section, day, missionId, control = {}) {
   }
 }
 
-// Where the wheel goes after a mission is done (12/11): to what is now the focus,
-// the first open mission not done (or else the next to open, or the prize unlocked),
-// skipping the ones already done; with no focus, the next stop.
+// Where the wheel goes after a mission is done (12/11), never to one already done:
+// to what is now the focus (the first open mission not done, or else the next to open,
+// or the prize unlocked); with no focus, the first stop not done after it (a closed
+// mission, the prize locked), or before it; with everything done, it stays.
 function nextStop(day, here) {
   const stops = routeStops(day);
   const focus = stops.findIndex((stop) => stop.focus);
   if (focus >= 0) return focus;
-  return here + 1 < stops.length ? here + 1 : -1;
+  const after = stops.findIndex((stop, i) => i > here && !stop.done);
+  return after >= 0 ? after : stops.findIndex((stop) => !stop.done);
 }
 
 // From a routine: the child's route over everything for a moment, the star landing on it,
