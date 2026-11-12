@@ -1,6 +1,7 @@
 // Back on the route after "¡Misión cumplida!" (12/11): the star won appears and lands
 // on the mission's ring, the mission lights up, the footprints (or dots) to the next
-// stop take its colour one after another, and the wheel turns to the next stop.
+// stop take its colour one after another, and the wheel turns to the mission to do now
+// (the first open one not done, skipping those already done).
 // From a routine, the same over its clock, and then back to the routine.
 import { sounds } from "../../components/sound.js";
 import { h } from "../../dom.js";
@@ -65,10 +66,23 @@ export async function landStar(section, day, missionId, control = {}) {
       : spread(Math.max(1, Math.round(way.offsetWidth / DOT_EVERY_PX)), step + light)); // as the colour passes each dot
     await wait(Math.max(1, paws) * step + light);
   }
-  const next = stopIndex(day, missionId) + 1;
-  if (control.turnTo && next < routeStops(day).length) {
-    await control.turnTo(next, tokenMs("--landing-turn", 2000)); // slowly, clicking as it goes
+  const here = stopIndex(day, missionId);
+  const next = nextStop(day, here);
+  if (control.turnTo && next >= 0 && next !== here) {
+    // slowly, clicking as it goes; a little longer for each stop more on the way
+    const ms = tokenMs("--landing-turn", 2000) * (1 + 0.3 * (Math.abs(next - here) - 1));
+    await control.turnTo(next, ms);
   }
+}
+
+// Where the wheel goes after a mission is done (12/11): to what is now the focus,
+// the first open mission not done (or else the next to open, or the prize unlocked),
+// skipping the ones already done; with no focus, the next stop.
+function nextStop(day, here) {
+  const stops = routeStops(day);
+  const focus = stops.findIndex((stop) => stop.focus);
+  if (focus >= 0) return focus;
+  return here + 1 < stops.length ? here + 1 : -1;
 }
 
 // From a routine: the child's route over everything for a moment, the star landing on it,
