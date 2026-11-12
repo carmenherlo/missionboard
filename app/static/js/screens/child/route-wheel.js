@@ -105,15 +105,47 @@ export function wheelView(day, handlers, { at = null, onTurn = () => {}, control
 
   // To the stop i the short way round.
   function goTo(i) {
-    let target = i;
-    if (loop) {
-      const here = Math.round(rot / step);
-      target = here + ((((i - here) % n) + n + Math.floor(n / 2)) % n) - Math.floor(n / 2);
-    }
-    settle(target);
+    settle(shortWay(i));
   }
 
-  if (control) control.goTo = goTo;
+  function shortWay(i) {
+    if (!loop) return i;
+    const here = Math.round(rot / step);
+    return here + ((((i - here) % n) + n + Math.floor(n / 2)) % n) - Math.floor(n / 2);
+  }
+
+  // A slow turn to the stop i (after a star lands, 12/11): it starts and stops gently,
+  // and clicks like a ratchet as it goes (four clicks from one stop to the next).
+  function turnTo(i, ms) {
+    cancelAnimationFrame(frame);
+    if (!loop) i = Math.min(n - 1, Math.max(0, i));
+    const from = rot;
+    const target = shortWay(i) * step;
+    const started = performance.now();
+    let clicks = Math.floor((from / step) * 4);
+    return new Promise((resolve) => {
+      const turn = (now) => {
+        const p = Math.min(1, (now - started) / ms);
+        const eased = p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2;
+        rot = from + (target - from) * eased;
+        const passed = Math.floor((rot / step) * 4);
+        if (passed !== clicks) {
+          clicks = passed;
+          if (look.tick !== "none") sounds.tick(0, true, look.tick === "loud");
+        }
+        draw();
+        if (p < 1) {
+          frame = requestAnimationFrame(turn);
+          return;
+        }
+        onTurn(middle());
+        resolve();
+      };
+      frame = requestAnimationFrame(turn);
+    });
+  }
+
+  if (control) Object.assign(control, { goTo, turnTo });
 
   // Dragging: the stop under the finger follows it; let go, it goes on with its speed.
   let start = null;

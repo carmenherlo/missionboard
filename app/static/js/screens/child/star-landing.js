@@ -24,7 +24,7 @@ export function prepareLanding(section, day, missionId) {
   joint(section, day, missionId)?.classList.add("drum__joint--waiting");
 }
 
-// section: the route as drawn (routeView), prepared; control: the wheel's ({ goTo }).
+// section: the route as drawn (routeView), prepared; control: the wheel's ({ goTo, turnTo }).
 export async function landStar(section, day, missionId, control = {}) {
   const node = section.querySelector(`[data-mission="${missionId}"]`);
   if (!node) return;
@@ -52,9 +52,8 @@ export async function landStar(section, day, missionId, control = {}) {
     await wait(paws * tokenMs("--paw-step", 180) + tokenMs("--paw-light", 400));
   }
   const next = stopIndex(day, missionId) + 1;
-  if (control.goTo && next < routeStops(day).length) {
-    control.goTo(next);
-    await wait(tokenMs("--landing-turn", 900));
+  if (control.turnTo && next < routeStops(day).length) {
+    await control.turnTo(next, tokenMs("--landing-turn", 2000)); // slowly, clicking as it goes
   }
 }
 

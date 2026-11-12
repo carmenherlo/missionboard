@@ -216,7 +216,7 @@
   --landing-glow: 900ms; /* the mission lighting up once its star is on it */
   --paw-step: 180ms; /* footprints lighting up one after another, towards the next stop */
   --paw-light: 400ms; /* each footprint taking its colour */
-  --landing-turn: 900ms; /* the wheel turning to the next stop */
+  --landing-turn: 2s; /* the wheel turning slowly to the next stop, clicking */
   --landing-linger: 700ms; /* from a routine: the route stays this long, then back to the routine */
   --drum-done-glow: 0.55; /* a mission done, on the wheel: its glow, still (open ones beat) */
   --heartbeat: 1.1s; /* "latido": a light in its colour behind, growing and fading */
