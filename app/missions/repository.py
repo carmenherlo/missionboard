@@ -1,5 +1,8 @@
 """The family's missions in config.yaml: mission → task → step.
 
+The child checks tasks; a task's steps are only reminders ("pistas", misiones-3.html):
+they are shown, and said by the voice, but never checked.
+
 There is one list, for the whole family: its order is the order of every child's
 route. Every mission belongs to every child; what changes between children is what
 each one has switched off (`off`: child id → ids of tasks and steps).
@@ -79,16 +82,16 @@ class Mission:
 
 @dataclass
 class ChildTask:
-    """A task as one child has it: with any step on, they check the steps; with none,
-    they check the task itself (and with the task off too, it is not there at all)."""
+    """A task as one child has it, with the steps (reminders) they have on. It is there
+    if the task or any of its steps is on for them."""
 
     task: Task
     steps: list[Step]
 
     @property
     def marks(self) -> list[str]:
-        """What the child checks in this task."""
-        return [s.id for s in self.steps] or [self.task.id]
+        """What the child checks in this task: the task itself, never its steps."""
+        return [self.task.id]
 
 
 def child_tasks(mission: Mission, child_id: str, weekday: str | None = None) -> list[ChildTask]:

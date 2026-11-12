@@ -100,6 +100,15 @@ class SpinResult:
     prize: Prize
 
 
+def _checked_tasks(tasks: list[ChildTask], checked: set[str]) -> set[str]:
+    """The tasks checked today. Before misiones-3 a child checked steps: a task whose
+    steps were all checked that day counts as checked too, so nobody loses it."""
+    return {
+        task.task.id for task in tasks
+        if task.task.id in checked or (task.steps and all(s.id in checked for s in task.steps))
+    }
+
+
 def current_season(seasons: tuple[Season, ...], day: date) -> Season:
     """The last one that has started; in January, the last of the list goes on."""
     started = [season for season in seasons if season.start <= day.strftime("%m-%d")]
@@ -155,7 +164,7 @@ class DayService:
             schedule = links.schedule_on(mission, routines.get(mission.id), child.id, weekday)
             item = MissionToday(mission, self._state(schedule, mission.id in completed, mission.id in opened, time),
                                 tasks, schedule=schedule)
-            item.checked = checked.get(mission.id, set()) & set(item.marks)
+            item.checked = _checked_tasks(tasks, checked.get(mission.id, set()))
             missions.append(item)
 
         focus = next((m for m in missions if m.state == OPEN), None)
@@ -196,8 +205,8 @@ class DayService:
         return SpinResult(self.today(child_id), prize)
 
     def set_mark(self, child_id: str, mission_id: str, item_id: str, checked: bool) -> StepResult:
-        """Check or uncheck a step, or a task without steps. The last one completes the
-        mission (once a day). Checking a task that has steps does nothing by itself."""
+        """Check or uncheck a task (its steps are only reminders). The last one completes
+        the mission (once a day)."""
         today = self.today(child_id)
         item = self._mission_today(today, mission_id)
         target = item.item(item_id)
@@ -214,6 +223,9 @@ class DayService:
 
         now = self._clock.now()
         self._days.set_step(today.day, today.child.id, mission_id, item_id, checked, now)
+        if not checked:  # steps checked before misiones-3 must not keep it checked
+            for step in next(t for t in item.tasks if t.task.id == item_id).steps:
+                self._days.set_step(today.day, today.child.id, mission_id, step.id, False, now)
         self._events.child_did(
             "step_checked" if checked else "step_unchecked", today.child, mission=item.mission, step=target
         )

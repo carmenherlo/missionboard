@@ -866,7 +866,8 @@
   cursor: default;
 }
 
-/* The mission's tasks (misiones-2): the task is a card and its steps, squares below.
+/* The mission's tasks (misiones-3): the task is a card, tapped once; its steps, small
+   reminders under a line (squares only for parents, switching them on and off).
    All the cards take the same room, however many steps each has. */
 .task-grid {
   display: grid;
@@ -921,7 +922,7 @@
 
 .task-card__toggle--still { cursor: default; }
 
-/* A task without steps: the whole card is tapped to mark it. */
+/* The whole card is tapped to mark it. */
 .task-card--tap {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -984,6 +985,38 @@
 
 .task-card--done .task-card__check { display: grid; }
 .task-card--done .task-card__speak { display: none; }
+
+/* A task's steps for the child: pictures that remind, not buttons. */
+.reminders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) 0 0;
+  border-top: 2px dashed var(--line);
+  list-style: none;
+}
+
+.reminder {
+  display: grid;
+  place-items: center;
+  width: var(--reminder-size);
+  height: var(--reminder-size);
+}
+
+.reminder img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.reminder__letter {
+  color: var(--mission-strong, var(--child-strong));
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.task-card--done .reminders { opacity: 0.45; }
 
 .squares {
   display: flex;

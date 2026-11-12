@@ -168,11 +168,10 @@ def test_only_its_children_with_something_on_and_the_goal_waits_for_them(client)
             set_active(client, mission, alex, step["id"], False)
     people = current(client)["people"]
     assert [p["child"]["name"] for p in people] == ["Bea"]
-    assert people[0]["mission"]["total"] == 7 and people[0]["mission"]["done"] == 0
+    assert people[0]["mission"]["total"] == 6 and people[0]["mission"]["done"] == 0
     assert people[0]["mission"]["colors"]["color"] == mission["color"]
     for task in mission["tasks"]:
-        for item in task["steps"] or [task]:
-            mark(client, bea, mission, item["id"])
+        mark(client, bea, mission, task["id"])
     assert current(client)["people"][0]["mission"]["completed"] is True
 
 
@@ -255,7 +254,7 @@ def test_a_trial_on_any_day_with_what_they_have(client, clock, morning):
     trial = client.get(f"/api/routines/{morning['id']}/trial", headers=PARENT).json()
     assert trial["trial"] is True
     person = trial["people"][0]
-    assert person["child"]["id"] == bea["id"] and person["mission"]["total"] == 7 and len(person["mission"]["marks"]) == 7
+    assert person["child"]["id"] == bea["id"] and person["mission"]["total"] == 6 and len(person["mission"]["marks"]) == 6
 
 
 # ---------- what the screen tells ----------

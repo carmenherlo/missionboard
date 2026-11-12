@@ -1,6 +1,6 @@
 // The mission: a panel over the route (or the routine's clock) with its tasks as cards
-// and their steps as squares. Tapping one marks it, tapping again unmarks it; 🔊 on
-// a card reads the task and its steps aloud.
+// and their steps as small reminders on them (misiones-3). Tapping a card marks it,
+// tapping again unmarks it; 🔊 on a card reads the task and its steps aloud.
 import { avatar } from "../../components/avatar.js";
 import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
@@ -14,7 +14,6 @@ export function missionSheet(day, mission, { onMark, onSpeak, onClose, again = f
   // A past mission (done, or closed without doing it): opened to look at, all in grey,
   // as it was left; its cards do not answer the finger (05/11).
   const past = mission.state === "done" || mission.state === "closed";
-  const marks = mission.tasks.flatMap((task) => (task.marks_itself ? [task] : task.steps));
 
   return h("div", { class: `mission-layer${again ? " mission-layer--again" : ""}`, style: missionStyle(mission.colors),
     onclick: (e) => { if (e.target === e.currentTarget) onClose(); } },
@@ -24,7 +23,7 @@ export function missionSheet(day, mission, { onMark, onSpeak, onClose, again = f
         h("h2", { class: "mission-sheet__title" }, mission.name),
         h("span", { class: "child-bar__spacer" }),
         h("span", { class: "progress", "aria-hidden": "true" },
-          marks.map((m) => h("i", { class: `progress__dot${m.checked ? " progress__dot--on" : ""}` }))),
+          mission.tasks.map((m) => h("i", { class: `progress__dot${m.checked ? " progress__dot--on" : ""}` }))),
         h("b", { class: "progress__count" }, `${mission.done} / ${mission.total}`),
         h("button", {
           type: "button", class: "icon-button mission-sheet__close", "aria-label": t.child.close, onclick: onClose,

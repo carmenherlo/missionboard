@@ -102,17 +102,15 @@ class Presenter:
         }
 
     def _task(self, item: MissionToday, task: ChildTask) -> dict:
-        """A task for its card: `marks_itself` when the child checks the card, without steps."""
+        """A task for its card: the child checks the card; its steps are reminders."""
         done = item.state == "done"
         return {
             "id": task.task.id,
             "text": task.task.text,
             "image_url": self._libraries.url(task.task.image),
-            "marks_itself": not task.steps,
-            "checked": done or set(task.marks) <= item.checked,
+            "checked": done or task.task.id in item.checked,
             "steps": [
-                {"id": s.id, "text": s.text, "image_url": self._libraries.url(s.image),
-                 "checked": done or s.id in item.checked}
+                {"id": s.id, "text": s.text, "image_url": self._libraries.url(s.image)}
                 for s in task.steps
             ],
         }

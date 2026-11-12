@@ -220,6 +220,7 @@ export async function viewMissionEdit(missionId) {
   const tasksTitle = h("span", {});
   const tasksList = h("ul", { class: "task-tree" });
   const tasksEmpty = h("p", { class: "hint" }, t.missionEdit.noTasks);
+  const tasksHint = h("p", { class: "hint" }, t.missionEdit.tasksHint);
   const stepLists = () => [...tasksList.querySelectorAll(".task-tree__steps")];
 
   sortable(tasksList, {
@@ -305,6 +306,7 @@ export async function viewMissionEdit(missionId) {
             days && h("span", { class: "row__detail" }, h("span", { class: "pill" }, days.length ? daysText(days) : "—"))),
           h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))),
         steps,
+        task.steps.length > 6 && h("p", { class: "hint" }, t.missionEdit.manySteps),
         addStepForm(task));
     }));
   }
@@ -372,6 +374,6 @@ export async function viewMissionEdit(missionId) {
           panel(t.missionEdit.panelRoutine, routineBox),
           panel(t.missionEdit.panelChildren,
             children.length ? [h("p", { class: "hint" }, t.missionEdit.childrenHint), kidsBox] : h("p", { class: "hint" }, t.missionEdit.noChildren))),
-        panel(tasksTitle, tasksEmpty, tasksList, addTask)),
+        panel(tasksTitle, tasksHint, tasksEmpty, tasksList, addTask)),
       footer));
 }

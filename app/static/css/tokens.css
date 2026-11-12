@@ -127,6 +127,7 @@
   --task-card-width: 300px;
   --task-icon-size: 64px;
   --square-size: 84px; /* a child's finger: not under 64px */
+  --reminder-size: 40px; /* a step on a child's card: a reminder, not a button (misiones-3) */
   --step-check-size: 56px;
   --shadow-badge: 0 3px 10px rgb(0 0 0 / 0.15);
   --glow-reach: 40px; /* how far the beating glow of a ring goes out, at strength 1 */

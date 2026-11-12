@@ -1,15 +1,15 @@
 // A child's mission opened over whatever is on screen (their route, or the
-// clock of a routine): the panel with its tasks and steps, marking and unmarking
-// them, 🔊, and the celebration when the last one is marked.
+// clock of a routine): the panel with its tasks (their steps only as reminders),
+// marking and unmarking them, 🔊, and the celebration when the last one is marked.
 import { api } from "../../api.js";
 import { speak } from "../../components/speech.js";
 import { h } from "../../dom.js";
 import { showCelebration } from "./celebration.js";
 import { missionSheet } from "./mission-sheet.js";
 
-// What a child marks of a mission: the steps, or the tasks without steps.
+// What a child marks of a mission: its tasks (misiones-3: steps are reminders).
 export function marksOf(mission) {
-  return mission.tasks.flatMap((task) => (task.marks_itself ? [task.id] : task.steps.map((st) => st.id)));
+  return mission.tasks.map((task) => task.id);
 }
 
 // day: the child's day (GET /api/children/<id>/today), or null to fetch it.
@@ -46,10 +46,7 @@ export async function openMission(container, childId, missionId, { day = null, o
   // In a trial, marked as the trial says, whatever today's real state is.
   function pretended(mission) {
     const has = (id) => pretend.checked.has(id);
-    const tasks = mission.tasks.map((task) => {
-      const steps = task.steps.map((st) => ({ ...st, checked: has(st.id) }));
-      return { ...task, steps, checked: task.marks_itself ? has(task.id) : steps.every((st) => st.checked) };
-    });
+    const tasks = mission.tasks.map((task) => ({ ...task, checked: has(task.id) }));
     const done = marksOf(mission).filter(has).length;
     return { ...mission, state: "open", tasks, done };
   }
@@ -63,17 +60,13 @@ export async function openMission(container, childId, missionId, { day = null, o
   const wanted = new Map(); // id → checked, as last tapped
   let celebrated = false; // the last one came: what is still queued does not matter
 
-  // element: the square, or the card of a task without steps.
+  // element: the task's card.
   function toggle(item, element) {
     if (pretend) return toggleOnlyHere(item);
     const checked = !(wanted.get(item.id) ?? item.checked);
     wanted.set(item.id, checked);
-    element?.classList.toggle(element.classList.contains("square") ? "square--done" : "task-card--done", checked);
-    // The last square of a card completes it at once.
-    const card = element?.closest(".task-card");
-    if (card && element.classList.contains("square")) {
-      card.classList.toggle("task-card--done", ![...card.querySelectorAll(".square")].some((sq) => !sq.classList.contains("square--done")));
-    }
+    element?.classList.toggle("task-card--done", checked);
+    element?.setAttribute("aria-pressed", String(checked));
     waiting += 1;
     queue = queue.then(() => send(item.id, checked)).finally(() => { waiting -= 1; });
   }

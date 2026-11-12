@@ -7,7 +7,7 @@ from app.storage import db
 
 class DayRepository:
     """What each child has done each app day, and their stars (SQLite). `step_checks`
-    keeps whatever they check: a step, or a task without steps."""
+    keeps the tasks they check (before misiones-3, also steps: see today/service.py)."""
 
     def __init__(self, data_dir: Path):
         self._data_dir = data_dir
