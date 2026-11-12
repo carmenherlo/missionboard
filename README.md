@@ -11,6 +11,8 @@ con un código.
 
 La app está en español; el código, los comentarios y los tests, en inglés.
 
+<p align="center"><img src="screenshots/home.webp" alt="El inicio: cada niño con su avatar" width="760"></p>
+
 ## Qué hace
 
 - **Misiones de la familia:** cada misión tiene tareas, y cada tarea, sus pistas
@@ -37,6 +39,16 @@ La app está en español; el código, los comentarios y los tests, en inglés.
   en el servidor y se guardan; si no está, se usa la voz de la propia tablet.
 - **Funciona sin internet:** no depende de servicios externos; las letras y las
   imágenes van dentro de la app.
+
+## Capturas
+
+| <img src="screenshots/route.webp" alt="La ruta del niño: sus misiones en una rueda" width="420"> | <img src="screenshots/mission.webp" alt="Una misión: cada tarea se marca con un toque; las pistas recuerdan lo que incluye" width="420"> |
+|:---:|:---:|
+| La ruta del niño: sus misiones en una rueda | Una misión: cada tarea se marca con un toque; las pistas recuerdan lo que incluye |
+| <img src="screenshots/routine.webp" alt="Una rutina en marcha: el reloj, la parte de ahora y los niños" width="420"> | <img src="screenshots/prize.webp" alt="El premio del día: la ruleta" width="420"> |
+| Una rutina en marcha: el reloj, la parte de ahora y los niños | El premio del día: la ruleta |
+| <img src="screenshots/parents-mission.webp" alt="Zona de padres: editar una misión" width="420"> | <img src="screenshots/parents-routine.webp" alt="Zona de padres: editar una rutina" width="420"> |
+| Zona de padres: editar una misión | Zona de padres: editar una rutina |
 
 ## Arrancarla
 

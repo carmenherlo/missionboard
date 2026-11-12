@@ -10,6 +10,8 @@ A **parents' zone**, behind a code, is where everything is set up.
 
 The interface is in Spanish; the code, comments and tests are in English.
 
+<p align="center"><img src="screenshots/home.webp" alt="The home screen: each child with their avatar" width="760"></p>
+
 ## Features
 
 - **Family missions:** a mission has tasks, and a task has reminders (what
@@ -33,6 +35,16 @@ The interface is in Spanish; the code, comments and tests are in English.
 - **Natural voice:** sentences are spoken with [Piper](https://github.com/OHF-Voice/piper1-gpl)
   on the server and cached; the tablet's own voice is the fallback.
 - **Works offline:** no external services at run time; fonts and images are bundled.
+
+## Screenshots
+
+| <img src="screenshots/route.webp" alt="A child's route: their missions on a wheel" width="420"> | <img src="screenshots/mission.webp" alt="A mission: each task ticked with one tap; reminders show what it includes" width="420"> |
+|:---:|:---:|
+| A child's route: their missions on a wheel | A mission: each task ticked with one tap; reminders show what it includes |
+| <img src="screenshots/routine.webp" alt="A routine running: the clock, the part now and the kids" width="420"> | <img src="screenshots/prize.webp" alt="The daily prize: the wheel" width="420"> |
+| A routine running: the clock, the part now and the kids | The daily prize: the wheel |
+| <img src="screenshots/parents-mission.webp" alt="Parents' zone: editing a mission" width="420"> | <img src="screenshots/parents-routine.webp" alt="Parents' zone: editing a routine" width="420"> |
+| Parents' zone: editing a mission | Parents' zone: editing a routine |
 
 ## Quick start
 
