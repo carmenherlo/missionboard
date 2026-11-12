@@ -132,8 +132,10 @@ export const t = {
     eventLog: "Registro",
     backup: "Copia de seguridad",
     display: "Pantalla",
-    settings: "Ajustes",
+    appearance: "Apariencia",
     avatars: "Avatares",
+    day: "El día",
+    stars: "Estrellas",
     // The groups of Configurar (ajustes.html)
     groupDay: "El día de los niños",
     groupRewards: "Recompensas",
@@ -163,11 +165,21 @@ export const t = {
     openTitle: "Al abrir la app",
     openLast: "La última elegida",
   },
-  // Ajustes, and the switches and settings on each screen where they are used (ajustes.html)
+  // Configurar → Apariencia (12/11; was Ajustes)
+  appearance: {
+    title: "Apariencia",
+    hint: "Cómo se ve la app, pantalla a pantalla. Igual en todas las tablets.",
+    home: "Pantalla de inicio",
+    missions: "Camino de misiones",
+    seasons: "Fondos y estaciones",
+  },
+  // Apariencia, Estrellas, El día, and the switches and settings on each screen where they are used (ajustes.html)
   settings: {
     title: "Ajustes",
     starsTitle: "Estrellas",
-    perMission: "Por cada misión completada",
+    perMissionTitle: "Al completar una misión",
+    perMission: "Estrellas por cada misión",
+    giftHint: "Para dar estrellas a un niño en concreto: Niños → su ficha → Estrellas.",
     dayTitle: "El día",
     dayStarts: "Empieza a las",
     dayHint: "Hasta esa hora, la app cuenta el día anterior: las misiones hechas, las estrellas y el premio.",
@@ -190,10 +202,10 @@ export const t = {
     sameStart: "Dos estaciones no pueden empezar el mismo día.",
     fileHint: "Todo esto se guarda en config.yaml: se puede cambiar también ahí.",
     // Inicio de los niños (inicio-ajustes.html)
-    homeTitle: "Inicio de los niños",
+    homeTitle: "Cómo se ve",
     homeBackground: "El fondo del momento",
     homeVeil: "Velo blanco",
-    homeVeils: [[0, "Sin velo"], [25, "Suave"], [45, "Como la ruta"]],
+    homeVeils: [[0, "Sin velo"], [25, "Suave"], [45, "Como el camino"]],
     homePill: "Nombre en pastilla blanca",
     homeRing: "Brillo del aro",
     homeRings: [["color", "De su color"], ["pale", "Más luminoso"], ["vivid", "Más intenso"], ["white", "Blanco"], ["none", "Sin brillo"]],
@@ -211,7 +223,7 @@ export const t = {
     homeResetDetail: "Fondo sin velo, nombre en pastilla, brillo de su color, luz blanca, más fuerte, latido lento y reflejo al abrir.",
     homeResetYes: "Volver a lo de la app",
     // La ruta de los niños (prueba-ruta-rueda.html)
-    routeTitle: "La ruta de los niños",
+    routeTitle: "Cómo se ve",
     routeShape: "Forma",
     routeShapes: [["wheel", "Rueda que gira"], ["line", "En línea"]],
     routeWidth: "Anchura",
@@ -231,12 +243,12 @@ export const t = {
     routeGrey: "En blanco y negro las que faltan y las no hechas",
     routeVeil: "Velo blanco",
     routeVeils: [[0, "Sin velo"], [25, "Suave"], [45, "Como siempre"]],
-    routePreview: (name) => `Así se ve ahora la ruta de ${name}`,
-    routeNoChild: "Añade un niño para ver aquí su ruta.",
+    routePreview: (name) => `Así se ve ahora el camino de ${name}`,
+    routeNoChild: "Añade un niño para ver aquí su camino.",
     routeLineHint: "En línea: la de antes, con la misión de ahora grande en su sitio.",
     routeReset: "Volver a lo de la app",
     trialStar: "Probar la estrella ganada",
-    routeResetConfirm: "¿Volver a la ruta como viene con la app?",
+    routeResetConfirm: "¿Volver al camino como viene con la app?",
     routeResetDetail: "Rueda normal, huellas, tic flojo, rebota al final, en blanco y negro las que faltan y velo como siempre.",
     routeResetYes: "Volver a lo de la app",
     // On each screen

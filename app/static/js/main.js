@@ -14,7 +14,8 @@ import { viewAvatarNew } from "./screens/parents/avatar-new.js";
 import { viewAvatarsList } from "./screens/parents/avatars-list.js";
 import { viewBackup } from "./screens/parents/backup.js";
 import { viewDisplaySettings } from "./screens/parents/display-settings.js";
-import { viewSettings } from "./screens/parents/settings.js";
+import { viewAppearance, viewAppearanceHome, viewAppearanceMissions, viewSeasons } from "./screens/parents/settings.js";
+import { viewDaySettings, viewStarsSettings } from "./screens/parents/rules-settings.js";
 import { viewEventLog } from "./screens/parents/event-log.js";
 import { viewParentsLock } from "./screens/parents/lock.js";
 import { viewPrizeEdit } from "./screens/parents/prize-edit.js";
@@ -57,7 +58,13 @@ const routes = [
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],
   [parentsPath("/backup"), () => viewBackup(), "parents", "backup"],
   [parentsPath("/display"), () => viewDisplaySettings(), "parents", "display"],
-  [parentsPath("/settings"), () => viewSettings(), "parents", "settings"],
+  [parentsPath("/settings"), () => { location.hash = "#/parents/config/appearance"; }, "parents"], // the old Ajustes
+  [parentsPath("/appearance"), () => viewAppearance(), "parents", "appearance"],
+  [parentsPath("/appearance/home"), () => viewAppearanceHome(), "parents", "appearance_home"],
+  [parentsPath("/appearance/missions"), () => viewAppearanceMissions(), "parents", "appearance_missions"],
+  [parentsPath("/appearance/seasons"), () => viewSeasons(), "parents", "appearance_seasons"],
+  [parentsPath("/stars"), () => viewStarsSettings(), "parents", "stars_settings"],
+  [parentsPath("/day"), () => viewDaySettings(), "parents", "day_settings"],
   [parentsPath("/avatars"), () => viewAvatarsList(), "parents", "avatars"],
   [parentsPath("/avatars/new"), () => viewAvatarNew(), "parents", "avatar_new"],
   [parentsPath("/avatars/:avatar"), (ids) => viewAvatarEdit(ids.avatar), "parents", "avatar_edit"],

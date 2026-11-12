@@ -3,14 +3,17 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
-// By groups (ajustes.html): what the children do, what they earn, this tablet, the whole app.
+// By groups (ajustes.html, reorganised 12/11): what the children do, what they earn, this tablet,
+// the whole app (how it looks, its avatars, its code, its copies and its log).
 const GROUPS = [
   [t.config.groupDay, [
     ["children", "children", t.config.children],
     ["missions", "missions", t.config.missions],
     ["routines", "clock", t.config.routines],
+    ["day", "sun", t.config.day],
   ]],
   [t.config.groupRewards, [
+    ["stars", "star", t.config.stars],
     ["prizes", "prize", t.config.prizes],
     ["shop", "shop", t.config.shop],
   ]],
@@ -18,7 +21,7 @@ const GROUPS = [
     ["display", "eye", t.config.display],
   ]],
   [t.config.groupApp, [
-    ["settings", "settings", t.config.settings],
+    ["appearance", "palette", t.config.appearance],
     ["avatars", "smile", t.config.avatars],
     ["code", "parentCode", t.config.parentCode],
     ["backup", "download", t.config.backup],

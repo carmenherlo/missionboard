@@ -1,6 +1,7 @@
-// Configurar → Ajustes (ajustes.html): what is the whole app's and has no other screen
-// to go on: the stars for each mission, when the day starts, and the seasons with their
-// backgrounds. Saved on the spot in config.yaml (settings), like the rest of the parents' zone.
+// Configurar → Apariencia (12/11; was Ajustes, ajustes.html): how the app looks, a page for
+// each screen: the home, the missions' way, and the seasons with their backgrounds.
+// The stars went to Recompensas → Estrellas, and when the day starts to El día de los niños → El día.
+// Saved on the spot in config.yaml (settings), like the rest of the parents' zone.
 import { api } from "../../api.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { panel } from "../../components/panel.js";
@@ -11,7 +12,8 @@ import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { homeLookPanel } from "./home-look-panel.js";
 import { routeLookPanel } from "./route-look-panel.js";
-import { loadSettings, saveSettings, settingStepper } from "./settings-parts.js";
+import { loadSettings, saveSettings } from "./settings-parts.js";
+import { icon } from "../../icons.js";
 
 const MOMENTS = ["manana", "dia", "tarde", "noche"];
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -32,7 +34,7 @@ function problem(seasons) {
   return null;
 }
 
-export async function viewSettings() {
+export async function viewSeasons() {
   const { settings, now } = await loadSettings();
   const status = saveStatus();
   const seasons = settings.seasons.map((season) => ({ ...season }));
@@ -95,39 +97,56 @@ export async function viewSettings() {
     h("button", { type: "button", class: "btn", onclick: () => resetBox.replaceChildren(confirmBar({
       message: t.settings.resetConfirm, detail: t.settings.resetDetail, confirmLabel: t.settings.resetYes,
       onCancel: showReset,
-      onConfirm: async () => { await api("POST", "api/settings/seasons/reset"); await viewSettings(); },
+      onConfirm: async () => { await api("POST", "api/settings/seasons/reset"); await viewSeasons(); },
     })) }, t.settings.reset));
   showReset();
 
-  const dayStart = timeInput({
-    value: settings.day_starts_at, required: true, label: t.settings.dayStarts,
-    onchange: (e) => e.target.value && saveSettings(status, { day_starts_at: e.target.value }),
-  });
-
   const cards = seasons.map(seasonCard);
-  const homePanel = await homeLookPanel({ look: settings.home, picture: now.background_url, status, onReset: viewSettings });
-  const routePanel = await routeLookPanel({ look: settings.route, status, onReset: viewSettings });
   redraws.forEach((redraw) => redraw());
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.settings.title, status.element), { href: "#/parents/config", label: t.config.back }),
+    pageHeader(t.appearance.seasons, status),
     h("main", { class: "page" },
       h("div", { class: "stack" },
-        h("div", { class: "columns columns--equal" },
-          panel(t.settings.starsTitle, settingStepper({
-            label: t.settings.perMission, value: settings.stars_per_mission, min: 0, max: 10,
-            onChange: (n) => saveSettings(status, { stars_per_mission: n }),
-          })),
-          panel(t.settings.dayTitle,
-            h("div", { class: "setting" },
-              h("label", { class: "setting__line" }, h("span", { class: "setting__label" }, t.settings.dayStarts), dayStart),
-              h("p", { class: "hint" }, t.settings.dayHint)))),
         panel(t.settings.seasonsTitle,
           h("div", { class: "stack" },
             h("p", { class: "hint" }, t.settings.seasonsHint),
             ...cards,
             resetBox)),
-        homePanel,
-        routePanel,
         h("p", { class: "note" }, t.settings.fileHint))));
+}
+
+const APPEARANCE = "#/parents/config/appearance";
+const pageHeader = (title, status) => parentsHeader(h("span", { class: "title-line" }, title, status.element),
+  { href: APPEARANCE, label: t.appearance.title });
+
+// Apariencia: one row for each screen (more will come).
+export function viewAppearance() {
+  const pages = [["home", "home", t.appearance.home], ["missions", "missions", t.appearance.missions],
+    ["seasons", "sun", t.appearance.seasons]];
+  render(
+    parentsHeader(t.appearance.title, { href: "#/parents/config", label: t.config.back }),
+    h("main", { class: "page" },
+      h("p", { class: "hint" }, t.appearance.hint),
+      h("ul", { class: "rows" }, pages.map(([path, iconName, label]) => h("li", {},
+        h("a", { class: "row row--link", href: `${APPEARANCE}/${path}` },
+          h("span", { class: "row__icon" }, icon(iconName)),
+          h("span", { class: "row__name" }, label),
+          h("span", { class: "row__chevron" }, icon("next"))))))));
+}
+
+// Apariencia → Pantalla de inicio.
+export async function viewAppearanceHome() {
+  const { settings, now } = await loadSettings();
+  const status = saveStatus();
+  const look = await homeLookPanel({ look: settings.home, picture: now.background_url, status, onReset: viewAppearanceHome });
+  render(pageHeader(t.appearance.home, status), h("main", { class: "page" }, look));
+}
+
+// Apariencia → Camino de misiones.
+export async function viewAppearanceMissions() {
+  const { settings } = await loadSettings();
+  const status = saveStatus();
+  const look = await routeLookPanel({ look: settings.route, status, onReset: viewAppearanceMissions });
+  render(pageHeader(t.appearance.missions, status), h("main", { class: "page" }, look));
 }
