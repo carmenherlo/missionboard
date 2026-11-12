@@ -3,7 +3,7 @@
 **Español** · [English](README.en.md)
 
 Una app familiar para una tablet compartida. Los niños siguen sus **misiones**
-(tareas y pasos, con imágenes y voz), ganan **estrellas**, las gastan en una
+(tareas con imágenes y voz), ganan **estrellas**, las gastan en una
 **tienda** y desbloquean un **premio del día** con una ruleta. Las **rutinas** guían
 los momentos con prisa (prepararse para el cole, irse a dormir) con un despertador,
 un reloj que habla y música. Todo se configura en la **zona de padres**, protegida
@@ -13,12 +13,13 @@ La app está en español; el código, los comentarios y los tests, en inglés.
 
 ## Qué hace
 
-- **Misiones de la familia:** cada misión tiene tareas, y cada tarea, pasos. Todas son
+- **Misiones de la familia:** cada misión tiene tareas, y cada tarea, sus pistas
+  (lo que no hay que olvidar: dientes, cara…). Todas son
   de todos los niños, y a cada uno se le activa lo suyo. Cada misión tiene su color,
   sus días, su horario y, si se quiere, su rutina.
 - **Pantallas de los niños:** cada niño se reconoce por su avatar; su día es una ruta
-  de misiones, y cada misión se abre como un panel de tarjetas: la tarea es la tarjeta
-  y sus pasos, cuadrados para ir marcando. Estrellas, una celebración al completar una
+  de misiones, y cada misión se abre como un panel de tarjetas: cada tarea es una tarjeta
+  que se marca con un toque, con sus pistas en pequeño como recordatorio. Estrellas, una celebración al completar una
   misión y un premio del día al completarlas todas. Los fondos cambian con la estación
   y el momento del día.
 - **Rutinas:** le ponen tiempo a una misión: sus partes son las tareas, con sus
@@ -80,7 +81,7 @@ almacenamiento persistente que Home Assistant asigna a cada addon).
 | Ruta | Qué hay |
 |---|---|
 | `config.yaml` | Niños, misiones, rutinas, premios, tienda, ajustes e interruptores |
-| `missionboard.db` | SQLite: el historial (pasos marcados, misiones hechas, estrellas, premios, compras, rutinas, registro) |
+| `missionboard.db` | SQLite: el historial (tareas marcadas, misiones hechas, estrellas, premios, compras, rutinas, registro) |
 | `photos/`, `sounds/` | Fotos y canciones subidas |
 | `voice-cache/` | Las frases ya dichas; si faltan, se vuelven a generar |
 | `backups/` | Lo que había antes de poner una copia o de empezar de cero |

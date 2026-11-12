@@ -2,8 +2,8 @@
 
 [Español](README.md) · **English**
 
-A family app for a shared tablet. Kids follow their **missions** (tasks and
-steps, with pictures and voice), earn **stars**, spend them in a **shop** and unlock
+A family app for a shared tablet. Kids follow their **missions** (tasks, with
+pictures and voice), earn **stars**, spend them in a **shop** and unlock
 a **daily prize** with a spinning wheel. **Routines** guide the busy moments of the
 day (getting ready for school, bedtime) with an alarm, a talking clock and music.
 A **parents' zone**, behind a code, is where everything is set up.
@@ -12,12 +12,13 @@ The interface is in Spanish; the code, comments and tests are in English.
 
 ## Features
 
-- **Family missions:** a mission has tasks, and a task has steps. They are all
+- **Family missions:** a mission has tasks, and a task has reminders (what
+  not to forget: teeth, face…). They are all
   everyone's, and each child has their own things switched on. A mission has its colour,
   days, hours and, if wanted, its routine.
 - **Kids' screens:** each child is known by their avatar; their day is a route of
-  missions, each one opened as a panel of cards: the task is the card and its steps are
-  squares to tick. Stars, a celebration when a mission is done, and a daily prize when
+  missions, each one opened as a panel of cards: each task is a card ticked with one
+  tap, with its reminders as small pictures. Stars, a celebration when a mission is done, and a daily prize when
   all of them are. The backgrounds follow the season and the moment of the day.
 - **Routines:** they put time to a mission: its parts are the tasks, with their minutes,
   between an alarm and a goal. Either the start or the end time is pinned and the rest
@@ -76,7 +77,7 @@ storage Home Assistant gives each add-on).
 | Path | What |
 |---|---|
 | `config.yaml` | Children, missions, routines, prizes, shop, settings and feature switches |
-| `missionboard.db` | SQLite: the history (steps ticked, missions done, stars, prizes, purchases, routines run, event log) |
+| `missionboard.db` | SQLite: the history (tasks ticked, missions done, stars, prizes, purchases, routines run, event log) |
 | `photos/`, `sounds/` | Uploaded photos and songs |
 | `voice-cache/` | Spoken sentences, generated again when missing |
 | `backups/` | What there was before restoring a copy or starting from scratch |
