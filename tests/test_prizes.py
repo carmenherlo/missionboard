@@ -10,7 +10,12 @@ from tests.test_missions import PNG, create_child, photo_files, saved, upload
 from tests.test_today import MONDAY, check, descriptions, mission, note, today, write_config
 from tests.test_settings import FixedClock
 
-SAMPLES = ["Guerra de cojines", "Elegir la cena", "Un cuento más", "15 minutos más de juego"]
+SAMPLES = [
+    "Guerra de cojines o de cosquillas", "10 minutos de juego con mamá, tú eliges",
+    "10 minutos de juego con papá, tú eliges", "Elige una canción y bailamos todos",
+    "Eliges el cuento de esta noche", "Paseo en dinosaurio por toda la casa",
+    "Eliges tu sitio en la mesa para cenar", "Un petisuí extra",
+]
 
 
 @pytest.fixture
@@ -45,11 +50,10 @@ def finish(client, child, item):
 # ---------- the list, in Configurar ----------
 
 
-def test_a_new_install_has_four_sample_prizes(client):
+def test_a_new_install_has_eight_sample_prizes(client):
     prizes = client.get("/api/prizes").json()
     assert texts(prizes) == SAMPLES
-    assert prizes[0]["image"] is None
-    assert prizes[1]["image_url"].endswith("/pizza.svg")
+    assert prizes[1]["image_url"].endswith("/game-die.svg")
 
 
 def test_add_edit_and_delete_a_prize(client, data_dir):
@@ -73,7 +77,7 @@ def test_a_new_prize_gets_a_suggested_image(client):
 
 
 def test_a_photo_replaces_the_old_one(client, data_dir):
-    url = "/api/prizes/elegir-la-cena"
+    url = "/api/prizes/juego-mama"
     upload(client, f"{url}/photo", PNG, "image/png")
     upload(client, f"{url}/photo", PNG, "image/png")
     assert len(photo_files(data_dir)) == 1
@@ -88,8 +92,8 @@ def test_a_bad_prize_is_refused(client, body):
 
 @pytest.mark.parametrize("call", [
     lambda c: c.post("/api/prizes", json={"text": "X"}),
-    lambda c: c.patch("/api/prizes/mas-juego", json={"text": "X"}),
-    lambda c: c.delete("/api/prizes/mas-juego"),
+    lambda c: c.patch("/api/prizes/petisui", json={"text": "X"}),
+    lambda c: c.delete("/api/prizes/petisui"),
 ])
 def test_changes_need_the_parent_code(client, call):
     assert call(client).status_code == 401
@@ -97,10 +101,10 @@ def test_changes_need_the_parent_code(client, call):
 
 def test_changes_go_to_the_log(client):
     client.post("/api/prizes", json={"text": "Ver una peli"}, headers=PARENT)
-    client.patch("/api/prizes/mas-juego", json={"text": "Más juego"}, headers=PARENT)
-    client.delete("/api/prizes/un-cuento-mas", headers=PARENT)
+    client.patch("/api/prizes/petisui", json={"text": "Más juego"}, headers=PARENT)
+    client.delete("/api/prizes/cuento", headers=PARENT)
     assert descriptions(client, limit=3) == [
-        "Borraste el premio «Un cuento más»",
+        "Borraste el premio «Eliges el cuento de esta noche»",
         "Cambiaste el premio «Más juego» · nombre: Más juego",
         "Añadiste el premio «Ver una peli»",
     ]
