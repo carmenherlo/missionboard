@@ -129,6 +129,7 @@
   --square-size: 84px; /* a child's finger: not under 64px */
   --step-check-size: 56px;
   --shadow-badge: 0 3px 10px rgb(0 0 0 / 0.15);
+  --glow-reach: 40px; /* how far the beating glow of a ring goes out, at strength 1 */
   --color-dot-check-shadow: rgb(0 0 0 / 0.5); /* the white ✓ of a chosen colour, legible on any colour */
 
   /* Stars */

@@ -164,27 +164,31 @@
 .home-look--beat-fast .avatar-fx { --beat: var(--home-beat-fast); }
 .home-look--beat-slower .avatar-fx { --beat: var(--home-beat-slower); }
 
-/* The ring stays still; the glow round it is drawn once, on its own layer, and only its
-   opacity beats (a moving box-shadow is redrawn every frame: on a tablet it jumps on/off). */
+/* The ring stays still; the glow round it is a gradient on a layer of its own that grows a
+   little and fades, like the white light (a beating box-shadow is redrawn every frame, and
+   tablets show it on/off; a gradient that only scales and fades, they animate smoothly). */
 .home-look--ring .avatar-fx > .avatar {
   box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--ring-solid, var(--child-color));
 }
 
 .home-look--ring .avatar-fx__glow {
-  --glow: calc(var(--glow-k) * var(--glow-size, 1));
+  --reach: calc(var(--glow-reach) * var(--glow-k) * var(--glow-size, 1));
   position: absolute;
-  inset: 0;
+  inset: calc(-1 * var(--reach));
   border-radius: 50%;
-  box-shadow: 0 0 calc(22px * var(--glow)) calc(6px * var(--glow)) var(--ring-glow),
-    0 0 calc(60px * var(--glow)) calc(18px * var(--glow)) color-mix(in srgb, var(--ring-glow) 70%, transparent);
+  background: radial-gradient(closest-side,
+    transparent calc(100% - var(--reach) - 2px),
+    var(--ring-glow) calc(100% - var(--reach) + 4px),
+    color-mix(in srgb, var(--ring-glow) 55%, transparent) calc(100% - var(--reach) * 0.55),
+    transparent 100%);
   animation: glow-beat var(--beat) ease-in-out infinite;
-  will-change: opacity;
+  will-change: opacity, transform;
   pointer-events: none;
 }
 
 @keyframes glow-beat {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.35; transform: scale(0.97); }
+  50% { opacity: 1; transform: scale(1); }
 }
 
 .home-look--centre .avatar-fx::before {
@@ -209,16 +213,19 @@
 .route--wheel .ring::before { display: none; } /* the line's heartbeat: here, the glow below */
 
 .route--wheel .route-node--open .ring::before {
+  --reach: calc(var(--glow-reach) * var(--drum-glow));
   content: "";
   display: block;
   position: absolute;
-  inset: 0;
+  inset: calc(-1 * var(--reach));
   border-radius: 50%;
-  background: none;
-  box-shadow: 0 0 calc(22px * var(--drum-glow)) calc(6px * var(--drum-glow)) var(--mission-color),
-    0 0 calc(60px * var(--drum-glow)) calc(18px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 70%, transparent);
+  background: radial-gradient(closest-side,
+    transparent calc(100% - var(--reach) - 2px),
+    var(--mission-color) calc(100% - var(--reach) + 4px),
+    color-mix(in srgb, var(--mission-color) 55%, transparent) calc(100% - var(--reach) * 0.55),
+    transparent 100%);
   animation: glow-beat var(--drum-beat) ease-in-out infinite;
-  will-change: opacity;
+  will-change: opacity, transform;
   pointer-events: none;
 }
 
