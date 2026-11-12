@@ -154,6 +154,32 @@ export const sounds = {
     }, "ticking", { full: loud });
   },
 
+  // The prize wheel (12/11). Before turning: a "whoosh" going up.
+  whoosh() {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now, freq: 220, to: 880, length: 0.45, type: "sine", volume: 0.35 });
+      blip(ctx, out, { at: now + 0.05, freq: 330, to: 1320, length: 0.4, type: "triangle", volume: 0.15 });
+    });
+  },
+
+  // A peg of the wheel passing the pointer: a dry "clac", softer when it goes fast.
+  clack(soft = false) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now, freq: 1800, to: 900, length: 0.03, type: "triangle", volume: soft ? 0.25 : 0.55 });
+      blip(ctx, out, { at: now, freq: 180, to: 90, length: 0.05, type: "sine", volume: soft ? 0.2 : 0.4 });
+    });
+  },
+
+  // The wheel has stopped: a little bell, two notes up.
+  chime() {
+    play((ctx, out, now) => {
+      for (const [freq, at] of [[1047, 0], [1568, 0.12], [2093, 0.24]]) {
+        blip(ctx, out, { at: now + at, freq, length: 0.7, type: "sine", volume: 0.4 });
+        blip(ctx, out, { at: now + at, freq: freq * 2, length: 0.3, type: "sine", volume: 0.08 });
+      }
+    });
+  },
+
   // Well done: a fanfare.
   win() {
     play((ctx, out, now) => {

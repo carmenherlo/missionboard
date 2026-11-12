@@ -1,17 +1,23 @@
-// The daily prize: a panel over the route with the wheel. "¡Gira!" asks the
-// server for the prize (it chooses and keeps it), then the wheel turns to it
-// and shows what came out. The turning and the confetti are effects.
+// The daily prize: a panel over the route with the wheel, a fairground one (12/11):
+// lights round its rim and "¡Gira!" in its middle. A tap asks the server for the
+// prize (it chooses and keeps it); then the wheel winds up, turns to it with a
+// "clac" at each peg, rings a bell, lights the slice won and shows what came out.
+// The turning, the lights and the confetti are effects.
 import { api } from "../../api.js";
 import { avatar } from "../../components/avatar.js";
 import { h } from "../../dom.js";
 import { confetti } from "../../effects/confetti.js";
+import { sounds } from "../../components/sound.js";
+import { tokenMs } from "../../effects/motion.js";
 import { spinTo } from "../../effects/spin.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { picture } from "./ring.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const R = 95; // the wheel's radius in its 200 × 200 drawing
+const R = 92; // the slices' radius in the wheel's 224 × 224 drawing
+const RIM = 103; // the middle of the rim, with its lights
+const BULBS = 20;
 
 // onDay(day): the day after spinning, for the route behind; onClose(): back to the route.
 export function prizeSheet(day, { spinUrl, onDay, onClose }) {
@@ -29,22 +35,42 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
 
   function showWheel(prize) {
     const disc = wheel(prize.wheel);
-    const button = h("button", {
-      type: "button", class: "btn btn--primary spin-button",
+    const pointer = h("span", { class: "wheel__pointer", "aria-hidden": "true" });
+    const box = h("div", { class: "wheel" }, disc, pointer);
+    const flick = () => {
+      pointer.classList.remove("wheel__pointer--flick");
+      void pointer.offsetWidth; // so the same flick starts again
+      pointer.classList.add("wheel__pointer--flick");
+    };
+    const hub = h("button", {
+      type: "button", class: "wheel__hub",
       onclick: async () => {
-        button.disabled = true;
+        hub.disabled = true;
+        box.classList.add("wheel--spinning");
         try {
           const result = await api("POST", spinUrl);
           onDay(result.today);
-          const index = prize.wheel.findIndex((p) => p.id === result.prize_id);
-          await spinTo(disc, Math.max(index, 0), prize.wheel.length);
+          const index = Math.max(0, prize.wheel.findIndex((p) => p.id === result.prize_id));
+          const slice = 360 / prize.wheel.length;
+          await spinTo(disc, index, prize.wheel.length, {
+            onGo: () => sounds.whoosh(),
+            onPeg: (speed) => {
+              sounds.clack(speed > slice / 3);
+              flick();
+            },
+          });
+          box.classList.replace("wheel--spinning", "wheel--stopped");
+          disc.querySelector(`[data-slice="${index}"]`)?.classList.add("wheel__slice--won");
+          sounds.chime();
+          await new Promise((resolve) => setTimeout(resolve, tokenMs("--wheel-pause", 1400)));
           showWon(result.today.prize, { justWon: true });
         } catch {
           onClose(); // it was not unlocked any more: back to the route as it is now
         }
       },
-    }, prize.won.length ? t.child.spinAgain : t.child.spin);
-    body.replaceChildren(h("div", { class: "wheel" }, disc, h("span", { class: "wheel__pointer" })), button);
+    }, h("span", { class: "wheel__hub-text" }, prize.won.length ? t.child.spinAgain : t.child.spin));
+    box.append(hub);
+    body.replaceChildren(box);
   }
 
   function showWon(prize, { justWon = false } = {}) {
@@ -59,7 +85,10 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
         type: "button", class: "btn btn--primary spin-button", onclick: () => showWheel(prize),
       }, t.child.spinAgain),
     ].filter(Boolean));
-    if (justWon) confetti(layer);
+    if (justWon) {
+      confetti(layer);
+      sounds.win();
+    }
   }
 
   if (day.prize.state === "unlocked" && !day.prize.won.length) showWheel(day.prize);
@@ -78,7 +107,7 @@ function sliceColors(n) {
 // One slice per prize, clockwise from the top, with its picture (or initial).
 function wheel(prizes) {
   const svg = document.createElementNS(SVG_NS, "svg");
-  svg.setAttribute("viewBox", "-100 -100 200 200");
+  svg.setAttribute("viewBox", "-112 -112 224 224");
   svg.setAttribute("class", "wheel__disc");
   svg.setAttribute("aria-hidden", "true");
   const n = prizes.length;
@@ -99,6 +128,7 @@ function wheel(prizes) {
       slice.setAttribute("d", `M0 0 L${x0} ${y0} A${R} ${R} 0 ${to - from > 180 ? 1 : 0} 1 ${x1} ${y1}Z`);
     }
     slice.setAttribute("class", `wheel__slice wheel__slice--${colors[i]}`);
+    slice.dataset.slice = i;
     svg.append(slice);
 
     const [cx, cy] = n === 1 ? [0, 0] : point((from + to) / 2, R * 0.62);
@@ -119,9 +149,21 @@ function wheel(prizes) {
       svg.append(letter);
     }
   });
-  const rim = document.createElementNS(SVG_NS, "circle");
-  rim.setAttribute("class", "wheel__rim");
-  rim.setAttribute("r", R);
-  svg.append(rim);
+  const circle = (cls, r, [cx, cy] = [0, 0]) => {
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("class", cls);
+    c.setAttribute("r", r);
+    c.setAttribute("cx", cx);
+    c.setAttribute("cy", cy);
+    svg.append(c);
+    return c;
+  };
+  circle("wheel__rim", RIM);
+  // The pegs between slices: each one passing the pointer is a "clac".
+  if (n > 1) for (let i = 0; i < n; i += 1) circle("wheel__peg", 3.2, point((i * 360) / n, R - 4));
+  // The lights round the rim, in two sets that take turns.
+  for (let i = 0; i < BULBS; i += 1) {
+    circle(`wheel__bulb wheel__bulb--${i % 2 ? "b" : "a"}`, 3.6, point((i * 360) / BULBS + 360 / BULBS / 2, RIM));
+  }
   return svg;
 }

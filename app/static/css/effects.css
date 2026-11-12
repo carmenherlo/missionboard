@@ -112,11 +112,46 @@
 }
 
 
-/* The wheel turns fast and slows down until it stops on the prize
-   (the angle is set by static/js/effects/spin.js). */
-.wheel__disc {
-  transition: transform var(--wheel-spin) cubic-bezier(0.12, 0.8, 0.22, 1);
+/* The prize wheel (12/11). It turns frame by frame (static/js/effects/spin.js); here,
+   what goes with it. The rim's lights take turns, faster while it turns, and all
+   blink together once it stops. */
+.wheel__bulb { animation: bulb-a var(--wheel-chase) steps(1) infinite; }
+.wheel__bulb--b { animation-name: bulb-b; }
+.wheel--spinning .wheel__bulb { animation-duration: calc(var(--wheel-chase) / 3); }
+.wheel--stopped .wheel__bulb { animation: bulb-all calc(var(--wheel-chase) / 2) steps(1) infinite; }
+
+@keyframes bulb-a {
+  0% { fill: var(--wheel-bulb-on); }
+  50% { fill: var(--wheel-bulb-off); }
 }
+@keyframes bulb-b {
+  0% { fill: var(--wheel-bulb-off); }
+  50% { fill: var(--wheel-bulb-on); }
+}
+@keyframes bulb-all {
+  0% { fill: var(--wheel-bulb-on); }
+  50% { fill: var(--wheel-bulb-off); }
+}
+
+/* A peg hits the arrow: it jumps aside and comes back. */
+.wheel__pointer--flick { animation: pointer-flick 140ms ease-out; }
+@keyframes pointer-flick {
+  30% { transform: rotate(-22deg); }
+}
+
+/* "¡Gira!" asks to be tapped: it beats softly; pressed, it sinks; turning, it rests. */
+.wheel__hub { animation: hub-beat 1.6s ease-in-out infinite; transition: transform 120ms ease-out; }
+.wheel__hub:active:not(:disabled) { transform: scale(0.92); }
+.wheel--spinning .wheel__hub, .wheel--stopped .wheel__hub { animation: none; }
+.wheel--spinning .wheel__hub-text, .wheel--stopped .wheel__hub-text { opacity: 0.55; }
+@keyframes hub-beat {
+  0%, 100% { transform: scale(1); box-shadow: var(--shadow-lifted), 0 0 0 0 var(--wheel-bulb-glow); }
+  50% { transform: scale(1.06); box-shadow: var(--shadow-lifted), 0 0 0 14px transparent; }
+}
+
+/* The slice won shines while the lights blink. */
+.wheel__slice--won { animation: slice-won 0.5s ease-in-out infinite alternate; }
+@keyframes slice-won { to { stroke-width: 9; } }
 
 .prize-won {
   animation: rise var(--appear) ease-out;
@@ -356,7 +391,7 @@
   .fx-shine::after {
     display: none;
   }
-  .wheel__disc {
-    transition: none;
+  .wheel__bulb, .wheel__hub, .wheel__pointer--flick, .wheel__slice--won {
+    animation: none;
   }
 }

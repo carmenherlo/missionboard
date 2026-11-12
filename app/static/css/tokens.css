@@ -146,7 +146,17 @@
   --wheel-2: #d4f3e3;
   --wheel-3: #fff0c2;
   --wheel-4: #dce6ff;
-  --wheel-pointer: var(--text);
+  --wheel-pointer: #e5484d; /* the fairground arrow at the top */
+  --wheel-pointer-edge: #ffffff;
+  --wheel-rim: #2b2d6e; /* the rim, dark, so its lights shine */
+  --wheel-peg: #ffffff;
+  --wheel-bulb-on: #fff3b0;
+  --wheel-bulb-glow: #ffd23f;
+  --wheel-bulb-off: #8a8cc4;
+  --wheel-hub: var(--accent-vivid); /* "¡Gira!" in the middle */
+  --wheel-hub-text: #3d2a00;
+  --wheel-hub-edge: #ffffff;
+  --wheel-won: #ffd23f; /* the edge of the slice won */
 
   /* ---------- Routines (rutinas-1.html) ----------
      The clock: a part's stretch in four quarters as it runs out,
@@ -258,7 +268,9 @@
   --appear: 220ms; /* panels and messages coming in */
   --state-hover: 8%; /* Material 3 state layer: the text's colour over what is touched */
   --state-pressed: 10%;
-  --wheel-spin: 4s; /* the wheel turning until it stops on the prize */
+  --wheel-spin: 5s; /* the wheel turning until it stops on the prize (after a short wind-up) */
+  --wheel-pause: 1.4s; /* stopped, the slice won shining, before "¡Te ha tocado!" */
+  --wheel-chase: 0.9s; /* the rim's lights taking turns; three times as fast while it turns */
   --confetti-1: #5b4ae6;
   --confetti-2: #ff9f43;
   --confetti-3: #2fb37a;

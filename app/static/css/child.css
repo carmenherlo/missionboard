@@ -732,14 +732,18 @@
   border-radius: 50%;
   box-shadow: var(--shadow-lifted);
   transform: rotate(var(--wheel-angle, 0deg));
+  will-change: transform; /* turned every frame: on its own layer */
 }
 
-.wheel__slice { stroke: var(--surface); stroke-width: 2; }
+.wheel__slice { stroke: var(--surface); stroke-width: 1.5; }
 .wheel__slice--0 { fill: var(--wheel-1); }
 .wheel__slice--1 { fill: var(--wheel-2); }
 .wheel__slice--2 { fill: var(--wheel-3); }
 .wheel__slice--3 { fill: var(--wheel-4); }
-.wheel__rim { fill: none; stroke: var(--surface); stroke-width: 6; }
+.wheel__slice--won { stroke: var(--wheel-won); stroke-width: 5; }
+.wheel__rim { fill: none; stroke: var(--wheel-rim); stroke-width: 18; }
+.wheel__peg { fill: var(--wheel-peg); stroke: var(--wheel-rim); stroke-width: 1; }
+.wheel__bulb { fill: var(--wheel-bulb-off); }
 
 .wheel__letter {
   fill: var(--text);
@@ -748,16 +752,56 @@
   dominant-baseline: central;
 }
 
+/* The arrow at the top, over the rim: it is hit by each peg (effects.css). */
 .wheel__pointer {
   position: absolute;
-  top: -18px;
+  top: -14px;
   left: 50%;
-  width: 44px;
-  height: 40px;
-  transform: translateX(-50%);
+  z-index: 1;
+  width: 48px;
+  height: 58px;
+  margin-left: -24px;
   background: var(--wheel-pointer);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  clip-path: polygon(50% 100%, 0 30%, 8% 10%, 30% 0, 70% 0, 92% 10%, 100% 30%);
+  transform-origin: 50% 20%;
 }
+
+.wheel__pointer::after { /* its round head, white */
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--wheel-pointer-edge);
+}
+
+/* "¡Gira!" in the middle: it does not turn with the wheel. */
+.wheel__hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34%;
+  height: 34%;
+  margin: -17% 0 0 -17%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 6px solid var(--wheel-hub-edge);
+  border-radius: 50%;
+  background: var(--wheel-hub);
+  color: var(--wheel-hub-text);
+  box-shadow: var(--shadow-lifted);
+  font: 900 clamp(1.3rem, 4.4vmin, 2.1rem) / 1 var(--font);
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wheel__hub:disabled { cursor: default; }
+.wheel__hub-text { padding: 0 var(--space-2); }
 
 .spin-button {
   min-height: 72px;
