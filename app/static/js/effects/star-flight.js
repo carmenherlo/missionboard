@@ -1,5 +1,4 @@
-// A star won (12/11): it comes in from outside the screen, from the top corner farthest
-// from where it goes, tumbling along an arc and leaving a trail of sparks, and lands
+// A star won (12/11): it comes in from outside the screen, from the top right, tumbling along an arc and leaving a trail of sparks, and lands
 // with a little bounce (the celebration's avatar, a mission's ring on the route).
 // An effect: with "reduce motion" it does nothing, and what waits for it goes on at once.
 import { reducedMotion, tokenMs } from "./motion.js";
@@ -19,9 +18,9 @@ export function flyStar(src, target, { size = 220, layer = document.body } = {})
     transform: `translate(${x - size / 2}px, ${y - size / 2}px) scale(${scale}) rotate(${turn}deg)`, opacity,
   });
   const [tx, ty] = [to.left + to.width / 2, to.top + to.height / 2];
-  const fromLeft = tx > innerWidth / 2; // from the other side: a long way across
-  const [sx, sy] = [fromLeft ? -size : innerWidth + size, -size / 2];
-  const turns = fromLeft ? 1 : -1; // it tumbles the way it flies
+  // Always from the top right (Carmen, 12/11), tumbling the way it flies.
+  const [sx, sy] = [innerWidth + size, -size / 2];
+  const turns = -1;
   const [mx, my] = [(sx + tx) / 2, Math.max(size / 2, Math.min(sy, ty) + innerHeight * 0.12)];
   const end = Math.max(0.1, to.width / size);
   const flight = star.animate([
