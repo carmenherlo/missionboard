@@ -23,7 +23,7 @@ const PAW_EVERY = 60; // px of the way for each footprint
 const MOVED = 6; // px: a finger that moved more than this was dragging, not tapping
 
 // at: the stop to start on (kept by the screen across its refreshes); onTurn(i): told when it stops.
-export function wheelView(day, handlers, { at = null, onTurn = () => {} } = {}) {
+export function wheelView(day, handlers, { at = null, onTurn = () => {}, control = null } = {}) {
   const look = day.route_look;
   const stops = routeStops(day);
   const n = stops.length;
@@ -112,6 +112,8 @@ export function wheelView(day, handlers, { at = null, onTurn = () => {} } = {}) 
     }
     settle(target);
   }
+
+  if (control) control.goTo = goTo;
 
   // Dragging: the stop under the finger follows it; let go, it goes on with its speed.
   let start = null;
@@ -205,6 +207,9 @@ function joint(from, kind) {
   });
 }
 
+// Each footprint knows its place (--i), so they can light up one after another, walking.
 function paws(el, count) {
-  if (el.children.length !== count) el.replaceChildren(...Array.from({ length: count }, () => icon("paw")));
+  if (el.children.length === count) return;
+  el.replaceChildren(...Array.from({ length: count }, () => icon("paw")));
+  [...el.children].forEach((paw, i) => paw.style.setProperty("--i", i));
 }

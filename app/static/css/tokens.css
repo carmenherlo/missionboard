@@ -208,7 +208,16 @@
   --hold-to-close: 1.2s; /* "Cerrar" closes only when held this long (a quick tap by mistake does not) */
 
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
-  --celebration-duration: 5s; /* "¡Misión cumplida!" closes by itself after this */
+  --celebration-duration: 6s; /* "¡Misión cumplida!" closes by itself after this */
+  --celebration-star-delay: 700ms; /* then the star won pops up and flies to the avatar */
+  --star-flight: 1.8s; /* a star won: up big in the middle, then to where it stays */
+  --landing-pause: 400ms; /* back on the route: before the star comes */
+  --landing-glow: 900ms; /* the mission lighting up once its star is on it */
+  --paw-step: 180ms; /* footprints lighting up one after another, towards the next stop */
+  --paw-light: 400ms; /* each footprint taking its colour */
+  --landing-turn: 900ms; /* the wheel turning to the next stop */
+  --landing-linger: 700ms; /* from a routine: the route stays this long, then back to the routine */
+  --drum-done-glow: 0.55; /* a mission done, on the wheel: its glow, still (open ones beat) */
   --heartbeat: 1.1s; /* "latido": a light in its colour behind, growing and fading */
   --heartbeat-strength: 60%; /* how much of the colour that light has */
   --shine: 1.4s; /* "resplandor": a reflection going once round a ring */

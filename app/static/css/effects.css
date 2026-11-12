@@ -243,6 +243,86 @@
 
 .route--wheel .ring__inner img { position: relative; } /* over the light */
 
+/* A mission done, on the wheel: its glow, still. */
+.route--wheel .route-node--done .ring::before {
+  --reach: calc(var(--glow-reach) * var(--drum-glow) * 0.7);
+  content: "";
+  display: block;
+  position: absolute;
+  inset: calc(-1 * var(--reach));
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    transparent calc(100% - var(--reach) - 2px),
+    var(--mission-color) calc(100% - var(--reach) + 4px),
+    color-mix(in srgb, var(--mission-color) 55%, transparent) calc(100% - var(--reach) * 0.55),
+    transparent 100%);
+  opacity: var(--drum-done-glow);
+  pointer-events: none;
+}
+
+/* ---------- A star won (12/11) ---------- */
+
+/* The one flying (effects/star-flight.js): over everything, shining. */
+.flying-star {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 70;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 0 24px var(--confetti-star));
+  will-change: transform, opacity;
+}
+
+/* The celebration: the seat and the count wait for the star, then pop. */
+.celebration__star--waiting,
+.celebration__count--waiting { opacity: 0; animation: none; }
+
+.celebration__star--landed {
+  animation: star-pop 500ms ease-out, star-shine var(--star-shine) ease-in-out 500ms infinite;
+}
+
+.celebration__count--landed { animation: star-pop 500ms ease-out; }
+
+@keyframes star-pop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* The route: the star not there yet, then on the ring with a pop, and the mission lighting up. */
+.route-node--landing .ring__star,
+.route--wheel .route-node--landing .ring::before { opacity: 0; } /* it lights up when the star is on */
+.route-node--lit .ring__star { animation: star-pop 500ms ease-out; }
+.route--wheel .route-node--lit .ring::before { animation: lit-up var(--landing-glow) ease-out; }
+
+@keyframes lit-up {
+  0% { opacity: 0; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.25); }
+  100% { opacity: var(--drum-done-glow); transform: scale(1); }
+}
+
+/* The way on, grey until the star is on; then each footprint takes the colour, walking. */
+.drum__joint--done.drum__joint--waiting { color: var(--drum-joint-off); }
+
+.drum__joint--walking.drum__joint--paws .icon {
+  animation: paw-light var(--paw-light) ease-out both;
+  animation-delay: calc(var(--i, 0) * var(--paw-step));
+}
+
+@keyframes paw-light {
+  0% { color: var(--drum-joint-off); transform: rotate(90deg) translateX(var(--paw-side)) scale(0.7); }
+  60% { transform: rotate(90deg) translateX(var(--paw-side)) scale(1.3); }
+  100% { transform: rotate(90deg) translateX(var(--paw-side)) scale(1); }
+}
+
+.drum__joint--walking.drum__joint--dots {
+  background: linear-gradient(to right, currentColor 50%, var(--drum-joint-off) 50%) 100% 0 / 200% 100% no-repeat;
+  animation: dots-walk calc(var(--paw-step) + var(--paw-light)) linear forwards;
+}
+
+@keyframes dots-walk { to { background-position: 0 0; } }
+
 /* Home: a child's card gives a little when it is pressed. */
 .child-card {
   transition: transform var(--appear) ease;
@@ -255,7 +335,9 @@
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .prize-won, .routine__count,
   .ring::before, .avatar-fx::before, .fx-shine::after, .avatar-fx__glow,
-  .route--wheel .route-node--open .ring::before, .route--wheel .route-node--open .ring__inner::before {
+  .route--wheel .route-node--open .ring::before, .route--wheel .route-node--open .ring__inner::before,
+  .flying-star, .celebration__star--landed, .celebration__count--landed, .route-node--lit .ring__star,
+  .route--wheel .route-node--lit .ring::before, .drum__joint--walking .icon, .drum__joint--walking {
     animation: none !important;
   }
   .fx-shine::after {

@@ -36,6 +36,7 @@ import { onSay, quiet, say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { openMission } from "../screens/child/mission-flow.js";
+import { showLanding } from "../screens/child/star-landing.js";
 import { missionStyle } from "../screens/child/ring.js";
 import { t } from "../texts.js";
 import { confetti } from "../effects/confetti.js";
@@ -896,10 +897,16 @@ export function startRoutines() {
       onChange: (checked) => setPretend(person.child.id, checked),
     } : null;
     const phase = phaseAt(now());
-    showing.mission = await openMission(showing.view.over, person.child.id, person.mission.id, {
+    const wasDone = Boolean(person.mission.completed);
+    const over = showing.view.over;
+    showing.mission = await openMission(over, person.child.id, person.mission.id, {
       pretend,
       current: phase.kind === "part" ? phase.part.id : null, // the task going on stands out
-      onClose: () => {
+      onClose: async (day) => {
+        if (!showing) return;
+        // Just done (not in a trial): the star lands on the child's route a moment, then back here.
+        const done = day?.missions.find((m) => m.id === person.mission.id)?.state === "done";
+        if (!pretend && done && !wasDone) await showLanding(over, day, person.mission.id);
         if (!showing) return;
         showing.mission = null;
         check(); // how the kids go, again

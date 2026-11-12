@@ -395,6 +395,10 @@
 .route-node--done .ring__fill { stroke: var(--mission-soft, var(--child-soft)); }
 .route-node--done .ring__inner img,
 .route-node--done .ring__star img { opacity: 0.75; filter: saturate(0.6); }
+/* On the wheel, a mission done stays bright, in its colour, with its star (12/11). */
+.route--wheel .route-node--done .ring__fill { stroke: var(--mission-color); }
+.route--wheel .route-node--done .ring__inner img,
+.route--wheel .route-node--done .ring__star img { opacity: 1; filter: none; }
 .route-node--open:not(.route-node--focus) .ring__inner img,
 .route-node--upcoming .ring__inner img { opacity: 0.8; filter: grayscale(1); } /* transparent, over the picture: not fainter */
 .route-node--closed .ring__inner img,
@@ -1069,4 +1073,13 @@
 
 .open-today__form {
   width: min(420px, 100%);
+}
+
+/* From a routine: the child's route over everything a moment, while the star lands (star-landing.js). */
+.landing-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  min-height: 0;
+  overflow: hidden;
 }

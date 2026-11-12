@@ -10,7 +10,8 @@ import { wheelView } from "./route-wheel.js";
 
 const HOLD_MS = 1000; // holding a mission that is not open: a parent opens it, only today
 
-// options (the wheel's): at, the stop to start on; onTurn(i), told where it stopped.
+// options (the wheel's): at, the stop to start on; onTurn(i), told where it stopped;
+// control, an object that gets goTo(i) to turn it from outside (a star landing).
 export function routeView(day, handlers, options) {
   return day.route_look?.shape === "line" ? lineView(day, handlers) : wheelView(day, handlers, options);
 }
@@ -75,7 +76,7 @@ function missionNode(mission, distance, day, { onOpen, onLocked, onHold }) {
   const canOpen = state !== "upcoming"; // a past one opens too, to look at (05/11)
   const hold = (state === "upcoming" || state === "closed") ? holdable(() => onHold(mission)) : null;
   return h("button", {
-    type: "button", style: missionStyle(mission.colors),
+    type: "button", style: missionStyle(mission.colors), "data-mission": mission.id,
     ...(hold?.events ?? {}),
     class: `route-node route-node--${state} route-node--${sizeFor(distance)}${mission.focus ? " route-node--focus" : ""}`,
     "aria-label": [mission.name, tag, ...(Array.isArray(detail) ? [detail[1]] : [detail])].filter(Boolean).join(", "),

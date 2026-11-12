@@ -1,0 +1,88 @@
+// Back on the route after "¡Misión cumplida!" (12/11): the star won appears and lands
+// on the mission's ring, the mission lights up, the footprints (or dots) to the next
+// stop take its colour one after another, and the wheel turns to the next stop.
+// From a routine, the same over its clock, and then back to the routine.
+import { sounds } from "../../components/sound.js";
+import { h } from "../../dom.js";
+import { flyStar } from "../../effects/star-flight.js";
+import { reducedMotion, tokenMs } from "../../effects/motion.js";
+import { routeStops, routeView } from "./route.js";
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const frame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+// The stop of a mission, to put the wheel on it before the route is drawn.
+export function stopIndex(day, missionId) {
+  return routeStops(day).findIndex((stop) => stop.mission?.id === missionId);
+}
+
+// Before the route is shown: the star not there yet, the way on not walked yet.
+export function prepareLanding(section, day, missionId) {
+  const node = section.querySelector(`[data-mission="${missionId}"]`);
+  node?.classList.add("route-node--landing");
+  joint(section, day, missionId)?.classList.add("drum__joint--waiting");
+}
+
+// section: the route as drawn (routeView), prepared; control: the wheel's ({ goTo }).
+export async function landStar(section, day, missionId, control = {}) {
+  const node = section.querySelector(`[data-mission="${missionId}"]`);
+  if (!node) return;
+  const way = joint(section, day, missionId);
+  const light = () => {
+    node.classList.remove("route-node--landing");
+    node.classList.add("route-node--lit");
+  };
+  if (reducedMotion()) {
+    light();
+    way?.classList.remove("drum__joint--waiting");
+    return;
+  }
+
+  await frame(); // the wheel measures itself and turns to the mission first
+  await wait(tokenMs("--landing-pause", 400));
+  await flyStar(day.star_url, node.querySelector(".ring__star"), { size: 200 });
+  light();
+  sounds.ding();
+  await wait(tokenMs("--landing-glow", 900));
+
+  if (way) {
+    way.classList.replace("drum__joint--waiting", "drum__joint--walking"); // grey until each one lights up
+    const paws = Math.max(1, way.children.length);
+    await wait(paws * tokenMs("--paw-step", 180) + tokenMs("--paw-light", 400));
+  }
+  const next = stopIndex(day, missionId) + 1;
+  if (control.goTo && next < routeStops(day).length) {
+    control.goTo(next);
+    await wait(tokenMs("--landing-turn", 900));
+  }
+}
+
+// From a routine: the child's route over everything for a moment, the star landing on it,
+// and then gone. Nothing on it can be tapped.
+export async function showLanding(container, day, missionId) {
+  const { color, soft, strong, on } = day.colors;
+  const control = {};
+  const nothing = () => {};
+  const route = routeView(day,
+    { onOpen: nothing, onLocked: nothing, onHold: nothing, onPrize: nothing, onPrizeLocked: nothing },
+    { at: stopIndex(day, missionId), control });
+  prepareLanding(route, day, missionId);
+  const layer = h("div", {
+    class: `child-screen child-screen--veil-${day.route_look.veil} landing-layer`, "aria-hidden": "true",
+    style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
+  },
+    h("div", { class: "child-scene" },
+      day.background_url && h("img", { class: "child-scene__picture", src: day.background_url, alt: "" }),
+      h("div", { class: "child-scene__veil" })),
+    route);
+  container.append(layer);
+  await landStar(route, day, missionId, control);
+  await wait(tokenMs("--landing-linger", 700));
+  layer.remove();
+}
+
+// The footprints (or dots) that leave the mission, on the wheel.
+function joint(section, day, missionId) {
+  const i = stopIndex(day, missionId);
+  return i < 0 ? null : section.querySelectorAll(".drum__joint")[i] ?? null;
+}
