@@ -34,5 +34,9 @@ export function avatar(child, { size = "md", fx = null } = {}) {
     class: `avatar avatar--${size}`,
     style: child.color ? `--child-color: ${child.color}` : null,
   }, avatarPicture(child));
-  return fx ? h("span", { class: `avatar-fx${fx === "shine" ? " fx-shine" : ""}` }, picture) : picture;
+  // The glow is a layer of its own: only its opacity beats, which tablets animate smoothly.
+  return fx
+    ? h("span", { class: `avatar-fx${fx === "shine" ? " fx-shine" : ""}` },
+        h("span", { class: "avatar-fx__glow", "aria-hidden": "true" }), picture)
+    : picture;
 }

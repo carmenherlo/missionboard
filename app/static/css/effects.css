@@ -164,22 +164,27 @@
 .home-look--beat-fast .avatar-fx { --beat: var(--home-beat-fast); }
 .home-look--beat-slower .avatar-fx { --beat: var(--home-beat-slower); }
 
+/* The ring stays still; the glow round it is drawn once, on its own layer, and only its
+   opacity beats (a moving box-shadow is redrawn every frame: on a tablet it jumps on/off). */
 .home-look--ring .avatar-fx > .avatar {
-  --glow: calc(var(--glow-k) * var(--glow-size, 1));
-  animation: home-ring var(--beat) ease-in-out infinite;
+  box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--ring-solid, var(--child-color));
 }
 
-@keyframes home-ring {
-  0%, 100% {
-    box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--ring-solid, var(--child-color)),
-      0 0 calc(10px * var(--glow)) calc(2px * var(--glow)) color-mix(in srgb, var(--ring-glow) 75%, transparent),
-      0 0 calc(24px * var(--glow)) calc(6px * var(--glow)) color-mix(in srgb, var(--ring-glow) 40%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--ring-solid, var(--child-color)),
-      0 0 calc(22px * var(--glow)) calc(6px * var(--glow)) var(--ring-glow),
-      0 0 calc(60px * var(--glow)) calc(18px * var(--glow)) color-mix(in srgb, var(--ring-glow) 70%, transparent);
-  }
+.home-look--ring .avatar-fx__glow {
+  --glow: calc(var(--glow-k) * var(--glow-size, 1));
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 calc(22px * var(--glow)) calc(6px * var(--glow)) var(--ring-glow),
+    0 0 calc(60px * var(--glow)) calc(18px * var(--glow)) color-mix(in srgb, var(--ring-glow) 70%, transparent);
+  animation: glow-beat var(--beat) ease-in-out infinite;
+  will-change: opacity;
+  pointer-events: none;
+}
+
+@keyframes glow-beat {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
 }
 
 .home-look--centre .avatar-fx::before {
@@ -190,6 +195,7 @@
   background: radial-gradient(closest-side,
     color-mix(in srgb, var(--centre-glow) var(--centre-strength), transparent) var(--light-solid), transparent);
   animation: home-centre var(--beat) ease-in-out infinite;
+  will-change: opacity, transform;
   pointer-events: none;
 }
 
@@ -202,20 +208,18 @@
    colour round its ring, a white light behind the picture), all beating together. */
 .route--wheel .ring::before { display: none; } /* the line's heartbeat: here, the glow below */
 
-.route--wheel .route-node--open .ring {
+.route--wheel .route-node--open .ring::before {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
-  animation: drum-ring var(--drum-beat) ease-in-out infinite;
-}
-
-@keyframes drum-ring {
-  0%, 100% {
-    box-shadow: 0 0 calc(10px * var(--drum-glow)) calc(2px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 75%, transparent),
-      0 0 calc(24px * var(--drum-glow)) calc(6px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 40%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 calc(22px * var(--drum-glow)) calc(6px * var(--drum-glow)) var(--mission-color),
-      0 0 calc(60px * var(--drum-glow)) calc(18px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 70%, transparent);
-  }
+  background: none;
+  box-shadow: 0 0 calc(22px * var(--drum-glow)) calc(6px * var(--drum-glow)) var(--mission-color),
+    0 0 calc(60px * var(--drum-glow)) calc(18px * var(--drum-glow)) color-mix(in srgb, var(--mission-color) 70%, transparent);
+  animation: glow-beat var(--drum-beat) ease-in-out infinite;
+  will-change: opacity;
+  pointer-events: none;
 }
 
 .route--wheel .route-node--open .ring__inner::before {
@@ -226,6 +230,7 @@
   background: radial-gradient(closest-side,
     color-mix(in srgb, var(--home-light) var(--home-light-white), transparent) var(--drum-solid), transparent);
   animation: home-centre var(--drum-beat) ease-in-out infinite;
+  will-change: opacity, transform;
   pointer-events: none;
 }
 
@@ -242,8 +247,8 @@
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .prize-won, .routine__count,
-  .ring::before, .avatar-fx::before, .fx-shine::after, .home-look .avatar-fx > .avatar,
-  .route--wheel .route-node--open .ring, .route--wheel .route-node--open .ring__inner::before {
+  .ring::before, .avatar-fx::before, .fx-shine::after, .avatar-fx__glow,
+  .route--wheel .route-node--open .ring::before, .route--wheel .route-node--open .ring__inner::before {
     animation: none !important;
   }
   .fx-shine::after {
