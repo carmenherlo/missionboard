@@ -146,6 +146,14 @@ export const sounds = {
     }, "ticking", { full: loud });
   },
 
+  // A footprint (or a dot) taking its colour on the route (12/11): a soft "pat", lower
+  // for one foot and a little higher for the other, `delay` seconds from now.
+  step(delay, other = false, loud = false) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: other ? 260 : 220, to: other ? 150 : 120, length: 0.09, type: "sine", volume: loud ? 0.9 : 0.6 });
+    }, "ticking", { full: loud });
+  },
+
   // Well done: a fanfare.
   win() {
     play((ctx, out, now) => {

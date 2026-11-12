@@ -9,6 +9,16 @@ import { reducedMotion, tokenMs } from "../../effects/motion.js";
 import { showCelebration } from "./celebration.js";
 import { routeStops, routeView } from "./route.js";
 
+const DOT_EVERY_PX = 20; // as drawn in child.css (.drum__joint--dots)
+
+// A soft "pat" for each footprint or dot as it takes its colour (with the wheel's tick setting).
+function pats(look, times) {
+  if (look.tick === "none") return;
+  times.forEach((ms, i) => sounds.step(ms / 1000, i % 2 === 1, look.tick === "loud"));
+}
+
+const spread = (count, ms) => Array.from({ length: count }, (_, i) => (i / count) * ms);
+
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const frame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
@@ -48,8 +58,12 @@ export async function landStar(section, day, missionId, control = {}) {
 
   if (way) {
     way.classList.replace("drum__joint--waiting", "drum__joint--walking"); // grey until each one lights up
-    const paws = Math.max(1, way.children.length);
-    await wait(paws * tokenMs("--paw-step", 180) + tokenMs("--paw-light", 400));
+    const [step, light] = [tokenMs("--paw-step", 180), tokenMs("--paw-light", 400)];
+    const paws = way.children.length;
+    pats(day.route_look, paws
+      ? Array.from({ length: paws }, (_, i) => i * step + light * 0.6) // as each footprint jumps
+      : spread(Math.max(1, Math.round(way.offsetWidth / DOT_EVERY_PX)), step + light)); // as the colour passes each dot
+    await wait(Math.max(1, paws) * step + light);
   }
   const next = stopIndex(day, missionId) + 1;
   if (control.turnTo && next < routeStops(day).length) {

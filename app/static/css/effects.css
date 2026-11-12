@@ -186,9 +186,10 @@
   pointer-events: none;
 }
 
+/* It grows outwards only: shrinking, its inner edge went into the ring and mixed with the white light. */
 @keyframes glow-beat {
-  0%, 100% { opacity: 0.35; transform: scale(0.97); }
-  50% { opacity: 1; transform: scale(1); }
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
 }
 
 .home-look--centre .avatar-fx::before {
