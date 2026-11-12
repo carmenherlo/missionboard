@@ -116,6 +116,12 @@ def test_migration_17_to_18():
     assert upgrade({"version": 17, "children": []})["avatars"] == []
 
 
+def test_migration_18_to_19_switches_the_home_reflection_off():
+    doc = upgrade({"version": 18, "settings": {"home": {"shine": True, "veil": 0}}})
+    assert doc["settings"]["home"] == {"shine": False, "veil": 0}
+    assert upgrade({"version": 18})["version"] == 19
+
+
 def test_tones_of_any_colour():
     for entry in avatars.PALETTE:  # hand-picked ones stay
         assert avatars.tones(entry["color"])["soft"] == entry["soft"]

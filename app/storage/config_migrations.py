@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 18
+CURRENT_VERSION = 19
 
 
 class ConfigVersionError(Exception):
@@ -66,6 +66,18 @@ def _v17_to_v18(doc: dict) -> dict:
 
 
 _MIGRATIONS[17] = _v17_to_v18
+
+
+def _v18_to_v19(doc: dict) -> dict:
+    """The home's reflection on opening, off: too much (12/11). It can be switched on again in Ajustes."""
+    home = (doc.get("settings") or {}).get("home")
+    if isinstance(home, dict):
+        home["shine"] = False
+    doc["version"] = 19
+    return doc
+
+
+_MIGRATIONS[18] = _v18_to_v19
 
 
 def upgrade(doc: dict) -> dict:

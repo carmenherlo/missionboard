@@ -105,7 +105,7 @@ def test_routines_switched_off_do_not_ring_and_are_kept(client):
 def test_how_the_home_screen_looks_changed_in_ajustes_and_read_without_a_code(client, data_dir):
     got = client.get("/api/home").json()  # the home screen: no parent code
     assert got["look"] == {"background": True, "veil": 0, "name_pill": True, "ring_glow": "color", "ring_too": True,
-                           "centre_light": "white", "strength": 2, "beat_seconds": 3.5, "shine": True}
+                           "centre_light": "white", "strength": 2, "beat_seconds": 3.5, "shine": False}
     assert got["background_url"] == "static/backgrounds/otono/manana.webp"
     look = {**got["look"], "ring_glow": "vivid", "veil": 25, "beat_seconds": 5}
     assert patch(client, home=look).status_code == 200

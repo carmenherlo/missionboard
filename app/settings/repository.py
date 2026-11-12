@@ -75,7 +75,7 @@ class HomeLook(BaseModel):
     centre_light: Literal["color", "white", "none"] = "white"
     strength: Literal[1, 2, 3] = 2
     beat_seconds: Literal[2, 3.5, 5] = 3.5
-    shine: bool = True  # a reflection goes once round each ring when the screen opens
+    shine: bool = False  # a reflection goes once round each ring when the screen opens (off: too much, 12/11)
 
 
 class RouteLook(BaseModel):
