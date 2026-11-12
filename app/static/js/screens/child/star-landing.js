@@ -101,15 +101,19 @@ function joint(section, day, missionId) {
   return i < 0 ? null : section.querySelectorAll(".drum__joint")[i] ?? null;
 }
 
-// Ajustes → "Probar la estrella": the whole of it with a child's day as if a mission had just
-// been done (the first one not done yet), without changing anything: nothing marked, no star given.
+// Apariencia → "Probar la estrella ganada": the whole of it as a clean example, without changing
+// anything (nothing marked, no star given): the first mission just done, the others not done yet
+// (whatever today really is), the prize locked.
 export async function trialStar(day) {
-  const mission = day.missions.find((m) => m.state !== "done") ?? day.missions[0];
+  const mission = day.missions[0];
   if (!mission) return;
   const pretended = {
     ...day,
     stars: day.stars + 1,
-    missions: day.missions.map((m) => (m.id === mission.id ? { ...m, state: "done", done: m.total, focus: false } : m)),
+    missions: day.missions.map((m, i) => (i === 0
+      ? { ...m, state: "done", done: m.total, focus: false }
+      : { ...m, state: m.state === "done" ? "open" : m.state, done: 0, focus: i === 1 })),
+    prize: day.prize && { ...day.prize, state: "locked" },
   };
   const { color, soft, strong, on } = day.colors;
   const holder = h("div", {
