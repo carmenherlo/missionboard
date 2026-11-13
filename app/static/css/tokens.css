@@ -127,6 +127,7 @@
   --task-card-width: 300px;
   --task-icon-size: 64px;
   --square-size: 84px; /* a child's finger: not under 64px */
+  --task-speak-size: 34px; /* 🔊 on a task's card (13/11: it was hardly seen) */
   --reminder-size: 40px; /* a step on a child's card: a reminder, not a button (misiones-3) */
   --step-check-size: 56px;
   --shadow-badge: 0 3px 10px rgb(0 0 0 / 0.15);
@@ -141,7 +142,7 @@
   --prize-soft: var(--accent-soft);
   --prize-strong: var(--stars-text); /* "¡Tu premio!" */
   --prize-locked-opacity: 0.6; /* while missions are left: in colour, but in the background */
-  --wheel-size: min(440px, 62vh);
+  --wheel-size: min(560px, 70vh);
   --wheel-1: #ffd9e5; /* pastel slices, so they do not compete with the child's colour */
   --wheel-2: #d4f3e3;
   --wheel-3: #fff0c2;

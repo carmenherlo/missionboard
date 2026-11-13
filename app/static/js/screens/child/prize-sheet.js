@@ -18,6 +18,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const R = 92; // the slices' radius in the wheel's 224 × 224 drawing
 const RIM = 103; // the middle of the rim, with its lights
 const BULBS = 20;
+const PICTURE_AT = 68; // the pictures' distance from the middle: a little outwards of halfway ("¡Gira!" ends at ~41, the pegs at 88), where the slice is wider
 
 // onDay(day): the day after spinning, for the route behind; onClose(): back to the route.
 export function prizeSheet(day, { spinUrl, onDay, onClose }) {
@@ -131,8 +132,9 @@ function wheel(prizes) {
     slice.dataset.slice = i;
     svg.append(slice);
 
-    const [cx, cy] = n === 1 ? [0, 0] : point((from + to) / 2, R * 0.62);
-    const size = Math.min(48, (2 * Math.PI * R * 0.62) / n * 0.7);
+    // In its slice, a little outwards of halfway between "¡Gira!" and the pegs: there it is wider.
+    const [cx, cy] = n === 1 ? [0, -PICTURE_AT] : point((from + to) / 2, PICTURE_AT);
+    const size = Math.min(50, (2 * Math.PI * PICTURE_AT) / n * 0.62);
     if (prize.image_url) {
       const image = document.createElementNS(SVG_NS, "image");
       image.setAttribute("href", prize.image_url);

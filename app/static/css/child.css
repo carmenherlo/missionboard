@@ -1010,13 +1010,14 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: calc(var(--task-speak-size) + 20px);
+  height: calc(var(--task-speak-size) + 20px);
   padding: 0;
   border: 0;
   border-radius: var(--radius-md);
   background: none;
-  color: var(--muted);
+  color: var(--mission-strong, var(--child-strong));
+  font-size: var(--task-speak-size); /* the icon is 1em */
   cursor: pointer;
 }
 
