@@ -1272,6 +1272,11 @@ button.prize-won {
 }
 
 /* On the route, next to their stars: the orders on their way (a truck and how many). */
+/* The shop's own door (13/11), a little apart from their stars. */
+.shop-chip {
+  margin-inline-end: var(--space-3);
+}
+
 /* News of an order (13/11): a word under the truck, pointing at it. */
 .orders-chip-box {
   position: relative;

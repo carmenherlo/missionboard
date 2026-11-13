@@ -60,9 +60,14 @@ export async function viewChildToday(childId) {
             type: "button", class: "orders-news", "aria-hidden": "true", tabindex: "-1",
             onclick: () => openShop({ tab: "orders", arrive: orders.arrived > 0, announce: orders.today[0] ?? null }),
           }, news() === "arrived" ? t.shop.newsArrived : t.shop.newsToday)),
-        h("button", {
-          type: "button", class: "stars stars--button", "aria-label": `${t.child.stars(day.stars)} · ${t.shop.openShop}`,
+        // The shop has its own door (13/11): their stars are for keeping, not only for spending.
+        day.shop_url && h("button", {
+          type: "button", class: "stars stars--button shop-chip", "aria-label": t.shop.title,
           onclick: () => openShop(),
+        }, h("img", { src: day.shop_url, alt: "" })),
+        h("button", {
+          type: "button", class: "stars stars--button", "aria-label": t.child.stars(day.stars),
+          onclick: () => say(t.shop.youHave(day.stars)),
         }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
       day.missions.length

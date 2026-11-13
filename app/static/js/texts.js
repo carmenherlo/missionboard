@@ -373,7 +373,6 @@ export const t = {
     notifyNone: "Home Assistant no tiene ningún móvil con su app.",
     notifyError: "Home Assistant no contesta. Prueba más tarde.",
     remindAt: "Si llega el día y no se lo has dado, recordármelo a las",
-    openShop: "Mis estrellas y la tienda",
   },
   routines: {
     title: "Rutinas",

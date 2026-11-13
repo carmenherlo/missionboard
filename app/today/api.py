@@ -26,6 +26,7 @@ STAR_IMAGE = "fluent/star"
 MAX_GIFT = 50  # stars a parent can give at once
 CELEBRATION_STAR_IMAGE = "fluent/glowing-star"
 PRIZE_IMAGE = "fluent/wrapped-gift"
+SHOP_IMAGE = "fluent/convenience-store"
 FIRE_IMAGE = "fluent/fire"  # the streak (step 8)
 
 
@@ -83,6 +84,8 @@ class Presenter:
             "celebration_star_url": self._libraries.url(CELEBRATION_STAR_IMAGE),
             "focus_is_now": today.focus_is_now,
             "route_look": SettingsRepository(self._store).settings().route.model_dump(mode="json"),
+            # The shop's own button (13/11), apart from their stars; none while the shop is off.
+            "shop_url": self._libraries.url(SHOP_IMAGE) if SettingsRepository(self._store).features().shop else None,
             "missions": [
                 {
                     "id": item.mission.id,
