@@ -578,13 +578,19 @@
 .garage__smoke { transform-box: fill-box; transform-origin: 50% 50%; }
 @keyframes garage-smoke { 0% { opacity: 0; scale: 0.3; } 30% { opacity: 1; scale: 1.1; } 100% { opacity: 0; scale: 1.7; } }
 
+/* A full tank waiting to be loaded beats; the lever is pulled down and springs back. */
+.garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today { animation: today-beat 1.4s ease-in-out infinite; }
+.garage__lever-stick { transform-box: view-box; transform-origin: 1480px 930px; transition: rotate 200ms ease-in; }
+.garage--pull .garage__lever-stick { rotate: 50deg; }
+
 /* What it won (or not) comes in once it is decided. */
 .garage-layer__line--ended { animation: line-pop 600ms cubic-bezier(0.2, 1.6, 0.4, 1) both; }
 @keyframes line-pop { from { opacity: 0; scale: 0.4; } to { opacity: 1; scale: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   .garage-layer, .garage-layer--out, .garage__hose--flow, .garage__tank--now .garage__today, .garage__cone,
-  .garage__star--twinkle, .garage__rocket, .garage__smoke, .garage-layer__line--ended {
+  .garage__star--twinkle, .garage__rocket, .garage__smoke, .garage-layer__line--ended,
+  .garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today {
     animation: none !important;
   }
   .garage__fuel, .garage__hatch { transition: none; }

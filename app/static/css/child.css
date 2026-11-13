@@ -2168,3 +2168,23 @@ span.week-mini { cursor: default; }
 .garage__tank--missed .garage__inside,
 .garage__tank--free .garage__inside { stroke: var(--garage-shell-dark); stroke-width: 5; stroke-dasharray: 14 10; }
 .garage__tank--free { opacity: 0.45; }
+
+/* Loaded into the rocket: the tank empties and gets a ✓. */
+.garage__check { display: none; }
+.garage__check circle { fill: var(--garage-check); }
+.garage__check path { fill: none; stroke: var(--garage-check-mark); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.garage__tank--loaded .garage__check { display: inline; }
+.garage__tank--loaded .garage__fuel { transform: scaleY(0); }
+
+/* In their place, the child does things: full tanks to load beat; the lever starts it. */
+.garage--visit .garage__tank,
+.garage--visit .garage__lever { cursor: pointer; }
+.garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today { display: inline; stroke: var(--garage-light-on); }
+.garage__lever { display: none; }
+.garage--visit .garage__lever { display: inline; }
+.garage__lever-hit { fill: transparent; }
+.garage__lever-bar { fill: var(--garage-lever); }
+.garage__lever-knob { fill: var(--garage-lever-knob); }
+.garage__lever-base { fill: var(--garage-lever-base); }
+.garage-layer__line { flex-wrap: wrap; justify-content: center; }
+.garage-layer__line .btn { white-space: nowrap; }

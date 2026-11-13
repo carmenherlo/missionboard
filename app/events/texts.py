@@ -103,6 +103,7 @@ SCREENS = {
     "home": ("el inicio", None),
     "child_today": ("la ruta de un niño", "la ruta de {child}"),
     "child_place": ("el sitio de un niño", "el sitio de {child}"),
+    "child_garage": ("el taller de un niño", "el taller de {child}"),
     "event_log": ("Registro", None),
     "backup": ("Copia de seguridad", None),
     "display": ("Pantalla", None),
@@ -216,6 +217,7 @@ _CHILD = {
     "week_full": "{child} llenó todos los depósitos de la semana · {detail}",
     "week_second": "{child} ganó el premio pequeño de la semana · {detail}",
     "week_none": "A {child} le faltó combustible esta semana · {detail}",
+    "fuel_loaded": "{child} cargó en el cohete el depósito del {detail}",
 }
 
 

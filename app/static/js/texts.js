@@ -45,6 +45,24 @@ export const t = {
       ? `Cada día que haces tus misiones, se llena un depósito. ¡Llénalos todos y el cohete despegará!`
       : `Esta semana llevas ${full} ${full === 1 ? "depósito lleno" : "depósitos llenos"} de ${counted}. ¡Llénalos todos y el cohete despegará!`,
     noDays: "Esta semana no hay días de misiones.",
+    // The workshop, where the child loads the fuel and starts the rocket (taller.html).
+    tapToLoad: "Toca un depósito lleno para cargar el cohete.",
+    loadFirst: "Primero, carga todo el combustible en el cohete.",
+    pullLever: "¡Tu cohete está listo! Tira de la palanca.",
+    loadedSay: "¡Combustible cargado! Toca otro depósito lleno.",
+    allLoadedSay: "¡Todo el combustible está en el cohete!",
+    allLoadedReady: "¡Todo el combustible está en el cohete! Ahora, tira de la palanca.",
+    tankLoaded: "Este combustible ya está en el cohete.",
+    tankSay: {
+      now: "Este es el depósito de hoy. Se llena cuando haces tus misiones.",
+      later: "Este depósito se llenará ese día, si haces tus misiones.",
+      missed: "Ese día no se llenó.",
+      free: "Ese día era libre: no cuenta.",
+    },
+    notReady: "Al cohete le falta combustible. ¡Llena todos los depósitos de la semana!",
+    readyTitle: "¡Enhorabuena! Tu cohete está listo para despegar",
+    readySay: (name) => `¡Enhorabuena, ${name}! Tu cohete está listo para despegar. ¡Ve al taller!`,
+    goToGarage: "Ir al taller",
     dayTitle: "¡Depósito lleno!",
     daySay: (name, full, counted) => full >= counted
       ? `¡Muy bien, ${name}! ¡Todos los depósitos llenos!`

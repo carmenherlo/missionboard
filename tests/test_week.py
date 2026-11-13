@@ -132,3 +132,37 @@ def test_a_day_off_neither_counts_nor_breaks_the_week(client, bea, clock):
 def test_without_rachas_there_is_no_week(client, bea):
     client.patch("/api/settings/features", json={"streaks": False}, headers=PARENT)
     assert week(client, bea) == {"on": False}
+
+
+# ---------- the rocket's workshop: loading the fuel (taller.html) ----------
+
+
+def load(client, child, day):
+    return client.post(f"/api/children/{child['id']}/week/fuel/{day}")
+
+
+def test_a_full_tank_is_loaded_into_the_rocket_once(client, bea, clock):
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    assert load(client, bea, "2026-11-02").status_code == 404  # not full yet
+    do_day(client, bea, item, clock, 0)
+    assert [t["loaded"] for t in week(client, bea)["tanks"]] == [False] * 5
+    response = load(client, bea, "2026-11-02")
+    assert response.status_code == 200
+    assert [t["loaded"] for t in response.json()["tanks"]] == [True] + [False] * 4
+    assert load(client, bea, "2026-11-02").status_code == 200  # again: nothing changes
+    assert descriptions(client, limit=5).count("Bea cargó en el cohete el depósito del 2026-11-02") == 1
+    assert load(client, bea, "2026-11-05").status_code == 404  # still to come
+
+
+def test_a_week_closed_while_nobody_looked_keeps_its_rocket(client, bea, clock):
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    week(client, bea)
+    for n in range(5):
+        do_day(client, bea, item, clock, n)
+    clock.moment = MONDAY + timedelta(days=5)  # Saturday: a new week, the rocket not launched yet
+    view = week(client, bea)
+    assert view["result"]["tier"] == "full" and {t["state"] for t in view["tanks"]} == {"later"}
+    assert [t["state"] for t in view["launch_tanks"]] == ["full"] * 5
+    assert load(client, bea, "2026-11-06").json()["launch_tanks"][-1]["loaded"] is True
+    client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
+    assert week(client, bea)["launch_tanks"] is None

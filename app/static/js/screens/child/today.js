@@ -4,7 +4,7 @@
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { cornerButton } from "../../components/corner-button.js";
-import { newsBadge, newsOf } from "../../components/news.js";
+import { newsBadge, newsOf, withRocket } from "../../components/news.js";
 import { say } from "../../components/speech.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
@@ -13,7 +13,7 @@ import { askToOpen } from "./open-today.js";
 import { prizeSheet } from "./prize-sheet.js";
 import { routeView } from "./route.js";
 import { landStar, prepareLanding, stopIndex } from "./star-landing.js";
-import { playDay, playResult } from "./week-bar.js";
+import { playDay, rocketReady } from "./week-bar.js";
 
 const REFRESH_MS = 60_000; // missions open and close with the time: look again every minute
 const TOAST_MS = 3000;
@@ -46,7 +46,7 @@ export async function viewChildToday(childId) {
         // Their avatar is the door to their place (mi-sitio.html), with the sign of what is new.
         h("a", { class: "child-bar__me news-host", href: `#/child/${childId}/place`, "aria-label": t.place.open },
           avatar(day.child, { size: "child", fx: "shine" }),
-          newsBadge(newsOf(orders))),
+          newsBadge(withRocket(newsOf(orders), rocketReady(week)))),
         h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
         h("span", { class: "child-bar__spacer" }),
         h("button", {
@@ -103,22 +103,25 @@ export async function viewChildToday(childId) {
     overlay = false;
   }
 
-  // Rachas: today's tank, the first time it is full (once per day in this tablet), and
-  // how a week ended, until the child has seen it (the server keeps that).
+  // Rachas: today's tank, the first time it is full (once per day in this tablet). A week
+  // won waits in the workshop (taller.html): "your rocket is ready", once, and the sign
+  // on their avatar until it takes off. A week without a prize ends quietly.
   async function weekNews() {
     if (!week.on) return;
     overlay = true;
+    if (week.result?.tier === "none") {
+      api("POST", `api/children/${childId}/week/${week.result.end}/seen`).catch(() => {});
+    }
+    const toGarage = () => { location.hash = `#/child/${childId}/place/garage`; };
     const today = week.tanks.find((tank) => tank.day === day.day);
+    const readyKey = rocketReady(week) && `ready-${childId}-${week.result.end}`;
     if (today?.state === "full" && !wasTold(`week-${childId}-${day.day}`)) {
       told(`week-${childId}-${day.day}`);
-      await playDay(screen, week, { day: day.day, name: day.child.name });
-    }
-    if (week.result) {
-      const { result } = week;
-      api("POST", `api/children/${childId}/week/${result.end}/seen`).catch(() => {});
-      await playResult(screen, week, result, { name: day.child.name });
-      week = await weekOf(childId);
-      draw();
+      if (readyKey) told(readyKey);
+      await playDay(screen, week, { day: day.day, name: day.child.name, onGarage: toGarage });
+    } else if (readyKey && !wasTold(readyKey)) {
+      told(readyKey);
+      say(t.week.readySay(day.child.name));
     }
     overlay = false;
   }

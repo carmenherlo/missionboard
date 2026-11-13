@@ -195,6 +195,19 @@ class DayRepository:
             else:
                 conn.execute("DELETE FROM free_days WHERE child_id = ? AND day = ?", (child_id, day.isoformat()))
 
+    def fuel_loads(self, child_id: str) -> set[str]:
+        """The days whose tank the child loaded into the rocket."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute("SELECT day FROM fuel_loads WHERE child_id = ?", (child_id,)).fetchall()
+        return {row["day"] for row in rows}
+
+    def load_fuel(self, child_id: str, day: date, at: datetime) -> bool:
+        """False if it was loaded already."""
+        with db.connect(self._data_dir) as conn:
+            cursor = conn.execute("INSERT OR IGNORE INTO fuel_loads (child_id, day, at) VALUES (?, ?, ?)",
+                                  (child_id, day.isoformat(), at.isoformat(timespec="seconds")))
+        return cursor.rowcount > 0
+
     def weeks(self, child_id: str) -> dict[str, dict]:
         """The weeks already settled for the child, by their last day."""
         with db.connect(self._data_dir) as conn:

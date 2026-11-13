@@ -57,6 +57,7 @@ const routes = [
   [/^#?\/?$/, () => viewHome(), null, "home"],
   [/^#\/child\/(?<child>[\w-]+)$/, (ids) => viewChildToday(ids.child), "child", "child_today"],
   [/^#\/child\/(?<child>[\w-]+)\/place$/, (ids) => viewChildPlace(ids.child), "child", "child_place"],
+  [/^#\/child\/(?<child>[\w-]+)\/place\/garage$/, (ids) => viewChildPlace(ids.child, { garage: true }), "child", "child_garage"],
   [/^#\/parents\/?$/, () => viewParentsToday(), "parents", "parents_today"],
   [/^#\/parents\/kids\/(?<child>[\w-]+)$/, (ids) => viewParentsChild(ids.child), "parents", "parents_child"],
   [parentsPath(""), () => viewConfigIndex(), "parents", "config"],

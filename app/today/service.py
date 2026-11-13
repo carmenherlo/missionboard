@@ -34,7 +34,7 @@ from app.routines.repository import RoutinesRepository, minute_of
 from app.settings import MOMENTS, Season, SettingsRepository
 from app.today.repository import DayRepository
 from app.today.streaks import streak
-from app.today.week import Week, build_week, week_end
+from app.today.week import FULL, Week, build_week, week_end
 
 DONE, OPEN, UPCOMING, CLOSED = "done", "open", "upcoming", "closed"
 LOCKED, UNLOCKED, WON = "locked", "unlocked", "won"
@@ -227,7 +227,31 @@ class DayService:
         settled = self._days.weeks(child.id)
         unseen = [row for row in settled.values()
                   if row["shown_at"] is None and row["week_end"] >= (end - timedelta(days=7)).isoformat()]
-        return {"week": current, "result": max(unseen, key=lambda row: row["week_end"]) if unseen else None}
+        result = max(unseen, key=lambda row: row["week_end"]) if unseen else None
+        # The week whose rocket takes off (taller.html): this one, or the one before if
+        # it closed while nobody looked (Saturday, a new week already).
+        launch = None
+        if result:
+            result_end = date.fromisoformat(result["week_end"])
+            launch = current if result_end == end else build_week(
+                today, result_end, rules, settings.streak_rule, had, done, free)
+        return {"week": current, "result": result, "launch": launch, "loaded": self._days.fuel_loads(child.id)}
+
+    def load_fuel(self, child_id: str, day: date) -> dict | None:
+        """The child loads a full tank into the rocket (taller.html): one of this week, or
+        of the week whose rocket is still to take off."""
+        view = self.week(child_id)
+        if view is None:
+            raise NotFoundError("Rachas are off")
+        weeks = [view["week"]] + ([view["launch"]] if view["launch"] else [])
+        tank = next((t for w in weeks for t in w.tanks if t.day == day), None)
+        if tank is None or tank.state != FULL:
+            raise NotFoundError("No full tank that day")
+        child = self._child(child_id)
+        if self._days.load_fuel(child.id, day, self._clock.now()):
+            self._events.child_did("fuel_loaded", child, prize=day.isoformat())
+            view["loaded"].add(day.isoformat())
+        return view
 
     def _settle(self, child: Child, week: Week, rules, settled: dict) -> None:
         if not week.closed or not week.counted or week.end.isoformat() in settled:

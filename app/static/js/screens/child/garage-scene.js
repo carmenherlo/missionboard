@@ -17,8 +17,10 @@ let seed = 3;
 const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const STARS = Array.from({ length: 70 }, () => [380 + rand() * 640, 110 + rand() * 420, 1.5 + rand() * 2.5]);
 
-// tanks: [{ letter, state: full | now | later | missed | free }]. Returns the scene and
-// its moving parts, by day: tanks, hoses and lights.
+// tanks: [{ letter, state: full | now | later | missed | free, loaded }]: a full tank the
+// child loaded into the rocket is empty again, with a ✓, and its light on the rocket is
+// lit. Returns the scene and its moving parts, by day: tanks, hoses and lights; and the
+// lever that starts the rocket.
 export function garageScene(tanks) {
   const root = h("div", { class: "garage-scene", "aria-hidden": "true" });
   root.innerHTML = svg(tanks);
@@ -29,6 +31,7 @@ export function garageScene(tanks) {
     hoses: all(".garage__hose"),
     lights: all(".garage__light"),
     rocket: root.querySelector(".garage__rocket"),
+    lever: root.querySelector(".garage__lever"),
     hangar: root.querySelector(".garage"),
   };
 }
@@ -112,7 +115,7 @@ function tanksAndHoses(tanks) {
     const x = x0 + i * (tw + gap);
     const cx = x + tw / 2;
     const inner = `x="${x + 14}" y="${top + 24}" width="${tw - 28}" height="${h - 48}" rx="${(tw - 28) / 2.4}"`;
-    o.push(`<g class="garage__tank garage__tank--${tank.state}">
+    o.push(`<g class="garage__tank garage__tank--${tank.state}${tank.loaded ? " garage__tank--loaded" : ""}" data-index="${i}">
       <rect class="garage__shell" x="${x}" y="${top}" width="${tw}" height="${h}" rx="${tw / 2.6}"/>
       <rect class="garage__inside" ${inner}/>
       <rect class="garage__fuel" ${inner} fill="url(#garage-fuel)"/>
@@ -121,6 +124,7 @@ function tanksAndHoses(tanks) {
       <rect class="garage__shell-dark" x="${x + 8}" y="${bottom - 6}" width="${tw - 16}" height="14" rx="6"/>
       <text class="garage__letter" x="${cx}" y="${top + h / 2 + 22}" text-anchor="middle" font-size="${tw * 0.46}">${tank.letter}</text>
       <rect class="garage__today" x="${x - 12}" y="${top - 34}" width="${tw + 24}" height="${h + 52}" rx="${tw / 2.2}"/>
+      <g class="garage__check"><circle cx="${cx}" cy="${top + 40}" r="30"/><path d="M${cx - 14} ${top + 40} l10 10 l18 -20"/></g>
     </g>`);
   });
   return o.join("");
@@ -146,11 +150,19 @@ function rocket(n, tanks) {
     <rect class="garage__beam" x="${cx - 18}" y="${ry - 20}" width="36" height="22" rx="4"/>`);
   const step = n > 1 ? 190 / (n - 1) : 0;
   tanks.forEach((tank, i) => {
-    o.push(`<circle class="garage__light${tank.state === "full" ? " garage__light--on" : ""}" cx="${cx}" cy="${top + 300 + i * step}" r="${n > 5 ? 11 : 13}"/>`);
+    o.push(`<circle class="garage__light${tank.loaded ? " garage__light--on" : ""}" cx="${cx}" cy="${top + 300 + i * step}" r="${n > 5 ? 11 : 13}"/>`);
   });
   o.push(`</g>`);
   o.push(`<rect class="garage__platform" x="${cx - 190}" y="${ry}" width="380" height="34" rx="8"/>`);
   for (const lx of [cx - 170, cx + 150]) o.push(`<rect class="garage__beam" x="${lx}" y="${ry + 30}" width="20" height="50"/>`);
+  // The lever that starts the rocket, on the floor in front of it.
+  const lx = cx + 150;
+  o.push(`<g class="garage__lever">
+    <rect class="garage__lever-hit" x="${lx - 90}" y="${ry + 40}" width="180" height="200"/>
+    <g class="garage__lever-stick"><rect class="garage__lever-bar" x="${lx - 9}" y="${ry + 50}" width="18" height="110" rx="9"/>
+      <circle class="garage__lever-knob" cx="${lx}" cy="${ry + 50}" r="30"/></g>
+    <rect class="garage__lever-base" x="${lx - 55}" y="${ry + 150}" width="110" height="50" rx="12"/>
+  </g>`);
   // Smoke at take-off, in front of the platform (it stays when the rocket goes).
   o.push(`<g class="garage__smoke">${[[-110, 20, 60], [0, 40, 80], [110, 20, 60]].map(([dx, dy, r]) =>
     `<circle cx="${cx + dx}" cy="${ry + dy}" r="${r}"/>`).join("")}</g>`);

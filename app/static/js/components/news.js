@@ -38,6 +38,12 @@ export function newsOf(summary) {
   return count ? { count, arrived: arrived.length > 0, picture: `${FLUENT}/package.svg` } : null;
 }
 
+// A rocket ready to take off (taller.html) is news too, the biggest: its picture goes first.
+export function withRocket(news, ready) {
+  if (!ready) return news;
+  return { count: (news?.count ?? 0) + 1, arrived: news?.arrived ?? false, picture: `${FLUENT}/rocket.svg` };
+}
+
 // The sign over an avatar (its parent must be positioned: .news-host).
 export function newsBadge(news) {
   if (!news) return null;

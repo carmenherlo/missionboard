@@ -163,6 +163,16 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (child_id, day)
     )
     """,
+    # 11 · The rocket's workshop (taller.html): a full tank the child loaded into the
+    # rocket (they tap it; its light on the rocket comes on).
+    """
+    CREATE TABLE fuel_loads (
+        child_id TEXT NOT NULL,
+        day TEXT NOT NULL,
+        at TEXT NOT NULL,
+        PRIMARY KEY (child_id, day)
+    )
+    """,
 ]
 
 

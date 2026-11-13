@@ -6,7 +6,7 @@
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { cornerButton } from "../../components/corner-button.js";
-import { newsBadge, newsOf } from "../../components/news.js";
+import { newsBadge, newsOf, withRocket } from "../../components/news.js";
 import { say } from "../../components/speech.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
@@ -15,12 +15,13 @@ import { placeSheet } from "./place-sheet.js";
 import { skyNews, skyView } from "./sky.js";
 import { openStars } from "./stars-sheet.js";
 import { ordersOf, weekOf } from "./today.js";
-import { openWorkshop, weekMini } from "./week-bar.js";
+import { openWorkshop, rocketReady, weekMini } from "./week-bar.js";
 
 const FLUENT = "static/libraries/fluent";
 const img = (name, className) => h("img", { class: className, src: `${FLUENT}/${name}.svg`, alt: "" });
 
-export async function viewChildPlace(childId) {
+// garage: open the workshop at once (from "Ir al taller", when their rocket is ready).
+export async function viewChildPlace(childId, { garage = false } = {}) {
   const load = () => Promise.all([api("GET", `api/children/${childId}/today`), weekOf(childId), ordersOf(childId)]);
   let [day, week, orders] = await Promise.all([load(), loadAvatars()]).then(([data]) => data);
   const screen = h("main", { class: "child-screen place-screen" });
@@ -52,13 +53,23 @@ export async function viewChildPlace(childId) {
           h("span", { class: "place__name" }, day.child.name)),
         day.shop_url && building("tl", t.place.shop, img("convenience-store"), openShop),
         week.on && building("tr", t.place.garage,
-          h("span", { class: "place-building__garage" }, img("rocket", "place-building__rocket"), img("fuel-pump", "place-building__pump")),
-          openGarage, week.tanks.length > 0 && weekMini(week)),
+          h("span", { class: "news-host place-building__garage" },
+            img("rocket", "place-building__rocket"), img("fuel-pump", "place-building__pump"), newsBadge(garageNews())),
+          openGarage, week.tanks.length > 0 && weekMini(week), !!garageNews()),
         building("bl", t.place.mailbox,
           h("span", { class: "news-host" },
             img(news ? "closed-mailbox-with-raised-flag" : "closed-mailbox-with-lowered-flag"), newsBadge(news)),
           openMail, null, !!news),
         building("br", t.place.sky, img("telescope"), openSky)));
+  }
+
+  // The workshop's news: a rocket ready to take off, or fuel to load into it.
+  function garageNews() {
+    if (!week.on) return null;
+    const tanks = week.launch_tanks ?? week.tanks;
+    const toLoad = tanks.filter((tank) => tank.state === "full" && !tank.loaded).length;
+    if (rocketReady(week)) return withRocket(null, true);
+    return toLoad ? { count: toLoad, picture: `${FLUENT}/fuel-pump.svg` } : null;
   }
 
   // A building at a corner (tl, tr, bl, br): its picture, its name in a pill, and what it opens.
@@ -85,7 +96,7 @@ export async function viewChildPlace(childId) {
   }
 
   function openGarage() {
-    openWorkshop(screen, week, { backLabel: t.place.backHere, onClose: back });
+    openWorkshop(screen, week, { childId, name: day.child.name, backLabel: t.place.backHere, onClose: back });
   }
 
   function openSky() {
@@ -101,7 +112,8 @@ export async function viewChildPlace(childId) {
 
   draw();
   render(screen);
-  if (newsOf(orders)) say(t.place.mailboxSay);
+  if (garage && week.on) openGarage();
+  else if (newsOf(orders)) say(t.place.mailboxSay);
 }
 
 // The paths from their avatar to each corner, dotted like the route's.

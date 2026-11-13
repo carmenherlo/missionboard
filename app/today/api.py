@@ -203,11 +203,16 @@ def present_week(view: dict | None) -> dict:
     """The week for the child's screen and the parents' cards; {"on": False} while rachas are off."""
     if view is None:
         return {"on": False}
-    week, result = view["week"], view["result"]
+    week, result, loaded = view["week"], view["result"], view.get("loaded", set())
+    tanks = lambda w: [{"day": t.day.isoformat(), "letter": t.letter, "state": t.state,  # noqa: E731
+                        "loaded": t.day.isoformat() in loaded} for t in w.tanks]
+    launch = view.get("launch")
     return {
         "on": True,
         "end": week.end.isoformat(),
-        "tanks": [{"day": t.day.isoformat(), "letter": t.letter, "state": t.state} for t in week.tanks],
+        "tanks": tanks(week),
+        # The week whose rocket is ready to take off (or not), with a result not seen yet.
+        "launch_tanks": tanks(launch) if launch else None,
         "full": week.full,
         "counted": week.counted,
         "result": result and {
@@ -220,6 +225,12 @@ def present_week(view: dict | None) -> dict:
 @router.get("/children/{child_id}/week")
 def get_week(child_id: str, days: DayService = Depends(get_day_service)):
     return present_week(days.week(child_id))
+
+
+@router.post("/children/{child_id}/week/fuel/{day}")
+def load_fuel(child_id: str, day: date, days: DayService = Depends(get_day_service)):
+    """The child loads a full tank into the rocket, in the workshop (taller.html)."""
+    return present_week(days.load_fuel(child_id, day))
 
 
 @router.post("/children/{child_id}/week/{end}/seen", status_code=204)

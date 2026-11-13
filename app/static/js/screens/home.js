@@ -1,7 +1,8 @@
 import { api, session } from "../api.js";
 import { loadAvatars } from "../components/avatar.js";
 import { homeKid, homeLookClasses, homeScene } from "../components/home-look.js";
-import { newsOf } from "../components/news.js";
+import { newsOf, withRocket } from "../components/news.js";
+import { rocketReady } from "./child/week-bar.js";
 import { parentsCornerButton } from "../components/corner-button.js";
 import { fullscreenButton } from "../components/fullscreen-button.js";
 import { display, homeScreen, setDisplay } from "../display.js";
@@ -16,12 +17,16 @@ export async function viewHome() {
   const [children, byHand, { look, background_url: picture }, orders] = await Promise.all(
     [api("GET", "api/children"), routinesByHand(), api("GET", "api/home"),
       api("GET", "api/orders/summary").catch(() => ({})), loadAvatars()]);
+  // A rocket ready to take off is news on its child's avatar too (taller.html).
+  const weeks = await Promise.all(children.map((child) =>
+    api("GET", `api/children/${child.id}/week`).catch(() => ({ on: false }))));
   // The kids or the clock (reloj.html), as this tablet last chose.
   const showClock = homeScreen() === "clock";
   const dark = showClock && display().clockTheme === "dark";
   const grid = showClock ? clockScreen(children) : children.length
     ? h("section", { class: `children${children.length >= 5 ? " children--many" : children.length === 4 ? " children--4" : ""}` },
-        children.map((child) => homeKid(child, look, { href: `#/child/${child.id}`, news: newsOf(orders[child.id]) })))
+        children.map((child, i) => homeKid(child, look, {
+          href: `#/child/${child.id}`, news: withRocket(newsOf(orders[child.id]), rocketReady(weeks[i])) })))
     // Nobody yet (a new installation without the examples): the first step, one tap away.
     : h("div", { class: "home__empty" },
         h("p", { class: "empty" }, t.home.empty),

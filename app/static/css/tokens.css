@@ -314,6 +314,12 @@
   --garage-platform: #8a90c8;
   --garage-smoke: #e8eaf6;
   --garage-in: 500ms; /* the workshop coming in over the route, and going */
+  --garage-check: #1fbf8f; /* a tank already loaded into the rocket */
+  --garage-check-mark: #ffffff;
+  --garage-lever: #9aa0c8;
+  --garage-lever-knob: #e0483f;
+  --garage-lever-base: #2b3058;
+  --week-ready: 9000ms; /* "your rocket is ready: go to the workshop", on screen */
   --week-fill: 1100ms; /* today's tank filling */
   --week-stay: 3500ms; /* then it stays, while the voice speaks */
   --week-countdown: 2600ms; /* "tres, dos, uno…" before the rocket goes */
