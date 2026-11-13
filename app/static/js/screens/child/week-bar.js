@@ -1,7 +1,8 @@
 // Rachas (rachas.html, 13/11): the week as fuel tanks and a rocket. A tank per day that
 // counts, its letter inside; full when the day is done. The server says the states
 // (app/today/week.py); this module draws them:
-// - weekMini: the week, small, under the child's name (a tap says how it goes);
+// - weekMini: the week, small (the parents' screens);
+// - weekBoard: the week, big and still, in the rocket's workshop of the child's place;
 // - playDay: the bar comes in from the left, today's tank fills, the voice, and out;
 // - playResult: how a week ended: the rocket takes off (the prize), takes a short
 //   flight (the smaller prize) or tries and stays ("this time it could not be").
@@ -24,6 +25,16 @@ export function weekMini(week, { onTap = null } = {}) {
   return onTap
     ? h("button", { type: "button", class: "week-mini", "aria-label": t.week.miniLabel(week.full, week.counted), onclick: onTap }, tanks)
     : h("span", { class: "week-mini", role: "img", "aria-label": t.week.miniLabel(week.full, week.counted) }, tanks);
+}
+
+// The rocket's workshop (mi-sitio.html): the same card, still, with how the week goes.
+export function weekBoard(week) {
+  const scene = card(week, { title: "" });
+  scene.heading.remove(); // the panel of the workshop already says its name
+  scene.box.classList.add("week-card--still");
+  scene.box.removeAttribute("role");
+  scene.line.textContent = week.tanks.length ? t.week.miniLabel(week.full, week.counted) : t.week.noDays;
+  return scene.box;
 }
 
 // The big bar over the route. today: the day whose tank fills now (or null).

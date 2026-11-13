@@ -147,7 +147,25 @@
   --order-arrived: color-mix(in srgb, var(--success-vivid) 18%, var(--surface)); /* arrived, waiting to be opened */
   --order-size: 72px; /* each order's picture, and the shop and the house at the ends of its road */
   --purse-star: 40px;
-  --shadow-parcel: 0 4px 6px rgb(0 0 0 / 0.3); /* the box on an avatar of the home */ /* their stars, when ordering */
+  /* The child's place (mi-sitio.html): their avatar in the middle, a building at each corner. */
+  --place-building-size: min(190px, 16vw); /* a building's picture */
+  --place-path: rgb(255 255 255 / 0.9); /* the dotted paths from their avatar to each building */
+  --place-path-width: 9px;
+  --place-path-dots: 0.1 26px; /* round dots, like the route's */
+  --place-arrive: 700ms; /* their avatar arriving in the middle */
+  --news-size: 44%; /* the sign of something new, of the avatar it is on */
+  --news-count-bg: var(--danger); /* how many new things */
+  --news-count-text: white;
+  --shadow-news: 0 3px 8px rgb(0 0 0 / 0.3);
+  --mail-new: color-mix(in srgb, var(--accent-vivid) 22%, var(--surface)); /* a notice not read yet */
+  --mail-sign-size: 48px;
+  /* Their sky, in the observatory: the stars they keep. */
+  --sky-top: #2b3f8c;
+  --sky-bottom: #0d1433;
+  --sky-line: rgb(255 255 255 / 0.5);
+  --sky-name: #dfe6ff;
+  --sky-star-size: 30px;
+  --sky-star-off: 0.22; /* the stars still missing in the constellation forming */
   --prize-locked-opacity: 0.6; /* while missions are left: in colour, but in the background */
   --wheel-size: min(560px, 70vh);
   --wheel-1: #ffd9e5; /* pastel slices, so they do not compete with the child's colour */

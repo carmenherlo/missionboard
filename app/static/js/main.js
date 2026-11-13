@@ -2,6 +2,7 @@
 
 import { api, errorMessage, session } from "./api.js";
 import { h, render } from "./dom.js";
+import { viewChildPlace } from "./screens/child/place.js";
 import { viewChildToday } from "./screens/child/today.js";
 import { viewHome } from "./screens/home.js";
 import { viewChangeCode } from "./screens/parents/change-code.js";
@@ -55,6 +56,7 @@ const parentsPath = (path) =>
 const routes = [
   [/^#?\/?$/, () => viewHome(), null, "home"],
   [/^#\/child\/(?<child>[\w-]+)$/, (ids) => viewChildToday(ids.child), "child", "child_today"],
+  [/^#\/child\/(?<child>[\w-]+)\/place$/, (ids) => viewChildPlace(ids.child), "child", "child_place"],
   [/^#\/parents\/?$/, () => viewParentsToday(), "parents", "parents_today"],
   [/^#\/parents\/kids\/(?<child>[\w-]+)$/, (ids) => viewParentsChild(ids.child), "parents", "parents_child"],
   [parentsPath(""), () => viewConfigIndex(), "parents", "config"],

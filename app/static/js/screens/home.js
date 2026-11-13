@@ -1,6 +1,7 @@
 import { api, session } from "../api.js";
 import { loadAvatars } from "../components/avatar.js";
 import { homeKid, homeLookClasses, homeScene } from "../components/home-look.js";
+import { newsOf } from "../components/news.js";
 import { parentsCornerButton } from "../components/corner-button.js";
 import { fullscreenButton } from "../components/fullscreen-button.js";
 import { display, homeScreen, setDisplay } from "../display.js";
@@ -20,7 +21,7 @@ export async function viewHome() {
   const dark = showClock && display().clockTheme === "dark";
   const grid = showClock ? clockScreen(children) : children.length
     ? h("section", { class: `children${children.length >= 5 ? " children--many" : children.length === 4 ? " children--4" : ""}` },
-        children.map((child) => homeKid(child, look, { href: `#/child/${child.id}`, parcel: orders[child.id]?.arrived > 0 })))
+        children.map((child) => homeKid(child, look, { href: `#/child/${child.id}`, news: newsOf(orders[child.id]) })))
     // Nobody yet (a new installation without the examples): the first step, one tap away.
     : h("div", { class: "home__empty" },
         h("p", { class: "empty" }, t.home.empty),

@@ -2,6 +2,7 @@
 // the moment, and each avatar with a glow round its ring and a light behind it. The same
 // pieces draw the home and its preview in Ajustes, so the two always match.
 import { avatar } from "./avatar.js";
+import { newsBadge } from "./news.js";
 import { h } from "../dom.js";
 
 const BEATS = { 2: "fast", 3.5: "slow", 5: "slower" };
@@ -34,14 +35,15 @@ export function homeScene(look, backgroundUrl) {
 }
 
 // A child on the home: their avatar (with its reflection on opening) and their name.
-// parcel: something they ordered has arrived (tienda-2.html): a box on their avatar.
-export function homeKid(child, look, { href = null, parcel = false } = {}) {
+// news: something new for them (mi-sitio.html, components/news.js): a sign on their avatar.
+export function homeKid(child, look, { href = null, news = null } = {}) {
   return h(href ? "a" : "div", {
     class: "child-card", href,
     // The child's colour: the only style passed from code (its glow and light come from it).
     style: child.color ? `--child-color: ${child.color}` : null,
   },
-  avatar(child, { size: "home", fx: look.shine ? "shine" : "halo" }),
-  parcel && h("img", { class: "child-card__parcel", src: "static/libraries/fluent/package.svg", alt: "" }),
+  h("span", { class: "news-host" },
+    avatar(child, { size: "home", fx: look.shine ? "shine" : "halo" }),
+    newsBadge(news)),
   h("span", { class: "child-card__name" }, child.name));
 }

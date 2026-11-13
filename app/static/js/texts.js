@@ -44,6 +44,7 @@ export const t = {
     miniSay: (full, counted) => full === 0
       ? `Cada día que haces tus misiones, se llena un depósito. ¡Llénalos todos y el cohete despegará!`
       : `Esta semana llevas ${full} ${full === 1 ? "depósito lleno" : "depósitos llenos"} de ${counted}. ¡Llénalos todos y el cohete despegará!`,
+    noDays: "Esta semana no hay días de misiones.",
     dayTitle: "¡Depósito lleno!",
     daySay: (name, full, counted) => full >= counted
       ? `¡Muy bien, ${name}! ¡Todos los depósitos llenos!`
@@ -57,6 +58,41 @@ export const t = {
       text ? lower(text) : tier === "full" ? "un premio sorpresa" : "un premio"}. Papá o mamá te lo darán.`,
     noneSay: (full) => `¡Esta vez no ha podido ser! Al cohete le faltó combustible.${
       full ? ` Has llenado ${full} ${full === 1 ? "depósito" : "depósitos"}, ¡muy bien!` : ""} La semana que viene lo intentamos otra vez.`,
+  },
+  // The child's place (mi-sitio.html): their avatar in the middle and four buildings.
+  place: {
+    open: "Mi sitio",
+    back: "Mis misiones",
+    shop: "La tienda",
+    garage: "El taller del cohete",
+    mailbox: "El buzón",
+    sky: "El observatorio",
+    newsSay: (name) => `¡${name}, tienes algo en tu buzón! Toca tu dibujo para verlo.`,
+    mailboxSay: "¡Tienes algo en el buzón!",
+  },
+  mail: {
+    title: "Tu buzón",
+    empty: "Tu buzón está vacío. Aquí te llegarán tus mensajes.",
+    emptySay: "Tu buzón está vacío. Cuando te llegue un mensaje, aquí lo encontrarás.",
+    isNew: "nuevo",
+    arrived: (text) => `¡Ha llegado! ${text}`,
+    today: (text) => `${text}: llega hoy`,
+    onWay: (text, nights) => nights === null ? `${text}: en camino`
+      : nights === 1 ? `${text}: llega mañana` : `${text}: llega en ${nights} noches`,
+  },
+  sky: {
+    title: "Tu cielo",
+    // The constellations, in the order they form (sky.js has their shapes).
+    names: ["la Osa", "el Cohete", "la Ballena", "la Corona", "el Gato", "el Barco"],
+    line: (n, left, name) => n === 0
+      ? "Cada estrella que guardes se encenderá aquí."
+      : `${n === 1 ? "1 estrella guardada" : `${n} estrellas guardadas`}. Con ${left} más, se forma ${name}.`,
+    say: (n, left, name) => n === 0
+      ? "Tu cielo está vacío. Cada estrella que guardes se encenderá aquí."
+      : `Tienes ${n === 1 ? "una estrella guardada" : `${n} estrellas guardadas`} en tu cielo. ¡Con ${
+        left === 1 ? "una" : left} más, se forma ${name}!`,
+    full: (n) => `${n} estrellas guardadas. ¡Tu cielo está lleno!`,
+    fullSay: (n) => `¡Tienes ${n} estrellas guardadas! ¡Tu cielo está lleno de constelaciones!`,
   },
   child: {
     hello: (name) => `¡Hola, ${name}!`,
@@ -378,11 +414,6 @@ export const t = {
           : `${text} llega dentro de ${nights} noches.`,
     noOrders: "Todavía no has pedido nada.",
     todaySay: (text) => `¡Tu pedido llega hoy: ${lower(text)}! Ya falta muy poco.`,
-    // The notice by the truck when they come in (13/11): a word on it, and the voice once.
-    newsToday: "¡Llega hoy!",
-    newsArrived: "¡Ha llegado!",
-    newsTodaySay: (name) => `¡${name}, buenas noticias! Tu pedido llega hoy. Toca el camión para verlo.`,
-    newsArrivedSay: (name) => `¡${name}, tu pedido ha llegado! Toca el camión para abrirlo.`,
     youHaveThem: "Ya lo tienes",
     arrived: "¡Ha llegado!",
     openIt: "Ábrelo",

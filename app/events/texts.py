@@ -102,6 +102,7 @@ _ROUTINE = {
 SCREENS = {
     "home": ("el inicio", None),
     "child_today": ("la ruta de un niño", "la ruta de {child}"),
+    "child_place": ("el sitio de un niño", "el sitio de {child}"),
     "event_log": ("Registro", None),
     "backup": ("Copia de seguridad", None),
     "display": ("Pantalla", None),

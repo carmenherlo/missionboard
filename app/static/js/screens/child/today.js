@@ -4,16 +4,16 @@
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { cornerButton } from "../../components/corner-button.js";
+import { newsBadge, newsOf } from "../../components/news.js";
 import { say } from "../../components/speech.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { openMission as openMissionOver } from "./mission-flow.js";
 import { askToOpen } from "./open-today.js";
 import { prizeSheet } from "./prize-sheet.js";
-import { openStars } from "./stars-sheet.js";
 import { routeView } from "./route.js";
 import { landStar, prepareLanding, stopIndex } from "./star-landing.js";
-import { playDay, playResult, weekMini } from "./week-bar.js";
+import { playDay, playResult } from "./week-bar.js";
 
 const REFRESH_MS = 60_000; // missions open and close with the time: look again every minute
 const TOAST_MS = 3000;
@@ -23,7 +23,7 @@ export async function viewChildToday(childId) {
   const [first, summary, firstWeek] = await Promise.all([api("GET", base), ordersOf(childId), weekOf(childId), loadAvatars()]);
   let day = first;
   let week = firstWeek; // rachas (rachas.html): this week's fuel tanks
-  let orders = summary; // on their way and arrived (tienda-2.html): the truck by their stars
+  let orders = summary; // on their way and arrived (tienda-2.html): the sign on their avatar
   let overlay = false; // a mission, its celebration or the wheel is open: no redrawing under it
   let turned = null; // the stop the route's wheel was left on: kept when the screen is drawn again
   const wheel = {}; // the wheel's goTo, to turn it from here (a star landing)
@@ -43,28 +43,12 @@ export async function viewChildToday(childId) {
         day.background_url && h("img", { class: "child-scene__picture", src: day.background_url, alt: "" }),
         h("div", { class: "child-scene__veil" })),
       h("header", { class: "child-bar" },
-        avatar(day.child, { size: "child", fx: "shine" }),
-        h("div", { class: "child-bar__who" },
-          h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
-          // Rachas: the week, small, under their name; a tap says how it goes.
-          week.on && week.tanks.length > 0 && weekMini(week, { onTap: () => say(t.week.miniSay(week.full, week.counted)) })),
+        // Their avatar is the door to their place (mi-sitio.html), with the sign of what is new.
+        h("a", { class: "child-bar__me news-host", href: `#/child/${childId}/place`, "aria-label": t.place.open },
+          avatar(day.child, { size: "child", fx: "shine" }),
+          newsBadge(newsOf(orders))),
+        h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
         h("span", { class: "child-bar__spacer" }),
-        orders.on_way + orders.arrived > 0 && h("span", { class: "orders-chip-box" },
-          h("button", {
-            type: "button", class: `stars stars--button orders-chip${news() ? " orders-chip--arrived" : ""}`,
-            "aria-label": t.shop.onTheWay(orders.on_way + orders.arrived),
-            onclick: () => openShop({ tab: "orders", arrive: orders.arrived > 0, announce: orders.today[0] ?? null }),
-          }, h("img", { src: TRUCK, alt: "" }), String(orders.on_way + orders.arrived)),
-          // News of an order: a word under the truck, until they tap it.
-          news() && h("button", {
-            type: "button", class: "orders-news", "aria-hidden": "true", tabindex: "-1",
-            onclick: () => openShop({ tab: "orders", arrive: orders.arrived > 0, announce: orders.today[0] ?? null }),
-          }, news() === "arrived" ? t.shop.newsArrived : t.shop.newsToday)),
-        // The shop has its own door (13/11): their stars are for keeping, not only for spending.
-        day.shop_url && h("button", {
-          type: "button", class: "stars stars--button shop-chip", "aria-label": t.shop.title,
-          onclick: () => openShop(),
-        }, h("img", { src: day.shop_url, alt: "" })),
         h("button", {
           type: "button", class: "stars stars--button", "aria-label": t.child.stars(day.stars),
           onclick: () => say(t.shop.youHave(day.stars)),
@@ -78,31 +62,14 @@ export async function viewChildToday(childId) {
             avatar(day.child, { size: "hero" }), t.child.noMissions));
   }
 
-  function openShop(options = {}) {
-    overlay = true;
-    openStars(screen, childId, {
-      ...options,
-      onClose: async () => {
-        overlay = false;
-        await refresh();
-      },
-    });
-  }
-
-  // News of their orders (13/11): one handed over by a parent ("Entregado"), or one that
-  // arrives today. The truck jumps with a word under it and, the first time for each
-  // order, the voice tells them to tap it; inside, they see it arrive (or arriving today).
-  function news() {
-    return orders.arrived > 0 ? "arrived" : orders.today.length ? "today" : null;
-  }
+  // Something new (an order arrived, or arriving today): the voice tells them once per
+  // order in this tablet, and to tap their avatar (the mailbox is in their place).
   function arrivals() {
     if (overlay) return;
-    const kind = news();
-    const ids = kind === "arrived" ? orders.arrived_ids : orders.today;
-    const fresh = (ids || []).filter((id) => !wasTold(`${kind}-${id}`));
-    if (!fresh.length) return;
-    fresh.forEach((id) => told(`${kind}-${id}`));
-    say(kind === "arrived" ? t.shop.newsArrivedSay(day.child.name) : t.shop.newsTodaySay(day.child.name));
+    const ids = [...orders.arrived_ids, ...orders.today].map((id) => `news-${id}`).filter((id) => !wasTold(id));
+    if (!ids.length || !newsOf(orders)) return;
+    ids.forEach(told);
+    say(t.place.newsSay(day.child.name));
   }
 
   function openMission(mission) {
@@ -221,18 +188,16 @@ export async function viewChildToday(childId) {
   arrivals();
 }
 
-const TRUCK = "static/libraries/fluent/delivery-truck.svg";
-
-async function weekOf(childId) {
+export async function weekOf(childId) {
   return api("GET", `api/children/${childId}/week`).catch(() => ({ on: false }));
 }
 
-async function ordersOf(childId) {
+export async function ordersOf(childId) {
   const summary = await api("GET", "api/orders/summary").catch(() => ({}));
   return summary[childId] || { on_way: 0, arrived: 0, today: [], arrived_ids: [] };
 }
 
-// The news a child has been told aloud, in this tablet ("arrived-12", "today-12"): once each.
+// The news a child has been told aloud, in this tablet ("news-12"): once each.
 const TOLD_KEY = "missionboard.ordersTold";
 function toldList() {
   try {

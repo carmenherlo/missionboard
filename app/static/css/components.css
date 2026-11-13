@@ -1034,18 +1034,8 @@
   cursor: pointer;
 }
 
-/* Something they ordered has arrived (tienda-2.html): a box on their avatar. */
 .child-card {
   position: relative;
-}
-
-.child-card__parcel {
-  position: absolute;
-  top: 0;
-  right: 4%;
-  width: 30%;
-  height: auto;
-  filter: drop-shadow(var(--shadow-parcel));
 }
 
 .child-card__name {
