@@ -109,6 +109,32 @@ class ShopNotify(BaseModel):
     _remind_at = field_validator("remind_at", mode="before")(time_from_yaml_number)
 
 
+Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+
+class StreakWeek(BaseModel):
+    """Rachas (rachas.html, 13/11): the week of fuel tanks. The days that count, the day
+    the parents give the prize (it closes the week: a Friday prize, a Saturday-to-Friday
+    week) and the prizes: the big one for every day; optionally a smaller one for at
+    least `second_min` days. An empty text: a surprise, chosen when it is given."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    days: tuple[Weekday, ...] = ("mon", "tue", "wed", "thu", "fri")
+    prize_day: Weekday = "fri"
+    prize: str = Field(default="", max_length=40)
+    second_on: bool = False
+    second_min: int = Field(default=3, ge=1, le=7)
+    second: str = Field(default="", max_length=40)
+
+    @field_validator("days")
+    @classmethod
+    def some_days(cls, days):
+        if not days or len(set(days)) != len(days):
+            raise ValueError("the week needs at least one day, each once")
+        return days
+
+
 class Settings(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -120,8 +146,9 @@ class Settings(BaseModel):
     home: HomeLook = HomeLook()
     route: RouteLook = RouteLook()
     shop_notify: ShopNotify = ShopNotify()
-    # Rachas: a day counts with at least one mission done ("any") or all of them ("all").
-    streak_rule: Literal["any", "all"] = "any"
+    # Rachas: a day counts with all their missions done ("all", 13/11) or at least one ("any").
+    streak_rule: Literal["any", "all"] = "all"
+    streak_week: StreakWeek = StreakWeek()
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)

@@ -139,6 +139,30 @@ MIGRATIONS: list[str] = [
     """
     ALTER TABLE prize_spins ADD COLUMN delivered_at TEXT
     """,
+    # 10 · Rachas (rachas.html): how each child's week ended (its prize, if any, with a
+    # copy of its text; when they saw it and when a parent handed it over), and the days
+    # a parent let off (ill, away): they neither count nor break the week.
+    """
+    CREATE TABLE streak_weeks (
+        child_id TEXT NOT NULL,
+        child_name TEXT NOT NULL,
+        week_end TEXT NOT NULL,
+        tier TEXT NOT NULL,
+        prize_text TEXT NOT NULL,
+        full_days INTEGER NOT NULL,
+        days INTEGER NOT NULL,
+        at TEXT NOT NULL,
+        shown_at TEXT,
+        delivered_at TEXT,
+        PRIMARY KEY (child_id, week_end)
+    );
+    CREATE TABLE free_days (
+        child_id TEXT NOT NULL,
+        day TEXT NOT NULL,
+        at TEXT NOT NULL,
+        PRIMARY KEY (child_id, day)
+    )
+    """,
 ]
 
 

@@ -13,14 +13,16 @@ import { prizeSheet } from "./prize-sheet.js";
 import { openStars } from "./stars-sheet.js";
 import { routeView } from "./route.js";
 import { landStar, prepareLanding, stopIndex } from "./star-landing.js";
+import { playDay, playResult, weekMini } from "./week-bar.js";
 
 const REFRESH_MS = 60_000; // missions open and close with the time: look again every minute
 const TOAST_MS = 3000;
 
 export async function viewChildToday(childId) {
   const base = `api/children/${childId}/today`;
-  const [first, summary] = await Promise.all([api("GET", base), ordersOf(childId), loadAvatars()]);
+  const [first, summary, firstWeek] = await Promise.all([api("GET", base), ordersOf(childId), weekOf(childId), loadAvatars()]);
   let day = first;
+  let week = firstWeek; // rachas (rachas.html): this week's fuel tanks
   let orders = summary; // on their way and arrived (tienda-2.html): the truck by their stars
   let overlay = false; // a mission, its celebration or the wheel is open: no redrawing under it
   let turned = null; // the stop the route's wheel was left on: kept when the screen is drawn again
@@ -42,13 +44,11 @@ export async function viewChildToday(childId) {
         h("div", { class: "child-scene__veil" })),
       h("header", { class: "child-bar" },
         avatar(day.child, { size: "child", fx: "shine" }),
-        h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
+        h("div", { class: "child-bar__who" },
+          h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
+          // Rachas: the week, small, under their name; a tap says how it goes.
+          week.on && week.tanks.length > 0 && weekMini(week, { onTap: () => say(t.week.miniSay(week.full, week.counted)) })),
         h("span", { class: "child-bar__spacer" }),
-        // Rachas (step 8): days in a row, with fire; tapping it says it.
-        day.streak > 0 && h("button", {
-          type: "button", class: "stars stars--button streak-chip", "aria-label": t.child.streakSay(day.streak),
-          onclick: () => say(t.child.streakSay(day.streak)),
-        }, h("img", { src: day.fire_url, alt: "" }), String(day.streak)),
         orders.on_way + orders.arrived > 0 && h("span", { class: "orders-chip-box" },
           h("button", {
             type: "button", class: `stars stars--button orders-chip${news() ? " orders-chip--arrived" : ""}`,
@@ -130,6 +130,29 @@ export async function viewChildToday(childId) {
       prepareLanding(section, day, missionId);
       await landStar(section, day, missionId, wheel);
     }
+    week = await weekOf(childId);
+    draw();
+    await weekNews(); // the last mission of the day: its tank fills
+    overlay = false;
+  }
+
+  // Rachas: today's tank, the first time it is full (once per day in this tablet), and
+  // how a week ended, until the child has seen it (the server keeps that).
+  async function weekNews() {
+    if (!week.on) return;
+    overlay = true;
+    const today = week.tanks.find((tank) => tank.day === day.day);
+    if (today?.state === "full" && !wasTold(`week-${childId}-${day.day}`)) {
+      told(`week-${childId}-${day.day}`);
+      await playDay(screen, week, { day: day.day, name: day.child.name });
+    }
+    if (week.result) {
+      const { result } = week;
+      api("POST", `api/children/${childId}/week/${result.end}/seen`).catch(() => {});
+      await playResult(screen, week, result, { name: day.child.name });
+      week = await weekOf(childId);
+      draw();
+    }
     overlay = false;
   }
 
@@ -179,7 +202,7 @@ export async function viewChildToday(childId) {
   }
 
   async function refresh() {
-    [day, orders] = await Promise.all([api("GET", base), ordersOf(childId)]);
+    [day, orders, week] = await Promise.all([api("GET", base), ordersOf(childId), weekOf(childId)]);
     draw();
     arrivals();
   }
@@ -194,10 +217,15 @@ export async function viewChildToday(childId) {
 
   draw();
   render(screen);
+  await weekNews();
   arrivals();
 }
 
 const TRUCK = "static/libraries/fluent/delivery-truck.svg";
+
+async function weekOf(childId) {
+  return api("GET", `api/children/${childId}/week`).catch(() => ({ on: false }));
+}
 
 async function ordersOf(childId) {
   const summary = await api("GET", "api/orders/summary").catch(() => ({}));

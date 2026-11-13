@@ -32,10 +32,14 @@ class OverviewService:
 
     def today(self) -> dict:
         """Every child's day, the orders not handed over and the prizes not given."""
+        children = self._children.list()
+        weeks = {child.id: self._days.week(child.id) for child in children}  # settles the weeks just closed
         return {
-            "children": [self._days.today(child.id) for child in self._children.list()],
+            "children": [self._days.today(child.id) for child in children],
+            "weeks": weeks,
             "orders": self._orders.for_parents()["waiting"],
             "prizes": self._records.prizes_to_give(),
+            "week_prizes": self._records.week_prizes_to_give(),
         }
 
     def setup(self, missions: list, code_is_default: bool, prizes: int, shop: int, routines: int) -> dict:
@@ -57,6 +61,7 @@ class OverviewService:
         earned = self._records.earned_by_day(child_id, since)
         return {
             "today": today,
+            "week": self._days.week(child_id),
             "chart": [{"day": (d := since + timedelta(days=n)).isoformat(), "stars": earned.get(d.isoformat(), 0)}
                       for n in range(CHART_DAYS)],
             "movements": self._records.movements(child_id, HISTORY),

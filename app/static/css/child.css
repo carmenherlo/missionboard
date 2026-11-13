@@ -1597,3 +1597,208 @@ button.prize-won {
   -webkit-user-drag: none;
   pointer-events: none; /* the finger is on the mission, never on its picture */
 }
+
+
+/* ---------- Rachas: the week of fuel tanks (rachas.html, week-bar.js) ---------- */
+
+/* Under the child's name: the week, small, a tank per day with its letter. */
+.child-bar__who {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.week-mini {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(var(--week-card-top), var(--week-card-bottom));
+  box-shadow: var(--shadow-lifted);
+  font: inherit;
+  cursor: pointer;
+}
+
+span.week-mini { cursor: default; }
+
+.week-mini__tank {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--tank-line);
+  border-radius: 8px;
+  background: var(--tank-empty);
+  color: var(--tank-letter);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.week-mini__tank--full {
+  border-color: var(--tank-now);
+  background: linear-gradient(var(--tank-fuel-top), var(--tank-fuel-bottom));
+  color: var(--tank-fuel-letter);
+}
+
+.week-mini__tank--free { border-style: dashed; opacity: 0.4; }
+.week-mini__tank--missed { border-style: dashed; opacity: 0.6; }
+.week-mini__tank--now { border-color: var(--tank-now); }
+
+/* The big bar, over the route. */
+.week-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: var(--week-shade);
+}
+
+.week-card {
+  position: relative;
+  width: min(820px, 92%);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(var(--week-card-top), var(--week-card-bottom));
+  color: var(--week-card-text);
+  box-shadow: var(--shadow-lifted);
+  overflow: hidden;
+  text-align: center;
+}
+
+.week-card__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-xl);
+}
+
+.week-launch {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.week-tanks {
+  flex: 1;
+  display: grid;
+  grid-auto-columns: minmax(0, 110px); /* a week of one or two days does not stretch */
+  justify-content: center;
+  grid-auto-flow: column;
+  gap: var(--space-3);
+}
+
+.week-tank {
+  position: relative;
+  height: 130px;
+  border: 4px solid var(--tank-line);
+  border-radius: 18px 18px 12px 12px;
+  background: var(--tank-empty);
+  overflow: hidden;
+}
+
+/* The fuel: a layer that fills from the bottom (all at once without effects.css). */
+.week-tank::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: linear-gradient(var(--tank-fuel-top), var(--tank-fuel-bottom));
+  box-shadow: 0 0 18px var(--tank-glow);
+}
+
+.week-tank--full::after,
+.week-tank--filling::after { height: 100%; }
+
+.week-tank b {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: var(--tank-letter);
+  font-size: 1.8rem;
+}
+
+.week-tank--full b,
+.week-tank--filling b { color: var(--tank-fuel-letter); }
+.week-tank--missed { border-style: dashed; opacity: 0.6; }
+.week-tank--free { border-style: dashed; opacity: 0.35; }
+.week-tank--today { outline: 3px dashed var(--tank-now); outline-offset: 3px; }
+
+.week-pad {
+  position: relative;
+  flex: none;
+  width: 120px;
+  height: 190px;
+}
+
+.week-pad::after { /* the launch pad */
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 10px;
+  border-radius: 10px;
+  background: var(--tank-pad);
+}
+
+.week-pad__rocket {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 100px;
+  translate: -50% 0;
+  rotate: -45deg; /* the picture flies up and to the right: straight up */
+}
+
+.week-pad__smoke {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 140px;
+  translate: -50% 0;
+  opacity: 0;
+}
+
+.week-card__line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 0;
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-lg);
+  font-weight: 900;
+}
+
+.week-card__line:empty { display: none; }
+
+.week-card__picture {
+  width: 64px;
+  height: 64px;
+}
+
+/* Padres · Niño: the same tanks, bigger, to let a day off. */
+.week-days {
+  display: inline-flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: linear-gradient(var(--week-card-top), var(--week-card-bottom));
+}
+
+.week-days__day {
+  width: 48px;
+  height: 48px;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.week-days__day:disabled { cursor: default; }

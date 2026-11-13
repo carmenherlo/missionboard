@@ -13,6 +13,7 @@ const GROUPS = [
   ]],
   [t.config.groupRewards, [
     ["stars", "star", t.config.stars],
+    ["streaks", "rocket", t.config.streaks],
     ["prizes", "prize", t.config.prizes],
     ["shop", "shop", t.config.shop],
   ]],

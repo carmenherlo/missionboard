@@ -20,7 +20,8 @@ unlocked for settings.daily_prize_spins spins, then won (showing what it was).
 import secrets
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
+from types import SimpleNamespace
 
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
@@ -33,6 +34,7 @@ from app.routines.repository import RoutinesRepository, minute_of
 from app.settings import MOMENTS, Season, SettingsRepository
 from app.today.repository import DayRepository
 from app.today.streaks import streak
+from app.today.week import Week, build_week, week_end
 
 DONE, OPEN, UPCOMING, CLOSED = "done", "open", "upcoming", "closed"
 LOCKED, UNLOCKED, WON = "locked", "unlocked", "won"
@@ -194,6 +196,64 @@ class DayService:
         }
         return streak(day, settings.streak_rule, lambda d: by_weekday[WEEKDAYS[d.weekday()]],
                       self._days.completions(child_id))
+
+    # ---------- rachas: the week of fuel tanks (rachas.html) ----------
+
+    def week(self, child_id: str) -> dict | None:
+        """This week's tanks and the result of a week the child has not seen yet (once
+        it is closed, it is kept, with its prize). None while rachas are off."""
+        if not self._settings.features().streaks:
+            return None
+        child = self._child(child_id)
+        settings = self._settings.settings()
+        rules = settings.streak_week
+        today = app_day(self._clock.now(), settings.day_starts_at)
+        missions = self._missions.list()
+        by_weekday = {wd: {m.id for m in missions if child_tasks(m, child.id, wd)} for wd in WEEKDAYS}
+        had = lambda d: by_weekday[WEEKDAYS[d.weekday()]]  # noqa: E731
+        done, free = self._days.completions(child.id), self._days.free_days(child.id)
+        end = week_end(today, rules.prize_day)
+        settled = self._days.weeks(child.id)
+        current = build_week(today, end, rules, settings.streak_rule, had, done, free)
+        previous_end = end - timedelta(days=7)
+        if not settled:  # the first time: the weeks before rachas existed are not judged
+            now = self._clock.now()
+            self._days.settle_week(child, previous_end, "none", "", 0, 0, now)
+            self._days.week_seen(child.id, previous_end.isoformat(), now)
+        else:  # a week can close while nobody looks (Friday missed): settled on the next look
+            previous = build_week(today, previous_end, rules, settings.streak_rule, had, done, free)
+            self._settle(child, previous, rules, settled)
+        self._settle(child, current, rules, settled)
+        settled = self._days.weeks(child.id)
+        unseen = [row for row in settled.values()
+                  if row["shown_at"] is None and row["week_end"] >= (end - timedelta(days=7)).isoformat()]
+        return {"week": current, "result": max(unseen, key=lambda row: row["week_end"]) if unseen else None}
+
+    def _settle(self, child: Child, week: Week, rules, settled: dict) -> None:
+        if not week.closed or not week.counted or week.end.isoformat() in settled:
+            return
+        tier = week.tier(rules)
+        text = {"full": rules.prize, "second": rules.second}.get(tier, "")
+        self._days.settle_week(child, week.end, tier, text, week.full, week.counted, self._clock.now())
+        self._events.child_did(f"week_{tier}", child, prize=f"{week.full} de {week.counted}")
+
+    def week_seen(self, child_id: str, end: str) -> None:
+        self._days.week_seen(self._child(child_id).id, end, self._clock.now())
+
+    def set_free_day(self, child_id: str, day: date, free: bool) -> None:
+        child = self._child(child_id)
+        self._days.set_free_day(child.id, day, free, self._clock.now())
+        self._events.config_changed("free_day", "on" if free else "off", child=child,
+                                    mission=SimpleNamespace(id=day.isoformat(), name=f"{day.day}/{day.month}"))
+
+    def deliver_week_prize(self, child_id: str, end: str) -> None:
+        row = self._days.weeks(child_id).get(end)
+        if row is None or row["tier"] == "none":
+            raise NotFoundError("Prize not found")
+        if self._days.deliver_week_prize(child_id, end, self._clock.now()):
+            self._events.config_changed(
+                "week_prize", "delivered", child=SimpleNamespace(id=row["child_id"], name=row["child_name"]),
+                mission=SimpleNamespace(id=end, name=row["prize_text"] or "premio sorpresa"))
 
     def _prize_today(self, day: date, child: Child, missions: list[MissionToday]) -> PrizeToday | None:
         spins = self._settings.settings().daily_prize_spins

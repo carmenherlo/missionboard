@@ -257,6 +257,35 @@ export const sounds = {
     });
   },
 
+  // Rachas (rachas.html). A tank filling: little bubbles going up.
+  fill() {
+    play((ctx, out, now) => {
+      for (let i = 0; i < 9; i += 1) {
+        blip(ctx, out, { at: now + i * 0.11, freq: 300 + i * 70, to: 500 + i * 90, length: 0.08, type: "sine", volume: 0.35 });
+      }
+      blip(ctx, out, { at: now + 1.05, freq: 1319, length: 0.4, type: "sine", volume: 0.3 }); // full: "ding"
+    });
+  },
+
+  // The rocket taking off: a roar going up, for a good while.
+  liftoff() {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now, freq: 40, to: 180, length: 2.4, type: "sawtooth", volume: 0.22 });
+      blip(ctx, out, { at: now, freq: 25, to: 60, length: 2.6, type: "square", volume: 0.1 });
+      blip(ctx, out, { at: now + 0.3, freq: 600, to: 2400, length: 1.8, type: "triangle", volume: 0.08 });
+    });
+  },
+
+  // The rocket without enough fuel: three coughs and a sigh going down.
+  sputter() {
+    play((ctx, out, now) => {
+      for (const at of [0, 0.45, 0.9]) {
+        blip(ctx, out, { at: now + at, freq: 120, to: 60, length: 0.18, type: "sawtooth", volume: 0.3 });
+      }
+      blip(ctx, out, { at: now + 1.4, freq: 440, to: 220, length: 0.7, type: "triangle", volume: 0.25 });
+    });
+  },
+
   // At the door: "ding-dong".
   doorbell(delay = 0) {
     play((ctx, out, now) => {

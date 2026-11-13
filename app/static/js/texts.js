@@ -38,6 +38,26 @@ export const t = {
     fullscreen: "Pantalla completa",
     exitFullscreen: "Salir de pantalla completa",
   },
+  // Rachas (rachas.html): the week of fuel tanks, as the child sees and hears it.
+  week: {
+    miniLabel: (full, counted) => `Esta semana: ${full} de ${counted} depósitos llenos`,
+    miniSay: (full, counted) => full === 0
+      ? `Cada día que haces tus misiones, se llena un depósito. ¡Llénalos todos y el cohete despegará!`
+      : `Esta semana llevas ${full} ${full === 1 ? "depósito lleno" : "depósitos llenos"} de ${counted}. ¡Llénalos todos y el cohete despegará!`,
+    dayTitle: "¡Depósito lleno!",
+    daySay: (name, full, counted) => full >= counted
+      ? `¡Muy bien, ${name}! ¡Todos los depósitos llenos!`
+      : `¡Muy bien, ${name}! ¡Otro depósito lleno! Ya llevas ${full} de ${counted}.`,
+    resultTitle: { full: "¡Despegue!", second: "¡Vuelo corto!", none: "¡Esta vez no ha podido ser!" },
+    prizeLine: (text) => (text ? `Premio de la semana: ${text}` : "¡Premio sorpresa de la semana!"),
+    noneLine: "Le faltó combustible. ¡La semana que viene, otra vez!",
+    prizeSay: (tier, name, full, text) => `${tier === "full"
+      ? `¡Todos los depósitos llenos, ${name}! Tres, dos, uno… ¡despegue!`
+      : `¡Has llenado ${full} depósitos, ${name}! Tres, dos, uno… ¡un vuelo corto!`} Te has ganado ${
+      text ? lower(text) : tier === "full" ? "un premio sorpresa" : "un premio"}. Papá o mamá te lo darán.`,
+    noneSay: (full) => `¡Esta vez no ha podido ser! Al cohete le faltó combustible.${
+      full ? ` Has llenado ${full} ${full === 1 ? "depósito" : "depósitos"}, ¡muy bien!` : ""} La semana que viene lo intentamos otra vez.`,
+  },
   child: {
     hello: (name) => `¡Hola, ${name}!`,
     stars: (count) => `${count} ${count === 1 ? "estrella" : "estrellas"}`,
@@ -143,6 +163,7 @@ export const t = {
     appearance: "Apariencia",
     avatars: "Avatares",
     stars: "Estrellas",
+    streaks: "Rachas",
     // The groups of Configurar (ajustes.html)
     groupDay: "El día de los niños",
     groupRewards: "Recompensas",
@@ -263,12 +284,27 @@ export const t = {
     prizeOff: "Apagado: el premio no sale en la ruta. La lista se conserva para cuando se vuelva a encender.",
     spins: "Giros de la ruleta al día",
     streaksTitle: "Rachas",
-    streaksOn: "Encendidas: cada niño ve con un fuego cuántos días seguidos lleva",
+    streaksOn: "Encendidas: cada niño llena un depósito por día y, si los llena todos, el cohete despega y gana el premio de la semana",
     streaksOff: "Apagadas: no se ven",
-    streakCounts: "Un día cuenta para la racha si hace",
+    streakCounts: "Un día llena su depósito si hace",
     streakAny: "Al menos una misión",
     streakAll: "Todas sus misiones",
-    streakHint: "Los días en que un niño no tiene misiones no cuentan ni la rompen.",
+    streakHint: "Los días en que un niño no tiene misiones no salen en su semana: ni llenan ni rompen.",
+    // Configurar → Rachas (rachas.html)
+    streakDaysTitle: "Qué días cuentan",
+    streakDaysHint: "Un depósito por cada uno de estos días. El que no cuenta no sale en la barra.",
+    streakPrizeDay: "Cuándo das el premio",
+    streakWeekIs: (from, to) => from === to ? `La semana es solo el ${to}.` : `La semana va del ${from} al ${to}: ese día se cierra y empieza otra.`,
+    streakPrizeTitle: "Premio de la semana",
+    streakPrizeHint: "Para cuando llena todos los depósitos. Vacío: una sorpresa (el niño oye «un premio sorpresa» y tú eliges cuál al darlo).",
+    streakPrizeText: "Premio",
+    streakPrizePlaceholder: "Sorpresa",
+    streakSecondTitle: "Premio pequeño (si quieres)",
+    streakSecondOn: "Si no los llena todos, pero sí unos cuantos, gana un premio más pequeño",
+    streakSecondMin: "Depósitos que necesita como mínimo",
+    streakSecondText: "Premio pequeño",
+    streakNoneHint: "Si no llega a ninguno de los dos, el cohete lo intenta y se queda: «¡Esta vez no ha podido ser! La semana que viene lo intentamos otra vez».",
+    streakTry: "Probar cómo lo ve el niño",
     shopTitle: "Tienda",
     shopOn: "Encendida: los niños gastan sus estrellas desde su ruta",
     shopOff: "Apagada: los niños siguen viendo sus estrellas, pero no pueden comprar.",
@@ -819,6 +855,12 @@ export const t = {
   },
   // Padres · Hoy and Padres · Niño (step 7)
   overview: {
+    weekSurprise: "Premio sorpresa de la semana",
+    weekWon: (name, tier, day) => `${name} · ${tier === "full" ? "semana completa" : "premio pequeño"} (hasta el ${day})`,
+    weekTitle: "Esta semana",
+    weekHint: "Toca un día para marcarlo como libre (enfermo, de viaje): ese depósito no cuenta ni rompe la semana. Otra vez para quitarlo.",
+    weekOff: "Las rachas están apagadas (Configurar → Rachas).",
+    freeDay: "libre",
     firstSteps: "Primeros pasos",
     firstStepsHint: "Para dejar la app lista. Esta lista se va sola cuando están hechos los cuatro primeros.",
     stepChildren: "Añadir a los niños",

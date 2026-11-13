@@ -230,6 +230,26 @@
   --celebration-duration: 6s; /* "¡Misión cumplida!" closes by itself after this */
   --celebration-star-delay: 700ms; /* then the star won pops up and flies to the avatar */
   --parcel-send: 9s; /* an order leaving: stars → box → the truck backs up, takes it and goes (effects/delivery.js) */
+  /* Rachas (rachas.html): the week of fuel tanks, a little space over the route. */
+  --week-card-top: #1b2350;
+  --week-card-bottom: #2c2f6e;
+  --week-card-text: #ffffff;
+  --week-shade: rgb(0 0 0 / 0.35);
+  --tank-empty: #252a5c;
+  --tank-line: #5d64a8;
+  --tank-letter: #9aa0d8;
+  --tank-fuel-top: #ffd25a;
+  --tank-fuel-bottom: #ff7a1a;
+  --tank-fuel-letter: #7a3a00;
+  --tank-glow: rgb(255 154 58 / 0.8);
+  --tank-now: #ffb347;
+  --tank-pad: #8a90c8;
+  --week-slide: 700ms; /* the bar coming in from the left, and going out on the right */
+  --week-fill: 1100ms; /* today's tank filling */
+  --week-stay: 3500ms; /* then it stays, while the voice speaks */
+  --week-countdown: 2600ms; /* "tres, dos, uno…" before the rocket goes */
+  --week-result: 6000ms; /* how the week ended, on screen */
+  --week-liftoff: 2200ms;
   --kid-off-opacity: 0.35; /* a child's avatar switched off (who sees a shop item) */
   --parcel-bump: 260ms; /* the truck shaking on the road, up and down */
   --parcel-home: 5s; /* an order arriving: truck → "ding-dong" → it opens */

@@ -20,7 +20,7 @@ from app.shop.api import get_orders_service
 from app.shop.orders import OrdersService
 from app.storage.config_store import ConfigStore
 from app.today.api import Presenter as DayPresenter
-from app.today.api import get_day_repository, get_day_service
+from app.today.api import get_day_repository, get_day_service, present_week
 from app.today.repository import DayRepository
 from app.today.service import DayService, Today
 
@@ -69,9 +69,12 @@ class Presenter:
 def overview_today(overview: OverviewService = Depends(get_overview_service), present: Presenter = Depends()):
     view = overview.today()
     return {
-        "children": [present.child_day(today) for today in view["children"]],
+        "children": [{**present.child_day(today), "week": present_week(view["weeks"][today.child.id])}
+                     for today in view["children"]],
         "orders": [present.order(o) for o in view["orders"]],
         "prizes": [present.prize(p) for p in view["prizes"]],
+        "week_prizes": [{k: p[k] for k in ("child_id", "child_name", "week_end", "tier", "prize_text")}
+                        for p in view["week_prizes"]],
     }
 
 
@@ -88,9 +91,16 @@ def setup(overview: OverviewService = Depends(get_overview_service), store: Conf
 def overview_child(child_id: str, overview: OverviewService = Depends(get_overview_service),
                    present: Presenter = Depends()):
     view = overview.child(child_id)
-    return {**present.child_day(view["today"]), "chart": view["chart"], "movements": view["movements"]}
+    return {**present.child_day(view["today"]), "week": present_week(view["week"]),
+            "chart": view["chart"], "movements": view["movements"]}
 
 
 @router.post("/prizes/{spin_id}/deliver", status_code=204)
 def deliver_prize(spin_id: int, overview: OverviewService = Depends(get_overview_service)) -> None:
     overview.deliver_prize(spin_id)
+
+
+@router.post("/week-prizes/{child_id}/{end}/deliver", status_code=204)
+def deliver_week_prize(child_id: str, end: str, days: DayService = Depends(get_day_service)) -> None:
+    """Entregado: the prize of a full week (or the smaller one) handed over."""
+    days.deliver_week_prize(child_id, end)

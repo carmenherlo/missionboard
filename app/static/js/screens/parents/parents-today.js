@@ -9,11 +9,12 @@ import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
+import { weekMini } from "../child/week-bar.js";
 import { parentsHeader } from "./common.js";
 import { dayMonth, ordersPanel } from "./orders-panel.js";
 
 const STAR = "static/libraries/fluent/star.svg";
-const FIRE = "static/libraries/fluent/fire.svg";
+const GIFT = "static/libraries/fluent/wrapped-gift.svg";
 
 export async function viewParentsToday() {
   const [view, orders, setup] = await Promise.all([
@@ -21,6 +22,7 @@ export async function viewParentsToday() {
   const status = saveStatus();
   const pending = h("div", { class: "stack" });
   let prizes = view.prizes;
+  let weekPrizes = view.week_prizes; // rachas: a full week (or the smaller prize), given by a parent
 
   // Pendiente de dar: the prizes of the wheel and the orders, always both (each says
   // when it has nothing), so the parents know where to look.
@@ -28,8 +30,19 @@ export async function viewParentsToday() {
   function drawPending() {
     pending.replaceChildren(
       panel(t.overview.prizesTitle,
-        prizes.length
-          ? h("ul", { class: "rows" }, prizes.map((spin) => h("li", { class: "row row--compact" },
+        prizes.length || weekPrizes.length
+          ? h("ul", { class: "rows" }, ...weekPrizes.map((won) => h("li", { class: "row row--compact" },
+              imageThumb(GIFT, { size: "sm", label: won.prize_text }),
+              h("span", { class: "row__text" }, won.prize_text || t.overview.weekSurprise,
+                h("span", { class: "row__detail" }, t.overview.weekWon(won.child_name, won.tier, dayMonth(won.week_end)))),
+              h("button", {
+                type: "button", class: "btn btn--primary",
+                onclick: async () => {
+                  await status.track(api("POST", `api/overview/week-prizes/${won.child_id}/${won.week_end}/deliver`)).catch(() => {});
+                  ({ prizes, week_prizes: weekPrizes } = await api("GET", "api/overview/today"));
+                  drawPending();
+                },
+              }, icon("check"), t.shop.given))), ...prizes.map((spin) => h("li", { class: "row row--compact" },
               imageThumb(spin.image_url, { size: "sm", label: spin.prize_text }),
               h("span", { class: "row__text" }, spin.prize_text,
                 h("span", { class: "row__detail" }, t.overview.wonOn(spin.child_name, dayMonth(spin.day)))),
@@ -107,8 +120,7 @@ function dayCard(day) {
       avatar(day.child, { size: "md" }),
       h("b", { class: "day-card__name" }, day.child.name),
       h("span", { class: "day-card__count" }, h("img", { src: STAR, alt: "" }), String(day.stars)),
-      day.streak > 0 && h("span", { class: "day-card__count", title: t.overview.streak(day.streak) },
-        h("img", { src: FIRE, alt: "" }), String(day.streak))),
+      day.week?.on && day.week.tanks.length > 0 && weekMini(day.week)),
     day.missions.length
       ? h("ul", { class: "day-card__missions" }, day.missions.map((m) => {
           const [kind, text] = STATE[m.state](m);

@@ -51,6 +51,7 @@ _FIELDS = {
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
     "routines": lambda value: "rutinas " + ("encendidas" if value else "apagadas"),
     "streaks": lambda value: "rachas " + ("encendidas" if value else "apagadas"),
+    "streak_week": lambda value: "semana de la racha cambiada",
     "streak_rule": lambda value: "la racha cuenta con " + ("una misión" if value == "any" else "todas las misiones"),
 }
 
@@ -110,6 +111,7 @@ SCREENS = {
     "appearance_missions": ("Apariencia · Camino de misiones", None),
     "appearance_seasons": ("Apariencia · Fondos y estaciones", None),
     "stars_settings": ("Estrellas", None),
+    "streak_settings": ("Rachas", None),
     "parents_today": ("Padres · Hoy", None),
     "parents_child": ("Padres · Niño", "Cómo va {child}"),
     "day_settings": ("El día", None),
@@ -180,6 +182,9 @@ _CONFIG = {
     ("shop_item", "changed"): "Cambiaste «{mission}» de la tienda",
     ("shop_item", "deleted"): "Quitaste «{mission}» de la tienda",
     ("shop_item", "reordered"): "Ordenaste la tienda",
+    ("week_prize", "delivered"): "Entregaste el premio de la semana a {child} · «{mission}»",
+    ("free_day", "on"): "Marcaste el {mission} como día libre de {child}",
+    ("free_day", "off"): "Quitaste el día libre del {mission} de {child}",
     ("prize", "created"): "Añadiste el premio «{mission}»",
     ("prize", "changed"): "Cambiaste el premio «{mission}»",
     ("prize", "deleted"): "Borraste el premio «{mission}»",
@@ -207,6 +212,9 @@ _CHILD = {
     "prize_spun": "{child} giró la ruleta · {detail}",
     "purchase": "{child} compró «{mission}» · {detail}",
     "order_seen": "{child} vio llegar «{mission}»",
+    "week_full": "{child} llenó todos los depósitos de la semana · {detail}",
+    "week_second": "{child} ganó el premio pequeño de la semana · {detail}",
+    "week_none": "A {child} le faltó combustible esta semana · {detail}",
 }
 
 

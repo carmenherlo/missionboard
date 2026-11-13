@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -193,3 +194,45 @@ def spin(child_id: str, days: DayService = Depends(get_day_service), present: Pr
 @router.post("/children/{child_id}/today/notes", status_code=204)
 def note(child_id: str, body: NoteIn, days: DayService = Depends(get_day_service)) -> None:
     days.note(child_id, body.kind, body.mission_id, body.step_id)
+
+
+# ---------- Rachas: the week of fuel tanks (rachas.html) ----------
+
+
+def present_week(view: dict | None) -> dict:
+    """The week for the child's screen and the parents' cards; {"on": False} while rachas are off."""
+    if view is None:
+        return {"on": False}
+    week, result = view["week"], view["result"]
+    return {
+        "on": True,
+        "end": week.end.isoformat(),
+        "tanks": [{"day": t.day.isoformat(), "letter": t.letter, "state": t.state} for t in week.tanks],
+        "full": week.full,
+        "counted": week.counted,
+        "result": result and {
+            "end": result["week_end"], "tier": result["tier"], "prize_text": result["prize_text"],
+            "full": result["full_days"], "counted": result["days"],
+        },
+    }
+
+
+@router.get("/children/{child_id}/week")
+def get_week(child_id: str, days: DayService = Depends(get_day_service)):
+    return present_week(days.week(child_id))
+
+
+@router.post("/children/{child_id}/week/{end}/seen", status_code=204)
+def week_seen(child_id: str, end: str, days: DayService = Depends(get_day_service)) -> None:
+    """The child has seen how that week ended (the rocket took off, or not)."""
+    days.week_seen(child_id, end)
+
+
+class FreeDayIn(BaseModel):
+    free: bool
+
+
+@router.put("/children/{child_id}/free-days/{day}", status_code=204, dependencies=[Depends(require_parent)])
+def free_day(child_id: str, day: date, body: FreeDayIn, days: DayService = Depends(get_day_service)) -> None:
+    """A parent lets a day off (ill, away): it neither counts nor breaks the week."""
+    days.set_free_day(child_id, day, body.free)
