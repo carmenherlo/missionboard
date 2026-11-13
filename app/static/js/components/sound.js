@@ -198,6 +198,65 @@ export const sounds = {
     });
   },
 
+  // The truck backing up and leaving (13/11). Its engine for `length` seconds:
+  // a low rumble; `away`, going up and fading as it drives off.
+  engine(delay, length, away = false) {
+    play((ctx, out, now) => {
+      const at = now + delay;
+      blip(ctx, out, { at, freq: away ? 60 : 50, to: away ? 140 : 65, length, type: "sawtooth", volume: away ? 0.14 : 0.1 });
+      blip(ctx, out, { at, freq: away ? 30 : 25, to: away ? 70 : 32, length, type: "square", volume: 0.05 });
+    });
+  },
+
+  // Backing up: `count` short beeps, `every` seconds apart.
+  backUp(delay, count, every) {
+    play((ctx, out, now) => {
+      for (let i = 0; i < count; i += 1) {
+        blip(ctx, out, { at: now + delay + i * every, freq: 1175, length: 0.18, type: "square", volume: 0.12 });
+      }
+    });
+  },
+
+  // The brakes: a short squeak, sliding down.
+  squeak(delay = 0) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: 2200, to: 1500, length: 0.3, type: "triangle", volume: 0.18 });
+    });
+  },
+
+  // The thing going into its box: a round "pop".
+  pop(delay = 0) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: 300, to: 900, length: 0.12, type: "sine", volume: 0.5 });
+    });
+  },
+
+  // The box hopping into the truck: "boing".
+  boing(delay = 0) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: 200, to: 600, length: 0.25, type: "sine", volume: 0.45 });
+      blip(ctx, out, { at: now + delay + 0.25, freq: 600, to: 300, length: 0.3, type: "sine", volume: 0.3 });
+    });
+  },
+
+  // The box landing in the truck: a dull "thud".
+  thud(delay = 0) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: 140, to: 50, length: 0.2, type: "sine", volume: 0.8 });
+      blip(ctx, out, { at: now + delay, freq: 400, to: 120, length: 0.05, type: "triangle", volume: 0.2 });
+    });
+  },
+
+  // "Honk, honk": two notes together, like a real horn.
+  honk(delay = 0) {
+    play((ctx, out, now) => {
+      for (const [at, length] of [[0, 0.16], [0.24, 0.3]]) {
+        blip(ctx, out, { at: now + delay + at, freq: 415, length, type: "square", volume: 0.2 });
+        blip(ctx, out, { at: now + delay + at, freq: 523, length, type: "square", volume: 0.14 });
+      }
+    });
+  },
+
   // At the door: "ding-dong".
   doorbell(delay = 0) {
     play((ctx, out, now) => {

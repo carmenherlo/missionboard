@@ -1220,6 +1220,32 @@ button.prize-won {
   transform: scaleX(-1);
 }
 
+/* The truck that takes an order: a box that moves (__van), with the truck facing right
+   inside and its smoke behind it. */
+.parcel-scene__van {
+  position: absolute;
+  bottom: 15%;
+  left: 110%;
+  width: 230px;
+  height: 230px;
+}
+
+.parcel-scene .parcel-scene__van-body {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  scale: -1 1;
+  transform-origin: 50% 90%;
+}
+
+.parcel-scene .parcel-scene__smoke {
+  left: -70px;
+  bottom: 6%;
+  width: 80px;
+  height: 80px;
+  opacity: 0;
+}
+
 .parcel-scene__house {
   right: 6%;
   bottom: 15%;
