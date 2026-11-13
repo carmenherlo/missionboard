@@ -158,6 +158,12 @@
   --shop-wood: #c98a4b; /* the sign, the shelves and the counter */
   --shop-wood-dark: #9a6431;
   --shop-wood-text: #fff6e8;
+  --shop-logo-board: #1b2350; /* the sign: night blue, in a wooden frame (a shop of the stars) */
+  --shop-logo-text: #ffffff;
+  --shop-logo-tail-start: rgb(255 210 63 / 0); /* the shooting star's trail, fading at its tail */
+  --shop-logo-tail-end: #ffd23f;
+  --shop-logo-star: #ffd23f;
+  --shop-logo-star-edge: #e59a00;
   --shop-tag: #fff3c4; /* the price, on a tag */
   --shop-tag-edge: #e8c766;
   --order-way-ground: var(--surface); /* on its way: still not theirs, white */

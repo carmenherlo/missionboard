@@ -5,6 +5,7 @@
 // truck brings it home. Everything is drawn and said: no need to read.
 import { api } from "../../api.js";
 import { avatar } from "../../components/avatar.js";
+import { shopLogo } from "../../components/shop-logo.js";
 import { say } from "../../components/speech.js";
 import { h } from "../../dom.js";
 import { bringHome, sendOff } from "../../effects/delivery.js";
@@ -76,7 +77,7 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
       h("div", { class: "shop-front__top", "aria-hidden": "true" },
         h("div", { class: "shop-front__rod" }),
         h("div", { class: "shop-front__awning" }),
-        h("span", { class: "shop-front__sign" }, img(`${FLUENT}/star.svg`, "shop-front__sign-star"), t.place.shop)),
+        h("span", { class: "shop-front__sign" }, shopLogo())),
       view.items.length > 0 && h("div", { class: "step-grid shop-front__shelf" }, view.items.map((item) =>
         h("div", { class: `step-card${item.affordable ? "" : " step-card--locked"}` },
           h("button", {

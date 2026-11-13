@@ -395,6 +395,7 @@ export const t = {
     youHave: (n) => `Tienes ${n} ${n === 1 ? "estrella" : "estrellas"}`,
     missing: (n) => `Te ${n === 1 ? "falta 1" : `faltan ${n}`}`,
     // The child's side as orders on their way (tienda-2.html): every sentence is also said.
+    name: "Astrozon", // the shop's name, on its logo
     tabShop: "Tienda",
     tabOrders: (n) => (n ? `Mis pedidos · ${n}` : "Mis pedidos"),
     costSay: (text, n) => `${text}. Cuesta ${stars(n)}.`,

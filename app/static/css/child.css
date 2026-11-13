@@ -2089,34 +2089,53 @@ span.week-mini { cursor: default; }
   filter: drop-shadow(0 4px 2px var(--shop-awning-shade));
 }
 
-/* Its sign, a wooden board over the awning. */
+/* Its sign, a wooden board over the awning, with the shop's logo. */
 .shop-front__sign {
   position: absolute;
   left: 50%;
-  top: 4px;
+  top: 2px;
   translate: -50% 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-5);
-  border: 3px solid var(--shop-wood-dark);
-  border-radius: 14px;
-  background: var(--shop-wood);
-  color: var(--shop-wood-text);
+  padding: var(--space-2) var(--space-5) var(--space-1);
+  border: 6px solid var(--shop-wood);
+  border-radius: 16px;
+  background: var(--shop-logo-board);
   box-shadow: var(--shadow-badge);
-  font-size: var(--text-xl);
-  font-weight: 900;
-  white-space: nowrap;
 }
 
-.shop-front__sign-star {
-  width: 32px;
-  height: 32px;
+.shop-logo {
+  display: grid;
+  justify-items: center;
+}
+
+.shop-logo__name {
+  color: var(--shop-logo-text);
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.shop-logo__trail {
+  width: 200px;
+  height: 40px;
+  margin-top: -4px;
+  overflow: visible;
+}
+
+.shop-logo__tail-start { stop-color: var(--shop-logo-tail-start); }
+.shop-logo__tail-end { stop-color: var(--shop-logo-tail-end); }
+.shop-logo__tail { fill: url(#shop-logo-tail); }
+
+.shop-logo__star {
+  fill: var(--shop-logo-star);
+  stroke: var(--shop-logo-star-edge);
+  stroke-width: 2;
+  stroke-linejoin: round;
 }
 
 .stars-body .shop-front__shelf {
   row-gap: var(--space-6);
-  padding: var(--space-3) var(--space-5) var(--space-5);
+  padding: var(--space-6) var(--space-5) var(--space-5);
 }
 
 /* A wooden shelf under each row of things. */
