@@ -100,3 +100,20 @@ def test_stars_can_be_taken_away_but_not_more_than_they_have(client, bea):
     assert client.post(url, json={"stars": 4}, headers=PARENT).status_code == 422
     assert client.post(url, json={"stars": 1}).status_code == 401
     assert descriptions(client, limit=1) == ["Quitaste estrellas a Bea · -2 estrellas"]
+
+
+# ---------- Primeros pasos ----------
+
+
+def test_first_steps_tell_what_is_ready(client):
+    def setup():
+        return client.get("/api/overview/setup", headers=PARENT).json()
+
+    first = setup()
+    assert (first["children"], first["switched_on"], first["code_changed"]) == (0, False, False)
+    bea = create_child(client)
+    mission(client, bea, "Despegue", steps=("Uno",))  # created and switched on for her, as the tests do
+    ready = setup()
+    assert ready["children"] == 1 and ready["missions"] == 1 and ready["switched_on"]
+    client.put("/api/parents/code", json={"current_code": "1234", "code": "4321"}, headers=PARENT)
+    assert client.get("/api/overview/setup", headers={"X-Parent-Code": "4321"}).json()["code_changed"]

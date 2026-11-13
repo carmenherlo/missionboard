@@ -16,7 +16,8 @@ const STAR = "static/libraries/fluent/star.svg";
 const FIRE = "static/libraries/fluent/fire.svg";
 
 export async function viewParentsToday() {
-  const [view, orders] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/orders"), loadAvatars()]);
+  const [view, orders, setup] = await Promise.all([
+    api("GET", "api/overview/today"), api("GET", "api/orders"), api("GET", "api/overview/setup"), loadAvatars()]);
   const status = saveStatus();
   const pending = h("div", { class: "stack" });
   let prizes = view.prizes;
@@ -58,6 +59,7 @@ export async function viewParentsToday() {
         h("div", { class: "page-header" },
           h("p", { class: "lead" }, t.overview.today(date)),
           h("a", { class: "btn", href: "#/parents/config" }, icon("settings"), t.config.title)),
+        firstSteps(setup),
         h("section", { class: "stack" },
           h("h2", { class: "section-title" }, t.overview.pendingTitle), pending),
         h("section", { class: "stack" },
@@ -65,6 +67,30 @@ export async function viewParentsToday() {
           view.children.length
             ? h("div", { class: "day-cards" }, view.children.map(dayCard))
             : h("p", { class: "hint" }, t.overview.noChildren)))));
+}
+
+// Primeros pasos: what is left to get the app ready, each line to its screen; gone once
+// the first four are done.
+function firstSteps(setup) {
+  const steps = [
+    [setup.children > 0, t.overview.stepChildren, setup.children ? "#/parents/config/children" : "#/parents/config/children/new"],
+    [setup.missions > 0, t.overview.stepMissions, "#/parents/config/missions"],
+    [setup.switched_on, t.overview.stepSwitchOn, "#/parents/config/missions"],
+    [setup.code_changed, t.overview.stepCode, "#/parents/config/code"],
+  ];
+  if (steps.every(([done]) => done)) return null;
+  const line = (done, text, href) => h("li", {},
+    h("a", { class: `row row--link${done ? " first-step--done" : ""}`, href },
+      h("span", { class: "row__icon" }, icon(done ? "check" : "next")),
+      h("span", { class: "row__name" }, text)));
+  return panel(t.overview.firstSteps,
+    h("p", { class: "hint" }, t.overview.firstStepsHint),
+    h("ol", { class: "rows first-steps" }, steps.map(([done, text, href]) => line(done, text, href))),
+    h("p", { class: "setting__label" }, t.overview.optional),
+    h("ul", { class: "rows first-steps" },
+      line(setup.prizes > 0, t.overview.stepPrizes, "#/parents/config/prizes"),
+      line(setup.shop > 0, t.overview.stepShop, "#/parents/config/shop"),
+      line(setup.routines > 0, t.overview.stepRoutines, "#/parents/config/routines")));
 }
 
 const STATE = {

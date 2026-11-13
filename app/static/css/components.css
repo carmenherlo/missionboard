@@ -2195,3 +2195,26 @@ a.choice {
   font-size: var(--text-lg);
   font-weight: 700;
 }
+
+/* A bigger main button: the one first step on an empty home */
+.btn--big {
+  min-height: 64px;
+  padding: 0 var(--space-5);
+  font-size: var(--text-lg);
+}
+
+/* Primeros pasos: a done step, ticked and quiet */
+.first-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.first-step--done .row__name {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.first-step--done .row__icon {
+  color: var(--success);
+}

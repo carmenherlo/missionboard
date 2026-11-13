@@ -8,7 +8,12 @@ from app.children.repository import ChildrenRepository
 from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, require_parent
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
+from app.missions.repository import MissionsRepository
 from app.overview.service import OverviewService
+from app.parents.repository import DEFAULT_PARENT_CODE, ParentsRepository
+from app.prizes.repository import PrizesRepository
+from app.routines.repository import RoutinesRepository
+from app.shop.repository import ShopRepository
 from app.settings import SettingsRepository
 from app.shop.api import Presenter as ShopPresenter
 from app.shop.api import get_orders_service
@@ -68,6 +73,15 @@ def overview_today(overview: OverviewService = Depends(get_overview_service), pr
         "orders": [present.order(o) for o in view["orders"]],
         "prizes": [present.prize(p) for p in view["prizes"]],
     }
+
+
+@router.get("/setup")
+def setup(overview: OverviewService = Depends(get_overview_service), store: ConfigStore = Depends(get_config_store)):
+    """Primeros pasos (Zona de padres): children, missions, switched on for someone, the code changed."""
+    return overview.setup(
+        MissionsRepository(store).list(),
+        ParentsRepository(store).code() == DEFAULT_PARENT_CODE,
+        len(PrizesRepository(store).list()), len(ShopRepository(store).list()), len(RoutinesRepository(store).list()))
 
 
 @router.get("/children/{child_id}")

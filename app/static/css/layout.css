@@ -155,7 +155,16 @@
 }
 
 .home__empty {
+  position: relative; /* over the home's picture */
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
   font-size: var(--text-lg);
+  text-align: center;
 }
 
 .children {

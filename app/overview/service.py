@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from app.children.repository import ChildrenRepository
 from app.clock import Clock
 from app.errors import NotFoundError
+from app.missions.repository import child_tasks
 from app.events.service import EventLog
 from app.settings import SettingsRepository
 from app.shop.orders import OrdersService
@@ -35,6 +36,19 @@ class OverviewService:
             "children": [self._days.today(child.id) for child in self._children.list()],
             "orders": self._orders.for_parents()["waiting"],
             "prizes": self._records.prizes_to_give(),
+        }
+
+    def setup(self, missions: list, code_is_default: bool, prizes: int, shop: int, routines: int) -> dict:
+        """Primeros pasos: what is ready of the app (it goes away once the first four are)."""
+        children = self._children.list()
+        return {
+            "children": len(children),
+            "missions": len(missions),
+            "switched_on": any(child_tasks(m, c.id) for m in missions for c in children),
+            "code_changed": not code_is_default,
+            "prizes": prizes,
+            "shop": shop,
+            "routines": routines,
         }
 
     def child(self, child_id: str) -> dict:

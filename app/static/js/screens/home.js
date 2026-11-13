@@ -21,8 +21,10 @@ export async function viewHome() {
   const grid = showClock ? clockScreen(children) : children.length
     ? h("section", { class: `children${children.length >= 5 ? " children--many" : children.length === 4 ? " children--4" : ""}` },
         children.map((child) => homeKid(child, look, { href: `#/child/${child.id}`, parcel: orders[child.id]?.arrived > 0 })))
+    // Nobody yet (a new installation without the examples): the first step, one tap away.
     : h("div", { class: "home__empty" },
         h("p", { class: "empty" }, t.home.empty),
+        h("a", { class: "btn btn--primary btn--big", href: "#/parents/config/children/new" }, icon("plus"), t.home.start),
         h("p", { class: "note" }, t.home.emptyHint));
 
   render(
