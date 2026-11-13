@@ -94,7 +94,8 @@ def test_a_full_week_wins_the_prize_for_the_parents_to_give(client, bea, clock):
     assert [t["state"] for t in view["tanks"]] == ["full"] * 4 + ["later"] and view["result"] is None
     do_day(client, bea, item, clock, 4)  # Friday, the prize day
     view = week(client, bea)
-    assert view["result"] == {"end": "2026-11-06", "tier": "full", "prize_text": "Ir al parque", "full": 5, "counted": 5}
+    assert view["result"] == {"end": "2026-11-06", "tier": "full", "prize_text": "Ir al parque", "full": 5, "counted": 5,
+                              "prize_image_url": None}
     assert descriptions(client, limit=5)[0] == "Bea llenó todos los depósitos de la semana · 5 de 5"
 
     [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
@@ -166,3 +167,36 @@ def test_a_week_closed_while_nobody_looked_keeps_its_rocket(client, bea, clock):
     assert load(client, bea, "2026-11-06").json()["launch_tanks"][-1]["loaded"] is True
     client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
     assert week(client, bea)["launch_tanks"] is None
+
+
+# ---------- the pictures of the week's prizes ----------
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 64
+
+
+def test_a_week_prize_has_a_picture_copied_when_the_week_closes(client, bea, clock):
+    url = "/api/settings/week-prizes/prize"
+    assert client.patch(url, json={"image": "fluent/rocket"}).status_code == 401
+    assert client.patch(url, json={"image": "fluent/nope"}, headers=PARENT).status_code == 422
+    view = client.patch(url, json={"image": "fluent/rocket"}, headers=PARENT).json()
+    assert view["prize"]["ref"] == "fluent/rocket" and view["prize"]["url"].endswith("/rocket.svg")
+    assert view["second"] == {"ref": None, "url": None}
+    set_week(client, prize="Ir al parque")  # the whole week saved again keeps its pictures
+    assert client.get("/api/settings/week-prizes", headers=PARENT).json()["prize"]["ref"] == "fluent/rocket"
+
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    for n in range(5):
+        do_day(client, bea, item, clock, n)
+    week(client, bea)  # the week closes (it is settled when someone looks)
+    client.patch(url, json={"image": None}, headers=PARENT)  # changed after: the week keeps its copy
+    assert week(client, bea)["result"]["prize_image_url"].endswith("/rocket.svg")
+
+
+def test_a_week_prize_picture_can_be_a_photo(client):
+    url = "/api/settings/week-prizes/second/photo"
+    response = client.put(url, content=PNG, headers={**PARENT, "Content-Type": "image/png"})
+    assert response.status_code == 200
+    photo = response.json()["second"]["url"]
+    assert client.get(f"/{photo}").content == PNG
+    client.patch("/api/settings/week-prizes/second", json={"image": "fluent/rocket"}, headers=PARENT)
+    assert client.get(f"/{photo}").status_code == 404  # replaced: its file goes away

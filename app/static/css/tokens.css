@@ -319,6 +319,27 @@
   --garage-lever: #9aa0c8;
   --garage-lever-knob: #e0483f;
   --garage-lever-base: #2b3058;
+  /* The trip to the moon of the prize (space-trip.js): a moon colour per week. */
+  --trip-moon-1: #ffc4dc; /* pink */
+  --trip-moon-1-dark: #e892b6;
+  --trip-moon-2: #b9f0d8; /* mint */
+  --trip-moon-2-dark: #7fd1ad;
+  --trip-moon-3: #d9c8ff; /* lilac */
+  --trip-moon-3-dark: #ad94ee;
+  --trip-moon-4: #ffd6a8; /* orange */
+  --trip-moon-4-dark: #f2ad69;
+  --trip-moon-5: #bfe3ff; /* sky blue */
+  --trip-moon-5-dark: #82bdeb;
+  --trip-moon-6: #fff1a8; /* yellow */
+  --trip-moon-6-dark: #ecd46a;
+  --trip-moon-glow: rgb(255 255 255 / 0.35);
+  --trip-streak: rgb(255 255 255 / 0.7);
+  --trip-dust: #f4f1ff;
+  --trip-bubble: #ffffff;
+  --trip-ray: rgb(255 226 120 / 0.55);
+  --trip-flight: 3800ms; /* from the workshop to the moon */
+  --trip-land: 900ms; /* touching down: dust */
+  --trip-shake: 900ms; /* the moon shakes, then the prize comes out */
   --week-ready: 9000ms; /* "your rocket is ready: go to the workshop", on screen */
   --week-fill: 1100ms; /* today's tank filling */
   --week-stay: 3500ms; /* then it stays, while the voice speaks */

@@ -258,7 +258,8 @@ class DayService:
             return
         tier = week.tier(rules)
         text = {"full": rules.prize, "second": rules.second}.get(tier, "")
-        self._days.settle_week(child, week.end, tier, text, week.full, week.counted, self._clock.now())
+        image = {"full": rules.prize_image, "second": rules.second_image}.get(tier)
+        self._days.settle_week(child, week.end, tier, text, week.full, week.counted, self._clock.now(), image)
         self._events.child_did(f"week_{tier}", child, prize=f"{week.full} de {week.counted}")
 
     def week_seen(self, child_id: str, end: str) -> None:

@@ -14,10 +14,10 @@ import { api } from "../../api.js";
 import { say } from "../../components/speech.js";
 import { sounds } from "../../components/sound.js";
 import { h } from "../../dom.js";
-import { confetti } from "../../effects/confetti.js";
 import { reducedMotion, tokenMs } from "../../effects/motion.js";
 import { t } from "../../texts.js";
 import { garageScene } from "./garage-scene.js";
+import { spaceTrip } from "./space-trip.js";
 
 const FLUENT = "static/libraries/fluent";
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -180,23 +180,24 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
     busy = false;
   });
 
+  // Off it goes: the roof opens, "tres, dos, uno…", and the trip to the moon of its prize.
   async function launch() {
     const { result } = week;
     api("POST", `api/children/${childId}/week/${result.end}/seen`).catch(() => {});
-    say(t.week.prizeSay(result.tier, name, result.full, result.prize_text));
+    say(t.week.launchSay(result.tier, name, result.full));
     const { hangar } = scene;
     if (!reducedMotion()) {
       hangar.classList.add("garage--open", "garage--shake");
-      await wait(tokenMs("--week-countdown", 2600)); // "tres, dos, uno…"
+      await wait(tokenMs("--week-countdown", 2600));
       hangar.classList.remove("garage--shake");
-      hangar.classList.add(result.tier === "full" ? "garage--go" : "garage--hop");
+      hangar.classList.add("garage--go");
       sounds.liftoff();
-      confetti(scene.layer);
       await wait(tokenMs("--week-liftoff", 2200));
     }
+    await spaceTrip(scene.layer, result);
     scene.caption.replaceChildren(
-      h("img", { class: "garage-layer__picture", src: `${FLUENT}/wrapped-gift.svg`, alt: "" }),
-      h("span", {}, t.week.prizeLine(result.prize_text)));
+      h("img", { class: "garage-layer__picture", src: result.prize_image_url || `${FLUENT}/wrapped-gift.svg`, alt: "" }),
+      h("span", {}, t.week.wonTitle(result.prize_text)));
     scene.caption.classList.add("garage-layer__line--ended");
     week = { ...week, result: null, launch_tanks: null };
   }

@@ -126,6 +126,10 @@ class StreakWeek(BaseModel):
     second_on: bool = False
     second_min: int = Field(default=3, ge=1, le=7)
     second: str = Field(default="", max_length=40)
+    # Their pictures (13/11): a library image or an uploaded photo, as a prize's. Changed only
+    # through their own routes (settings/week_prizes.py), which check them.
+    prize_image: str | None = None
+    second_image: str | None = None
 
     @field_validator("days")
     @classmethod

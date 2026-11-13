@@ -568,15 +568,41 @@
 .garage--open .garage__hatch--right { translate: 190px 0; }
 .garage--go .garage__rocket { animation: garage-go var(--week-liftoff) cubic-bezier(0.5, 0, 0.9, 0.4) forwards; }
 @keyframes garage-go { to { translate: 0 -1300px; } }
-.garage--hop .garage__rocket { animation: garage-hop calc(var(--week-liftoff) * 1.4) ease-in-out forwards; }
-@keyframes garage-hop { 0%, 100% { translate: 0 0; } 45% { translate: 0 -300px; } 70% { translate: 0 -250px; } }
-.garage--go .garage__flame, .garage--hop .garage__flame { opacity: 1; }
-.garage--go .garage__smoke, .garage--hop .garage__smoke { animation: garage-smoke 2s ease-out forwards; }
+.garage--go .garage__flame { opacity: 1; }
+.garage--go .garage__smoke { animation: garage-smoke 2s ease-out forwards; }
 .garage--sputter .garage__rocket { animation: garage-sputter 1.6s ease-in-out forwards; }
 @keyframes garage-sputter { 0%, 30%, 65%, 100% { translate: 0 0; } 15% { translate: 0 -40px; } 50% { translate: 0 -24px; } 80% { translate: 0 -10px; } }
 .garage--sputter .garage__smoke { animation: garage-smoke 1.2s ease-out 3; scale: 0.6; }
 .garage__smoke { transform-box: fill-box; transform-origin: 50% 50%; }
 @keyframes garage-smoke { 0% { opacity: 0; scale: 0.3; } 30% { opacity: 1; scale: 1.1; } 100% { opacity: 0; scale: 1.7; } }
+
+/* The trip to the moon (space-trip.js): the stars streak past, the moon comes from far
+   away and grows, the rocket flies in tilted, slows down and stands on it. */
+.trip { animation: trip-in 600ms ease-out both; }
+@keyframes trip-in { from { opacity: 0; } }
+.trip--flying .trip__streaks { opacity: 1; animation: streak 400ms linear infinite; }
+@keyframes streak { from { translate: 0 0; } to { translate: -6% 6%; } }
+.trip__streaks { transition: opacity 600ms; }
+.trip--flying .trip__moon { animation: moon-near var(--trip-flight) cubic-bezier(0.3, 0, 0.3, 1) both; }
+@keyframes moon-near { from { transform: translate(38vw, -62vh) scale(0.08); } }
+.trip--flying .trip__rocket { animation: rocket-in var(--trip-flight) cubic-bezier(0.2, 0.6, 0.3, 1) both; }
+@keyframes rocket-in {
+  0% { transform: translate(-48vw, 60vh) rotate(45deg) scale(0.7); }
+  55% { transform: translate(-14vw, 6vh) rotate(38deg) scale(0.9); }
+  85% { transform: translate(0, -6vh) rotate(4deg) scale(1); }
+  100% { transform: none; }
+}
+.trip--flying .trip__ship { animation: ship-wobble 300ms ease-in-out infinite alternate; }
+@keyframes ship-wobble { to { rotate: 3deg; } }
+.trip--landed .trip__dust { animation: dust var(--trip-land) ease-out both; }
+@keyframes dust { 0% { opacity: 0.9; scale: 0.3; } 100% { opacity: 0; scale: 1.4; } }
+.trip--shake .trip__moon, .trip--shake .trip__rocket { animation: moon-shake 110ms linear infinite alternate; }
+@keyframes moon-shake { from { translate: calc(-50% - 6px) 2px; } to { translate: calc(-50% + 6px) -2px; } }
+.trip--prize .trip__prize { animation: prize-out 900ms cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+@keyframes prize-out { from { opacity: 0; transform: translate(25vw, 30vh) scale(0.1); } }
+.trip--prize .trip__rays { animation: rays 9s linear infinite; }
+@keyframes rays { to { rotate: 1turn; } }
+.trip--prize .trip__won { animation: line-pop 600ms 500ms cubic-bezier(0.2, 1.6, 0.4, 1) both; }
 
 /* A full tank waiting to be loaded beats; the lever is pulled down and springs back. */
 .garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today { animation: today-beat 1.4s ease-in-out infinite; }
@@ -590,7 +616,8 @@
 @media (prefers-reduced-motion: reduce) {
   .garage-layer, .garage-layer--out, .garage__hose--flow, .garage__tank--now .garage__today, .garage__cone,
   .garage__star--twinkle, .garage__rocket, .garage__smoke, .garage-layer__line--ended,
-  .garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today {
+  .garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today,
+  .trip, .trip__streaks, .trip__moon, .trip__rocket, .trip__ship, .trip__dust, .trip__prize, .trip__rays, .trip__won {
     animation: none !important;
   }
   .garage__fuel, .garage__hatch { transition: none; }

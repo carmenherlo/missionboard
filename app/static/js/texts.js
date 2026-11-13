@@ -67,15 +67,14 @@ export const t = {
     daySay: (name, full, counted) => full >= counted
       ? `¡Muy bien, ${name}! ¡Todos los depósitos llenos!`
       : `¡Muy bien, ${name}! ¡Otro depósito lleno! Ya llevas ${full} de ${counted}.`,
-    resultTitle: { full: "¡Despegue!", second: "¡Vuelo corto!", none: "¡Esta vez no ha podido ser!" },
-    prizeLine: (text) => (text ? `Premio de la semana: ${text}` : "¡Premio sorpresa de la semana!"),
-    noneLine: "Le faltó combustible. ¡La semana que viene, otra vez!",
-    prizeSay: (tier, name, full, text) => `${tier === "full"
+    launchSay: (tier, name, full) => tier === "full"
       ? `¡Todos los depósitos llenos, ${name}! Tres, dos, uno… ¡despegue!`
-      : `¡Has llenado ${full} depósitos, ${name}! Tres, dos, uno… ¡un vuelo corto!`} Te has ganado ${
-      text ? lower(text) : tier === "full" ? "un premio sorpresa" : "un premio"}. Papá o mamá te lo darán.`,
-    noneSay: (full) => `¡Esta vez no ha podido ser! Al cohete le faltó combustible.${
-      full ? ` Has llenado ${full} ${full === 1 ? "depósito" : "depósitos"}, ¡muy bien!` : ""} La semana que viene lo intentamos otra vez.`,
+      : `¡Has llenado ${full} depósitos, ${name}! Tres, dos, uno… ¡despegue!`,
+    // The rocket lands on a moon, and the prize comes out (space-trip.js).
+    wonTitle: (text) => (text ? `¡Has ganado ${lower(text)}!` : "¡Has ganado un premio sorpresa!"),
+    wonHint: "Papá o mamá te lo darán.",
+    wonSay: (text) => `¡Aterrizaje perfecto! Has ganado ${text ? lower(text) : "un premio sorpresa"}. Papá o mamá te lo darán.`,
+    great: "¡Bien!",
   },
   // The child's place (mi-sitio.html): their avatar in the middle and four buildings.
   place: {
@@ -339,7 +338,7 @@ export const t = {
     prizeOff: "Apagado: el premio no sale en la ruta. La lista se conserva para cuando se vuelva a encender.",
     spins: "Giros de la ruleta al día",
     streaksTitle: "Rachas",
-    streaksOn: "Encendidas: cada niño llena un depósito por día y, si los llena todos, el cohete despega y gana el premio de la semana",
+    streaksOn: "Encendidas: cada niño llena un depósito por día y, si los llena todos, su cohete despega en el taller y gana el premio de la semana",
     streaksOff: "Apagadas: no se ven",
     streakCounts: "Un día llena su depósito si hace",
     streakAny: "Al menos una misión",
@@ -353,12 +352,13 @@ export const t = {
     streakPrizeTitle: "Premio de la semana",
     streakPrizeHint: "Para cuando llena todos los depósitos. Vacío: una sorpresa (el niño oye «un premio sorpresa» y tú eliges cuál al darlo).",
     streakPrizeText: "Premio",
+    streakPrizeImage: "Su imagen (la verá al llegar a la luna)",
     streakPrizePlaceholder: "Sorpresa",
     streakSecondTitle: "Premio pequeño (si quieres)",
     streakSecondOn: "Si no los llena todos, pero sí unos cuantos, gana un premio más pequeño",
     streakSecondMin: "Depósitos que necesita como mínimo",
     streakSecondText: "Premio pequeño",
-    streakNoneHint: "Si no llega a ninguno de los dos, el cohete lo intenta y se queda: «¡Esta vez no ha podido ser! La semana que viene lo intentamos otra vez».",
+    streakNoneHint: "Si no llega a ninguno de los dos, en el taller el cohete tose y no despega. Con premio, el niño carga el combustible, tira de la palanca y el cohete vuela hasta una luna, donde sale el premio.",
     streakTry: "Probar cómo lo ve el niño",
     shopTitle: "Tienda",
     shopOn: "Encendida: los niños gastan sus estrellas desde su ruta",

@@ -1,6 +1,8 @@
 // Configurar → Rachas (rachas.html, 13/11): the week of fuel tanks. On or off, which days
 // count and what fills a tank, the day the parents give the prize (it closes the week),
 // the prize and, if they want, a smaller one for a few tanks. Saved on the spot.
+import { api } from "../../api.js";
+import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
@@ -11,8 +13,17 @@ import { WEEKDAYS } from "./mission-summary.js";
 import { featurePanel, featureSwitch, loadSettings, saveFeatures, saveSettings, settingStepper } from "./settings-parts.js";
 
 export async function viewStreakSettings() {
-  const { settings, features } = await loadSettings();
+  const [{ settings, features }, images] = await Promise.all([loadSettings(), api("GET", "api/settings/week-prizes")]);
   const status = saveStatus();
+  // Each prize's picture (13/11): what the child sees when the rocket lands. Saved on the spot.
+  const picker = (which) => imagePicker({
+    initial: images[which],
+    onChange: (choice) => saveImageChoice(choice, {
+      patch: (ref) => status.track(api("PATCH", `api/settings/week-prizes/${which}`, { json: { image: ref } })),
+      upload: (file) => status.track(api("PUT", `api/settings/week-prizes/${which}/photo`, { body: file, contentType: file.type })),
+    }).catch(() => {}),
+  });
+  const [prizePicture, secondPicture] = await Promise.all([picker("prize"), picker("second")]);
   let week = settings.streak_week;
   const save = (changes) => {
     week = { ...week, ...changes };
@@ -58,7 +69,9 @@ export async function viewStreakSettings() {
         h("div", { class: "chips chips--days" }, WEEKDAYS.map((day) => chip(day, week.prize_day === day, () => save({ prize_day: day })))),
         h("p", { class: "hint" }, t.settings.streakWeekIs(t.dayNames[first || start], t.dayNames[week.prize_day])),
         text(week.prize, t.settings.streakPrizeText, (value) => save({ prize: value })),
-        h("p", { class: "hint" }, t.settings.streakPrizeHint)),
+        h("p", { class: "hint" }, t.settings.streakPrizeHint),
+        h("p", { class: "setting__label" }, t.settings.streakPrizeImage),
+        prizePicture.element),
       panel(t.settings.streakSecondTitle,
         h("label", { class: "toggle" }, h("input", {
           type: "checkbox", checked: week.second_on, onchange: (e) => save({ second_on: e.target.checked }),
@@ -68,6 +81,8 @@ export async function viewStreakSettings() {
           onChange: (n) => { week = { ...week, second_min: n }; saveSettings(status, { streak_week: week }); },
         }),
         week.second_on && text(week.second, t.settings.streakSecondText, (value) => save({ second: value })),
+        week.second_on && h("p", { class: "setting__label" }, t.settings.streakPrizeImage),
+        week.second_on && secondPicture.element,
         h("p", { class: "hint" }, t.settings.streakNoneHint)));
   }
   draw();

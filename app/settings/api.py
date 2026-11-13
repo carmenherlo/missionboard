@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict
 
 from app.clock import Clock, app_day
-from app.deps import get_clock, get_config_store, get_event_log, require_parent
+from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
 from app.events.service import EventLog
+from app.images.libraries import ImageLibraries
 from app.settings.repository import HomeLook, RouteLook, Season, SettingsRepository, ShopNotify, StreakWeek
 from app.settings.service import SettingsService
+from app.settings.week_prizes import Which, WeekPrizeImages
 from app.storage.config_store import ConfigStore
+from app.storage.photo_store import PhotoStore
 from app.today.api import background_url
 from app.today.service import current_moment, current_season
 
@@ -75,8 +78,46 @@ def get_settings(service: SettingsService = Depends(get_settings_service), clock
 @router.patch("")
 def update_settings(body: SettingsPatch, service: SettingsService = Depends(get_settings_service),
                     clock: Clock = Depends(get_clock)):
-    service.update_settings(_given(body))
+    changes = _given(body)
+    if "streak_week" in changes:  # its pictures change only through their own routes, below
+        current = service.settings().streak_week
+        changes["streak_week"] = changes["streak_week"].model_copy(
+            update={"prize_image": current.prize_image, "second_image": current.second_image})
+    service.update_settings(changes)
     return _present(service, clock)
+
+
+# ---------- the pictures of the week's prizes (rachas.html) ----------
+
+
+class ImageIn(BaseModel):
+    image: str | None = None
+
+
+def get_week_prize_images(
+    service: SettingsService = Depends(get_settings_service),
+    libraries: ImageLibraries = Depends(get_image_libraries),
+    photos: PhotoStore = Depends(get_photo_store),
+) -> WeekPrizeImages:
+    return WeekPrizeImages(service, libraries, photos)
+
+
+@router.get("/week-prizes")
+def week_prize_images(images: WeekPrizeImages = Depends(get_week_prize_images)):
+    return images.view()
+
+
+@router.patch("/week-prizes/{which}")
+def set_week_prize_image(which: Which, body: ImageIn, images: WeekPrizeImages = Depends(get_week_prize_images)):
+    return images.set_image(which, body.image)
+
+
+@router.put("/week-prizes/{which}/photo")
+async def upload_week_prize_photo(which: Which, request: Request,
+                                  images: WeekPrizeImages = Depends(get_week_prize_images)):
+    """Upload the raw image as the request body (no multipart needed)."""
+    media_type = request.headers.get("content-type", "").split(";")[0].strip()
+    return images.set_photo(which, await request.body(), media_type)
 
 
 @router.patch("/features")

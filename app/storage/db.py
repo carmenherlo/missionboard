@@ -173,6 +173,10 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (child_id, day)
     )
     """,
+    # 12 · The picture of a week's prize (13/11), copied with its text when the week closes.
+    """
+    ALTER TABLE streak_weeks ADD COLUMN prize_image TEXT
+    """,
 ]
 
 

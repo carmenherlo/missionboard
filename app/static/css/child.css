@@ -2188,3 +2188,168 @@ span.week-mini { cursor: default; }
 .garage__lever-base { fill: var(--garage-lever-base); }
 .garage-layer__line { flex-wrap: wrap; justify-content: center; }
 .garage-layer__line .btn { white-space: nowrap; }
+
+
+/* ---------- The trip to the moon of the prize (space-trip.js) ---------- */
+
+.trip {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.trip__sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(var(--garage-sky-1), var(--garage-sky-2) 45%, var(--garage-sky-3) 80%, var(--garage-sky-4));
+}
+
+.trip__stars, .trip__streaks,
+.trip__stars svg, .trip__streaks svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.trip__streaks line {
+  stroke: var(--trip-streak);
+  stroke-width: 2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.trip__streaks { opacity: 0; }
+
+/* The moon: big, its top is the ground the rocket lands on. */
+.trip__moon {
+  --moon: var(--trip-moon-1);
+  --moon-dark: var(--trip-moon-1-dark);
+  position: absolute;
+  left: 50%;
+  top: 60vh;
+  width: 100vh;
+  height: 100vh;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, var(--moon) 55%, var(--moon-dark));
+  box-shadow: 0 0 80px 20px var(--trip-moon-glow);
+}
+
+.trip__moon--2 { --moon: var(--trip-moon-2); --moon-dark: var(--trip-moon-2-dark); }
+.trip__moon--3 { --moon: var(--trip-moon-3); --moon-dark: var(--trip-moon-3-dark); }
+.trip__moon--4 { --moon: var(--trip-moon-4); --moon-dark: var(--trip-moon-4-dark); }
+.trip__moon--5 { --moon: var(--trip-moon-5); --moon-dark: var(--trip-moon-5-dark); }
+.trip__moon--6 { --moon: var(--trip-moon-6); --moon-dark: var(--trip-moon-6-dark); }
+
+.trip__crater {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--moon-dark);
+  opacity: 0.55;
+}
+
+.trip__crater--1 { left: 18%; top: 14%; width: 14%; height: 9%; }
+.trip__crater--2 { left: 66%; top: 10%; width: 10%; height: 6%; }
+.trip__crater--3 { left: 42%; top: 26%; width: 8%; height: 5%; }
+
+/* The rocket, standing on the moon at the end. */
+.trip__rocket {
+  position: absolute;
+  left: 50%;
+  top: calc(60vh - 34vh + 1vh);
+  width: 13.8vh;
+  height: 34vh;
+  translate: -50% 0;
+}
+
+.trip__ship, .trip__ship svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.trip__flame { fill: var(--tank-fuel-bottom); opacity: 0; }
+.trip--flying .trip__flame { opacity: 1; }
+
+.trip__dust {
+  position: absolute;
+  left: 50%;
+  bottom: -2vh;
+  width: 40vh;
+  height: 10vh;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: var(--trip-dust);
+  opacity: 0;
+}
+
+/* The prize: a bubble with its picture and rays of light, left of the rocket. */
+.trip__prize {
+  position: absolute;
+  left: 25%;
+  top: 24vh;
+  width: 30vh;
+  height: 30vh;
+  translate: -50% -50%;
+  opacity: 0;
+}
+
+.trip__rays {
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--trip-ray) 0 12deg, transparent 12deg 30deg);
+  mask: radial-gradient(circle, black 30%, transparent 70%);
+}
+
+.trip__bubble {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--trip-bubble);
+  box-shadow: var(--shadow-lifted);
+  overflow: hidden;
+}
+
+.trip__prize-picture {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+}
+
+/* "¡Has ganado …!", at the right. */
+.trip__won {
+  position: absolute;
+  right: 5%;
+  top: 12vh;
+  width: min(38%, 520px);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--trip-bubble);
+  box-shadow: var(--shadow-lifted);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.trip__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 900;
+}
+
+.trip__hint {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.trip--prize .trip__prize,
+.trip--prize .trip__won { opacity: 1; pointer-events: auto; }

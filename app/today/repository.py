@@ -214,12 +214,15 @@ class DayRepository:
             rows = conn.execute("SELECT * FROM streak_weeks WHERE child_id = ?", (child_id,)).fetchall()
         return {row["week_end"]: dict(row) for row in rows}
 
-    def settle_week(self, child, end: date, tier: str, prize_text: str, full: int, days: int, at: datetime) -> None:
+    def settle_week(self, child, end: date, tier: str, prize_text: str, full: int, days: int, at: datetime,
+                    prize_image: str | None = None) -> None:
         with db.connect(self._data_dir) as conn:
             conn.execute(
-                "INSERT OR IGNORE INTO streak_weeks (child_id, child_name, week_end, tier, prize_text, full_days, days, at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (child.id, child.name, end.isoformat(), tier, prize_text, full, days, at.isoformat(timespec="seconds")),
+                "INSERT OR IGNORE INTO streak_weeks"
+                " (child_id, child_name, week_end, tier, prize_text, full_days, days, at, prize_image)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (child.id, child.name, end.isoformat(), tier, prize_text, full, days, at.isoformat(timespec="seconds"),
+                 prize_image),
             )
 
     def week_seen(self, child_id: str, end: str, at: datetime) -> None:

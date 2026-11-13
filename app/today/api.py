@@ -199,7 +199,7 @@ def note(child_id: str, body: NoteIn, days: DayService = Depends(get_day_service
 # ---------- Rachas: the week of fuel tanks (rachas.html) ----------
 
 
-def present_week(view: dict | None) -> dict:
+def present_week(view: dict | None, libraries: ImageLibraries | None = None) -> dict:
     """The week for the child's screen and the parents' cards; {"on": False} while rachas are off."""
     if view is None:
         return {"on": False}
@@ -218,19 +218,22 @@ def present_week(view: dict | None) -> dict:
         "result": result and {
             "end": result["week_end"], "tier": result["tier"], "prize_text": result["prize_text"],
             "full": result["full_days"], "counted": result["days"],
+            **({"prize_image_url": libraries.url(result.get("prize_image"))} if libraries else {}),
         },
     }
 
 
 @router.get("/children/{child_id}/week")
-def get_week(child_id: str, days: DayService = Depends(get_day_service)):
-    return present_week(days.week(child_id))
+def get_week(child_id: str, days: DayService = Depends(get_day_service),
+             libraries: ImageLibraries = Depends(get_image_libraries)):
+    return present_week(days.week(child_id), libraries)
 
 
 @router.post("/children/{child_id}/week/fuel/{day}")
-def load_fuel(child_id: str, day: date, days: DayService = Depends(get_day_service)):
+def load_fuel(child_id: str, day: date, days: DayService = Depends(get_day_service),
+              libraries: ImageLibraries = Depends(get_image_libraries)):
     """The child loads a full tank into the rocket, in the workshop (taller.html)."""
-    return present_week(days.load_fuel(child_id, day))
+    return present_week(days.load_fuel(child_id, day), libraries)
 
 
 @router.post("/children/{child_id}/week/{end}/seen", status_code=204)
