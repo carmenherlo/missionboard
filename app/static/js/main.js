@@ -15,7 +15,7 @@ import { viewAvatarsList } from "./screens/parents/avatars-list.js";
 import { viewBackup } from "./screens/parents/backup.js";
 import { viewDisplaySettings } from "./screens/parents/display-settings.js";
 import { viewAppearance, viewAppearanceHome, viewAppearanceMissions, viewSeasons } from "./screens/parents/settings.js";
-import { viewDaySettings, viewStarsSettings } from "./screens/parents/rules-settings.js";
+import { viewStarsSettings } from "./screens/parents/rules-settings.js";
 import { viewEventLog } from "./screens/parents/event-log.js";
 import { viewParentsLock } from "./screens/parents/lock.js";
 import { viewPrizeEdit } from "./screens/parents/prize-edit.js";
@@ -67,7 +67,7 @@ const routes = [
   [parentsPath("/appearance/missions"), () => viewAppearanceMissions(), "parents", "appearance_missions"],
   [parentsPath("/appearance/seasons"), () => viewSeasons(), "parents", "appearance_seasons"],
   [parentsPath("/stars"), () => viewStarsSettings(), "parents", "stars_settings"],
-  [parentsPath("/day"), () => viewDaySettings(), "parents", "day_settings"],
+  [parentsPath("/day"), () => { location.hash = "#/parents/config/missions"; }, "parents"], // moved there 13/11
   [parentsPath("/avatars"), () => viewAvatarsList(), "parents", "avatars"],
   [parentsPath("/avatars/new"), () => viewAvatarNew(), "parents", "avatar_new"],
   [parentsPath("/avatars/:avatar"), (ids) => viewAvatarEdit(ids.avatar), "parents", "avatar_edit"],

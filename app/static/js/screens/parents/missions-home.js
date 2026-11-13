@@ -8,6 +8,8 @@ import { t } from "../../texts.js";
 import { missionStyle } from "../child/ring.js";
 import { parentsHeader } from "./common.js";
 import { missionPills } from "./mission-summary.js";
+import { saveStatus } from "../../components/save-status.js";
+import { dayStartPanel } from "./rules-settings.js";
 
 // The family's missions, in the order of the children's route. Each card says who has
 // something on, and opens the mission.
@@ -50,12 +52,15 @@ export async function viewMissionsHome() {
     },
   });
 
+  const status = saveStatus();
+  const dayStart = await dayStartPanel(status);
   render(
-    parentsHeader(t.missions.title, { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.missions.title, status.element), { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },
       h("div", { class: "page-header" },
         h("p", { class: "hint" }, missions.length ? t.missions.hint : t.missions.empty),
         h("a", { class: "btn btn--primary", href: "#/parents/config/missions/new" }, icon("plus"), t.missions.add)),
       missions.length ? list : null,
-      error));
+      error,
+      dayStart));
 }

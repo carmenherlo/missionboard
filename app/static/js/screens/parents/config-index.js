@@ -10,7 +10,6 @@ const GROUPS = [
     ["children", "children", t.config.children],
     ["missions", "missions", t.config.missions],
     ["routines", "clock", t.config.routines],
-    ["day", "sun", t.config.day],
   ]],
   [t.config.groupRewards, [
     ["stars", "star", t.config.stars],
