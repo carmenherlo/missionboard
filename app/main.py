@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -14,6 +16,7 @@ from app.children.repository import ChildrenRepository
 from app.clock import Clock, SystemClock, app_day
 from app.events import api as events_api
 from app.events.repository import EventsRepository
+from app.events.service import EventLog
 from app.images import api as images_api
 from app.images.libraries import LIBRARIES, ImageLibraries, Library
 from app.missions import api as missions_api
@@ -26,6 +29,7 @@ from app.songs import api as songs_api
 from app.backup import api as backup_api
 from app.songs.repository import SoundFiles
 from app.avatars.repository import AvatarFiles
+from app.notify import HomeAssistant
 from app.shop.repository import PurchasesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
@@ -63,6 +67,28 @@ ERROR_STATUS = {
 }
 
 
+REMIND_EVERY_S = 60
+
+
+def _orders(app: FastAPI):
+    events = EventLog(app.state.events_repository, app.state.clock, SettingsRepository(app.state.config_store))
+    return shop_api.build_orders(app.state, events)
+
+
+async def _phone_buttons(app: FastAPI) -> None:
+    """The buttons of the shop's notifications, tapped on a phone (tienda-2.html)."""
+    if app.state.home_assistant.available:
+        await app.state.home_assistant.listen(lambda action: _orders(app).on_action(action))
+
+
+async def _reminders(app: FastAPI) -> None:
+    """Orders due today and not handed over: a reminder to the phones, once a day."""
+    while app.state.home_assistant.available:
+        with contextlib.suppress(Exception):
+            await asyncio.to_thread(lambda: _orders(app).remind())
+        await asyncio.sleep(REMIND_EVERY_S)
+
+
 def create_app(
     data_dir: Path | None = None,
     clock: Clock | None = None,
@@ -91,7 +117,12 @@ def create_app(
         settings.features()
         RoutinesRepository(config_store).list()  # and if a routine's times do not add up
         threading.Thread(target=app.state.voice.load, daemon=True).start()  # it takes a moment
+        tasks = [asyncio.create_task(job(app)) for job in (_phone_buttons, _reminders)]
         yield
+        for task in tasks:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
 
     app = FastAPI(title="missionboard", lifespan=lifespan)
     app.state.config_store = config_store
@@ -104,6 +135,7 @@ def create_app(
     app.state.day_repository = DayRepository(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
     app.state.purchases_repository = PurchasesRepository(data_dir)
+    app.state.home_assistant = HomeAssistant()  # only inside the add-on; elsewhere it sends nothing
     # The natural voice (app/voice/): its model in data/voices/ or where
     # MISSIONBOARD_VOICE_MODEL says (the Docker image brings it).
     model = Path(os.environ.get("MISSIONBOARD_VOICE_MODEL", data_dir / "voices" / MODEL_NAME))

@@ -141,6 +141,13 @@
   --prize-color: var(--accent-vivid);
   --prize-soft: var(--accent-soft);
   --prize-strong: var(--stars-text); /* "¡Tu premio!" */
+  /* The shop as orders on their way (tienda-2.html) */
+  --road: #8d8d86; /* the road from the shop to home, and the ground of the little films */
+  --road-gap: #c9c9c3; /* its dashes */
+  --order-arrived: color-mix(in srgb, var(--success-vivid) 18%, var(--surface)); /* arrived, waiting to be opened */
+  --order-size: 72px; /* each order's picture, and the shop and the house at the ends of its road */
+  --purse-star: 40px;
+  --shadow-parcel: 0 4px 6px rgb(0 0 0 / 0.3); /* the box on an avatar of the home */ /* their stars, when ordering */
   --prize-locked-opacity: 0.6; /* while missions are left: in colour, but in the background */
   --wheel-size: min(560px, 70vh);
   --wheel-1: #ffd9e5; /* pastel slices, so they do not compete with the child's colour */
@@ -222,6 +229,8 @@
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 6s; /* "¡Misión cumplida!" closes by itself after this */
   --celebration-star-delay: 700ms; /* then the star won pops up and flies to the avatar */
+  --parcel-send: 5s; /* an order leaving: stars → box → truck (effects/delivery.js) */
+  --parcel-home: 5s; /* an order arriving: truck → "ding-dong" → it opens */
   --star-flight: 1.6s; /* a star won: in from outside the screen, tumbling, to where it stays */
   --star-spark: 600ms; /* each spark of its trail */
   --landing-pause: 400ms; /* back on the route: before the star comes */

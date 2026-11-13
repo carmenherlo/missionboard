@@ -44,10 +44,16 @@ _FIELDS = {
     "home": lambda value: "aspecto del inicio cambiado",
     "gift": lambda value: stars_detail(value),
     "route": lambda value: "aspecto de la ruta cambiado",
+    "shop_notify": lambda value: "avisos al móvil: " + (", ".join(value.phones) or "ninguno") + f", recordar a las {value.remind_at}",
+    "due_day": lambda value: "llega " + (_day(value) if value else "pronto"),
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
     "routines": lambda value: "rutinas " + ("encendidas" if value else "apagadas"),
 }
+
+
+def _day(value) -> str:
+    return f"el {value.day}/{value.month}"
 
 
 def change_detail(changes: dict) -> str | None:
@@ -141,6 +147,8 @@ _CONFIG = {
     ("mission", "deleted"): "Borraste «{mission}»",
     ("mission", "opened_today"): "Abriste «{mission}» solo por hoy para {child}",
     ("stars", "given"): "Regalaste estrellas a {child}",
+    ("order", "due"): "Dijiste cuándo le llega «{mission}» a {child}",
+    ("order", "delivered"): "Diste «{mission}» a {child}",
     ("missions", "reordered"): "Ordenaste las misiones",
     ("task", "created"): "Añadiste la tarea «{step}» a «{mission}»",
     ("task", "changed"): "Cambiaste la tarea «{step}» de «{mission}»",
@@ -190,6 +198,7 @@ _CHILD = {
     "prize_locked": "{child} tocó el premio, aún bloqueado",
     "prize_spun": "{child} giró la ruleta · {detail}",
     "purchase": "{child} compró «{mission}» · {detail}",
+    "order_seen": "{child} vio llegar «{mission}»",
 }
 
 

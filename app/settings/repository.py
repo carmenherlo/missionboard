@@ -98,6 +98,17 @@ class RouteLook(BaseModel):
     veil: Literal[0, 25, 45] = 45  # % of white over the picture
 
 
+class ShopNotify(BaseModel):
+    """The shop's messages to the parents' phones (tienda-2.html), through Home Assistant."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    phones: tuple[str, ...] = ()  # Home Assistant's notify services ("mobile_app_pixel_7")
+    remind_at: str = Field(default="17:00", pattern=TIME)  # an order due today and not handed over
+
+    _remind_at = field_validator("remind_at", mode="before")(time_from_yaml_number)
+
+
 class Settings(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -108,6 +119,7 @@ class Settings(BaseModel):
     seasons: tuple[Season, ...] = DEFAULT_SEASONS
     home: HomeLook = HomeLook()
     route: RouteLook = RouteLook()
+    shop_notify: ShopNotify = ShopNotify()
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)

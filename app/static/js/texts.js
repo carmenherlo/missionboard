@@ -5,6 +5,10 @@ function joinNames(names) {
   return names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0];
 }
 
+// "Un globo" inside a sentence: "un globo".
+const lower = (text) => text.charAt(0).toLowerCase() + text.slice(1);
+const stars = (n) => `${n === 1 ? "una estrella" : `${n} estrellas`}`;
+
 export const t = {
   common: {
     cancel: "Cancelar",
@@ -305,14 +309,51 @@ export const t = {
     myStars: "Mis estrellas",
     youHave: (n) => `Tienes ${n} ${n === 1 ? "estrella" : "estrellas"}`,
     missing: (n) => `Te ${n === 1 ? "falta 1" : `faltan ${n}`}`,
-    buyQuestion: (text, n) => `¿Comprar «${text}» por ${n} ${n === 1 ? "estrella" : "estrellas"}?`,
-    yesBuy: "Sí, comprar",
-    no: "No",
-    bought: "¡Comprado!",
-    back: "Volver a la tienda",
-    yourPurchases: "Tus compras",
-    toDeliver: "por entregar",
-    delivered: "entregado",
+    // The child's side as orders on their way (tienda-2.html): every sentence is also said.
+    tabShop: "Tienda",
+    tabOrders: (n) => (n ? `Mis pedidos · ${n}` : "Mis pedidos"),
+    costSay: (text, n) => `${text}. Cuesta ${stars(n)}.`,
+    missingSay: (text, n) => `${text}. Te ${n === 1 ? "falta una estrella" : `faltan ${n} estrellas`}.`,
+    orderQuestion: (text) => `¿Pides ${lower(text)}?`,
+    orderSay: (text, n, left) => `¿Pides ${lower(text)}? Cuesta ${stars(n)}. Te ${left === 1 ? "quedará una" : `quedarán ${left}`}.`,
+    leftAfter: (n) => `Te ${n === 1 ? "queda 1" : `quedan ${n}`}`,
+    order: "¡Pedir!",
+    ordered: "¡Pedido hecho!",
+    orderedSay: (text) => `¡Pedido hecho! Ya va en camino: ${lower(text)}. Cuando llegue, te avisaré.`,
+    today: "hoy",
+    soon: "pronto",
+    nights: (n) => `en ${n} ${n === 1 ? "noche" : "noches"}`,
+    whenSay: (text, nights) => nights === null ? `${text} llegará pronto.`
+      : nights === 0 ? `${text} llega hoy.`
+        : nights === 1 ? `${text} llega mañana, después de dormir una noche.`
+          : `${text} llega dentro de ${nights} noches.`,
+    noOrders: "Todavía no has pedido nada.",
+    youHaveThem: "Ya lo tienes",
+    arrived: "¡Ha llegado!",
+    openIt: "Ábrelo",
+    arrivedTitle: "¡Ha llegado tu pedido!",
+    arrivedSay: (text) => `¡Ding dong! ¡Ha llegado tu pedido: ${lower(text)}! Corre a buscarlo.`,
+    great: "¡Bien!",
+    onTheWay: (n) => `${n} ${n === 1 ? "pedido" : "pedidos"} en camino`,
+    // Padres: Configurar → Tienda
+    ordersTitle: "Pedidos",
+    ordersHint: "Lo que han pedido los niños y todavía no tienen. Di cuándo les llega: en su pantalla lo ven como noches que faltan. Al dárselo, toca «Ya se lo di» y verán llegar el paquete.",
+    noWaiting: "No hay pedidos por entregar.",
+    orderedOn: (child, day, time) => `${child} · pedido el ${day} a las ${time}`,
+    dueNone: "Sin fecha",
+    dueToday: "Hoy",
+    dueTomorrow: "Mañana",
+    dueOther: "Otro día",
+    dueOn: (day) => `El ${day}`,
+    given: "Ya se lo di",
+    handedTitle: "Entregados",
+    handedOn: (child, day) => `${child} · entregado el ${day}`,
+    notifyTitle: "Avisar al móvil",
+    notifyHint: "Cada pedido te llega al móvil por Home Assistant, con botones para decir cuándo llega o que ya se lo has dado.",
+    notifyOff: "Solo funciona con la app como complemento de Home Assistant.",
+    notifyNone: "Home Assistant no tiene ningún móvil con su app.",
+    notifyError: "Home Assistant no contesta. Prueba más tarde.",
+    remindAt: "Si llega el día y no se lo has dado, recordármelo a las",
     openShop: "Mis estrellas y la tienda",
   },
   routines: {

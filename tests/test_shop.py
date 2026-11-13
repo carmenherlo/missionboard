@@ -91,7 +91,8 @@ def test_buying_takes_the_stars(client, bea):
     assert response.status_code == 200
     view = response.json()
     assert view["stars"] == 1
-    assert view["purchases"][0]["item_text"] == "Elegir el postre" and view["purchases"][0]["delivered_at"] is None
+    order = view["orders"][0]
+    assert order["item_text"] == "Elegir el postre" and order["state"] == "on_way" and order["id"] == view["order_id"]
     assert today(client, bea)["stars"] == 1
     assert descriptions(client, limit=1) == ["Bea compró «Elegir el postre» · -3 estrellas"]
 
@@ -99,7 +100,7 @@ def test_buying_takes_the_stars(client, bea):
 def test_not_enough_stars(client, bea):
     earn(client, bea, 2)
     assert buy(client, bea, "globo").status_code == 422
-    assert shop(client, bea)["stars"] == 2 and shop(client, bea)["purchases"] == []
+    assert shop(client, bea)["stars"] == 2 and shop(client, bea)["orders"] == []
 
 
 def test_unknown_child_or_item(client, bea):

@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from datetime import date
 
 from fastapi import APIRouter, Depends, Header, Request
 from pydantic import BaseModel, Field, field_validator
@@ -11,6 +12,7 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.settings import SettingsRepository
 from app.shop.repository import PurchasesRepository, ShopItem, ShopRepository
+from app.shop.orders import OrdersService
 from app.shop.service import ShopService
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
@@ -52,7 +54,18 @@ def get_purchases_repository(request: Request) -> PurchasesRepository:
     return request.app.state.purchases_repository
 
 
+def build_orders(state, events: EventLog) -> OrdersService:
+    """The orders, from the app's shared objects (the routes, and the phones' buttons)."""
+    return OrdersService(state.purchases_repository, SettingsRepository(state.config_store), state.clock,
+                         events, state.home_assistant)
+
+
+def get_orders_service(request: Request, events: EventLog = Depends(get_event_log)) -> OrdersService:
+    return build_orders(request.app.state, events)
+
+
 def get_shop_service(
+    orders: OrdersService = Depends(get_orders_service),
     store: ConfigStore = Depends(get_config_store),
     purchases: PurchasesRepository = Depends(get_purchases_repository),
     days: DayRepository = Depends(get_day_repository),
@@ -62,7 +75,7 @@ def get_shop_service(
     events: EventLog = Depends(get_event_log),
 ) -> ShopService:
     return ShopService(ShopRepository(store), purchases, days, ChildrenRepository(store), SettingsRepository(store),
-                       libraries, photos, clock, events)
+                       libraries, photos, clock, events, orders)
 
 
 class Presenter:
@@ -79,8 +92,14 @@ class Presenter:
             "stars": view["stars"],
             "star_url": self._libraries.url("fluent/star"),
             "items": [{**self.item(i), "affordable": i.price <= view["stars"]} for i in view["items"]],
-            "purchases": [{**p, "image_url": self._libraries.url(p["item_image"])} for p in view["purchases"]],
+            "orders": [self.order(o) for o in view["orders"]],
+            **({"order_id": view["order_id"]} if "order_id" in view else {}),
         }
+
+    def order(self, order: dict) -> dict:
+        keep = ("id", "day", "child_id", "child_name", "item_text", "price", "at", "delivered_at", "due_day",
+                "state", "nights", "progress")
+        return {**{k: order[k] for k in keep}, "image_url": self._libraries.url(order["item_image"])}
 
 
 # ---------- Configurar → Tienda ----------
@@ -135,3 +154,47 @@ def child_shop(child_id: str, shop: ShopService = Depends(get_shop_service), pre
 def buy(child_id: str, item_id: str, shop: ShopService = Depends(get_shop_service), present: Presenter = Depends()):
     """Buy it with the child's stars (422 if they do not have enough)."""
     return present.child(shop.buy(child_id, item_id))
+
+
+@router.post("/children/{child_id}/orders/{order_id}/seen", status_code=204)
+def order_seen(child_id: str, order_id: int, orders: OrdersService = Depends(get_orders_service)) -> None:
+    """The child has seen it arrive (the box opened on their screen)."""
+    orders.seen(child_id, order_id)
+
+
+@router.get("/orders/summary")
+def orders_summary(orders: OrdersService = Depends(get_orders_service)):
+    """Per child: orders on their way and arrived not seen (the home and the route point at them)."""
+    return orders.summary()
+
+
+# ---------- Padres · Pedidos ----------
+
+
+class DueIn(BaseModel):
+    due_day: date | None = None
+
+
+@router.get("/orders", dependencies=parent_only)
+def list_orders(orders: OrdersService = Depends(get_orders_service), present: Presenter = Depends()):
+    view = orders.for_parents()
+    return {name: [present.order(o) for o in view[name]] for name in ("waiting", "handed")}
+
+
+@router.patch("/orders/{order_id}", dependencies=parent_only)
+def set_due(order_id: int, body: DueIn, orders: OrdersService = Depends(get_orders_service),
+            present: Presenter = Depends()):
+    order = orders.set_due(order_id, body.due_day)
+    return present.order({**order, **orders.tracked(order)})
+
+
+@router.post("/orders/{order_id}/deliver", dependencies=parent_only)
+def deliver(order_id: int, orders: OrdersService = Depends(get_orders_service), present: Presenter = Depends()):
+    order = orders.deliver(order_id)
+    return present.order({**order, **orders.tracked(order)})
+
+
+@router.get("/notify/phones", dependencies=parent_only)
+def phones(orders: OrdersService = Depends(get_orders_service)):
+    """Whether Home Assistant is there (only in the add-on), and its phones."""
+    return orders.phones()

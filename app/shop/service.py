@@ -10,12 +10,12 @@ from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
 from app.images.rules import ImageRules
 from app.settings import SettingsRepository
+from app.shop.orders import OrdersService
 from app.shop.repository import PurchasesRepository, ShopItem, ShopRepository
 from app.storage.photo_store import PhotoStore
 from app.today.repository import DayRepository
 
 UNSET = object()
-LATEST_PURCHASES = 5
 
 
 class ShopService:
@@ -33,7 +33,9 @@ class ShopService:
         photos: PhotoStore,
         clock: Clock,
         events: EventLog,
+        orders: OrdersService,
     ):
+        self._orders = orders
         self._items = items
         self._purchases = purchases
         self._days = days
@@ -102,13 +104,13 @@ class ShopService:
     # ---------- the child's side ----------
 
     def for_child(self, child_id: str) -> dict:
-        """Their stars, what they can buy, and what they bought lately."""
+        """Their stars, what they can buy, and their orders (on their way, arrived, received)."""
         child = self._child(child_id)
         return {
             "child": child,
             "stars": self._days.stars(child.id),
             "items": self._items.list() if self._settings.features().shop else [],
-            "purchases": self._purchases.latest(child.id, LATEST_PURCHASES),
+            "orders": self._orders.of_child(child.id),
         }
 
     def buy(self, child_id: str, item_id: str) -> dict:
@@ -118,11 +120,13 @@ class ShopService:
         item = self.get(item_id)
         now = self._clock.now()
         day = app_day(now, self._settings.settings().day_starts_at)
-        if not self._purchases.buy(day, child, item, now):
+        order_id = self._purchases.buy(day, child, item, now)
+        if order_id is None:
             raise InvalidError("Not enough stars")
         self._events.child_did("purchase", child, mission=SimpleNamespace(id=item.id, name=item.text),
                                stars=-item.price)
-        return self.for_child(child_id)
+        self._orders.ordered(order_id)
+        return {**self.for_child(child_id), "order_id": order_id}
 
     def _child(self, child_id: str):
         child = self._children.get(child_id)

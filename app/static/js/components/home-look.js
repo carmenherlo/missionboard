@@ -34,12 +34,14 @@ export function homeScene(look, backgroundUrl) {
 }
 
 // A child on the home: their avatar (with its reflection on opening) and their name.
-export function homeKid(child, look, { href = null } = {}) {
+// parcel: something they ordered has arrived (tienda-2.html): a box on their avatar.
+export function homeKid(child, look, { href = null, parcel = false } = {}) {
   return h(href ? "a" : "div", {
     class: "child-card", href,
     // The child's colour: the only style passed from code (its glow and light come from it).
     style: child.color ? `--child-color: ${child.color}` : null,
   },
   avatar(child, { size: "home", fx: look.shine ? "shine" : "halo" }),
+  parcel && h("img", { class: "child-card__parcel", src: "static/libraries/fluent/package.svg", alt: "" }),
   h("span", { class: "child-card__name" }, child.name));
 }

@@ -12,14 +12,15 @@ import { clockScreen } from "./clock.js";
 
 export async function viewHome() {
   session.parentCode = null;
-  const [children, byHand, { look, background_url: picture }] = await Promise.all(
-    [api("GET", "api/children"), routinesByHand(), api("GET", "api/home"), loadAvatars()]);
+  const [children, byHand, { look, background_url: picture }, orders] = await Promise.all(
+    [api("GET", "api/children"), routinesByHand(), api("GET", "api/home"),
+      api("GET", "api/orders/summary").catch(() => ({})), loadAvatars()]);
   // The kids or the clock (reloj.html), as this tablet last chose.
   const showClock = homeScreen() === "clock";
   const dark = showClock && display().clockTheme === "dark";
   const grid = showClock ? clockScreen(children) : children.length
     ? h("section", { class: `children${children.length >= 5 ? " children--many" : children.length === 4 ? " children--4" : ""}` },
-        children.map((child) => homeKid(child, look, { href: `#/child/${child.id}` })))
+        children.map((child) => homeKid(child, look, { href: `#/child/${child.id}`, parcel: orders[child.id]?.arrived > 0 })))
     : h("div", { class: "home__empty" },
         h("p", { class: "empty" }, t.home.empty),
         h("p", { class: "note" }, t.home.emptyHint));

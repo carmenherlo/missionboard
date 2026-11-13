@@ -126,6 +126,15 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (day, child_id, mission_id)
     )
     """,
+    # 8 · A purchase is an order on its way (tienda-2.html): the day a parent says it
+    # arrives, when the child saw it arrive, and the last day the parents' phones were
+    # reminded. Those already handed over count as seen.
+    """
+    ALTER TABLE purchases ADD COLUMN due_day TEXT;
+    ALTER TABLE purchases ADD COLUMN seen_at TEXT;
+    ALTER TABLE purchases ADD COLUMN reminded_day TEXT;
+    UPDATE purchases SET seen_at = delivered_at WHERE delivered_at IS NOT NULL
+    """,
 ]
 
 

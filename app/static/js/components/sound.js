@@ -180,6 +180,32 @@ export const sounds = {
     });
   },
 
+  // The shop (tienda-2.html). A star paid, `delay` seconds from now: a small coin.
+  coin(delay = 0) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: 1319, length: 0.07, type: "square", volume: 0.15 });
+      blip(ctx, out, { at: now + delay + 0.07, freq: 1760, length: 0.25, type: "sine", volume: 0.3 });
+    });
+  },
+
+  // The delivery truck: a low engine for a moment and two short honks.
+  truck(delay = 0) {
+    play((ctx, out, now) => {
+      const at = now + delay;
+      blip(ctx, out, { at, freq: 55, to: 90, length: 1.1, type: "sawtooth", volume: 0.12 });
+      blip(ctx, out, { at: at + 0.9, freq: 415, length: 0.14, type: "square", volume: 0.25 });
+      blip(ctx, out, { at: at + 1.1, freq: 415, length: 0.22, type: "square", volume: 0.25 });
+    });
+  },
+
+  // At the door: "ding-dong".
+  doorbell(delay = 0) {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now + delay, freq: 659, length: 0.7, type: "sine", volume: 0.55 });
+      blip(ctx, out, { at: now + delay + 0.45, freq: 523, length: 1.1, type: "sine", volume: 0.55 });
+    });
+  },
+
   // Well done: a fanfare.
   win() {
     play((ctx, out, now) => {

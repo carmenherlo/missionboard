@@ -18,8 +18,9 @@ const TOAST_MS = 3000;
 
 export async function viewChildToday(childId) {
   const base = `api/children/${childId}/today`;
-  const [first] = await Promise.all([api("GET", base), loadAvatars()]);
+  const [first, summary] = await Promise.all([api("GET", base), ordersOf(childId), loadAvatars()]);
   let day = first;
+  let orders = summary; // on their way and arrived (tienda-2.html): the truck by their stars
   let overlay = false; // a mission, its celebration or the wheel is open: no redrawing under it
   let turned = null; // the stop the route's wheel was left on: kept when the screen is drawn again
   const wheel = {}; // the wheel's goTo, to turn it from here (a star landing)
@@ -42,17 +43,14 @@ export async function viewChildToday(childId) {
         avatar(day.child, { size: "child", fx: "shine" }),
         h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
         h("span", { class: "child-bar__spacer" }),
+        orders.on_way + orders.arrived > 0 && h("button", {
+          type: "button", class: `stars stars--button orders-chip${orders.arrived ? " orders-chip--arrived" : ""}`,
+          "aria-label": t.shop.onTheWay(orders.on_way + orders.arrived),
+          onclick: () => openShop({ tab: "orders", arrive: orders.arrived > 0 }),
+        }, h("img", { src: TRUCK, alt: "" }), String(orders.on_way + orders.arrived)),
         h("button", {
           type: "button", class: "stars stars--button", "aria-label": `${t.child.stars(day.stars)} · ${t.shop.openShop}`,
-          onclick: () => {
-            overlay = true;
-            openStars(screen, childId, {
-              onClose: async () => {
-                overlay = false;
-                await refresh();
-              },
-            });
-          },
+          onclick: () => openShop(),
         }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
       day.missions.length
@@ -61,6 +59,22 @@ export async function viewChildToday(childId) {
             { at: turned, onTurn: (i) => { turned = i; }, control: wheel })
         : h("section", { class: "route route__empty" },
             avatar(day.child, { size: "hero" }), t.child.noMissions));
+  }
+
+  function openShop(options = {}) {
+    overlay = true;
+    openStars(screen, childId, {
+      ...options,
+      onClose: async () => {
+        overlay = false;
+        await refresh();
+      },
+    });
+  }
+
+  // Something a parent has handed over: the truck brings it home as soon as they come in.
+  function arrivals() {
+    if (orders.arrived > 0 && !overlay) openShop({ tab: "orders", arrive: true });
   }
 
   function openMission(mission) {
@@ -137,8 +151,9 @@ export async function viewChildToday(childId) {
   }
 
   async function refresh() {
-    day = await api("GET", base);
+    [day, orders] = await Promise.all([api("GET", base), ordersOf(childId)]);
     draw();
+    arrivals();
   }
 
   // Look again every minute (a mission may open or close), but never under the
@@ -151,4 +166,12 @@ export async function viewChildToday(childId) {
 
   draw();
   render(screen);
+  arrivals();
+}
+
+const TRUCK = "static/libraries/fluent/delivery-truck.svg";
+
+async function ordersOf(childId) {
+  const summary = await api("GET", "api/orders/summary").catch(() => ({}));
+  return summary[childId] || { on_way: 0, arrived: 0 };
 }

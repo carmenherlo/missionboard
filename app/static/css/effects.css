@@ -379,6 +379,93 @@
   transform: scale(0.96);
 }
 
+/* ---------- The shop's little films (tienda-2.html, effects/delivery.js) ---------- */
+
+/* An order leaving: the stars fly to it, it goes into a box, a truck takes it. */
+.parcel-scene--send .parcel-scene__star {
+  animation: parcel-star var(--parcel-send) ease-in both;
+}
+.parcel-scene__star--2 { animation-delay: 150ms !important; }
+.parcel-scene__star--3 { animation-delay: 300ms !important; }
+.parcel-scene__star--4 { animation-delay: 450ms !important; }
+.parcel-scene__star--5 { animation-delay: 600ms !important; }
+.parcel-scene--send .parcel-scene__item {
+  animation: parcel-shrink var(--parcel-send) ease both;
+}
+.parcel-scene--send .parcel-scene__box {
+  animation: parcel-pack var(--parcel-send) ease both;
+}
+.parcel-scene--send .parcel-scene__truck {
+  animation: parcel-take var(--parcel-send) ease-in-out both;
+}
+
+@keyframes parcel-star {
+  0% { top: 4%; right: 6%; opacity: 0; transform: scale(1); }
+  3% { opacity: 1; }
+  20% { top: calc(85% - 98px); right: calc(50% - 23px); opacity: 1; transform: scale(0.5) rotate(200deg); }
+  22%, 100% { top: calc(85% - 98px); right: calc(50% - 23px); opacity: 0; transform: scale(0.3); }
+}
+@keyframes parcel-shrink {
+  0%, 24% { opacity: 1; transform: scale(1); }
+  14% { transform: scale(1.12); }
+  31%, 100% { opacity: 0; transform: scale(0.2); }
+}
+@keyframes parcel-pack {
+  0%, 26% { opacity: 0; transform: scale(0.6); }
+  32% { opacity: 1; transform: scale(1.12); }
+  36%, 49% { opacity: 1; transform: scale(1); }
+  53%, 100% { opacity: 0; transform: scale(0.8); }
+}
+@keyframes parcel-take {
+  0%, 36% { left: -45%; }
+  48%, 56% { left: calc(50% - 115px); }
+  74%, 100% { left: 110%; }
+}
+
+/* An order arriving: the truck leaves the box at the door, "ding-dong", it opens. */
+.parcel-scene--home .parcel-scene__truck {
+  animation: parcel-bring var(--parcel-home) ease-in-out both;
+}
+.parcel-scene--home .parcel-scene__box {
+  animation: parcel-drop var(--parcel-home) ease both;
+}
+.parcel-scene--home .parcel-scene__item {
+  animation: parcel-out var(--parcel-home) ease both;
+}
+
+@keyframes parcel-bring {
+  0% { left: -45%; transform: scaleX(-1); }
+  24%, 42% { left: 14%; transform: scaleX(-1); }
+  43% { left: 14%; transform: scaleX(1); }
+  60%, 100% { left: -45%; transform: scaleX(1); }
+}
+@keyframes parcel-drop {
+  0%, 26% { opacity: 0; transform: translateY(-50px); }
+  31% { opacity: 1; transform: translateY(0); }
+  50% { transform: rotate(0); }
+  53% { transform: rotate(-7deg); }
+  56% { transform: rotate(7deg); }
+  59% { transform: rotate(-4deg); }
+  62% { opacity: 1; transform: scale(1); }
+  66%, 100% { opacity: 0; transform: scale(1.4); }
+}
+@keyframes parcel-out {
+  0%, 63% { opacity: 0; transform: scale(0.2); }
+  71% { opacity: 1; transform: scale(1.25); }
+  78%, 100% { opacity: 1; transform: scale(1); }
+}
+
+/* Something has arrived: the truck by their stars, and the box on the home, jump now and then. */
+.orders-chip--arrived, .child-card__parcel {
+  animation: chip-hop 1.6s ease-in-out infinite;
+}
+@keyframes chip-hop {
+  0%, 70%, 100% { transform: translateY(0); }
+  78% { transform: translateY(-10px); }
+  86% { transform: translateY(0); }
+  92% { transform: translateY(-4px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mission-layer, .mission-sheet, .child-toast, .celebration-layer,
   .celebration__hero .ring > svg, .celebration__star, .prize-won, .routine__count,
@@ -390,6 +477,9 @@
   }
   .fx-shine::after {
     display: none;
+  }
+  .orders-chip--arrived, .child-card__parcel {
+    animation: none;
   }
   .wheel__bulb, .wheel__hub, .wheel__pointer--flick, .wheel__slice--won {
     animation: none;
