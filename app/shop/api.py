@@ -46,6 +46,7 @@ class ItemPatch(BaseModel):
     text: str | None = Field(default=None, max_length=ITEM_TEXT_MAX)
     image: str | None = None
     price: int | None = Field(default=None, ge=1, le=999)
+    hidden_from: list[str] | None = None  # the children who do not see it
 
     _text = field_validator("text")(_not_blank)
 
@@ -115,6 +116,15 @@ def create_item(body: ItemCreate, shop: ShopService = Depends(get_shop_service),
     return present.item(shop.create(body.text, body.price))
 
 
+class OrderIn(BaseModel):
+    ids: list[str]
+
+
+@router.put("/shop/order", dependencies=parent_only)
+def reorder_items(body: OrderIn, shop: ShopService = Depends(get_shop_service), present: Presenter = Depends()):
+    return [present.item(i) for i in shop.reorder(body.ids)]
+
+
 @router.get("/shop/{item_id}")
 def get_item(item_id: str, shop: ShopService = Depends(get_shop_service), present: Presenter = Depends()):
     return present.item(shop.get(item_id))
@@ -124,7 +134,7 @@ def get_item(item_id: str, shop: ShopService = Depends(get_shop_service), presen
 def update_item(item_id: str, body: ItemPatch, shop: ShopService = Depends(get_shop_service),
                 present: Presenter = Depends()):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("text", "price"):
+    for required in ("text", "price", "hidden_from"):
         if changes.get(required, "") is None:
             changes.pop(required)
     return present.item(shop.update(item_id, **changes))

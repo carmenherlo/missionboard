@@ -301,7 +301,11 @@ export const t = {
   },
   shop: {
     title: "Tienda",
-    hint: "Lo que los niños pueden comprar con sus estrellas, cuando quieran. Lo mismo para todos.",
+    hint: "Lo que los niños pueden comprar con sus estrellas, cuando quieran. Cada artículo es para todos; toca el avatar de un niño para que no lo vea (sale en gris) y otra vez para que vuelva a verlo.",
+    forKid: (name, text) => `${name} ve «${text}» en la tienda`,
+    kidSees: (name) => `${name} lo ve. Toca para quitárselo.`,
+    kidHidden: (name) => `${name} no lo ve. Toca para dárselo.`,
+    deleted: (text) => `Quitado de la tienda: «${text}»`,
     empty: "Todavía no hay nada en la tienda.",
     count: (n) => `Artículos (${n})`,
     newItem: "Nuevo artículo…",

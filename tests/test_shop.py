@@ -116,3 +116,27 @@ def test_the_shop_can_be_switched_off(data_dir, clock):
         bea = create_child(client)
         assert shop(client, bea)["items"] == []
         assert buy(client, bea, "x").status_code == 409
+
+
+# ---------- who sees each item, and their order (13/11) ----------
+
+
+def test_an_item_is_for_everyone_but_the_children_it_is_hidden_from(client, bea):
+    alex = create_child(client, name="Alex", preset="fox")
+    globo = next(i for i in client.get("/api/shop").json() if i["text"] == "Un globo")
+    assert globo["hidden_from"] == []
+    url = f"/api/shop/{globo['id']}"
+    assert client.patch(url, json={"hidden_from": [alex["id"]]}, headers=PARENT).json()["hidden_from"] == [alex["id"]]
+    assert "Un globo" not in [i["text"] for i in shop(client, alex)["items"]]
+    assert "Un globo" in [i["text"] for i in shop(client, bea)["items"]]
+    client.post(f"/api/children/{alex['id']}/stars/gift", json={"stars": 10}, headers=PARENT)
+    assert buy(client, alex, globo["id"]).status_code == 404
+    assert descriptions(client, limit=2)[1].endswith("para: Bea")
+    assert client.patch(url, json={"hidden_from": ["nobody"]}, headers=PARENT).status_code == 404
+
+
+def test_the_items_can_be_reordered(client):
+    ids = [i["id"] for i in client.get("/api/shop").json()]
+    back = list(reversed(ids))
+    assert [i["id"] for i in client.put("/api/shop/order", json={"ids": back}, headers=PARENT).json()] == back
+    assert client.put("/api/shop/order", json={"ids": back[:1]}, headers=PARENT).status_code == 422

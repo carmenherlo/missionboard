@@ -1,4 +1,6 @@
-from dataclasses import asdict, dataclass
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 
@@ -8,13 +10,18 @@ from app.storage.config_store import ConfigStore
 
 @dataclass
 class ShopItem:
-    """Something the stars buy ("Un globo", 5 stars), the same for every child."""
+    """Something the stars buy ("Un globo", 5 stars). For every child, also the ones
+    added later, but those in `hidden_from` (13/11)."""
 
     id: str
     text: str
     price: int
     image: str | None = None
     image_suggested: bool = False
+    hidden_from: list[str] = field(default_factory=list)
+
+    def for_child(self, child_id: str) -> bool:
+        return child_id not in self.hidden_from
 
 
 def _from_doc(entry: dict) -> ShopItem:
@@ -24,6 +31,7 @@ def _from_doc(entry: dict) -> ShopItem:
         price=int(entry.get("price", 1)),
         image=entry.get("image"),
         image_suggested=bool(entry.get("image_suggested", False)),
+        hidden_from=list(entry.get("hidden_from") or []),
     )
 
 
@@ -53,6 +61,11 @@ class ShopRepository:
     def remove(self, item_id: str) -> None:
         with self._store.edit() as doc:
             doc["shop"] = [e for e in doc["shop"] if e["id"] != item_id]
+
+    def reorder(self, item_ids: list[str]) -> None:
+        with self._store.edit() as doc:
+            by_id = {e["id"]: e for e in doc["shop"]}
+            doc["shop"] = [by_id[item_id] for item_id in item_ids]
 
 
 class PurchasesRepository:

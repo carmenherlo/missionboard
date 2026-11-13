@@ -32,6 +32,7 @@ _FIELDS = {
     "avatar": lambda value: f"avatar: {value}",
     "color": lambda value: f"color: {value}",
     "order": lambda value: "orden: " + ", ".join(value),
+    "shop_for": lambda value: "para: " + (", ".join(value) or "nadie"),
     "price": lambda value: f"precio: {value} {'estrella' if value == 1 else 'estrellas'}",
     # Ajustes and the switches on each screen (ajustes.html)
     "stars_per_mission": lambda value: f"estrellas por misión: {value}",
@@ -178,6 +179,7 @@ _CONFIG = {
     ("shop_item", "created"): "Añadiste «{mission}» a la tienda",
     ("shop_item", "changed"): "Cambiaste «{mission}» de la tienda",
     ("shop_item", "deleted"): "Quitaste «{mission}» de la tienda",
+    ("shop_item", "reordered"): "Ordenaste la tienda",
     ("prize", "created"): "Añadiste el premio «{mission}»",
     ("prize", "changed"): "Cambiaste el premio «{mission}»",
     ("prize", "deleted"): "Borraste el premio «{mission}»",

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import secrets
 from dataclasses import replace
 from types import SimpleNamespace
@@ -64,7 +66,7 @@ class ShopService:
         self._log("created", item)
         return item
 
-    def update(self, item_id: str, *, text=UNSET, image=UNSET, price=UNSET) -> ShopItem:
+    def update(self, item_id: str, *, text=UNSET, image=UNSET, price=UNSET, hidden_from=UNSET) -> ShopItem:
         with self._items.atomic():
             old = self.get(item_id)
             item = replace(old)
@@ -72,6 +74,11 @@ class ShopService:
                 item.text = text
             if price is not UNSET:
                 item.price = price
+            if hidden_from is not UNSET:
+                known = {c.id for c in self._children.list()}
+                if not set(hidden_from) <= known:
+                    raise NotFoundError("Child not found")
+                item.hidden_from = sorted(set(hidden_from))
             if image is not UNSET:
                 item.image = self._images.check_new_image(old.image, image)
                 item.image_suggested = False
@@ -79,9 +86,22 @@ class ShopService:
         self._images.drop_replaced_photo(old.image, item.image)
         changes = {("name" if f == "text" else f): getattr(item, f) for f in ("text", "image", "price")
                    if getattr(item, f) != getattr(old, f)}
+        if item.hidden_from != old.hidden_from:
+            changes["shop_for"] = [c.name for c in self._children.list() if item.for_child(c.id)]
         if changes:
             self._log("changed", item, changes)
         return item
+
+    def reorder(self, item_ids: list[str]) -> list[ShopItem]:
+        with self._items.atomic():
+            current = [i.id for i in self._items.list()]
+            if sorted(current) != sorted(item_ids):
+                raise InvalidError("The order must list every item exactly once")
+            self._items.reorder(item_ids)
+        items = self._items.list()
+        if item_ids != current:
+            self._events.config_changed("shop_item", "reordered", changes={"order": [i.text for i in items]})
+        return items
 
     def set_photo(self, item_id: str, data: bytes, media_type: str) -> ShopItem:
         extension = validate_photo(data, media_type)
@@ -109,7 +129,7 @@ class ShopService:
         return {
             "child": child,
             "stars": self._days.stars(child.id),
-            "items": self._items.list() if self._settings.features().shop else [],
+            "items": [i for i in self._items.list() if i.for_child(child.id)] if self._settings.features().shop else [],
             "orders": self._orders.of_child(child.id),
         }
 
@@ -118,6 +138,8 @@ class ShopService:
             raise ConflictError("The shop is off")
         child = self._child(child_id)
         item = self.get(item_id)
+        if not item.for_child(child.id):
+            raise NotFoundError("Item not found")
         now = self._clock.now()
         day = app_day(now, self._settings.settings().day_starts_at)
         order_id = self._purchases.buy(day, child, item, now)

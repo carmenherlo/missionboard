@@ -1715,6 +1715,24 @@ select.pick {
   gap: var(--space-1);
 }
 
+/* A child's avatar as a switch (Tienda, 13/11): in colour, on; grey and faint, off.
+   Over the card's link, so a tap on it does not open the item. */
+.kid-toggle {
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: opacity var(--appear) ease, filter var(--appear) ease;
+}
+
+.kid-toggle--off {
+  opacity: var(--kid-off-opacity);
+  filter: grayscale(1);
+}
+
 /* A mission's colour: one of the palette, the chosen one with its ✓. */
 .color-chips {
   display: flex;

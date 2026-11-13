@@ -230,6 +230,7 @@
   --celebration-duration: 6s; /* "¡Misión cumplida!" closes by itself after this */
   --celebration-star-delay: 700ms; /* then the star won pops up and flies to the avatar */
   --parcel-send: 9s; /* an order leaving: stars → box → the truck backs up, takes it and goes (effects/delivery.js) */
+  --kid-off-opacity: 0.35; /* a child's avatar switched off (who sees a shop item) */
   --parcel-bump: 260ms; /* the truck shaking on the road, up and down */
   --parcel-home: 5s; /* an order arriving: truck → "ding-dong" → it opens */
   --star-flight: 1.6s; /* a star won: in from outside the screen, tumbling, to where it stays */
