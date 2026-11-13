@@ -26,6 +26,7 @@ class SettingsPatch(BaseModel):
     home: HomeLook | None = None
     route: RouteLook | None = None
     shop_notify: ShopNotify | None = None
+    streak_rule: str | None = None
     routine_warn_minutes: int | None = None
 
 
@@ -34,6 +35,7 @@ class FeaturesPatch(BaseModel):
     # Only the switches that do something today (ajustes.html, question 3).
     daily_prize: bool | None = None
     shop: bool | None = None
+    streaks: bool | None = None
     routines: bool | None = None
 
 

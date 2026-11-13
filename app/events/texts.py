@@ -49,6 +49,8 @@ _FIELDS = {
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
     "routines": lambda value: "rutinas " + ("encendidas" if value else "apagadas"),
+    "streaks": lambda value: "rachas " + ("encendidas" if value else "apagadas"),
+    "streak_rule": lambda value: "la racha cuenta con " + ("una misión" if value == "any" else "todas las misiones"),
 }
 
 
@@ -107,6 +109,8 @@ SCREENS = {
     "appearance_missions": ("Apariencia · Camino de misiones", None),
     "appearance_seasons": ("Apariencia · Fondos y estaciones", None),
     "stars_settings": ("Estrellas", None),
+    "parents_today": ("Padres · Hoy", None),
+    "parents_child": ("Padres · Niño", "Cómo va {child}"),
     "day_settings": ("El día", None),
     "config": ("Configurar", None),
     "change_code": ("Código de padres", None),
@@ -147,6 +151,8 @@ _CONFIG = {
     ("mission", "deleted"): "Borraste «{mission}»",
     ("mission", "opened_today"): "Abriste «{mission}» solo por hoy para {child}",
     ("stars", "given"): "Regalaste estrellas a {child}",
+    ("stars", "taken"): "Quitaste estrellas a {child}",
+    ("prize", "delivered"): "Diste el premio «{mission}» a {child}",
     ("order", "due"): "Dijiste cuándo le llega «{mission}» a {child}",
     ("order", "delivered"): "Diste «{mission}» a {child}",
     ("missions", "reordered"): "Ordenaste las misiones",

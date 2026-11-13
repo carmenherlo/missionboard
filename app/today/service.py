@@ -24,7 +24,7 @@ from datetime import date
 
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
-from app.errors import ConflictError, NotFoundError
+from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, ChildTask, Mission, MissionsRepository, Schedule, child_tasks
 from app.prizes.repository import Prize, PrizesRepository
@@ -32,6 +32,7 @@ from app.routines import links
 from app.routines.repository import RoutinesRepository, minute_of
 from app.settings import MOMENTS, Season, SettingsRepository
 from app.today.repository import DayRepository
+from app.today.streaks import streak
 
 DONE, OPEN, UPCOMING, CLOSED = "done", "open", "upcoming", "closed"
 LOCKED, UNLOCKED, WON = "locked", "unlocked", "won"
@@ -81,6 +82,7 @@ class Today:
     missions: list[MissionToday]
     stars: int
     prize: PrizeToday | None = None  # None: no prize at the end of the route
+    streak: int | None = None  # days in a row (step 8); None: rachas switched off
 
     @property
     def focus_is_now(self) -> bool:
@@ -179,7 +181,19 @@ class DayService:
             missions=missions,
             stars=self._days.stars(child.id),
             prize=self._prize_today(day, child, missions),
+            streak=self.streak(child.id, day) if self._settings.features().streaks else None,
         )
+
+    def streak(self, child_id: str, day: date | None = None) -> int:
+        """Days in a row with their missions done (streaks.py)."""
+        settings = self._settings.settings()
+        day = day or app_day(self._clock.now(), settings.day_starts_at)
+        missions = self._missions.list()
+        by_weekday = {
+            weekday: {m.id for m in missions if child_tasks(m, child_id, weekday)} for weekday in WEEKDAYS
+        }
+        return streak(day, settings.streak_rule, lambda d: by_weekday[WEEKDAYS[d.weekday()]],
+                      self._days.completions(child_id))
 
     def _prize_today(self, day: date, child: Child, missions: list[MissionToday]) -> PrizeToday | None:
         spins = self._settings.settings().daily_prize_spins
@@ -262,6 +276,16 @@ class DayService:
         now = self._clock.now()
         self._days.give_stars(child, stars, app_day(now, self._settings.settings().day_starts_at), now)
         self._events.config_changed("stars", "given", child=child, changes={"gift": stars})
+        return self._days.stars(child.id)
+
+    def take_stars(self, child_id: str, stars: int) -> int:
+        """A parent takes some stars away (Padres · Niño); never more than they have."""
+        child = self._child(child_id)
+        if stars > self._days.stars(child.id):
+            raise InvalidError("Not that many stars")
+        now = self._clock.now()
+        self._days.give_stars(child, -stars, app_day(now, self._settings.settings().day_starts_at), now, "taken")
+        self._events.config_changed("stars", "taken", child=child, changes={"gift": -stars})
         return self._days.stars(child.id)
 
     def note(self, child_id: str, kind: str, mission_id: str | None = None, step_id: str | None = None) -> None:

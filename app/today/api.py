@@ -26,6 +26,7 @@ STAR_IMAGE = "fluent/star"
 MAX_GIFT = 50  # stars a parent can give at once
 CELEBRATION_STAR_IMAGE = "fluent/glowing-star"
 PRIZE_IMAGE = "fluent/wrapped-gift"
+FIRE_IMAGE = "fluent/fire"  # the streak (step 8)
 
 
 class StepIn(BaseModel):
@@ -76,6 +77,8 @@ class Presenter:
             "moment": today.moment,
             "background_url": background_url(today.season.name, today.moment),
             "stars": today.stars,
+            "streak": today.streak,
+            "fire_url": self._libraries.url(FIRE_IMAGE),
             "star_url": self._libraries.url(STAR_IMAGE),
             "celebration_star_url": self._libraries.url(CELEBRATION_STAR_IMAGE),
             "focus_is_now": today.focus_is_now,
@@ -163,6 +166,12 @@ class GiftIn(BaseModel):
 @router.get("/children/{child_id}/stars", dependencies=[Depends(require_parent)])
 def child_stars(child_id: str, days: DayService = Depends(get_day_service)):
     return {"stars": days.stars(child_id)}
+
+
+@router.post("/children/{child_id}/stars/take", dependencies=[Depends(require_parent)])
+def take_stars(child_id: str, body: GiftIn, days: DayService = Depends(get_day_service)):
+    """A parent takes some stars away (Padres · Niño); 422 if they do not have that many."""
+    return {"stars": days.take_stars(child_id, body.stars)}
 
 
 @router.post("/children/{child_id}/stars/gift", dependencies=[Depends(require_parent)])

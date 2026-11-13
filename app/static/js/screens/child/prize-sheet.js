@@ -8,6 +8,7 @@ import { avatar } from "../../components/avatar.js";
 import { h } from "../../dom.js";
 import { confetti } from "../../effects/confetti.js";
 import { sounds } from "../../components/sound.js";
+import { say } from "../../components/speech.js";
 import { tokenMs } from "../../effects/motion.js";
 import { spinTo } from "../../effects/spin.js";
 import { icon } from "../../icons.js";
@@ -78,7 +79,8 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
     const won = prize.won.at(-1);
     body.replaceChildren(...[
       h("h3", { class: "prize-body__title" }, t.child.youWon),
-      h("div", { class: "prize-won" },
+      // Said too (not every child reads): tapping it says it again.
+      h("button", { type: "button", class: "prize-won", onclick: () => say(t.child.wonSay(won.text)) },
         h("span", { class: "step-tile" }, picture(won.image_url, won.text, "step-tile__letter")),
         won.text),
       h("p", { class: "prize-body__hint" }, t.child.tellAdult),
@@ -89,6 +91,9 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
     if (justWon) {
       confetti(layer);
       sounds.win();
+      setTimeout(() => say(t.child.wonSay(won.text)), SAY_AFTER_FANFARE_MS);
+    } else {
+      say(t.child.wonSay(won.text));
     }
   }
 
@@ -96,6 +101,8 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
   else showWon(day.prize);
   return layer;
 }
+
+const SAY_AFTER_FANFARE_MS = 1600; // the voice once the fanfare is over
 
 // The four pastel colours in turn, without two neighbours alike (the last one
 // also touches the first).

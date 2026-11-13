@@ -28,6 +28,8 @@ import { viewRoutinesList } from "./screens/parents/routines-list.js";
 import { viewSongsList } from "./screens/parents/songs-list.js";
 import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
+import { viewParentsChild } from "./screens/parents/parents-child.js";
+import { viewParentsToday } from "./screens/parents/parents-today.js";
 import { viewPrizesList } from "./screens/parents/prizes-list.js";
 import { viewMissionEdit } from "./screens/parents/mission-edit.js";
 import { viewMissionNew } from "./screens/parents/mission-new.js";
@@ -52,7 +54,8 @@ const parentsPath = (path) =>
 const routes = [
   [/^#?\/?$/, () => viewHome(), null, "home"],
   [/^#\/child\/(?<child>[\w-]+)$/, (ids) => viewChildToday(ids.child), "child", "child_today"],
-  [/^#\/parents\/?$/, () => { location.hash = "#/parents/config"; }, "parents"],
+  [/^#\/parents\/?$/, () => viewParentsToday(), "parents", "parents_today"],
+  [/^#\/parents\/kids\/(?<child>[\w-]+)$/, (ids) => viewParentsChild(ids.child), "parents", "parents_child"],
   [parentsPath(""), () => viewConfigIndex(), "parents", "config"],
   [parentsPath("/code"), () => viewChangeCode(), "parents", "change_code"],
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],

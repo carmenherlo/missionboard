@@ -4,6 +4,7 @@
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { cornerButton } from "../../components/corner-button.js";
+import { say } from "../../components/speech.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { openMission as openMissionOver } from "./mission-flow.js";
@@ -43,6 +44,11 @@ export async function viewChildToday(childId) {
         avatar(day.child, { size: "child", fx: "shine" }),
         h("h1", { class: "child-bar__title" }, t.child.hello(day.child.name)),
         h("span", { class: "child-bar__spacer" }),
+        // Rachas (step 8): days in a row, with fire; tapping it says it.
+        day.streak > 0 && h("button", {
+          type: "button", class: "stars stars--button streak-chip", "aria-label": t.child.streakSay(day.streak),
+          onclick: () => say(t.child.streakSay(day.streak)),
+        }, h("img", { src: day.fire_url, alt: "" }), String(day.streak)),
         orders.on_way + orders.arrived > 0 && h("button", {
           type: "button", class: `stars stars--button orders-chip${orders.arrived ? " orders-chip--arrived" : ""}`,
           "aria-label": t.shop.onTheWay(orders.on_way + orders.arrived),

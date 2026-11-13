@@ -135,6 +135,10 @@ MIGRATIONS: list[str] = [
     ALTER TABLE purchases ADD COLUMN reminded_day TEXT;
     UPDATE purchases SET seen_at = delivered_at WHERE delivered_at IS NOT NULL
     """,
+    # 9 · Padres · Hoy (step 7): a prize of the wheel handed over by a parent.
+    """
+    ALTER TABLE prize_spins ADD COLUMN delivered_at TEXT
+    """,
 ]
 
 

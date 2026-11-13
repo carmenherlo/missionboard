@@ -95,14 +95,66 @@ class DayRepository:
                 (child.id, child.name, stars, day.isoformat(), at.isoformat(timespec="seconds")),
             )
 
-    def give_stars(self, child: Child, stars: int, day: date, at: datetime) -> None:
-        """Stars a parent gives a child, as a present (Editar niño → Estrellas)."""
+    def give_stars(self, child: Child, stars: int, day: date, at: datetime, reason: str = "gift") -> None:
+        """Stars a parent gives a child, as a present (Editar niño → Estrellas), or takes
+        away (reason "taken", stars negative)."""
         with db.connect(self._data_dir) as conn:
             conn.execute(
                 "INSERT INTO star_movements (child_id, child_name, amount, reason, day, at)"
-                " VALUES (?, ?, ?, 'gift', ?, ?)",
-                (child.id, child.name, stars, day.isoformat(), at.isoformat(timespec="seconds")),
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                (child.id, child.name, stars, reason, day.isoformat(), at.isoformat(timespec="seconds")),
             )
+
+    # ---------- Padres · Hoy and Padres · Niños (step 7) ----------
+
+    def completions(self, child_id: str) -> dict[str, set[str]]:
+        """Every mission the child has completed, by day ("2026-11-13" → mission ids)."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT day, mission_id FROM mission_completions WHERE child_id = ?", (child_id,)
+            ).fetchall()
+        days: dict[str, set[str]] = {}
+        for row in rows:
+            days.setdefault(row["day"], set()).add(row["mission_id"])
+        return days
+
+    def movements(self, child_id: str, limit: int) -> list[dict]:
+        """The latest stars in and out, newest first."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT amount, reason, mission_name, day, at FROM star_movements WHERE child_id = ?"
+                " ORDER BY at DESC, id DESC LIMIT ?", (child_id, limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def earned_by_day(self, child_id: str, since: date) -> dict[str, int]:
+        """Stars won with missions, by day, from `since`."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT day, SUM(amount) AS stars FROM star_movements"
+                " WHERE child_id = ? AND reason = 'mission_completed' AND day >= ? GROUP BY day",
+                (child_id, since.isoformat()),
+            ).fetchall()
+        return {row["day"]: row["stars"] for row in rows}
+
+    def prizes_to_give(self) -> list[dict]:
+        """Prizes of the wheel not handed over yet, oldest first."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT id, day, child_id, child_name, prize_text, prize_image, at FROM prize_spins"
+                " WHERE delivered_at IS NULL ORDER BY id"
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def prize_spin(self, spin_id: int) -> dict | None:
+        with db.connect(self._data_dir) as conn:
+            row = conn.execute("SELECT * FROM prize_spins WHERE id = ?", (spin_id,)).fetchone()
+        return dict(row) if row else None
+
+    def deliver_prize(self, spin_id: int, at: datetime) -> None:
+        with db.connect(self._data_dir) as conn:
+            conn.execute("UPDATE prize_spins SET delivered_at = ? WHERE id = ? AND delivered_at IS NULL",
+                         (at.isoformat(timespec="seconds"), spin_id))
 
     def prize_spins(self, day: date, child_id: str) -> list[dict]:
         """The prizes the child won today, in order: {"prize_id", "text", "image"}."""

@@ -31,7 +31,7 @@ const GROUPS = [
 
 export function viewConfigIndex() {
   render(
-    parentsHeader(t.config.title),
+    parentsHeader(t.config.title, { href: "#/parents", label: t.overview.title }),
     h("main", { class: "page config-groups" },
       GROUPS.map(([title, sections]) =>
         h("section", { class: "config-group" },

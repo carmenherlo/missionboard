@@ -120,6 +120,8 @@ class Settings(BaseModel):
     home: HomeLook = HomeLook()
     route: RouteLook = RouteLook()
     shop_notify: ShopNotify = ShopNotify()
+    # Rachas: a day counts with at least one mission done ("any") or all of them ("all").
+    streak_rule: Literal["any", "all"] = "any"
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).
     routine_warn_minutes: int = Field(default=1, ge=0, le=30)

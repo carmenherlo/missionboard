@@ -2052,3 +2052,139 @@ a.choice {
   color: var(--on-accent-soft);
   font-weight: 700;
 }
+
+/* ---------- Padres · Hoy and Padres · Niño (step 7) ---------- */
+
+.day-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: var(--space-3);
+}
+
+/* A child's day: a card in their colour that opens Padres · Niño. */
+.day-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border-top: 6px solid var(--child-color);
+  background: var(--container);
+  color: inherit;
+  text-decoration: none;
+}
+
+.day-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.day-card__name {
+  flex: 1;
+  font-size: var(--text-lg);
+}
+
+.day-card__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+}
+
+.day-card__count img {
+  width: 24px;
+  height: 24px;
+}
+
+.day-card__missions {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-card__missions li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.day-card__mission {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.day-card__state {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.day-card__state--done {
+  color: var(--success);
+}
+
+.day-card__state--open {
+  color: var(--primary);
+}
+
+.day-card__state--closed {
+  color: var(--danger);
+}
+
+.day-card__prize {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* Stars won each day: a bar per day, its height from --share (0 to 1). */
+.star-chart {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  align-items: end;
+  gap: 4px;
+  height: 180px;
+}
+
+.star-chart__day {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  align-items: end;
+  height: 100%;
+  gap: 4px;
+}
+
+.star-chart__bar {
+  width: 100%;
+  height: calc(var(--share) * 100%);
+  min-height: 2px;
+  border-radius: 6px 6px 0 0;
+  background: var(--accent-vivid);
+}
+
+.star-chart__value, .star-chart__label {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.star-amount {
+  color: var(--success);
+}
+
+.star-amount--out {
+  color: var(--danger);
+}

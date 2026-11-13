@@ -822,6 +822,13 @@
   text-align: center;
 }
 
+button.prize-won {
+  border: 0;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
 .prize-won .step-tile {
   --step-tile-size: 160px;
 }
