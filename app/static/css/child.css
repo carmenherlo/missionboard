@@ -1591,143 +1591,6 @@ span.week-mini { cursor: default; }
 .week-mini__tank--missed { border-style: dashed; opacity: 0.6; }
 .week-mini__tank--now { border-color: var(--tank-now); }
 
-/* The big bar, over the route. */
-.week-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  display: grid;
-  place-items: center;
-  background: var(--week-shade);
-}
-
-.week-card {
-  position: relative;
-  width: min(820px, 92%);
-  padding: var(--space-5) var(--space-6) var(--space-6);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(var(--week-card-top), var(--week-card-bottom));
-  color: var(--week-card-text);
-  box-shadow: var(--shadow-lifted);
-  overflow: hidden;
-  text-align: center;
-}
-
-.week-card__title {
-  margin: 0 0 var(--space-4);
-  font-size: var(--text-xl);
-}
-
-.week-launch {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-3);
-}
-
-.week-tanks {
-  flex: 1;
-  display: grid;
-  grid-auto-columns: minmax(0, 110px); /* a week of one or two days does not stretch */
-  justify-content: center;
-  grid-auto-flow: column;
-  gap: var(--space-3);
-}
-
-.week-tank {
-  position: relative;
-  height: 130px;
-  border: 4px solid var(--tank-line);
-  border-radius: 18px 18px 12px 12px;
-  background: var(--tank-empty);
-  overflow: hidden;
-}
-
-/* The fuel: a layer that fills from the bottom (all at once without effects.css). */
-.week-tank::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 0;
-  background: linear-gradient(var(--tank-fuel-top), var(--tank-fuel-bottom));
-  box-shadow: 0 0 18px var(--tank-glow);
-}
-
-.week-tank--full::after,
-.week-tank--filling::after { height: 100%; }
-
-.week-tank b {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  color: var(--tank-letter);
-  font-size: 1.8rem;
-}
-
-.week-tank--full b,
-.week-tank--filling b { color: var(--tank-fuel-letter); }
-.week-tank--missed { border-style: dashed; opacity: 0.6; }
-.week-tank--free { border-style: dashed; opacity: 0.35; }
-.week-tank--today { outline: 3px dashed var(--tank-now); outline-offset: 3px; }
-
-.week-pad {
-  position: relative;
-  flex: none;
-  width: 120px;
-  height: 190px;
-}
-
-.week-pad::after { /* the launch pad */
-  content: "";
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 0;
-  height: 10px;
-  border-radius: 10px;
-  background: var(--tank-pad);
-}
-
-.week-pad__rocket {
-  position: absolute;
-  left: 50%;
-  bottom: 8px;
-  width: 100px;
-  translate: -50% 0;
-  rotate: -45deg; /* the picture flies up and to the right: straight up */
-}
-
-.week-pad__smoke {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 140px;
-  translate: -50% 0;
-  opacity: 0;
-}
-
-.week-card__line {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  min-height: 0;
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-lg);
-  font-weight: 900;
-}
-
-.week-card__line:empty { display: none; }
-
-.week-card__picture {
-  width: 64px;
-  height: 64px;
-}
-
-/* Padres · Niño: the same tanks, bigger, to let a day off. */
 .week-days {
   display: inline-flex;
   gap: var(--space-2);
@@ -1909,20 +1772,6 @@ span.week-mini { cursor: default; }
   width: 56px;
   height: 56px;
 }
-
-/* Inside the workshop: the week's card, still. */
-.place-garage {
-  width: 100%;
-  display: grid;
-  place-items: center;
-  border: none;
-  background: none;
-  padding: 0;
-  font: inherit;
-  cursor: pointer;
-}
-
-.week-card--still { width: 100%; }
 
 /* The mailbox: a notice per order. */
 .mail {
@@ -2203,3 +2052,119 @@ span.week-mini { cursor: default; }
   color: var(--muted);
   font-size: var(--text-lg);
 }
+
+
+/* ---------- The rocket's workshop (taller.html, garage-scene.js, week-bar.js) ---------- */
+
+.garage-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--garage-wall-top);
+}
+
+.garage-scene,
+.garage {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.garage-layer__back {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-4);
+  z-index: 1;
+  gap: var(--space-2);
+}
+
+/* What is said, written under it: a pill at the bottom. */
+.garage-layer__line {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-5);
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 90%;
+  margin: 0;
+  padding: var(--space-2) var(--space-5);
+  border-radius: 999px;
+  background: var(--route-label-bg);
+  box-shadow: var(--shadow-lifted);
+  font-size: var(--text-xl);
+  font-weight: 900;
+  text-align: center;
+}
+
+.garage-layer__line:empty { display: none; }
+
+.garage-layer__picture {
+  width: 56px;
+  height: 56px;
+}
+
+/* The drawing's colours (tokens.css, --garage-*). */
+.garage__sky-1 { stop-color: var(--garage-sky-1); }
+.garage__sky-2 { stop-color: var(--garage-sky-2); }
+.garage__sky-3 { stop-color: var(--garage-sky-3); }
+.garage__sky-4 { stop-color: var(--garage-sky-4); }
+.garage__wall-top { stop-color: var(--garage-wall-top); }
+.garage__wall-low { stop-color: var(--garage-wall-low); }
+.garage__fuel-top { stop-color: var(--tank-fuel-top); }
+.garage__fuel-bottom { stop-color: var(--tank-fuel-bottom); }
+.garage__body-light { stop-color: var(--garage-rocket); }
+.garage__body-shade { stop-color: var(--garage-rocket-shade); }
+.garage__glow-in { stop-color: var(--garage-lamp-light); stop-opacity: 0.45; }
+.garage__glow-out { stop-color: var(--garage-lamp-light); stop-opacity: 0; }
+.garage__moonglow-in { stop-color: var(--garage-moon); stop-opacity: 0.6; }
+.garage__moonglow-out { stop-color: var(--garage-moon); stop-opacity: 0; }
+.garage__ready-in { stop-color: var(--garage-light-on); stop-opacity: 0.7; }
+
+.garage__night { fill: var(--garage-sky-1); }
+.garage__beam { fill: var(--garage-beam); }
+.garage__truss { fill: none; stroke: var(--garage-rivet); stroke-width: 6; }
+.garage__rivet { fill: var(--garage-rivet); }
+.garage__star { fill: var(--garage-star); opacity: 0.85; }
+.garage__moon { fill: var(--garage-moon); }
+.garage__moon-edge { fill: var(--garage-moon-edge); }
+.garage__hill { fill: var(--garage-hill); }
+.garage__hill-near { fill: var(--garage-hill-near); }
+.garage__frame { fill: none; stroke: var(--garage-beam); stroke-width: 12; }
+.garage__frame--arch { stroke-width: 24; }
+.garage__cord { stroke: var(--garage-beam); stroke-width: 5; }
+.garage__lamp { fill: var(--garage-lamp); }
+.garage__bulb { fill: var(--garage-lamp-light); }
+.garage__floor { fill: var(--garage-floor); }
+.garage__floor-edge { fill: var(--garage-floor-edge); }
+.garage__floor-line { stroke: var(--garage-floor-line); stroke-width: 3; }
+.garage__shell { fill: var(--garage-shell); }
+.garage__shell-dark { fill: var(--garage-shell-dark); }
+.garage__inside { fill: var(--tank-empty); }
+.garage__sheen { fill: var(--garage-star); opacity: 0.18; }
+.garage__window .garage__sheen, .garage__rocket .garage__sheen { opacity: 0.5; }
+.garage__letter { fill: var(--garage-star); opacity: 0.55; font-family: inherit; font-weight: 900; }
+.garage__today { fill: none; stroke: var(--tank-now); stroke-width: 7; stroke-dasharray: 20 12; display: none; }
+.garage__hose { fill: none; stroke: var(--garage-hose); stroke-width: 12; stroke-linecap: round; }
+.garage__hose--full { stroke: var(--garage-hose-full); }
+.garage__fin { fill: var(--garage-fin); }
+.garage__window { fill: var(--garage-window); stroke: var(--garage-fin); stroke-width: 12; }
+.garage__light { fill: var(--garage-light-off); }
+.garage__light--on { fill: var(--garage-light-on); filter: drop-shadow(0 0 6px var(--garage-light-on)); }
+.garage__scaffold { fill: var(--garage-scaffold); }
+.garage__platform { fill: var(--garage-platform); }
+.garage__ready { opacity: 0; }
+.garage--ready .garage__ready { opacity: 1; }
+.garage__flame { fill: var(--tank-fuel-bottom); opacity: 0; }
+.garage__smoke circle { fill: var(--garage-smoke); }
+.garage__smoke { opacity: 0; }
+
+/* Each tank by its day's state. Full: the fuel, and the letter bright. */
+.garage__fuel { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); }
+.garage__tank--full .garage__fuel { transform: scaleY(1); }
+.garage__tank--full .garage__letter { opacity: 1; }
+.garage__tank--now .garage__today { display: inline; }
+.garage__tank--missed .garage__inside,
+.garage__tank--free .garage__inside { stroke: var(--garage-shell-dark); stroke-width: 5; stroke-dasharray: 14 10; }
+.garage__tank--free { opacity: 0.45; }

@@ -272,20 +272,48 @@
   --celebration-star-delay: 700ms; /* then the star won pops up and flies to the avatar */
   --parcel-send: 9s; /* an order leaving: stars → box → the truck backs up, takes it and goes (effects/delivery.js) */
   /* Rachas (rachas.html): the week of fuel tanks, a little space over the route. */
-  --week-card-top: #1b2350;
+  --week-card-top: #1b2350; /* the week, small (week-mini) */
   --week-card-bottom: #2c2f6e;
-  --week-card-text: #ffffff;
-  --week-shade: rgb(0 0 0 / 0.35);
   --tank-empty: #252a5c;
   --tank-line: #5d64a8;
   --tank-letter: #9aa0d8;
   --tank-fuel-top: #ffd25a;
   --tank-fuel-bottom: #ff7a1a;
   --tank-fuel-letter: #7a3a00;
-  --tank-glow: rgb(255 154 58 / 0.8);
   --tank-now: #ffb347;
-  --tank-pad: #8a90c8;
-  --week-slide: 700ms; /* the bar coming in from the left, and going out on the right */
+  /* The rocket's workshop (taller.html): a hangar at night, in the style of the backgrounds. */
+  --garage-wall-top: #3d4372;
+  --garage-wall-low: #4b5288;
+  --garage-beam: #2b3058;
+  --garage-rivet: #5d64a8;
+  --garage-floor: #6b709e;
+  --garage-floor-edge: #8a8fbe;
+  --garage-floor-line: #5c6190;
+  --garage-sky-1: #0b1236; /* the night in its window: the backgrounds' night */
+  --garage-sky-2: #141c4c;
+  --garage-sky-3: #232a66;
+  --garage-sky-4: #3a3f82;
+  --garage-hill: #2c3468;
+  --garage-hill-near: #3b4580;
+  --garage-moon: #f6f2d8;
+  --garage-moon-edge: #dfe3f6;
+  --garage-star: #ffffff;
+  --garage-lamp: #e0a030;
+  --garage-lamp-light: #ffd76e;
+  --garage-shell: #c9cde6; /* a tank's metal */
+  --garage-shell-dark: #9aa0c8;
+  --garage-hose: #7d82b0;
+  --garage-hose-full: #ff9a3a;
+  --garage-rocket: #ffffff; /* the backgrounds' rocket: white with red fins */
+  --garage-rocket-shade: #e4e6f4;
+  --garage-fin: #e0483f;
+  --garage-window: #8fc3e8;
+  --garage-light-off: #4b5288; /* a light per day on the rocket */
+  --garage-light-on: #ffd25a;
+  --garage-scaffold: #aab0d8;
+  --garage-platform: #8a90c8;
+  --garage-smoke: #e8eaf6;
+  --garage-in: 500ms; /* the workshop coming in over the route, and going */
   --week-fill: 1100ms; /* today's tank filling */
   --week-stay: 3500ms; /* then it stays, while the voice speaks */
   --week-countdown: 2600ms; /* "tres, dos, uno…" before the rocket goes */

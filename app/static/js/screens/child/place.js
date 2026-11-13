@@ -15,7 +15,7 @@ import { placeSheet } from "./place-sheet.js";
 import { skyNews, skyView } from "./sky.js";
 import { openStars } from "./stars-sheet.js";
 import { ordersOf, weekOf } from "./today.js";
-import { weekBoard, weekMini } from "./week-bar.js";
+import { openWorkshop, weekMini } from "./week-bar.js";
 
 const FLUENT = "static/libraries/fluent";
 const img = (name, className) => h("img", { class: className, src: `${FLUENT}/${name}.svg`, alt: "" });
@@ -85,10 +85,7 @@ export async function viewChildPlace(childId) {
   }
 
   function openGarage() {
-    const { body } = placeSheet(screen, { title: t.place.garage, picture: `${FLUENT}/rocket.svg`, colors: day.colors, onClose: back });
-    const board = weekBoard(week);
-    body.append(h("button", { type: "button", class: "place-garage", onclick: () => say(t.week.miniSay(week.full, week.counted)) }, board));
-    say(t.week.miniSay(week.full, week.counted));
+    openWorkshop(screen, week, { backLabel: t.place.backHere, onClose: back });
   }
 
   function openSky() {

@@ -63,6 +63,7 @@ export const t = {
   place: {
     open: "Mi sitio",
     back: "Mis misiones",
+    backHere: "Mi sitio",
     shop: "La tienda",
     garage: "El taller del cohete",
     mailbox: "El buzón",
