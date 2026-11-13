@@ -18,8 +18,9 @@ const DRAWN_PURSE = 20; // and their stars, to see which go
 
 const img = (src, className) => h("img", { class: className, src, alt: "" });
 
-// tab: "shop" or "orders"; arrive: show the first order that has arrived, at once.
-export async function openStars(container, childId, { onClose, tab = "shop", arrive = false }) {
+// tab: "shop" or "orders"; arrive: show the first order that has arrived, at once;
+// announce: the id of an order that arrives today, picked out and said aloud.
+export async function openStars(container, childId, { onClose, tab = "shop", arrive = false, announce = null }) {
   const base = `api/children/${childId}/shop`;
   let view = await api("GET", base);
   let showing = tab;
@@ -196,7 +197,11 @@ export async function openStars(container, childId, { onClose, tab = "shop", arr
 
   const firstArrived = view.orders.find((o) => o.state === "arrived");
   container.append(layer);
+  const news = announce !== null && view.orders.find((o) => o.id === announce);
   if (arrive && firstArrived) await arrive_(firstArrived);
-  else if (showing === "orders") showOrders();
+  else if (news) {
+    showOrders(news.id);
+    say(t.shop.todaySay(news.item_text));
+  } else if (showing === "orders") showOrders();
   else showShop();
 }

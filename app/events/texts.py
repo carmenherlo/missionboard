@@ -155,7 +155,7 @@ _CONFIG = {
     ("stars", "taken"): "Quitaste estrellas a {child}",
     ("prize", "delivered"): "Diste el premio «{mission}» a {child}",
     ("order", "due"): "Dijiste cuándo le llega «{mission}» a {child}",
-    ("order", "delivered"): "Diste «{mission}» a {child}",
+    ("order", "delivered"): "Entregaste «{mission}» a {child}",
     ("missions", "reordered"): "Ordenaste las misiones",
     ("task", "created"): "Añadiste la tarea «{step}» a «{mission}»",
     ("task", "changed"): "Cambiaste la tarea «{step}» de «{mission}»",

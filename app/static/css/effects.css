@@ -505,7 +505,7 @@
 }
 
 /* Something has arrived: the truck by their stars, and the box on the home, jump now and then. */
-.orders-chip--arrived, .child-card__parcel {
+.orders-chip--arrived, .child-card__parcel, .orders-news {
   animation: chip-hop 1.6s ease-in-out infinite;
 }
 @keyframes chip-hop {
@@ -527,7 +527,7 @@
   .fx-shine::after {
     display: none;
   }
-  .orders-chip--arrived, .child-card__parcel {
+  .orders-chip--arrived, .child-card__parcel, .orders-news {
     animation: none;
   }
   .wheel__bulb, .wheel__hub, .wheel__pointer--flick, .wheel__slice--won {

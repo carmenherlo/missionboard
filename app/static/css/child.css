@@ -1272,6 +1272,41 @@ button.prize-won {
 }
 
 /* On the route, next to their stars: the orders on their way (a truck and how many). */
+/* News of an order (13/11): a word under the truck, pointing at it. */
+.orders-chip-box {
+  position: relative;
+  display: inline-flex;
+}
+
+.orders-news {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  translate: -50% 0;
+  z-index: 2;
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--accent-vivid);
+  color: var(--text);
+  box-shadow: var(--shadow-lifted);
+  font: inherit;
+  font-size: var(--text-lg);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.orders-news::before { /* the little point, up to the truck */
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  translate: -50% 0;
+  border: 8px solid transparent;
+  border-bottom-color: var(--accent-vivid);
+}
+
 .orders-chip img {
   transform: scaleX(-1);
 }

@@ -61,11 +61,18 @@ class OrdersService:
         return [{**order, **track(order, today)} for order in self._purchases.of_child(child_id, DONE_SHOWN)]
 
     def summary(self) -> dict[str, dict]:
-        """Per child: orders on their way and arrived but not seen (the truck and the box)."""
+        """Per child: orders on their way and arrived but not seen (the truck and the box),
+        and their ids: arrived, and on their way arriving today (the child is told, 13/11)."""
         counts: dict[str, dict] = {}
+        today = self._today()
         for order in self._purchases.not_seen():
             kind = "arrived" if order["delivered_at"] else "on_way"
-            counts.setdefault(order["child_id"], {"on_way": 0, "arrived": 0})[kind] += 1
+            child = counts.setdefault(order["child_id"], {"on_way": 0, "arrived": 0, "today": [], "arrived_ids": []})
+            child[kind] += 1
+            if kind == "arrived":
+                child["arrived_ids"].append(order["id"])
+            elif track(order, today)["nights"] == 0:
+                child["today"].append(order["id"])
         return counts
 
     def seen(self, child_id: str, order_id: int) -> None:
@@ -115,7 +122,7 @@ class OrdersService:
         stars = order["price"]
         self._send(order, f"🛒 {order['child_name']} ha pedido «{order['item_text']}»",
                    f"Pagó {stars} {'estrella' if stars == 1 else 'estrellas'}. ¿Cuándo le llega?",
-                   [("TODAY", "Hoy"), ("TOMORROW", "Mañana"), ("GIVEN", "Ya se lo di")])
+                   [("TODAY", "Hoy"), ("TOMORROW", "Mañana"), ("GIVEN", "Entregado")])
 
     def remind(self) -> None:
         """Orders due today (or before) and not handed over: once a day, from remind_at."""
@@ -130,7 +137,7 @@ class OrdersService:
                 continue
             self._purchases.set(order["id"], reminded_day=today.isoformat())
             self._send(order, f"🚚 Hoy llega «{order['item_text']}» de {order['child_name']}",
-                       "¿Ya se lo has dado?", [("GIVEN", "Ya se lo di"), ("TOMORROW", "Mañana")])
+                       "¿Ya está entregado?", [("GIVEN", "Entregado"), ("TOMORROW", "Mañana")])
 
     def on_action(self, action: str) -> bool:
         """A button tapped on a phone ("MISSIONBOARD_ORDER_12_TODAY"); false if it is not ours."""

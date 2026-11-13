@@ -77,12 +77,12 @@ def test_an_order_is_on_its_way_until_a_parent_hands_it_over(client, bea):
     order_id = ordered(client, bea)
     [order] = mine(client, bea)
     assert (order["state"], order["nights"], order["progress"]) == ("on_way", None, 0.15)
-    assert client.get("/api/orders/summary").json() == {bea["id"]: {"on_way": 1, "arrived": 0}}
+    assert client.get("/api/orders/summary").json() == {bea["id"]: {"on_way": 1, "arrived": 0, "today": [], "arrived_ids": []}}
     assert [o["id"] for o in client.get("/api/orders", headers=PARENT).json()["waiting"]] == [order_id]
 
     assert client.post(f"/api/orders/{order_id}/deliver", headers=PARENT).json()["state"] == "arrived"
-    assert client.get("/api/orders/summary").json() == {bea["id"]: {"on_way": 0, "arrived": 1}}
-    assert descriptions(client, limit=1) == ["Diste «Elegir el postre» a Bea"]
+    assert client.get("/api/orders/summary").json() == {bea["id"]: {"on_way": 0, "arrived": 1, "today": [], "arrived_ids": [order_id]}}
+    assert descriptions(client, limit=1) == ["Entregaste «Elegir el postre» a Bea"]
 
     assert client.post(f"/api/children/{bea['id']}/orders/{order_id}/seen").status_code == 204
     assert mine(client, bea)[0]["state"] == "done"
@@ -160,3 +160,10 @@ def test_without_home_assistant_nothing_is_sent(data_dir, clock):
         bea = create_child(client)
         ordered(client, bea)
         assert client.get("/api/notify/phones", headers=PARENT).json() == {"available": False, "phones": []}
+
+
+def test_the_summary_says_which_orders_arrive_today(client, bea):
+    order_id = ordered(client, bea)
+    today_ = MONDAY.date().isoformat()
+    client.patch(f"/api/orders/{order_id}", json={"due_day": today_}, headers=PARENT)
+    assert client.get("/api/orders/summary").json()[bea["id"]]["today"] == [order_id]

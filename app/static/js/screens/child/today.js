@@ -49,11 +49,17 @@ export async function viewChildToday(childId) {
           type: "button", class: "stars stars--button streak-chip", "aria-label": t.child.streakSay(day.streak),
           onclick: () => say(t.child.streakSay(day.streak)),
         }, h("img", { src: day.fire_url, alt: "" }), String(day.streak)),
-        orders.on_way + orders.arrived > 0 && h("button", {
-          type: "button", class: `stars stars--button orders-chip${orders.arrived ? " orders-chip--arrived" : ""}`,
-          "aria-label": t.shop.onTheWay(orders.on_way + orders.arrived),
-          onclick: () => openShop({ tab: "orders", arrive: orders.arrived > 0 }),
-        }, h("img", { src: TRUCK, alt: "" }), String(orders.on_way + orders.arrived)),
+        orders.on_way + orders.arrived > 0 && h("span", { class: "orders-chip-box" },
+          h("button", {
+            type: "button", class: `stars stars--button orders-chip${news() ? " orders-chip--arrived" : ""}`,
+            "aria-label": t.shop.onTheWay(orders.on_way + orders.arrived),
+            onclick: () => openShop({ tab: "orders", arrive: orders.arrived > 0, announce: orders.today[0] ?? null }),
+          }, h("img", { src: TRUCK, alt: "" }), String(orders.on_way + orders.arrived)),
+          // News of an order: a word under the truck, until they tap it.
+          news() && h("button", {
+            type: "button", class: "orders-news", "aria-hidden": "true", tabindex: "-1",
+            onclick: () => openShop({ tab: "orders", arrive: orders.arrived > 0, announce: orders.today[0] ?? null }),
+          }, news() === "arrived" ? t.shop.newsArrived : t.shop.newsToday)),
         h("button", {
           type: "button", class: "stars stars--button", "aria-label": `${t.child.stars(day.stars)} · ${t.shop.openShop}`,
           onclick: () => openShop(),
@@ -78,9 +84,20 @@ export async function viewChildToday(childId) {
     });
   }
 
-  // Something a parent has handed over: the truck brings it home as soon as they come in.
+  // News of their orders (13/11): one handed over by a parent ("Entregado"), or one that
+  // arrives today. The truck jumps with a word under it and, the first time for each
+  // order, the voice tells them to tap it; inside, they see it arrive (or arriving today).
+  function news() {
+    return orders.arrived > 0 ? "arrived" : orders.today.length ? "today" : null;
+  }
   function arrivals() {
-    if (orders.arrived > 0 && !overlay) openShop({ tab: "orders", arrive: true });
+    if (overlay) return;
+    const kind = news();
+    const ids = kind === "arrived" ? orders.arrived_ids : orders.today;
+    const fresh = (ids || []).filter((id) => !wasTold(`${kind}-${id}`));
+    if (!fresh.length) return;
+    fresh.forEach((id) => told(`${kind}-${id}`));
+    say(kind === "arrived" ? t.shop.newsArrivedSay(day.child.name) : t.shop.newsTodaySay(day.child.name));
   }
 
   function openMission(mission) {
@@ -179,5 +196,23 @@ const TRUCK = "static/libraries/fluent/delivery-truck.svg";
 
 async function ordersOf(childId) {
   const summary = await api("GET", "api/orders/summary").catch(() => ({}));
-  return summary[childId] || { on_way: 0, arrived: 0 };
+  return summary[childId] || { on_way: 0, arrived: 0, today: [], arrived_ids: [] };
+}
+
+// The news a child has been told aloud, in this tablet ("arrived-12", "today-12"): once each.
+const TOLD_KEY = "missionboard.ordersTold";
+function toldList() {
+  try {
+    return JSON.parse(localStorage.getItem(TOLD_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+const wasTold = (id) => toldList().includes(id);
+function told(id) {
+  try {
+    localStorage.setItem(TOLD_KEY, JSON.stringify([...toldList(), id].slice(-50)));
+  } catch {
+    // no storage (a private window): they will be told again, that is all
+  }
 }

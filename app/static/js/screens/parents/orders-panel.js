@@ -9,7 +9,7 @@ import { t } from "../../texts.js";
 export const dayMonth = (value) => { const [, m, d] = value.slice(0, 10).split("-"); return `${Number(d)}/${Number(m)}`; };
 
 // Pedidos (tienda-2.html): what the children ordered and do not have yet. When it
-// arrives (the child sees the nights left) and "Ya se lo di" (they see it arrive).
+// arrives (the child sees the nights left) and "Entregado" (they see it arrive).
 // handed: also the latest handed over (not in Padres · Hoy, which shows only what is left to do).
 export function ordersPanel(orders, status, { onChange = () => {}, handed: showHanded = true } = {}) {
   const box = h("div", { class: "stack stack--tight" });
