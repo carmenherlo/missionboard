@@ -150,10 +150,18 @@
   /* The shop as a shop front, and "Mis pedidos" as two boxes that look nothing alike (13/11). */
   --shop-awning-a: #e5484d;
   --shop-awning-b: #ffffff;
-  --shop-awning-height: 44px;
+  --shop-awning-height: 48px;
   --shop-ground: #ffefd6; /* inside the shop: warm, not the panel's grey */
-  --order-way-ground: #e3eeff; /* on its way: the road, blue */
-  --order-way-edge: #9dbcf2;
+  --shop-plank: rgb(160 100 40 / 0.07); /* the wall's boards, faint */
+  --shop-awning-shade: rgb(0 0 0 / 0.16); /* the awning darker at its edge, as cloth */
+  --shop-rod: #7a4a24; /* the bar that holds the awning */
+  --shop-wood: #c98a4b; /* the sign, the shelves and the counter */
+  --shop-wood-dark: #9a6431;
+  --shop-wood-text: #fff6e8;
+  --shop-tag: #fff3c4; /* the price, on a tag */
+  --shop-tag-edge: #e8c766;
+  --order-way-ground: var(--surface); /* on its way: still not theirs, white */
+  --order-way-edge: #ffc233; /* a thick dashed yellow line, like a road's */
   --order-home-ground: #e3f5e4; /* what they have: home, green */
   --order-home-edge: #9fd3a3;
   /* The child's place (mi-sitio.html): their avatar in the middle, a building at each corner. */

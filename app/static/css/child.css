@@ -2055,25 +2055,97 @@ span.week-mini { cursor: default; }
 /* ---------- The shop as a shop front, and the two boxes of "Mis pedidos" (13/11) ---------- */
 
 .shop-front {
+  position: relative;
   width: 100%;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  background: var(--shop-ground);
+  /* the wall: warm, with faint boards */
+  background:
+    repeating-linear-gradient(90deg, transparent 0 58px, var(--shop-plank) 58px 62px),
+    var(--shop-ground);
   box-shadow: var(--shadow-badge);
 }
 
-/* The awning: stripes, and scallops at its edge. */
+.shop-front__top {
+  position: relative;
+  padding-bottom: var(--space-3);
+}
+
+.shop-front__rod {
+  height: 12px;
+  background: var(--shop-rod);
+}
+
+/* The awning: stripes, darker towards its edge, and scallops. */
 .shop-front__awning {
   height: var(--shop-awning-height);
-  background: repeating-linear-gradient(90deg, var(--shop-awning-a) 0 48px, var(--shop-awning-b) 48px 96px);
-  -webkit-mask: radial-gradient(24px at 24px 20px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
-    linear-gradient(black, black) 0 0 / 100% 20px no-repeat;
-  mask: radial-gradient(24px at 24px 20px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
-    linear-gradient(black, black) 0 0 / 100% 20px no-repeat;
+  background:
+    linear-gradient(transparent 40%, var(--shop-awning-shade)),
+    repeating-linear-gradient(90deg, var(--shop-awning-a) 0 48px, var(--shop-awning-b) 48px 96px);
+  -webkit-mask: radial-gradient(24px at 24px 24px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
+    linear-gradient(black, black) 0 0 / 100% 24px no-repeat;
+  mask: radial-gradient(24px at 24px 24px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
+    linear-gradient(black, black) 0 0 / 100% 24px no-repeat;
+  filter: drop-shadow(0 4px 2px var(--shop-awning-shade));
+}
+
+/* Its sign, a wooden board over the awning. */
+.shop-front__sign {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-5);
+  border: 3px solid var(--shop-wood-dark);
+  border-radius: 14px;
+  background: var(--shop-wood);
+  color: var(--shop-wood-text);
+  box-shadow: var(--shadow-badge);
+  font-size: var(--text-xl);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.shop-front__sign-star {
+  width: 32px;
+  height: 32px;
 }
 
 .stars-body .shop-front__shelf {
-  padding: var(--space-4);
+  row-gap: var(--space-6);
+  padding: var(--space-3) var(--space-5) var(--space-5);
+}
+
+/* A wooden shelf under each row of things. */
+.shop-front__shelf .step-card::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-3) / -2 - 1px);
+  right: calc(var(--space-3) / -2 - 1px);
+  bottom: -18px;
+  height: 14px;
+  border-bottom: 4px solid var(--shop-wood-dark);
+  background: var(--shop-wood);
+}
+
+/* The price on a tag. */
+.shop-front .price {
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--shop-tag-edge);
+  border-radius: 10px;
+  background: var(--shop-tag);
+}
+
+.shop-front .price--drawn { max-width: 240px; } /* up to 7 stars in one line on its tag */
+
+/* The counter, at the bottom. */
+.shop-front__counter {
+  height: 22px;
+  border-top: 5px solid var(--shop-wood-dark);
+  background: var(--shop-wood);
 }
 
 .order-box {
@@ -2083,8 +2155,9 @@ span.week-mini { cursor: default; }
   border-radius: var(--radius-lg);
 }
 
+/* On its way: white, inside a thick dashed yellow line (not theirs yet). */
 .order-box--way {
-  border-color: var(--order-way-edge);
+  border: 7px dashed var(--order-way-edge);
   background: var(--order-way-ground);
 }
 

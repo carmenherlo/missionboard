@@ -73,7 +73,10 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
     drawHead();
     // The shop as a shop front (13/11): an awning and its own ground, so they know where they are.
     body.replaceChildren(h("section", { class: "shop-front" },
-      h("div", { class: "shop-front__awning", "aria-hidden": "true" }),
+      h("div", { class: "shop-front__top", "aria-hidden": "true" },
+        h("div", { class: "shop-front__rod" }),
+        h("div", { class: "shop-front__awning" }),
+        h("span", { class: "shop-front__sign" }, img(`${FLUENT}/star.svg`, "shop-front__sign-star"), t.place.shop)),
       view.items.length > 0 && h("div", { class: "step-grid shop-front__shelf" }, view.items.map((item) =>
         h("div", { class: `step-card${item.affordable ? "" : " step-card--locked"}` },
           h("button", {
@@ -86,7 +89,8 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
             h("span", { class: "step-tile" }, picture(item.image_url, item.text, "step-tile__letter")),
             h("span", { class: "step-card__text" }, item.text),
             price(item.price),
-            !item.affordable && h("span", { class: "hint" }, t.shop.missing(item.price - view.stars))))))));
+            !item.affordable && h("span", { class: "hint" }, t.shop.missing(item.price - view.stars)))))),
+      h("div", { class: "shop-front__counter", "aria-hidden": "true" })));
   }
 
   // Their stars in a row: those it costs, ringed; those they keep, faded.
