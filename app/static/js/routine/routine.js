@@ -735,7 +735,7 @@ export function startRoutines() {
     const people = h("ul", { class: "routine__people" });
     const over = h("div", {}); // a kid's mission, over the clock
     const trialTools = h("div", { class: "routine__trial" });
-    const transcript = h("ol", { class: "routine__transcript", "aria-live": "polite" });
+    const transcript = h("ol", { class: "routine__transcript", "aria-live": "polite", hidden: true }); // a trial, when opened
     const dial = h("div", { class: "routine__dial" }, clock, count);
     dragging(dial);
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
