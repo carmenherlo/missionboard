@@ -1853,6 +1853,38 @@ span.week-mini { cursor: default; }
   background: radial-gradient(circle at 70% 15%, var(--sky-top), var(--sky-bottom));
 }
 
+.sky--g1 { --sky-top: var(--sky-1-top); --sky-bottom: var(--sky-1-bottom); }
+.sky--g2 { --sky-top: var(--sky-2-top); --sky-bottom: var(--sky-2-bottom); }
+.sky--g3 { --sky-top: var(--sky-3-top); --sky-bottom: var(--sky-3-bottom); }
+.sky--g4 { --sky-top: var(--sky-4-top); --sky-bottom: var(--sky-4-bottom); }
+
+.sky-box {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* The full galaxies, little, over the sky being filled. */
+.sky-galaxies {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.sky-galaxy {
+  display: grid;
+  place-items: center;
+  width: var(--sky-galaxy-size);
+  height: var(--sky-galaxy-size);
+  border-radius: 50%;
+  background: radial-gradient(circle at 70% 15%, var(--sky-top), var(--sky-bottom));
+}
+
+.sky-galaxy img {
+  width: 70%;
+  height: 70%;
+}
+
 .sky__group {
   position: relative;
   aspect-ratio: 16 / 9;

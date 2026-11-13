@@ -183,8 +183,15 @@
   --mail-new: color-mix(in srgb, var(--accent-vivid) 22%, var(--surface)); /* a notice not read yet */
   --mail-sign-size: 48px;
   /* Their sky, in the observatory: the stars they keep. */
-  --sky-top: #2b3f8c;
-  --sky-bottom: #0d1433;
+  --sky-1-top: #2b3f8c; /* each galaxy its colour: night blue, violet, teal, rose */
+  --sky-1-bottom: #0d1433;
+  --sky-2-top: #5b3a9e;
+  --sky-2-bottom: #1d0f3d;
+  --sky-3-top: #1f7a86;
+  --sky-3-bottom: #082a33;
+  --sky-4-top: #9e3a72;
+  --sky-4-bottom: #33102a;
+  --sky-galaxy-size: 64px;
   --sky-line: rgb(255 255 255 / 0.5);
   --sky-name: #dfe6ff;
   --sky-star-size: 30px;

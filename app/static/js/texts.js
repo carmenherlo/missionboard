@@ -105,12 +105,13 @@ export const t = {
     line: (n, left, name) => n === 0
       ? "Cada estrella que guardes se encenderá aquí."
       : `${n === 1 ? "1 estrella guardada" : `${n} estrellas guardadas`}. Con ${left} más, se forma ${name}.`,
-    say: (n, left, name) => n === 0
+    say: (n, left, name, galaxies) => n === 0
       ? "Tu cielo está vacío. Cada estrella que guardes se encenderá aquí."
-      : `Tienes ${n === 1 ? "una estrella guardada" : `${n} estrellas guardadas`} en tu cielo. ¡Con ${
+      : `Tienes ${n === 1 ? "una estrella guardada" : `${n} estrellas guardadas`}${galaxies
+        ? ` y ${galaxies === 1 ? "una galaxia llena" : `${galaxies} galaxias llenas`}` : ""}. ¡Con ${
         left === 1 ? "una" : left} más, se forma ${name}!`,
-    full: (n) => `${n} estrellas guardadas. ¡Tu cielo está lleno!`,
-    fullSay: (n) => `¡Tienes ${n} estrellas guardadas! ¡Tu cielo está lleno de constelaciones!`,
+    galaxiesLabel: (n) => `${n === 1 ? "Una galaxia llena" : `${n} galaxias llenas`}`,
+    newGalaxySay: (n) => `¡Has llenado ${n === 1 ? "tu cielo" : "otro cielo"} de constelaciones! Ahí arriba queda tu galaxia. ¡Empieza una galaxia nueva!`,
   },
   child: {
     hello: (name) => `¡Hola, ${name}!`,

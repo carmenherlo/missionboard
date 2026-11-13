@@ -7,7 +7,9 @@ import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { cornerButton } from "../../components/corner-button.js";
 import { newsBadge, newsOf, withRocket } from "../../components/news.js";
+import { sounds } from "../../components/sound.js";
 import { say } from "../../components/speech.js";
+import { confetti } from "../../effects/confetti.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { openMailbox } from "./mailbox.js";
@@ -102,11 +104,20 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
   function openSky() {
     const { body } = placeSheet(screen, { title: t.sky.title, picture: `${FLUENT}/telescope.svg`, colors: day.colors, onClose: back });
     const next = skyNews(day.stars);
-    const line = next.full ? t.sky.full(day.stars) : t.sky.line(day.stars, next.left, next.name);
-    const sentence = next.full ? t.sky.fullSay(day.stars) : t.sky.say(day.stars, next.left, next.name);
-    body.append(
-      h("button", { type: "button", class: "place-sky", onclick: () => say(sentence) }, skyView(day.stars, day.star_url)),
-      h("p", { class: "place-sky__line" }, line));
+    const line = t.sky.line(day.stars, next.left, next.name);
+    let sentence = t.sky.say(day.stars, next.left, next.name, next.galaxies);
+    // A galaxy just filled (the first time they see it, in this tablet): a party.
+    const key = `missionboard.galaxies.${childId}`;
+    const seen = Number(readKey(key) ?? 0);
+    if (next.galaxies > seen) sentence = t.sky.newGalaxySay(next.galaxies);
+    if (next.galaxies !== seen) writeKey(key, String(next.galaxies));
+    const view = h("button", { type: "button", class: "place-sky", onclick: () => say(sentence) }, skyView(day.stars, day.star_url));
+    body.append(view, h("p", { class: "place-sky__line" }, line));
+    if (next.galaxies > seen) {
+      view.querySelector(".sky-galaxy:last-child")?.classList.add("sky-galaxy--new");
+      sounds.win();
+      confetti(body);
+    }
     say(sentence);
   }
 
@@ -132,4 +143,21 @@ function paths() {
     svg.append(line);
   }
   return svg;
+}
+
+// This tablet's memory of something small (a private window: none, and that is all).
+function readKey(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeKey(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // nothing to do
+  }
 }
