@@ -147,6 +147,15 @@
   --order-arrived: color-mix(in srgb, var(--success-vivid) 18%, var(--surface)); /* arrived, waiting to be opened */
   --order-size: 72px; /* each order's picture, and the shop and the house at the ends of its road */
   --purse-star: 40px;
+  /* The shop as a shop front, and "Mis pedidos" as two boxes that look nothing alike (13/11). */
+  --shop-awning-a: #e5484d;
+  --shop-awning-b: #ffffff;
+  --shop-awning-height: 44px;
+  --shop-ground: #ffefd6; /* inside the shop: warm, not the panel's grey */
+  --order-way-ground: #e3eeff; /* on its way: the road, blue */
+  --order-way-edge: #9dbcf2;
+  --order-home-ground: #e3f5e4; /* what they have: home, green */
+  --order-home-edge: #9fd3a3;
   /* The child's place (mi-sitio.html): their avatar in the middle, a building at each corner. */
   --place-building-size: min(190px, 16vw); /* a building's picture */
   --place-path: rgb(255 255 255 / 0.9); /* the dotted paths from their avatar to each building */

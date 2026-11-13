@@ -1113,10 +1113,6 @@ button.prize-won {
   height: 34px;
 }
 
-.orders--done h3 {
-  margin: var(--space-2) 0;
-}
-
 .orders__things {
   display: flex;
   flex-wrap: wrap;
@@ -2053,4 +2049,65 @@ span.week-mini { cursor: default; }
   font-size: var(--text-lg);
   font-weight: 700;
   text-align: center;
+}
+
+
+/* ---------- The shop as a shop front, and the two boxes of "Mis pedidos" (13/11) ---------- */
+
+.shop-front {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--shop-ground);
+  box-shadow: var(--shadow-badge);
+}
+
+/* The awning: stripes, and scallops at its edge. */
+.shop-front__awning {
+  height: var(--shop-awning-height);
+  background: repeating-linear-gradient(90deg, var(--shop-awning-a) 0 48px, var(--shop-awning-b) 48px 96px);
+  -webkit-mask: radial-gradient(24px at 24px 20px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
+    linear-gradient(black, black) 0 0 / 100% 20px no-repeat;
+  mask: radial-gradient(24px at 24px 20px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
+    linear-gradient(black, black) 0 0 / 100% 20px no-repeat;
+}
+
+.stars-body .shop-front__shelf {
+  padding: var(--space-4);
+}
+
+.order-box {
+  width: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 3px solid;
+  border-radius: var(--radius-lg);
+}
+
+.order-box--way {
+  border-color: var(--order-way-edge);
+  background: var(--order-way-ground);
+}
+
+.order-box--home {
+  border-color: var(--order-home-edge);
+  background: var(--order-home-ground);
+}
+
+.order-box__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xl);
+}
+
+.order-box__picture {
+  width: 48px;
+  height: 48px;
+}
+
+.order-box__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-lg);
 }

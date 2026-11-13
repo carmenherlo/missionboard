@@ -71,8 +71,10 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
   function showShop() {
     showing = "shop";
     drawHead();
-    body.replaceChildren(...[
-      view.items.length > 0 && h("div", { class: "step-grid" }, view.items.map((item) =>
+    // The shop as a shop front (13/11): an awning and its own ground, so they know where they are.
+    body.replaceChildren(h("section", { class: "shop-front" },
+      h("div", { class: "shop-front__awning", "aria-hidden": "true" }),
+      view.items.length > 0 && h("div", { class: "step-grid shop-front__shelf" }, view.items.map((item) =>
         h("div", { class: `step-card${item.affordable ? "" : " step-card--locked"}` },
           h("button", {
             type: "button", class: "step-card__toggle",
@@ -84,8 +86,7 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
             h("span", { class: "step-tile" }, picture(item.image_url, item.text, "step-tile__letter")),
             h("span", { class: "step-card__text" }, item.text),
             price(item.price),
-            !item.affordable && h("span", { class: "hint" }, t.shop.missing(item.price - view.stars)))))),
-    ].filter(Boolean));
+            !item.affordable && h("span", { class: "hint" }, t.shop.missing(item.price - view.stars))))))));
   }
 
   // Their stars in a row: those it costs, ringed; those they keep, faded.
@@ -133,21 +134,25 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
     showOrders(view.order_id);
   }
 
-  // Each order on the road from the shop to home, and when it arrives.
+  // Two boxes that look nothing alike (13/11): what is on its way (the road, in blue)
+  // and what they already have (home, in green). Each says when it is empty.
   function showOrders(fresh = null) {
     showing = "orders";
     drawHead();
     const open = view.orders.filter((o) => o.state !== "done");
     const done = view.orders.filter((o) => o.state === "done");
-    body.replaceChildren(...[
-      !view.orders.length && h("p", { class: "hint" }, t.shop.noOrders),
-      open.length > 0 && h("ul", { class: "orders" }, open.map((o) => orderRow(o, o.id === fresh))),
-      done.length > 0 && h("div", { class: "orders orders--done" },
-        h("h3", {}, t.shop.youHaveThem),
-        h("ul", { class: "orders__things" }, done.map((o) => h("li", { class: "orders__thing" },
+    const box = (kind, picture, title, content, empty) => h("section", { class: `order-box order-box--${kind}` },
+      h("h3", { class: "order-box__title" }, img(`${FLUENT}/${picture}.svg`, "order-box__picture"), title),
+      content ?? h("p", { class: "order-box__empty" }, empty));
+    body.replaceChildren(
+      box("way", "delivery-truck", t.shop.onWayTitle,
+        open.length ? h("ul", { class: "orders" }, open.map((o) => orderRow(o, o.id === fresh))) : null,
+        t.shop.noneOnWay),
+      box("home", "house-with-garden", t.shop.youHaveThem,
+        done.length ? h("ul", { class: "orders__things" }, done.map((o) => h("li", { class: "orders__thing" },
           h("span", { class: "step-tile" }, picture(o.image_url, o.item_text, "step-tile__letter")),
-          h("span", { class: "orders__check", "aria-hidden": "true" }, icon("check")))))),
-    ].filter(Boolean));
+          h("span", { class: "orders__check", "aria-hidden": "true" }, icon("check"))))) : null,
+        t.shop.noneYet));
   }
 
   function orderRow(order, fresh) {

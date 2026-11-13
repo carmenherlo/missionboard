@@ -412,7 +412,9 @@ export const t = {
       : nights === 0 ? `${text} llega hoy.`
         : nights === 1 ? `${text} llega mañana, después de dormir una noche.`
           : `${text} llega dentro de ${nights} noches.`,
-    noOrders: "Todavía no has pedido nada.",
+    onWayTitle: "De camino",
+    noneOnWay: "No hay nada de camino. ¡Pide algo en la tienda!",
+    noneYet: "Aquí verás lo que te llegue de la tienda.",
     todaySay: (text) => `¡Tu pedido llega hoy: ${lower(text)}! Ya falta muy poco.`,
     youHaveThem: "Ya lo tienes",
     arrived: "¡Ha llegado!",
