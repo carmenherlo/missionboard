@@ -16,12 +16,10 @@ const GROUPS = [
     ["prizes", "prize", t.config.prizes],
     ["shop", "shop", t.config.shop],
   ]],
-  [t.config.groupDevice, [
-    ["display", "eye", t.config.display],
-  ]],
   [t.config.groupApp, [
     ["appearance", "palette", t.config.appearance],
     ["avatars", "smile", t.config.avatars],
+    ["display", "eye", t.config.display], // only this tablet (was its own group, Este aparato)
     ["code", "parentCode", t.config.parentCode],
     ["backup", "download", t.config.backup],
     ["log", "history", t.config.eventLog],
@@ -30,7 +28,7 @@ const GROUPS = [
 
 export function viewConfigIndex() {
   render(
-    parentsHeader(t.config.title, { href: "#/parents", label: t.overview.title }),
+    parentsHeader(t.config.title, { href: "#/parents", label: t.overview.back }),
     h("main", { class: "page config-groups" },
       GROUPS.map(([title, sections]) =>
         h("section", { class: "config-group" },

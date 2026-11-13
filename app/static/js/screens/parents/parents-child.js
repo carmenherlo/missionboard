@@ -17,7 +17,7 @@ export async function viewParentsChild(childId) {
   const top = Math.max(1, ...view.chart.map((d) => d.stars));
 
   render(
-    parentsHeader(t.overview.childTitle(view.child.name), { href: "#/parents", label: t.overview.title }),
+    parentsHeader(t.overview.childTitle(view.child.name), { href: "#/parents", label: t.overview.back }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
         view.streak > 0 && h("p", { class: "hint" }, t.overview.streak(view.streak)),

@@ -1,6 +1,6 @@
-// Padres · Hoy (step 7): the first screen after the code. How each child is doing
-// today (missions, stars, streak, prize), and what is waiting to be handed over:
-// the prizes of the wheel and the shop's orders. Configurar is one tap away.
+// Zona de padres · Hoy (step 7): the first screen after the code. First what is left
+// to do (prizes of the wheel and orders to hand over), then how each child is doing
+// today (missions, stars, streak, prize). Configurar: a button by the title.
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { imageThumb } from "../../components/image-thumb.js";
@@ -18,40 +18,53 @@ const FIRE = "static/libraries/fluent/fire.svg";
 export async function viewParentsToday() {
   const [view, orders] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/orders"), loadAvatars()]);
   const status = saveStatus();
-  const prizes = h("div", {});
+  const pending = h("div", { class: "stack" });
+  let prizes = view.prizes;
+  let waiting = orders.waiting.length;
 
-  function drawPrizes(list) {
-    prizes.replaceChildren(list.length
-      ? panel(t.overview.prizesTitle,
-          h("p", { class: "hint" }, t.overview.prizesHint),
-          h("ul", { class: "rows" }, list.map((spin) => h("li", { class: "row row--compact" },
-            imageThumb(spin.image_url, { size: "sm", label: spin.prize_text }),
-            h("span", { class: "row__text" }, spin.prize_text,
-              h("span", { class: "row__detail" }, t.overview.wonOn(spin.child_name, dayMonth(spin.day)))),
-            h("button", {
-              type: "button", class: "btn btn--primary",
-              onclick: async () => {
-                await status.track(api("POST", `api/overview/prizes/${spin.id}/deliver`)).catch(() => {});
-                drawPrizes((await api("GET", "api/overview/today")).prizes);
-              },
-            }, icon("check"), t.shop.given)))))
-      : "");
+  // Pendiente de dar: the prizes of the wheel and the orders; or that there is nothing.
+  function drawPending() {
+    pending.replaceChildren(...[
+      prizes.length > 0 && panel(t.overview.prizesTitle,
+        h("ul", { class: "rows" }, prizes.map((spin) => h("li", { class: "row row--compact" },
+          imageThumb(spin.image_url, { size: "sm", label: spin.prize_text }),
+          h("span", { class: "row__text" }, spin.prize_text,
+            h("span", { class: "row__detail" }, t.overview.wonOn(spin.child_name, dayMonth(spin.day)))),
+          h("button", {
+            type: "button", class: "btn btn--primary",
+            onclick: async () => {
+              await status.track(api("POST", `api/overview/prizes/${spin.id}/deliver`)).catch(() => {});
+              ({ prizes } = await api("GET", "api/overview/today"));
+              drawPending();
+            },
+          }, icon("check"), t.shop.given))))),
+      waiting > 0 && ordersPanel(orders, status, {
+        handed: false,
+        onChange: async () => {
+          waiting = (await api("GET", "api/orders")).waiting.length;
+          if (!waiting) drawPending();
+        },
+      }),
+      !prizes.length && !waiting && h("p", { class: "hint" }, t.overview.nothingPending),
+    ].filter(Boolean));
   }
-  drawPrizes(view.prizes);
+  drawPending();
 
+  const date = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   render(
     parentsHeader(h("span", { class: "title-line" }, t.overview.title, status.element)),
     h("main", { class: "page" },
       h("div", { class: "stack" },
-        h("a", { class: "row row--link", href: "#/parents/config" },
-          h("span", { class: "row__icon" }, icon("settings")),
-          h("span", { class: "row__name" }, t.config.title),
-          h("span", { class: "row__chevron" }, icon("next"))),
-        view.children.length
-          ? h("div", { class: "day-cards" }, view.children.map(dayCard))
-          : h("p", { class: "hint" }, t.overview.noChildren),
-        prizes,
-        (orders.waiting.length > 0 || orders.handed.length > 0) && ordersPanel(orders, status))));
+        h("div", { class: "page-header" },
+          h("p", { class: "lead" }, t.overview.today(date)),
+          h("a", { class: "btn", href: "#/parents/config" }, icon("settings"), t.config.title)),
+        h("section", { class: "stack" },
+          h("h2", { class: "section-title" }, t.overview.pendingTitle), pending),
+        h("section", { class: "stack" },
+          h("h2", { class: "section-title" }, t.overview.howTitle),
+          view.children.length
+            ? h("div", { class: "day-cards" }, view.children.map(dayCard))
+            : h("p", { class: "hint" }, t.overview.noChildren)))));
 }
 
 const STATE = {

@@ -10,7 +10,8 @@ export const dayMonth = (value) => { const [, m, d] = value.slice(0, 10).split("
 
 // Pedidos (tienda-2.html): what the children ordered and do not have yet. When it
 // arrives (the child sees the nights left) and "Ya se lo di" (they see it arrive).
-export function ordersPanel(orders, status, { onChange = () => {} } = {}) {
+// handed: also the latest handed over (not in Padres · Hoy, which shows only what is left to do).
+export function ordersPanel(orders, status, { onChange = () => {}, handed: showHanded = true } = {}) {
   const box = h("div", { class: "stack stack--tight" });
   let { waiting, handed } = orders;
 
@@ -62,8 +63,8 @@ export function ordersPanel(orders, status, { onChange = () => {} } = {}) {
     box.replaceChildren(...[
       h("p", { class: "hint" }, waiting.length ? t.shop.ordersHint : t.shop.noWaiting),
       waiting.length > 0 && h("ul", { class: "rows" }, waiting.map(row)),
-      handed.length > 0 && h("h3", { class: "panel__subtitle" }, t.shop.handedTitle),
-      handed.length > 0 && h("ul", { class: "rows" }, handed.map((order) => h("li", { class: "row row--compact" },
+      showHanded && handed.length > 0 && h("h3", { class: "panel__subtitle" }, t.shop.handedTitle),
+      showHanded && handed.length > 0 && h("ul", { class: "rows" }, handed.map((order) => h("li", { class: "row row--compact" },
         imageThumb(order.image_url, { size: "sm", label: order.item_text }),
         h("span", { class: "row__text" }, order.item_text,
           h("span", { class: "row__detail" }, t.shop.handedOn(order.child_name, dayMonth(order.delivered_at)))))))].filter(Boolean));

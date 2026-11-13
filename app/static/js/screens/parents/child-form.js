@@ -6,7 +6,6 @@ import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { handoff, uploadButton } from "./avatar-parts.js";
-import { childStarsPanel } from "./child-stars.js";
 import { parentsHeader } from "./common.js";
 
 const NAME_SAVE_DELAY_MS = 600;
@@ -143,7 +142,11 @@ export async function viewChildForm(childId) {
   }
 
   const title = h("span", {}, existing ? existing.name : "");
-  const starsPanel = existing ? await childStarsPanel(existing) : null;
+  // Their stars live in Padres · Niño (13/11): from here, a link to them.
+  const starsPanel = existing ? h("a", { class: "row row--link", href: `#/parents/kids/${existing.id}` },
+    h("span", { class: "row__icon" }, icon("star")),
+    h("span", { class: "row__name" }, t.childStars.seeThem(existing.name)),
+    h("span", { class: "row__chevron" }, icon("next"))) : null;
 
   refreshAll();
   if (added && !usedPresets.has(added.id)) {

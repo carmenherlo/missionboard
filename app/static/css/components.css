@@ -2188,3 +2188,10 @@ a.choice {
 .star-amount--out {
   color: var(--danger);
 }
+
+/* Zona de padres · Hoy: the day under the title */
+.lead {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
