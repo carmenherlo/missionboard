@@ -21,33 +21,28 @@ export async function viewParentsToday() {
   const status = saveStatus();
   const pending = h("div", { class: "stack" });
   let prizes = view.prizes;
-  let waiting = orders.waiting.length;
 
-  // Pendiente de dar: the prizes of the wheel and the orders; or that there is nothing.
+  // Pendiente de dar: the prizes of the wheel and the orders, always both (each says
+  // when it has nothing), so the parents know where to look.
+  const ordersBox = ordersPanel(orders, status, { handed: false });
   function drawPending() {
-    pending.replaceChildren(...[
-      prizes.length > 0 && panel(t.overview.prizesTitle,
-        h("ul", { class: "rows" }, prizes.map((spin) => h("li", { class: "row row--compact" },
-          imageThumb(spin.image_url, { size: "sm", label: spin.prize_text }),
-          h("span", { class: "row__text" }, spin.prize_text,
-            h("span", { class: "row__detail" }, t.overview.wonOn(spin.child_name, dayMonth(spin.day)))),
-          h("button", {
-            type: "button", class: "btn btn--primary",
-            onclick: async () => {
-              await status.track(api("POST", `api/overview/prizes/${spin.id}/deliver`)).catch(() => {});
-              ({ prizes } = await api("GET", "api/overview/today"));
-              drawPending();
-            },
-          }, icon("check"), t.shop.given))))),
-      waiting > 0 && ordersPanel(orders, status, {
-        handed: false,
-        onChange: async () => {
-          waiting = (await api("GET", "api/orders")).waiting.length;
-          if (!waiting) drawPending();
-        },
-      }),
-      !prizes.length && !waiting && h("p", { class: "hint" }, t.overview.nothingPending),
-    ].filter(Boolean));
+    pending.replaceChildren(
+      panel(t.overview.prizesTitle,
+        prizes.length
+          ? h("ul", { class: "rows" }, prizes.map((spin) => h("li", { class: "row row--compact" },
+              imageThumb(spin.image_url, { size: "sm", label: spin.prize_text }),
+              h("span", { class: "row__text" }, spin.prize_text,
+                h("span", { class: "row__detail" }, t.overview.wonOn(spin.child_name, dayMonth(spin.day)))),
+              h("button", {
+                type: "button", class: "btn btn--primary",
+                onclick: async () => {
+                  await status.track(api("POST", `api/overview/prizes/${spin.id}/deliver`)).catch(() => {});
+                  ({ prizes } = await api("GET", "api/overview/today"));
+                  drawPending();
+                },
+              }, icon("check"), t.shop.given))))
+          : h("p", { class: "hint" }, t.overview.noPrizes)),
+      ordersBox);
   }
   drawPending();
 
