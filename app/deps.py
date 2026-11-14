@@ -8,17 +8,17 @@ from fastapi import Depends, Header, HTTPException, Request
 
 from app.avatars.repository import AvatarFiles
 from app.clock import Clock
+from app.daily_prize.repository import PrizeSpinsRepository
 from app.events.repository import EventsRepository
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.parents.repository import ParentsRepository
 from app.parents.service import ParentsService
 from app.settings import SettingsRepository
-from app.storage.config_store import ConfigStore
 from app.songs.repository import SoundFiles
-from app.storage.photo_store import PhotoStore
-from app.daily_prize.repository import PrizeSpinsRepository
 from app.stars.repository import StarsRepository
+from app.storage.config_store import ConfigStore
+from app.storage.photo_store import PhotoStore
 from app.streaks.repository import StreaksRepository
 from app.today.repository import DayRepository
 

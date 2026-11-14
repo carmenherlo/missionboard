@@ -28,17 +28,57 @@ from materialyoucolor.scheme.scheme_tonal_spot import SchemeTonalSpot
 SOURCE_DIR = Path(__file__).resolve().parent.parent / "themes"
 
 # The roles of a Theme Builder export, in its order
-ROLES = (
-    "primary surfaceTint onPrimary primaryContainer onPrimaryContainer secondary onSecondary"
-    " secondaryContainer onSecondaryContainer tertiary onTertiary tertiaryContainer"
-    " onTertiaryContainer error onError errorContainer onErrorContainer background onBackground"
-    " surface onSurface surfaceVariant onSurfaceVariant outline outlineVariant shadow scrim"
-    " inverseSurface inverseOnSurface inversePrimary primaryFixed onPrimaryFixed primaryFixedDim"
-    " onPrimaryFixedVariant secondaryFixed onSecondaryFixed secondaryFixedDim"
-    " onSecondaryFixedVariant tertiaryFixed onTertiaryFixed tertiaryFixedDim"
-    " onTertiaryFixedVariant surfaceDim surfaceBright surfaceContainerLowest surfaceContainerLow"
-    " surfaceContainer surfaceContainerHigh surfaceContainerHighest"
-).split()
+ROLES = [
+    "primary",
+    "surfaceTint",
+    "onPrimary",
+    "primaryContainer",
+    "onPrimaryContainer",
+    "secondary",
+    "onSecondary",
+    "secondaryContainer",
+    "onSecondaryContainer",
+    "tertiary",
+    "onTertiary",
+    "tertiaryContainer",
+    "onTertiaryContainer",
+    "error",
+    "onError",
+    "errorContainer",
+    "onErrorContainer",
+    "background",
+    "onBackground",
+    "surface",
+    "onSurface",
+    "surfaceVariant",
+    "onSurfaceVariant",
+    "outline",
+    "outlineVariant",
+    "shadow",
+    "scrim",
+    "inverseSurface",
+    "inverseOnSurface",
+    "inversePrimary",
+    "primaryFixed",
+    "onPrimaryFixed",
+    "primaryFixedDim",
+    "onPrimaryFixedVariant",
+    "secondaryFixed",
+    "onSecondaryFixed",
+    "secondaryFixedDim",
+    "onSecondaryFixedVariant",
+    "tertiaryFixed",
+    "onTertiaryFixed",
+    "tertiaryFixedDim",
+    "onTertiaryFixedVariant",
+    "surfaceDim",
+    "surfaceBright",
+    "surfaceContainerLowest",
+    "surfaceContainerLow",
+    "surfaceContainer",
+    "surfaceContainerHigh",
+    "surfaceContainerHighest",
+]
 
 
 def scheme(seed: Hct, dark: bool, chroma: float | None) -> DynamicScheme:

@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.parents.repository import DEFAULT_PARENT_CODE
 from app.main import create_app
+from app.parents.repository import DEFAULT_PARENT_CODE
 
 PARENT = {"X-Parent-Code": DEFAULT_PARENT_CODE}
 

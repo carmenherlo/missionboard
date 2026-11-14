@@ -329,7 +329,7 @@ def spanish(glyph: str, cldr: dict) -> dict | None:
     return None
 
 
-def build(fluent_repo: Path, cldr_dir: Path) -> None:
+def build(fluent_repo: Path, cldr_dir: Path) -> None:  # noqa: C901 (to split)
     cldr = load_cldr(cldr_dir)
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)

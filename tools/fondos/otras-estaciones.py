@@ -1,4 +1,8 @@
-import random, subprocess, sys, os
+import os
+import random
+import subprocess
+import sys
+
 from PIL import Image
 
 out, root = sys.argv[1], sys.argv[2]

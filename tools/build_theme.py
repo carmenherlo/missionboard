@@ -176,7 +176,7 @@ def parse_args() -> tuple[list[str], dict[str, str]]:
     if args.name and not args.themes:
         parser.error("say which theme the colours are for, e.g. build_theme.py vermellon --name ...")
     colours = {}
-    for name, colour in zip(args.name, args.color):
+    for name, colour in zip(args.name, args.color, strict=True):
         if not COLOUR_NAME.match(name):
             parser.error(f"--name {name}: letters and digits, starting with a lowercase letter (e.g. success, info2)")
         if not HEX_COLOUR.match(colour):

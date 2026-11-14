@@ -2,8 +2,9 @@
 one back: to move to another device (or into Home Assistant) without losing anything.
 
 A copy is one .zip with the configuration, the database (the history: stars,
-missions done, the log) and the files the parents uploaded: photos, songs and avatars. Not the voice's cache or model (they are made again), nor the
-automatic .bak copies of the migrations.
+missions done, the log) and the files the parents uploaded: photos, songs and
+avatars. Not the voice's cache or model (they are made again), nor the automatic
+.bak copies of the migrations.
 
 Putting one back is all or nothing: the copy is first checked in a folder of its
 own (it opens, its versions are not newer than this app, its routines add up,

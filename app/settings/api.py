@@ -7,7 +7,7 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.settings.repository import HomeLook, RouteLook, Season, SettingsRepository, ShopNotify, StreakWeek
 from app.settings.service import SettingsService
-from app.settings.week_prizes import Which, WeekPrizeImages
+from app.settings.week_prizes import WeekPrizeImages, Which
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 from app.today.api import background_url

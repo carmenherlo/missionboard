@@ -95,9 +95,8 @@ def test_nothing_is_written_without_a_file(tmp_path):
 
 def test_app_refuses_to_start_with_invalid_settings(tmp_path):
     repo_with(tmp_path, {"version": CURRENT_VERSION, "settings": {"stars_per_mission": -1}})
-    with pytest.raises(ValidationError):
-        with TestClient(create_app(tmp_path)):
-            pass
+    with pytest.raises(ValidationError), TestClient(create_app(tmp_path)):
+        pass
 
 
 def test_startup_starts_from_scratch_with_an_old_file(tmp_path):

@@ -11,42 +11,42 @@ from fastapi.staticfiles import StaticFiles
 
 from app import errors
 from app.avatars import api as avatars_api
+from app.avatars.repository import AvatarFiles
+from app.backup import api as backup_api
 from app.children import api as children_api
 from app.children.repository import ChildrenRepository
 from app.clock import Clock, SystemClock, app_day
+from app.daily_prize import api as daily_prize_api
+from app.daily_prize.repository import PrizeSpinsRepository
 from app.events import api as events_api
 from app.events.repository import EventsRepository
 from app.events.service import EventLog
 from app.images import api as images_api
 from app.images.libraries import LIBRARIES, ImageLibraries, Library
 from app.missions import api as missions_api
+from app.notify import HomeAssistant
 from app.overview import api as overview_api
 from app.parents import api as parents_api
 from app.prizes import api as prizes_api
 from app.routines import api as routines_api
-from app.settings import api as settings_api
-from app.shop import api as shop_api
-from app.songs import api as songs_api
-from app.backup import api as backup_api
-from app.songs.repository import SoundFiles
-from app.avatars.repository import AvatarFiles
-from app.notify import HomeAssistant
-from app.shop.repository import PurchasesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
+from app.settings import api as settings_api
+from app.shop import api as shop_api
+from app.shop.repository import PurchasesRepository
+from app.songs import api as songs_api
+from app.songs.repository import SoundFiles
+from app.stars import api as stars_api
+from app.stars.repository import StarsRepository
 from app.storage import db, fresh_start
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
-from app.voice import api as voice_api
-from app.voice.service import MODEL_NAME, Voice
-from app.daily_prize import api as daily_prize_api
-from app.daily_prize.repository import PrizeSpinsRepository
-from app.stars import api as stars_api
-from app.stars.repository import StarsRepository
 from app.streaks import api as streaks_api
 from app.streaks.repository import StreaksRepository
 from app.today import api as today_api
 from app.today.repository import DayRepository
+from app.voice import api as voice_api
+from app.voice.service import MODEL_NAME, Voice
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"

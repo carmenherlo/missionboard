@@ -147,7 +147,7 @@ class RoutinesEditor:
         self._log("changed", routine, {k: v for k, v in changes.items() if k == "days"})
         return routine
 
-    def _retimed(self, routine: Routine, anchor=None, starts=None, ends=None, alarm=None, alarm_before=None) -> dict:
+    def _retimed(self, routine: Routine, anchor=None, starts=None, ends=None, alarm=None, alarm_before=None) -> dict:  # noqa: C901 (to split)
         """The changes for "Empieza / Termina a las" (`anchor`), its time (`starts` or `ends`,
         the goal's) and the alarm (on or off, and how many minutes before the first part)."""
         if routine.manual:

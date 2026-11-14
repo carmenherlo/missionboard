@@ -7,8 +7,8 @@ from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import PNG, create_child, photo_files, saved, upload
-from tests.test_today import MONDAY, check, descriptions, mission, note, today, write_config
 from tests.test_settings import FixedClock
+from tests.test_today import MONDAY, check, descriptions, mission, note, today, write_config
 
 SAMPLES = [
     "Guerra de cojines o de cosquillas",

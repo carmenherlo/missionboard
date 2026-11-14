@@ -19,8 +19,8 @@ from app.deps import (
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.settings import SettingsRepository
-from app.shop.repository import PurchasesRepository, ShopItem, ShopRepository
 from app.shop.orders import OrdersService
+from app.shop.repository import PurchasesRepository, ShopItem, ShopRepository
 from app.shop.service import ShopService
 from app.stars.repository import StarsRepository
 from app.storage.config_store import ConfigStore

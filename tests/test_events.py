@@ -261,7 +261,7 @@ def test_latest_comes_newest_first_and_limited(client):
 
 
 def test_csv_for_a_spreadsheet_in_spanish(client):
-    bea = create_child(client)
+    create_child(client)
     mission = create_mission(client, name="Aterrizaje; tarde").json()
     patch(client, mission["id"], days=["mon", "tue"])
     response = export(client)

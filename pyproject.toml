@@ -9,6 +9,8 @@ extend-exclude = ["data", "docs"]
 # E/W: pycodestyle · F: pyflakes (unused, undefined) · I: import order · B: likely bugs
 # UP: modern Python · SIM: simpler code · C4: comprehensions · C90: complexity
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "C90"]
+# SIM108 asks for nested "a if x else b if y else c": less readable than the if/else.
+ignore = ["SIM108"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's dependencies are declared as default arguments on purpose.
@@ -31,3 +33,7 @@ branch = true
 skip_covered = true
 show_missing = true
 sort = "Cover"
+
+[tool.ruff.lint.per-file-ignores]
+# One-off drawing programs for the backgrounds: long SVG paths and quick scripts.
+"tools/fondos/*" = ["E501", "E731", "C408", "C901", "SIM115", "UP031"]

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.storage import db
-from app.storage.config_migrations import CURRENT_VERSION
+from app.storage.config_migrations import CURRENT_VERSION, ConfigVersionError
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_settings import FixedClock
@@ -94,9 +94,8 @@ def test_it_happens_once(data_dir, clock):
 def test_a_newer_file_stops_the_app_and_touches_nothing(data_dir, clock):
     data_dir.mkdir(parents=True)
     config_path(data_dir).write_text(yaml.safe_dump({"version": CURRENT_VERSION + 1}))
-    with pytest.raises(Exception):
-        with start(data_dir, clock):
-            pass
+    with pytest.raises(ConfigVersionError), start(data_dir, clock):
+        pass
     assert yaml.safe_load(config_path(data_dir).read_text()) == {"version": CURRENT_VERSION + 1}
     assert not (data_dir / "backups").exists()
 

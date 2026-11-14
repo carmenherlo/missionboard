@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from tests.conftest import PARENT
-from tests.test_missions import add_step, add_task, create_child, create_mission
+from tests.test_missions import add_task, create_child, create_mission
 from tests.test_settings import FixedClock
 from tests.test_today import descriptions, mark
 
@@ -57,7 +57,8 @@ def test_a_routine_by_hand_has_no_times_of_its_own(client, landing):
 
 
 def test_started_by_hand_with_who_has_come_home(client, landing, clock):
-    bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
+    bea = create_child(client)
+    create_child(client, name="Alex", preset="dinosaur")
     assert client.get("/api/routines/current").json() is None
     by_hand = client.get("/api/routines/by-hand").json()
     assert [r["name"] for r in by_hand] == ["Aterrizaje"] and by_hand[0]["minutes"] == 7

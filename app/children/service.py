@@ -1,6 +1,6 @@
 import secrets
-from dataclasses import dataclass, replace
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass, replace
 from typing import Protocol
 
 from app.avatars.repository import AvatarsRepository

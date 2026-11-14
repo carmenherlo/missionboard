@@ -1,4 +1,8 @@
-import random, subprocess, sys, os, shutil
+import os
+import random
+import subprocess
+import sys
+
 from PIL import Image
 
 out, dest = sys.argv[1], sys.argv[2]

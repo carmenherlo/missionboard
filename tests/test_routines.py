@@ -28,7 +28,7 @@ def make_morning(client, kids=None):
     add_step(client, mission["id"], tasks[2]["id"], "Cara")
     routine = client.post("/api/routines", json={"mission_id": mission["id"], "wake": "06:30"}, headers=PARENT).json()
     url = f"/api/routines/{routine['id']}"
-    for part, (_, minutes) in zip(routine["parts"], PARTS):
+    for part, (_, minutes) in zip(routine["parts"], PARTS, strict=True):
         client.patch(f"{url}/parts/{part['id']}", json={"minutes": minutes}, headers=PARENT)
     client.patch(
         url, json={"goal": {"at": "07:30", "say": "¡Es hora de irse al cole!", "check_minutes": 5}}, headers=PARENT
@@ -363,9 +363,8 @@ def test_a_routine_whose_times_do_not_add_up_stops_the_app(data_dir, clock, rout
     mission = {"id": "m", "name": "M", "tasks": [{"id": "t", "text": "T"}]}
     doc = {"version": CURRENT_VERSION, "children": [], "missions": [mission], "prizes": [], "routines": [routine]}
     config_path(data_dir).write_text(yaml.safe_dump(doc))
-    with pytest.raises(Exception):
-        with TestClient(create_app(data_dir, clock=clock)):
-            pass
+    with pytest.raises(ValueError), TestClient(create_app(data_dir, clock=clock)):
+        pass
 
 
 def test_the_next_routine_to_ring(client, clock, morning):

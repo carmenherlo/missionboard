@@ -6,10 +6,10 @@ import re
 import secrets
 from dataclasses import replace
 
-from app.children import avatars
-from app.children.repository import ChildrenRepository
 from pydantic import ValidationError
 
+from app.children import avatars
+from app.children.repository import ChildrenRepository
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries, photo_filename, photo_ref

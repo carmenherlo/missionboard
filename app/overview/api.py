@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
+from app.daily_prize.api import get_daily_prize_service
+from app.daily_prize.service import DailyPrizeService
 from app.deps import get_config_store, get_image_libraries, require_parent
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
@@ -12,15 +14,13 @@ from app.overview.service import OverviewService
 from app.parents.repository import DEFAULT_PARENT_CODE, ParentsRepository
 from app.prizes.repository import PrizesRepository
 from app.routines.repository import RoutinesRepository
-from app.shop.repository import ShopRepository
 from app.shop.api import Presenter as ShopPresenter
 from app.shop.api import get_orders_service
 from app.shop.orders import OrdersService
-from app.storage.config_store import ConfigStore
-from app.daily_prize.api import get_daily_prize_service
-from app.daily_prize.service import DailyPrizeService
+from app.shop.repository import ShopRepository
 from app.stars.api import get_stars_service
 from app.stars.service import StarsService
+from app.storage.config_store import ConfigStore
 from app.streaks.api import get_streaks_service, present_week
 from app.streaks.service import StreaksService
 from app.today.api import Presenter as DayPresenter

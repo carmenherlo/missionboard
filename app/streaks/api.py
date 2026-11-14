@@ -43,15 +43,13 @@ def present_week(view: dict | None, libraries: ImageLibraries | None = None) -> 
     if view is None:
         return {"on": False}
     week, result, loaded = view["week"], view["result"], view.get("loaded", set())
-    tanks = lambda w: [
-        {
-            "day": t.day.isoformat(),
-            "letter": t.letter,
-            "state": t.state,  # noqa: E731
-            "loaded": t.day.isoformat() in loaded,
-        }
-        for t in w.tanks
-    ]
+
+    def tanks(week) -> list[dict]:
+        return [
+            {"day": t.day.isoformat(), "letter": t.letter, "state": t.state, "loaded": t.day.isoformat() in loaded}
+            for t in week.tanks
+        ]
+
     launch = view.get("launch")
     return {
         "on": True,

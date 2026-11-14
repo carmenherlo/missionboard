@@ -10,11 +10,11 @@ import json
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
+from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
-from app.children import avatars
 from app.missions.repository import WEEKDAYS, MissionsRepository, child_tasks
 from app.routines.links import kids_of
 from app.routines.repository import Part, Routine, RoutinesRepository, RunsRepository, minute_of
@@ -116,7 +116,7 @@ class RoutinesService:
         hand, as if started now with all its children."""
         settings = self._settings.settings()
         minute = now.hour * 60 + now.minute + now.second / 60
-        run = {name: None for name in RunsRepository.FIELDS}
+        run = dict.fromkeys(RunsRepository.FIELDS)
         started = None
         if routine.manual:
             started, routine = minute, routine.started_at(int(minute))
@@ -186,7 +186,7 @@ class RoutinesService:
         self._runs.set(day, routine_id, started_at=now, kids=json.dumps(kids))
         self._events.routine_did("routine_started", routine.name)
 
-    def note(
+    def note(  # noqa: C901 (to split)
         self,
         routine_id: str,
         kind: str,

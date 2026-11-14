@@ -163,7 +163,7 @@ class DayService:
             streak=self._streaks.streak(child.id, day) if self._settings.features().streaks else None,
         )
 
-    def set_mark(self, child_id: str, mission_id: str, item_id: str, checked: bool) -> StepResult:
+    def set_mark(self, child_id: str, mission_id: str, item_id: str, checked: bool) -> StepResult:  # noqa: C901 (to split)
         """Check or uncheck a task (its steps are only reminders). The last one completes
         the mission (once a day)."""
         today = self.today(child_id)

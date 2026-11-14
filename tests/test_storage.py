@@ -1,3 +1,5 @@
+import sqlite3
+
 import pytest
 import yaml
 
@@ -76,10 +78,9 @@ def test_upgrade_does_not_share_state():
 
 def test_failed_edit_saves_nothing(tmp_path):
     store = ConfigStore(tmp_path)
-    with pytest.raises(RuntimeError):
-        with store.edit() as doc:
-            doc["children"].append({"id": "x"})
-            raise RuntimeError
+    with pytest.raises(RuntimeError), store.edit() as doc:
+        doc["children"].append({"id": "x"})
+        raise RuntimeError
     assert not config_path(tmp_path).exists()
 
 
@@ -95,11 +96,10 @@ def test_nested_edits_share_one_document(tmp_path):
 
 def test_failure_after_nested_edit_saves_nothing(tmp_path):
     store = ConfigStore(tmp_path)
-    with pytest.raises(RuntimeError):
-        with store.edit():
-            with store.edit() as doc:
-                doc["children"].append({"id": "a"})
-            raise RuntimeError
+    with pytest.raises(RuntimeError), store.edit():
+        with store.edit() as doc:
+            doc["children"].append({"id": "a"})
+        raise RuntimeError
     assert not config_path(tmp_path).exists()
 
 
@@ -141,7 +141,7 @@ def test_db_migrate_is_idempotent(tmp_path):
 
 def test_failed_db_migration_keeps_previous_version(tmp_path):
     db.migrate(tmp_path, MIGRATIONS[:1])
-    with pytest.raises(Exception):
+    with pytest.raises(sqlite3.Error):
         db.migrate(tmp_path, [MIGRATIONS[0], "CREATE TABLE c (id); SELECT * FROM missing"])
     assert schema_version(tmp_path) == 1
     assert tables(tmp_path) == ["a"]

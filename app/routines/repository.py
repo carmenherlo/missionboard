@@ -18,7 +18,6 @@ from app.settings import TIME, time_from_yaml_number
 from app.storage import db
 from app.storage.config_store import ConfigStore
 
-
 NEW_PART_MINUTES = 5
 
 

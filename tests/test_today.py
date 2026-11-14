@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.settings import DEFAULT_SEASONS
-from app.today.api import background_url
 from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
+from app.today.api import background_url
 from tests.conftest import PARENT
 from tests.test_missions import add_step, add_task, create_child, create_mission, patch
 from tests.test_settings import FixedClock
@@ -494,13 +494,13 @@ def test_seasons_out_of_order_stop_the_app(data_dir, clock):
             ]
         },
     )
-    with pytest.raises(Exception):
-        with TestClient(create_app(data_dir, clock=clock)):
-            pass
+    with pytest.raises(ValueError), TestClient(create_app(data_dir, clock=clock)):
+        pass
 
 
 def test_a_parent_gives_a_child_stars_as_a_present(tmp_path):
     from fastapi.testclient import TestClient
+
     from app.main import create_app
     from tests.conftest import PARENT
 

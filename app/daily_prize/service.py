@@ -1,7 +1,6 @@
 """Spinning the wheel of the daily prize, and the parents handing it over (Pendiente de dar)."""
 
 import secrets
-
 from dataclasses import dataclass
 from types import SimpleNamespace
 

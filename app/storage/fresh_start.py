@@ -17,10 +17,10 @@ from pathlib import Path
 import yaml
 
 from app import samples
+from app.songs.repository import SOUNDS_DIRNAME
 from app.storage.config_migrations import FIRST_VERSION, initial
 from app.storage.config_store import CONFIG_FILENAME, ConfigStore
 from app.storage.db import DB_FILENAME
-from app.songs.repository import SOUNDS_DIRNAME
 
 BACKUPS_DIRNAME = "backups"
 NOT_COPIED = {BACKUPS_DIRNAME, "voices", "voice-cache"}  # made or downloaded again

@@ -28,7 +28,7 @@ def zipped(files: dict) -> bytes:
 
 
 def test_a_copy_has_everything(client):
-    bea = create_child(client)
+    create_child(client)
     mission = create_mission(client).json()
     upload(client, f"/api/missions/{mission['id']}/photo")
     names = zipfile.ZipFile(io.BytesIO(download(client))).namelist()

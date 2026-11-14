@@ -14,8 +14,8 @@ from app.images.rules import ImageRules
 from app.settings import SettingsRepository
 from app.shop.orders import OrdersService
 from app.shop.repository import PurchasesRepository, ShopItem, ShopRepository
-from app.storage.photo_store import PhotoStore
 from app.stars.repository import StarsRepository
+from app.storage.photo_store import PhotoStore
 
 UNSET = object()
 

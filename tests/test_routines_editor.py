@@ -123,7 +123,8 @@ def test_who_follows_it(client):
 
 
 def test_a_deleted_child_leaves_the_routines(client, data_dir):
-    bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
+    bea = create_child(client)
+    create_child(client, name="Alex", preset="dinosaur")
     edit(client, "PUT", "/kids", kids=[bea["id"]])
     client.delete(f"/api/children/{bea['id']}", headers=PARENT)
     routine = saved(data_dir)["routines"][0]

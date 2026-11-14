@@ -13,7 +13,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.storage.config_store import ConfigStore
 
-
 TIME = r"^([01]\d|2[0-3]):[0-5]\d$"
 
 
