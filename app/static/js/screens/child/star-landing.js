@@ -10,7 +10,7 @@ import { reducedMotion, tokenMs } from "../../effects/motion.js";
 import { showCelebration } from "./celebration.js";
 import { routeStops, routeView } from "./route.js";
 
-const DOT_EVERY_PX = 20; // as drawn in child.css (.drum__joint--dots)
+const DOT_EVERY_PX = 20; // as drawn in route.css (.drum__joint--dots)
 
 // A soft "pat" for each footprint or dot as it takes its colour (with the wheel's tick setting).
 function pats(look, times) {

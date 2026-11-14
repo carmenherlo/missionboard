@@ -7,7 +7,7 @@ import { display } from "../display.js";
 import { h } from "../dom.js";
 
 const CHECK_MS = 1000;
-const PLACES = 9; // .rest__time--1…9 in components.css
+const PLACES = 9; // .rest__time--1…9 in clock.css
 
 export function startRest() {
   let lastTouch = Date.now();

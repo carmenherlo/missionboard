@@ -1,0 +1,353 @@
+/* Avatars: the ring and its effects, the child cards, the pickers, the kids'
+   switches (Tienda) and the Avatares screens (avatares.html). */
+
+/* ---------- avatars ---------- */
+
+.avatar {
+  --size: 56px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  /* A double ring: a thin white one hugging the picture (the border)
+     and, outside it, a thicker one in the child's colour (the shadow). */
+  border: calc(var(--size) * 0.025 + 1px) solid var(--surface);
+  box-shadow: 0 0 0 calc(var(--size) * 0.05 + 1px) var(--child-color, var(--line));
+  background: none; /* transparent: the animal floats inside its ring */
+  font-size: calc(var(--size) * 0.45);
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 66%;
+  height: 66%;
+  object-fit: contain;
+}
+
+/* An avatar with an effect around it (effects.css): the halo behind, the shine on its ring. */
+.avatar-fx {
+  --shine-band: 14%; /* the coloured ring, outside the avatar (see .fx-shine::after below) */
+  position: relative;
+  display: inline-grid;
+  flex: none;
+}
+
+.avatar-fx > .avatar {
+  position: relative; /* over the halo */
+}
+
+.fx-shine {
+  position: relative;
+}
+
+.avatar-fx.fx-shine::after {
+  inset: -7%; /* the coloured ring is drawn outside the avatar's box */
+}
+
+.avatar--xs { --size: 28px; }
+
+.avatar--sm { --size: 40px; }
+
+.avatar--md { --size: 72px; }
+
+.avatar--lg { --size: 140px; }
+
+.avatar--xl { --size: 130px; }
+
+.avatar--home { --size: var(--home-avatar-size); }
+
+.avatar-edit {
+  position: relative;
+  align-self: center;
+}
+
+.avatar-edit__pencil {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  --icon-button: 48px;
+}
+
+/* A child as a big tappable card (home, missions) */
+.child-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.child-card {
+  position: relative;
+}
+
+.child-card__name {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.kid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.kid-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  background: var(--container);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Avatar picker (child form) */
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--space-2);
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) 4px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* In the avatar picker, each animal's ring in its colour, thick enough to read the colour. */
+.choice .avatar {
+  border-width: 4px;
+}
+
+.choice--selected {
+  border-color: var(--primary);
+}
+
+.choice:disabled {
+  filter: grayscale(1);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.picker h2 {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* A child card that is chosen by tapping it (apply a template): ring and ✓ */
+.kid-card--choice {
+  position: relative;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.kid-card__check {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  --icon-button: 40px;
+  border-radius: 50%;
+  font-size: 22px;
+  visibility: hidden;
+}
+
+.kid-card--selected {
+  box-shadow: 0 0 0 3px var(--primary);
+}
+
+.kid-card--selected .kid-card__check {
+  visibility: visible;
+}
+
+.kids-on {
+  display: flex;
+  flex: none;
+  gap: var(--space-1);
+}
+
+/* A child's avatar as a switch (Tienda, 13/11): in colour, on; grey and faint, off.
+   Over the card's link, so a tap on it does not open the item. */
+.kid-toggle {
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: opacity var(--appear) ease, filter var(--appear) ease;
+}
+
+.kid-toggle--off {
+  opacity: var(--kid-off-opacity);
+  filter: grayscale(1);
+}
+
+/* ---------- Avatares (avatares.html) ---------- */
+
+/* Editar niño: the family's avatars, then the app's */
+.picker__group {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.choice__who {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+a.choice {
+  color: inherit;
+  text-decoration: none;
+}
+
+.choice--fixed {
+  cursor: default;
+}
+
+/* "Subir avatar": a card with a dashed edge and a big + */
+.choice--add {
+  border: 2px dashed var(--line);
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  justify-content: center;
+}
+
+.add-circle {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.add-circle .icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* The picture in the three sizes it is seen in */
+.avatar-sizes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) 4px;
+}
+
+.avatar-sizes .avatar:not(:has(img)) {
+  border-style: dashed;
+}
+
+/* The ring's colour: round swatches, the chosen one with a ring and a ✓ */
+.color-choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.color-choice__title {
+  margin: var(--space-1) 0 0;
+  font-weight: 700;
+}
+
+.color-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.color-dots--labelled {
+  padding-bottom: var(--space-4); /* room for "Sugerido" */
+}
+
+.color-dot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--child-color);
+  color: var(--surface);
+  cursor: pointer;
+}
+
+.color-dot--on {
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--child-color);
+}
+
+.color-dot .icon {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 0 2px var(--color-dot-check-shadow));
+}
+
+.color-dot__label {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.color-choice__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The browser's colour chooser, opened by "Otro color…" */
+.color-choice__other {
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+}
+
+.hint--warning {
+  color: var(--on-accent-soft);
+  font-weight: 700;
+}

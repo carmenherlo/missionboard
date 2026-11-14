@@ -4,14 +4,35 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>missionboard</title>
-  <!-- Design in layers: theme (Material roles) → tokens (colours, type, sizes) → base → layout → components,
-       then the child's screens (child) and what moves on them (effects: optional, can be removed) -->
+  <!-- Design in layers: theme (Material roles) → tokens (colours, type, sizes) → base → layout → components
+       and the parents' screens (components … parents-today), then the child's screens (child … trip),
+       the routine, and what moves on them (effects: optional, can be removed). Order matters: a later
+       file wins over an earlier one with the same selector. -->
   <link rel="stylesheet" href="static/css/themes/azul-mision.css" id="theme">
   <link rel="stylesheet" href="static/css/tokens.css">
   <link rel="stylesheet" href="static/css/base.css">
   <link rel="stylesheet" href="static/css/layout.css">
   <link rel="stylesheet" href="static/css/components.css">
+  <link rel="stylesheet" href="static/css/lists.css">
+  <link rel="stylesheet" href="static/css/forms.css">
+  <link rel="stylesheet" href="static/css/images.css">
+  <link rel="stylesheet" href="static/css/avatars.css">
+  <link rel="stylesheet" href="static/css/routine-edit.css">
+  <link rel="stylesheet" href="static/css/clock.css">
+  <link rel="stylesheet" href="static/css/mission-edit.css">
+  <link rel="stylesheet" href="static/css/settings.css">
+  <link rel="stylesheet" href="static/css/parents-today.css">
   <link rel="stylesheet" href="static/css/child.css">
+  <link rel="stylesheet" href="static/css/route.css">
+  <link rel="stylesheet" href="static/css/mission.css">
+  <link rel="stylesheet" href="static/css/celebration.css">
+  <link rel="stylesheet" href="static/css/prize.css">
+  <link rel="stylesheet" href="static/css/shop.css">
+  <link rel="stylesheet" href="static/css/orders.css">
+  <link rel="stylesheet" href="static/css/tasks.css">
+  <link rel="stylesheet" href="static/css/garage.css">
+  <link rel="stylesheet" href="static/css/place.css">
+  <link rel="stylesheet" href="static/css/trip.css">
   <link rel="stylesheet" href="static/css/routine.css">
   <link rel="stylesheet" href="static/css/effects.css">
 </head>

@@ -1,0 +1,90 @@
+/* Configurar → Misiones: a mission's tasks and steps, its colour, and the
+   routine it goes with. */
+
+/* A mission that goes with a routine (rutinas-8): its days and hours are the routine's. */
+.pill--routine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--alarm-card);
+  color: var(--text);
+}
+
+.pill--routine img {
+  width: 16px;
+  height: 16px;
+}
+
+/* Editar misión → Cuándo → Con la rutina: the routine it goes with, to see. */
+.routine-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.routine-line__text {
+  display: grid;
+  flex: 1;
+}
+
+/* Editar misión: tasks as cards, and their steps as cards inside (misiones-2). */
+.task-tree {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task-tree__task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.task-tree__task.is-dragging { z-index: 2; }
+
+.task-tree__name { font-weight: 800; }
+
+.task-tree__steps {
+  min-height: var(--space-1);
+  padding: 0;
+}
+
+.row--step { margin-left: var(--space-5); }
+
+.row--mission { border-left: 6px solid var(--mission-color, var(--line)); }
+
+.order--mission {
+  background: var(--mission-color, var(--line));
+  color: var(--on-mission, var(--surface));
+}
+
+/* A mission's colour: one of the palette, the chosen one with its ✓. */
+.color-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.color-chip {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mission-color);
+  color: var(--surface);
+  cursor: pointer;
+}
+
+.color-chip--on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--mission-color); }

@@ -1,0 +1,282 @@
+/* The child's place (mi-sitio.html, place.js): their avatar, the buildings,
+   the mailbox and the observatory. */
+
+.place-back {
+  gap: var(--space-2);
+}
+
+.place-back__picture {
+  width: 40px;
+  height: 40px;
+}
+
+.place {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.place__paths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.place__paths line {
+  stroke: var(--place-path);
+  stroke-width: var(--place-path-width);
+  stroke-dasharray: var(--place-path-dots);
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.place__me {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.place__name,
+.place-building__label {
+  padding: var(--space-1) var(--space-4);
+  border-radius: 999px;
+  background: var(--route-label-bg);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.place-building {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.place-building--tl { left: 6%; top: 4%; }
+
+.place-building--tr { right: 6%; top: 4%; }
+
+.place-building--bl { left: 6%; bottom: 6%; }
+
+.place-building--br { right: 6%; bottom: 6%; }
+
+.place-building__picture,
+.place-building__picture > img,
+.place-building__picture .news-host > img {
+  width: var(--place-building-size);
+  height: var(--place-building-size);
+}
+
+.place-building__picture img {
+  filter: drop-shadow(var(--shadow-news));
+}
+
+.place-building__picture .news-badge img { filter: none; }
+
+/* The workshop: the rocket up, ready, and the fuel pump by it. */
+.place-building__garage {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.place-building__picture .place-building__rocket {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 80%;
+  height: 80%;
+  rotate: -45deg;
+}
+
+.place-building__picture .place-building__pump {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 45%;
+  height: 45%;
+}
+
+.place-building .week-mini { cursor: pointer; }
+
+.place-sheet__picture {
+  width: 56px;
+  height: 56px;
+}
+
+/* The mailbox: a notice per order. */
+.mail {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mail__notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mail__notice--new {
+  border-color: var(--accent-vivid);
+  background: var(--mail-new);
+  font-weight: 800;
+}
+
+.mail__sign {
+  width: var(--mail-sign-size);
+  height: var(--mail-sign-size);
+}
+
+.mail__text { flex: 1; }
+
+.mail__new {
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  background: var(--news-count-bg);
+  color: var(--news-count-text);
+  font-size: 1rem;
+}
+
+.mail__empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-lg);
+  text-align: center;
+}
+
+.mail__empty img {
+  width: 120px;
+  height: 120px;
+}
+
+/* The observatory: their sky, a constellation per 10 stars kept (sky.js). */
+.place-sky {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sky {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 70% 15%, var(--sky-top), var(--sky-bottom));
+}
+
+.sky--g1 { --sky-top: var(--sky-1-top); --sky-bottom: var(--sky-1-bottom); }
+
+.sky--g2 { --sky-top: var(--sky-2-top); --sky-bottom: var(--sky-2-bottom); }
+
+.sky--g3 { --sky-top: var(--sky-3-top); --sky-bottom: var(--sky-3-bottom); }
+
+.sky--g4 { --sky-top: var(--sky-4-top); --sky-bottom: var(--sky-4-bottom); }
+
+.sky-box {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* The full galaxies, little, over the sky being filled. */
+.sky-galaxies {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.sky-galaxy {
+  display: grid;
+  place-items: center;
+  width: var(--sky-galaxy-size);
+  height: var(--sky-galaxy-size);
+  border-radius: 50%;
+  background: radial-gradient(circle at 70% 15%, var(--sky-top), var(--sky-bottom));
+}
+
+.sky-galaxy img {
+  width: 70%;
+  height: 70%;
+}
+
+.sky__group {
+  position: relative;
+  aspect-ratio: 16 / 9;
+}
+
+.sky__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sky__lines polyline {
+  fill: none;
+  stroke: var(--sky-line);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.sky__star {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--sky-star-size);
+  height: var(--sky-star-size);
+  translate: -50% -50%;
+}
+
+.sky__star--off { opacity: var(--sky-star-off); }
+
+.sky__name {
+  position: absolute;
+  left: 50%;
+  bottom: -6%;
+  translate: -50% 0;
+  color: var(--sky-name);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.place-sky__line {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-align: center;
+}

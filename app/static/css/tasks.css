@@ -1,0 +1,239 @@
+/* A mission's tasks (misiones-3): each a card tapped once, its steps as
+   reminders; and the same cards for parents. */
+
+/* The mission's tasks (misiones-3): the task is a card, tapped once; its steps, small
+   reminders under a line (squares only for parents, switching them on and off).
+   All the cards take the same room, however many steps each has. */
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--task-card-width), 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.task-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.task-card--done {
+  background: var(--mission-soft, var(--child-soft));
+  box-shadow: inset 0 0 0 4px var(--mission-color, var(--child-color));
+}
+
+.task-card--current {
+  outline: 5px solid var(--mission-color, var(--child-color));
+  outline-offset: 3px;
+}
+
+.task-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.task-card__toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--task-icon-size);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.task-card__toggle--still { cursor: default; }
+
+/* The whole card is tapped to mark it. */
+.task-card--tap {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.task-card--tap .task-card__toggle--still { cursor: inherit; }
+
+.task-card__picture {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--task-icon-size);
+  height: var(--task-icon-size);
+}
+
+.task-card__picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.task-card__letter,
+.square__letter {
+  color: var(--mission-strong, var(--child-strong));
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.task-card__text {
+  min-width: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.task-card__speak {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--task-speak-size) + 20px);
+  height: calc(var(--task-speak-size) + 20px);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--mission-strong, var(--child-strong));
+  font-size: var(--task-speak-size); /* the icon is 1em */
+  cursor: pointer;
+}
+
+.task-card__check {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--mission-color, var(--child-color));
+  color: var(--on-mission, var(--on-child));
+}
+
+.task-card--done .task-card__check { display: grid; }
+
+.task-card--done .task-card__speak { display: none; }
+
+/* A task's steps for the child: pictures that remind, not buttons. */
+.reminders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) 0 0;
+  border-top: 2px dashed var(--line);
+  list-style: none;
+}
+
+.reminder {
+  display: grid;
+  place-items: center;
+  width: var(--reminder-size);
+  height: var(--reminder-size);
+}
+
+.reminder img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.reminder__letter {
+  color: var(--mission-strong, var(--child-strong));
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.task-card--done .reminders { opacity: 0.45; }
+
+.squares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Big enough for a child's finger (--square-size: over 64px, the size to aim at). */
+.square {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  width: var(--square-size);
+  min-height: var(--square-size);
+  padding: var(--space-1);
+  border: 3px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.square--done {
+  border-color: var(--mission-color, var(--child-color));
+  background: var(--mission-soft, var(--child-soft));
+}
+
+.square__picture {
+  display: grid;
+  place-items: center;
+  width: calc(var(--square-size) * 0.55);
+  height: calc(var(--square-size) * 0.55);
+}
+
+.square__picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.square__text {
+  max-width: 100%;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Parents, switching things on and off for a child: off, grey and saying so; no ✓. */
+.square--off,
+.task-card--off {
+  background: var(--container);
+  color: var(--muted);
+}
+
+.square--off img,
+.task-card--off img {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.task-card--parents .task-card__toggle { cursor: pointer; }
+
+.task-card__off {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.task-grid--parents { padding: var(--space-2) 0 0; }
+
+.mission-sheet--past .task-grid {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.mission-sheet--past .task-card__toggle,
+.mission-sheet--past .square { cursor: default; }

@@ -1,0 +1,71 @@
+/* ¡Misión cumplida! */
+
+/* ---------- ¡Misión cumplida! ---------- */
+
+.celebration-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  background: radial-gradient(circle at 50% 50%,
+    color-mix(in srgb, var(--accent-soft) 70%, transparent) 0, transparent 70%),
+    var(--surface);
+  cursor: pointer;
+}
+
+.celebration__title {
+  position: relative;
+  margin: 0;
+  font-size: 4.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.celebration__hero {
+  position: relative;
+  --size: 340px;
+}
+
+.celebration__hero .ring__inner {
+  overflow: hidden;
+}
+
+.celebration__hero .ring__inner img {
+  width: 66%;
+  height: 66%;
+}
+
+.celebration__hero .ring__inner img.avatar__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.celebration__star {
+  position: absolute;
+  right: -70px;
+  top: -60px;
+  width: 190px;
+}
+
+.celebration .stars {
+  height: 74px;
+  font-size: 2.25rem;
+}
+
+.celebration .stars img {
+  width: 46px;
+  height: 46px;
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}

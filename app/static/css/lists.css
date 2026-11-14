@@ -1,0 +1,320 @@
+/* Rows and lists: a row's parts, dragging to sort or to the bin (with
+   "Deshacer"), the − / + stepper and pills. */
+
+/* ---------- dragging to the bin, and undoing it (rutinas-7) ---------- */
+
+.trash {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-5);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border: 2px dashed var(--danger);
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  box-shadow: var(--shadow-lifted);
+  transform: translateX(-50%);
+  pointer-events: none;
+  transition: transform var(--appear) ease, background-color var(--appear) ease;
+}
+
+.trash .icon {
+  width: 30px;
+  height: 30px;
+}
+
+.trash--hot {
+  border-style: solid;
+  background: var(--danger);
+  color: var(--on-primary);
+  transform: translateX(-50%) scale(1.12);
+}
+
+.undo-bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-5);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  max-width: calc(100vw - 2 * var(--space-3));
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--inverse-surface);
+  color: var(--on-inverse-surface);
+  font-weight: 600;
+  box-shadow: var(--shadow-lifted);
+  transform: translateX(-50%);
+}
+
+.undo-bar__action {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--inverse-primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* − 5 min + : a number a step at a time, on a card. */
+.stepper {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.stepper__value {
+  min-width: 3.6em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stepper__button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.row__chevron {
+  display: grid;
+  color: var(--muted);
+}
+
+.row__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 28px;
+}
+
+.row__icon--sm {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+}
+
+.row__time {
+  flex: none;
+  width: 5.75rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.row__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.row__name--md {
+  font-size: var(--text-md);
+}
+
+.row__detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.row__text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.row__chevron {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 28px;
+}
+
+.row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Padres · Pedidos (tienda-2.html): when it arrives and "Ya se lo di", under the order */
+.row--order .row__actions {
+  flex-basis: 100%;
+}
+
+.order-date {
+  min-height: 44px;
+}
+
+.panel__subtitle {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-md);
+}
+
+.row__confirm {
+  font-weight: 700;
+}
+
+.row--compact {
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+}
+
+.row--add {
+  flex-wrap: nowrap;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
+  border: 1px dashed var(--outline);
+  background: transparent;
+  box-shadow: none;
+}
+
+.row--add input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.row--add input:focus-visible {
+  box-shadow: none;
+}
+
+/* Drag handle (⠿) and the item being dragged */
+.drag-handle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  min-height: 48px;
+  color: var(--muted);
+  font-size: 24px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.row--sortable {
+  will-change: transform;
+}
+
+.is-dragging {
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--shadow-lifted);
+  cursor: grabbing;
+}
+
+/* Position of a mission in the route */
+.order {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* "Plantilla" before the name in the top bar */
+.pill--title {
+  padding: 4px 14px;
+  font-size: var(--text-md);
+}
+
+.pill--muted {
+  background: color-mix(in srgb, var(--muted) 14%, var(--surface));
+  color: var(--muted);
+}
+
+.row--add input[type="number"] {
+  flex: none;
+  width: 4.5rem;
+  min-height: 40px;
+  text-align: center;
+}
+
+/* "Seleccionar": a whole row is the target while choosing parts to remove. */
+.row--selectable {
+  cursor: pointer;
+}
+
+/* The cover of a card that does something on the spot (a button, not a link). */
+.row__cover--button {
+  display: grid;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* A row whose text is corrected right there (a part's tasks): it looks like text
+   until it is touched. */
+.row input.row__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+}
+
+.row input.row__input:focus {
+  border-color: var(--outline);
+  background: var(--surface);
+  outline: none;
+}

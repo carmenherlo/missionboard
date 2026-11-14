@@ -1,0 +1,300 @@
+/* Configurar → Rutinas: the routine's cards between the alarm and the goal,
+   its days moved, "Lo que dice la voz", its songs and Editar parte. */
+
+/* A routine moved on some days: one small number per day (Configurar → Rutinas). */
+.offsets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.offsets__day {
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 800;
+}
+
+.offsets__times { /* in italics: the usual times are the ones above */
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-style: italic;
+}
+
+.offsets__day input {
+  width: 3.5rem; /* the five school days fit in one line of the panel */
+  min-height: 40px;
+  padding: 0 var(--space-1);
+  text-align: center;
+}
+
+/* The cards at both ends of a routine's parts (rutinas-4.html, section 0), like
+   Scratch's blocks: the alarm opens it, the goal closes it. They do not move. */
+.routine-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-weight: 700;
+}
+
+.routine-card__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.routine-card__detail {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.routine-card__time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* The time that stays put, with its − / + (rutinas-7). */
+.routine-card__pinned {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.routine-card--alarm {
+  background: var(--alarm-card);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm);
+}
+
+.routine-card--off {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px dashed var(--line);
+}
+
+/* The goal's card: its row, and above it checking the missions (rutinas-6). */
+.routine-card__row {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.routine-card--checking {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+}
+
+.routine-card__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.routine-card--goal {
+  background: var(--success-soft);
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-lg) var(--radius-lg);
+}
+
+/* "Lo que dice la voz" (rutinas-5): one line per sentence, with its time. The
+   parents' own sentences on white; what the voice says by itself, muted. */
+.voice-line {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.voice-line--auto,
+.voice-line--sound {
+  background: none;
+}
+
+.voice-line__time {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.voice-line__text {
+  font-weight: 600;
+}
+
+.voice-line--auto .voice-line__text,
+.voice-line--sound .voice-line__text {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.voice-line__tag {
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--container);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.voice-line__tag--mine {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.voice-line--editing {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  outline: 2px solid var(--primary);
+}
+
+.voice-line--editing .pill {
+  align-self: flex-start;
+}
+
+/* Editar parte: what the voice will say when it starts (changed in "Lo que dice la voz"). */
+.voice-preview {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* A routine's songs (rutinas-4, screen 4 bis): each one wraps the cards it plays
+   over, like Scratch's C blocks: a head above the first card and a rail down the
+   side (routine-music.js adds .song-head and .in-song). */
+.song-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2); /* the same as between the parts, so the rail covers every gap */
+}
+
+.song-head {
+  list-style: none;
+  margin-bottom: calc(-1 * var(--space-2)); /* the rail starts right under it */
+}
+
+.song-head__link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-left: var(--song-rail) solid var(--song-edge);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--song-bar);
+  color: var(--on-song);
+  text-decoration: none;
+}
+
+.song-head__link svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.song-head__name {
+  font-weight: 800;
+}
+
+.song-head__detail {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.song-head__edit {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+}
+
+.in-song {
+  position: relative;
+  margin-left: var(--song-indent);
+}
+
+.in-song::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--song-indent));
+  top: calc(-1 * var(--space-2));
+  bottom: 0;
+  width: var(--song-rail);
+  background: var(--song-edge);
+}
+
+.in-song--last::before {
+  border-radius: 0 0 var(--song-rail) var(--song-rail);
+}
+
+/* ---------- Editar parte, compact (rutinas-7) ---------- */
+
+/* "Dura  − 5 min +  De 7:00 a 7:05. Seguida de la anterior." in one line. */
+.part-length {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.part-length .field__label {
+  margin: 0;
+}
+
+.part-length .hint {
+  margin: 0;
+}
+
+/* A sentence with gaps to tap (rutinas-7: when a song plays). The gaps are the
+   browser's own lists, dressed as the app's pills. */
+.sentence {
+  margin: 0;
+  font-weight: 600;
+  line-height: 2.8;
+}
+
+select.pick {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+/* A routine's tasks: their steps as little reminders, the same pictures the child sees. */
+.step-reminders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.step-reminders img {
+  width: 24px;
+  height: 24px;
+}
+
+.step-reminders__letter {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.btn--start { justify-self: start; }

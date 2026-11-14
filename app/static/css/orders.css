@@ -1,0 +1,282 @@
+/* Mis pedidos: each order on its road, and the little films of the truck
+   (effects/delivery.js). */
+
+/* Mis pedidos: each order on its road */
+.orders {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delivery {
+  display: grid;
+  grid-template-columns: var(--order-size) 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--line);
+  border-radius: 28px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delivery .step-tile {
+  --step-tile-size: var(--order-size);
+}
+
+.delivery--fresh {
+  border-color: var(--child-color);
+}
+
+.delivery--arrived {
+  grid-template-columns: var(--order-size) auto;
+  justify-content: space-between;
+  border-color: var(--success-vivid);
+  background: var(--order-arrived);
+  cursor: default;
+}
+
+.delivery__open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.delivery__road {
+  position: relative;
+  height: var(--order-size);
+  min-width: 0;
+}
+
+.delivery__road::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--order-size) * 0.4);
+  right: calc(var(--order-size) * 0.4);
+  top: 66%;
+  height: 8px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(90deg, var(--road) 0 22px, var(--road-gap) 22px 32px);
+}
+
+.delivery__from, .delivery__to {
+  position: absolute;
+  top: 6%;
+  width: calc(var(--order-size) * 0.8);
+  height: calc(var(--order-size) * 0.8);
+}
+
+.delivery__from {
+  left: 0;
+}
+
+.delivery__to {
+  right: 0;
+}
+
+/* The truck between them: --progress (0 at the shop, 1 home) comes from the order. */
+.delivery__truck {
+  position: absolute;
+  top: 0;
+  left: calc(var(--order-size) * 0.4 + (100% - var(--order-size) * 0.8) * var(--progress));
+  width: calc(var(--order-size) * 0.85);
+  height: calc(var(--order-size) * 0.85);
+  translate: -50% 0;
+}
+
+.delivery__truck img {
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1); /* facing home */
+}
+
+.delivery__when {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-width: 120px;
+  font-weight: 900;
+  font-size: var(--text-lg);
+}
+
+.delivery__when > img {
+  width: 44px;
+  height: 44px;
+}
+
+.delivery__moons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 140px;
+}
+
+.delivery__moons img {
+  width: 34px;
+  height: 34px;
+}
+
+.orders__things {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orders__thing {
+  position: relative;
+}
+
+.orders__thing .step-tile {
+  --step-tile-size: 64px;
+}
+
+.orders__check {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--success-vivid);
+  color: var(--on-primary);
+}
+
+.orders__check .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* The little films (effects/delivery.js): a stage, the ground, and who is on it,
+   where each starts. How they move: effects.css (with "reduce motion" there is no film). */
+.parcel-stage {
+  position: relative;
+  width: 100%;
+  min-height: 340px;
+  overflow: hidden;
+}
+
+.parcel-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.parcel-scene__ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14%;
+  height: 10px;
+  border-radius: 10px;
+  background: var(--road);
+}
+
+.parcel-scene img, .parcel-scene__item {
+  position: absolute;
+  display: block;
+}
+
+.parcel-scene__parcel {
+  position: absolute;
+  left: 50%;
+  bottom: 15%;
+  width: 150px;
+  height: 150px;
+  translate: -50% 0;
+}
+
+.parcel-scene--send .parcel-scene__item {
+  inset: 12%;
+  width: 76%;
+  height: 76%;
+  opacity: 0;
+}
+
+.parcel-scene--send .parcel-scene__box {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.parcel-scene__star {
+  top: 4%;
+  right: 6%;
+  width: 46px;
+  height: 46px;
+  opacity: 0;
+}
+
+.parcel-scene__truck {
+  bottom: 15%;
+  left: 110%;
+  width: 230px;
+  height: 230px;
+  transform: scaleX(-1);
+}
+
+/* The truck that takes an order: a box that moves (__van), with the truck facing right
+   inside and its smoke behind it. */
+.parcel-scene__van {
+  position: absolute;
+  bottom: 15%;
+  left: 110%;
+  width: 230px;
+  height: 230px;
+}
+
+.parcel-scene .parcel-scene__van-body {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  scale: -1 1;
+  transform-origin: 50% 90%;
+}
+
+.parcel-scene .parcel-scene__smoke {
+  left: -70px;
+  bottom: 6%;
+  width: 80px;
+  height: 80px;
+  opacity: 0;
+}
+
+.parcel-scene__house {
+  right: 6%;
+  bottom: 15%;
+  width: 240px;
+  height: 240px;
+}
+
+.parcel-scene--home .parcel-scene__box {
+  left: 46%;
+  bottom: 15%;
+  width: 120px;
+  height: 120px;
+  translate: -50% 0;
+  opacity: 0;
+}
+
+.parcel-scene--home .parcel-scene__item {
+  left: 46%;
+  bottom: 22%;
+  width: 170px;
+  height: 170px;
+  translate: -50% 0;
+  opacity: 0;
+}
+
+.parcel-scene--home .parcel-scene__truck {
+  left: -40%;
+}

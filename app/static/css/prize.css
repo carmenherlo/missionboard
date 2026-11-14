@@ -1,0 +1,184 @@
+/* The daily prize at the end of the route, and its wheel. */
+
+/* ---------- the daily prize at the end of the route ---------- */
+
+.route-node--prize .ring__fill { stroke: var(--prize-color); }
+
+.route-node--prize .ring__inner { background: var(--prize-soft); }
+
+/* Locked: in colour (it motivates), but small and in the background. */
+.route-node--prize-locked .ring { opacity: var(--prize-locked-opacity); }
+
+.route-node--prize .route-node__tag {
+  background: var(--prize-strong);
+}
+
+.ring-holder {
+  position: relative;
+  display: grid;
+}
+
+.ring__lock {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 20px;
+  box-shadow: var(--shadow-badge);
+}
+
+/* ---------- the wheel ---------- */
+
+.prize-body {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.wheel {
+  position: relative;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+}
+
+.wheel__disc {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: var(--shadow-lifted);
+  transform: rotate(var(--wheel-angle, 0deg));
+  will-change: transform; /* turned every frame: on its own layer */
+}
+
+.wheel__slice { stroke: var(--surface); stroke-width: 1.5; }
+
+.wheel__slice--0 { fill: var(--wheel-1); }
+
+.wheel__slice--1 { fill: var(--wheel-2); }
+
+.wheel__slice--2 { fill: var(--wheel-3); }
+
+.wheel__slice--3 { fill: var(--wheel-4); }
+
+.wheel__slice--won { stroke: var(--wheel-won); stroke-width: 5; }
+
+.wheel__rim { fill: none; stroke: var(--wheel-rim); stroke-width: 18; }
+
+.wheel__peg { fill: var(--wheel-peg); stroke: var(--wheel-rim); stroke-width: 1; }
+
+.wheel__bulb { fill: var(--wheel-bulb-off); }
+
+.wheel__letter {
+  fill: var(--text);
+  font: 800 28px var(--font);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* The arrow at the top, over the rim: it is hit by each peg (effects.css). */
+.wheel__pointer {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  z-index: 1;
+  width: 48px;
+  height: 58px;
+  margin-left: -24px;
+  background: var(--wheel-pointer);
+  clip-path: polygon(50% 100%, 0 30%, 8% 10%, 30% 0, 70% 0, 92% 10%, 100% 30%);
+  transform-origin: 50% 20%;
+}
+
+.wheel__pointer::after { /* its round head, white */
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--wheel-pointer-edge);
+}
+
+/* "¡Gira!" in the middle: it does not turn with the wheel. */
+.wheel__hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34%;
+  height: 34%;
+  margin: -17% 0 0 -17%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 6px solid var(--wheel-hub-edge);
+  border-radius: 50%;
+  background: var(--wheel-hub);
+  color: var(--wheel-hub-text);
+  box-shadow: var(--shadow-lifted);
+  font: 900 clamp(1.3rem, 4.4vmin, 2.1rem) / 1 var(--font);
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wheel__hub:disabled { cursor: default; }
+
+.wheel__hub-text { padding: 0 var(--space-2); }
+
+.spin-button {
+  min-height: 72px;
+  padding: 0 var(--space-6);
+  font-size: 2rem;
+}
+
+.prize-won {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-radius: 40px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+  font-size: 2.25rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+button.prize-won {
+  border: 0;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.prize-won .step-tile {
+  --step-tile-size: 160px;
+}
+
+.prize-body__title {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.prize-body__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.child-colors {
+  display: contents; /* only carries the child's colour to what it holds */
+}

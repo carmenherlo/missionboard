@@ -17,8 +17,6 @@ SKIPPED = ("static/libraries/", "static/css/themes/")
 
 # Over the limit today; to split in the cleanup (1b–1d).
 TOO_BIG = {
-    "static/css/child.css": 2387,
-    "static/css/components.css": 2228,
     "static/css/effects.css": 641,
     "static/css/routine.css": 483,
     "routines/repository.py": 483,

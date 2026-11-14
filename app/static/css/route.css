@@ -1,0 +1,377 @@
+/* The child's route: the missions in a line or on a wheel, each in its ring,
+   and what a tap says. */
+
+/* ---------- the route ---------- */
+
+.route {
+  position: relative;
+  flex: 1;
+  display: grid;
+  align-content: center;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+}
+
+.route__line {
+  display: flex;
+  align-items: center;
+}
+
+/* Each tram of the line is longer the nearer it is to the mission in focus. */
+.route__link {
+  flex: 1 1 0;
+  min-width: var(--space-5); /* room for the names below */
+  height: var(--route-link-width);
+  margin: 0 var(--space-1);
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.route__link--near { flex-grow: 3; }
+
+.route__link--mid { flex-grow: 2; }
+
+.route__link--walked { background: var(--route-walked); }
+
+.route-node {
+  --size: var(--route-far-size);
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--size);
+  height: var(--route-focus-size); /* the same box for all: the names fall on one line */
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  /* Held down, a tablet would select the name or drag the picture, and cancel the hold. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: pointer;
+}
+
+.route-node--near { --size: var(--route-near-size); }
+
+.route-node--focus { --size: var(--route-focus-size); }
+
+.route-node__label {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  width: max-content;
+  max-width: calc(var(--size) + 7rem); /* a long name wraps instead of touching the next one */
+  border-radius: var(--radius-md);
+  background: var(--route-label-bg);
+  font-size: var(--text-md);
+  font-weight: 800;
+  text-align: center;
+}
+
+.route-node--near .route-node__label {
+  font-size: var(--text-lg);
+}
+
+.route-node--focus .route-node__label {
+  font-size: var(--text-xl);
+  white-space: nowrap;
+}
+
+.route-node__detail {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-md);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.route-node__tag {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--mission-strong, var(--child-strong));
+  color: var(--on-primary);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.route__message {
+  justify-self: center;
+  margin: 7rem 0 0; /* below the names of the route */
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.route__empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.avatar--hero {
+  --size: 200px;
+}
+
+/* ---------- the route as a wheel (route-wheel.js) ---------- */
+
+.route--wheel {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-content: stretch;
+  padding: 0 0 var(--space-5);
+}
+
+.drum-view {
+  display: grid;
+  place-items: center;
+  padding-bottom: 7rem; /* the names go below the rings */
+  perspective: var(--drum-perspective, 1950px);
+  touch-action: none; /* the finger turns the wheel, it does not scroll */
+  user-select: none;
+  cursor: grab;
+}
+
+.drum-view:active { cursor: grabbing; }
+
+.drum {
+  position: relative;
+  width: var(--drum-card);
+  height: var(--drum-card);
+  transform-style: preserve-3d;
+}
+
+/* Each stop faces out from the drum; only its ring and its name take taps. */
+.drum__stop {
+  position: absolute;
+  inset: calc(-1 * var(--drum-room));
+  padding: var(--drum-room);
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.drum__stop > * { pointer-events: auto; }
+
+.route--wheel .route-node {
+  --size: var(--drum-card);
+  width: var(--size);
+  height: var(--size);
+}
+
+/* Open: in colour (the glow is in effects.css). Not open yet, or not done: in black and white. */
+.route--wheel .route-node--open .ring__inner img { opacity: 1; filter: none; }
+
+.route--wheel:not(.route--grey) .route-node--upcoming .ring__inner img,
+.route--wheel:not(.route--grey) .route-node--closed .ring__inner img { filter: none; }
+
+.route--grey .route-node--upcoming .ring,
+.route--grey .route-node--closed .ring { filter: grayscale(1); }
+
+/* From a stop to the next, on the straight line between their rings. */
+.drum__joint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 14px;
+  margin-top: -7px;
+  color: var(--drum-joint-off);
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.drum__joint--done { color: color-mix(in srgb, var(--joint-color) var(--drum-joint-done), transparent); }
+
+.drum__joint--dots {
+  background: currentColor;
+  -webkit-mask: radial-gradient(circle, var(--mask-solid) 5px, transparent 6px) 0 50% / 20px 14px space no-repeat;
+  mask: radial-gradient(circle, var(--mask-solid) 5px, transparent 6px) 0 50% / 20px 14px space no-repeat;
+}
+
+/* Footprints: in zigzag, walking towards the next one. */
+.drum__joint--paws {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 60px;
+  margin-top: -30px;
+}
+
+.drum__joint--paws .icon { width: 34px; height: 34px; transform: rotate(90deg) translateX(var(--paw-side)); }
+
+.drum__joint--paws .icon:nth-child(odd) { --paw-side: -12px; }
+
+.drum__joint--paws .icon:nth-child(even) { --paw-side: 12px; }
+
+/* Which one is in the middle, as dots below. */
+.drum-marks {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.drum-marks span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--drum-mark);
+  box-shadow: 0 0 0 1px var(--drum-mark-edge);
+}
+
+.drum-marks .drum-marks__on { background: var(--child-color); }
+
+/* ---------- ring: the mission's picture, filled with the steps done ---------- */
+
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+}
+
+.ring > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+
+.ring__white {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+
+.ring__track {
+  fill: none; /* transparent: the picture floats inside its ring */
+  stroke: var(--line);
+  stroke-width: 6;
+}
+
+.ring__fill,
+.ring__glow {
+  fill: none;
+  stroke: var(--mission-color, var(--child-color));
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.ring__glow {
+  display: none; /* shown and animated in effects.css */
+  stroke-width: 10;
+}
+
+.ring__inner {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+}
+
+.ring__inner img {
+  width: 72%;
+  height: 72%;
+}
+
+.ring__letter {
+  color: var(--mission-strong, var(--child-strong));
+  font-size: calc(var(--size) * 0.4);
+  font-weight: 800;
+}
+
+.ring__star {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-badge);
+}
+
+.ring__star img {
+  width: 34px;
+  height: 34px;
+}
+
+/* Done: in the background, softer. Pending, upcoming and closed: grey. */
+.route-node--done .ring__fill { stroke: var(--mission-soft, var(--child-soft)); }
+
+.route-node--done .ring__inner img,
+.route-node--done .ring__star img { opacity: 0.75; filter: saturate(0.6); }
+
+/* On the wheel, a mission done stays bright, in its colour, with its star (12/11). */
+.route--wheel .route-node--done .ring__fill { stroke: var(--mission-color); }
+
+.route--wheel .route-node--done .ring__inner img,
+.route--wheel .route-node--done .ring__star img { opacity: 1; filter: none; }
+
+.route-node--open:not(.route-node--focus) .ring__inner img,
+.route-node--upcoming .ring__inner img { opacity: 0.8; filter: grayscale(1); }
+
+/* transparent, over the picture: not fainter */
+.route-node--closed .ring__inner img,
+.route-node--closed .ring__letter { opacity: 0.55; filter: grayscale(1); }
+
+/* ---------- toast: "Se abre a las 19:30" ---------- */
+
+.child-toast {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-5);
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+/* Holding a mission that is not open: the parents' code. */
+.open-today { display: grid; place-items: center; }
+
+.open-today__form {
+  width: min(420px, 100%);
+}
+
+/* From a routine: the child's route over everything a moment, while the star lands (star-landing.js). */
+.landing-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.route-node img {
+  -webkit-user-drag: none;
+  pointer-events: none; /* the finger is on the mission, never on its picture */
+}

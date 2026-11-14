@@ -1,0 +1,299 @@
+/* The shop (Mis estrellas): the shop front, its tabs, prices and asking for
+   something. */
+
+/* ---------- Mis estrellas: the shop ---------- */
+
+.stars--button {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.stars-body {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.stars--big {
+  margin: 0;
+}
+
+.stars-body .step-grid {
+  width: 100%;
+  padding: 0;
+}
+
+.step-card--locked .step-card__toggle {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--stars-text);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.price img {
+  width: 28px;
+  height: 28px;
+}
+
+/* The tabs (Tienda · Mis pedidos), their stars and the order (tienda-2.html) */
+.shop-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.shop-tabs {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.shop-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 56px;
+  padding: 0 var(--space-4) 0 var(--space-2);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shop-tab--on {
+  border-color: var(--child-color);
+  background: var(--child-soft);
+}
+
+.shop-tab__picture, .shop-order__picture {
+  width: 40px;
+  height: 40px;
+}
+
+.price--drawn {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  max-width: 160px;
+}
+
+.price--drawn img {
+  width: 24px;
+  height: 24px;
+}
+
+.shop-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+}
+
+.shop-confirm__tile {
+  --step-tile-size: 180px;
+}
+
+.shop-purse {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  max-width: 420px;
+  margin: 0;
+}
+
+.shop-purse__stars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.shop-purse__stars img {
+  width: var(--purse-star);
+  height: var(--purse-star);
+  border-radius: 50%;
+}
+
+.shop-purse__goes {
+  outline: 3px dashed var(--child-color);
+  outline-offset: 1px;
+}
+
+.shop-purse__stays {
+  opacity: 0.35;
+}
+
+.shop-order {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- The shop as a shop front, and the two boxes of "Mis pedidos" (13/11) ---------- */
+
+.shop-front {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  /* the wall: warm, with faint boards */
+  background:
+    repeating-linear-gradient(90deg, transparent 0 58px, var(--shop-plank) 58px 62px),
+    var(--shop-ground);
+  box-shadow: var(--shadow-badge);
+}
+
+.shop-front__top {
+  position: relative;
+  padding-bottom: var(--space-3);
+}
+
+.shop-front__rod {
+  height: 12px;
+  background: var(--shop-rod);
+}
+
+/* The awning: stripes, darker towards its edge, and scallops. */
+.shop-front__awning {
+  height: var(--shop-awning-height);
+  background:
+    linear-gradient(transparent 40%, var(--shop-awning-shade)),
+    repeating-linear-gradient(90deg, var(--shop-awning-a) 0 48px, var(--shop-awning-b) 48px 96px);
+  -webkit-mask: radial-gradient(24px at 24px 24px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
+    linear-gradient(black, black) 0 0 / 100% 24px no-repeat;
+  mask: radial-gradient(24px at 24px 24px, black 99%, transparent) 0 0 / 48px 100% repeat-x,
+    linear-gradient(black, black) 0 0 / 100% 24px no-repeat;
+  filter: drop-shadow(0 4px 2px var(--shop-awning-shade));
+}
+
+/* Its sign, a wooden board over the awning, with the shop's logo. */
+.shop-front__sign {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  translate: -50% 0;
+  padding: var(--space-2) var(--space-5) var(--space-1);
+  border: 6px solid var(--shop-wood);
+  border-radius: 16px;
+  background: var(--shop-logo-board);
+  box-shadow: var(--shadow-badge);
+}
+
+.shop-logo {
+  display: grid;
+  justify-items: center;
+}
+
+.shop-logo__name {
+  color: var(--shop-logo-text);
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.shop-logo__trail {
+  width: 200px;
+  height: 40px;
+  margin-top: -4px;
+  overflow: visible;
+}
+
+.shop-logo__tail-start { stop-color: var(--shop-logo-tail-start); }
+
+.shop-logo__tail-end { stop-color: var(--shop-logo-tail-end); }
+
+.shop-logo__tail { fill: url(#shop-logo-tail); }
+
+.shop-logo__star {
+  fill: var(--shop-logo-star);
+  stroke: var(--shop-logo-star-edge);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.stars-body .shop-front__shelf {
+  row-gap: var(--space-6);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+}
+
+/* A wooden shelf under each row of things. */
+.shop-front__shelf .step-card::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-3) / -2 - 1px);
+  right: calc(var(--space-3) / -2 - 1px);
+  bottom: -18px;
+  height: 14px;
+  border-bottom: 4px solid var(--shop-wood-dark);
+  background: var(--shop-wood);
+}
+
+/* The price on a tag. */
+.shop-front .price {
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--shop-tag-edge);
+  border-radius: 10px;
+  background: var(--shop-tag);
+}
+
+.shop-front .price--drawn { max-width: 240px; }
+
+/* up to 7 stars in one line on its tag */
+
+/* The counter, at the bottom. */
+.shop-front__counter {
+  height: 22px;
+  border-top: 5px solid var(--shop-wood-dark);
+  background: var(--shop-wood);
+}
+
+.order-box {
+  width: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 3px solid;
+  border-radius: var(--radius-lg);
+}
+
+/* On its way: white, inside a thick dashed yellow line (not theirs yet). */
+.order-box--way {
+  border: 7px dashed var(--order-way-edge);
+  background: var(--order-way-ground);
+}
+
+.order-box--home {
+  border-color: var(--order-home-edge);
+  background: var(--order-home-ground);
+}
+
+.order-box__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xl);
+}
+
+.order-box__picture {
+  width: 48px;
+  height: 48px;
+}
+
+.order-box__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-lg);
+}

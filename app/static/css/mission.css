@@ -1,0 +1,204 @@
+/* A mission: a screen inside the screen, over the route. */
+
+/* ---------- the mission: a screen inside the screen ---------- */
+
+.mission-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20; /* over the corner button: the panel is closed with its ✕ */
+  display: flex;
+  padding: var(--space-5);
+  background: var(--sheet-backdrop);
+}
+
+.mission-sheet {
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+  border-radius: 40px;
+  background: color-mix(in srgb, var(--surface) var(--sheet-opacity), transparent);
+  backdrop-filter: blur(var(--sheet-blur));
+  box-shadow: var(--shadow-sheet);
+}
+
+.mission-sheet__bar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.mission-sheet__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.mission-sheet__close {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.mission-sheet__close:active {
+  background: var(--line);
+}
+
+/* Many marks: the dots get thinner, and the count and the ✕ stay in sight. */
+.mission-sheet__bar > * { flex-shrink: 0; }
+
+.mission-sheet__bar > .progress {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.progress {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.progress__dot {
+  flex: 0 1 auto;
+  min-width: 4px;
+  width: 40px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--line);
+}
+
+.progress__dot--on {
+  background: var(--mission-color, var(--child-color));
+}
+
+.progress__count {
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.step-grid--many {
+  --step-tile-size: 88px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.step-card {
+  position: relative;
+}
+
+.step-card__toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  border: 0;
+  border-radius: 32px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.step-card__text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.step-tile {
+  display: grid;
+  place-items: center;
+  width: var(--step-tile-size);
+  height: var(--step-tile-size);
+  border-radius: calc(var(--step-tile-size) * 0.25);
+  background: none; /* transparent, like the missions' pictures */
+  overflow: hidden;
+}
+
+.step-tile img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+}
+
+.step-tile__letter {
+  color: var(--mission-strong, var(--child-strong));
+  font-size: calc(var(--step-tile-size) * 0.48);
+  font-weight: 800;
+}
+
+/* Done: the light tone of the child's colour and a vivid border (the
+   background is tinted with their colour too, so the fill alone would vanish). */
+.step-card--done .step-card__toggle {
+  background: var(--mission-soft, var(--child-soft));
+  box-shadow: inset 0 0 0 5px var(--mission-color, var(--child-color));
+}
+
+.step-card__check {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  display: none;
+  place-items: center;
+  width: var(--step-check-size);
+  height: var(--step-check-size);
+  border-radius: 50%;
+  background: var(--mission-color, var(--child-color));
+  color: var(--on-mission, var(--on-child));
+  font-size: calc(var(--step-check-size) * 0.6);
+  box-shadow: 0 0 0 4px var(--surface);
+  pointer-events: none;
+}
+
+.step-card--done .step-card__check {
+  display: grid;
+}
+
+.step-card__speak {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-size: 28px;
+  cursor: pointer;
+}
+
+/* A past mission (done, or closed without doing it), opened to look at (05/11): all in
+   grey, as it was left, and its steps do not look like they answer the finger. */
+.mission-sheet__past {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-align: center;
+}
+
+.mission-sheet--past .step-grid {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.mission-sheet--past .step-card__toggle {
+  cursor: default;
+}

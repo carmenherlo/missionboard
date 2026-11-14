@@ -1,0 +1,267 @@
+/* The week of fuel tanks (rachas.html) and the rocket's workshop (taller.html,
+   garage-scene.js, week-bar.js). */
+
+/* ---------- Rachas: the week of fuel tanks (rachas.html, week-bar.js) ---------- */
+
+/* The week, small, a tank per day with its letter (the parents' screens, the workshop). */
+.week-mini {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(var(--week-card-top), var(--week-card-bottom));
+  box-shadow: var(--shadow-lifted);
+  font: inherit;
+  cursor: pointer;
+}
+
+span.week-mini { cursor: default; }
+
+.week-mini__tank {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--tank-line);
+  border-radius: 8px;
+  background: var(--tank-empty);
+  color: var(--tank-letter);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.week-mini__tank--full {
+  border-color: var(--tank-now);
+  background: linear-gradient(var(--tank-fuel-top), var(--tank-fuel-bottom));
+  color: var(--tank-fuel-letter);
+}
+
+.week-mini__tank--free { border-style: dashed; opacity: 0.4; }
+
+.week-mini__tank--missed { border-style: dashed; opacity: 0.6; }
+
+.week-mini__tank--now { border-color: var(--tank-now); }
+
+.week-days {
+  display: inline-flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: linear-gradient(var(--week-card-top), var(--week-card-bottom));
+}
+
+.week-days__day {
+  width: 48px;
+  height: 48px;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.week-days__day:disabled { cursor: default; }
+
+/* ---------- The rocket's workshop (taller.html, garage-scene.js, week-bar.js) ---------- */
+
+.garage-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--garage-wall-top);
+}
+
+.garage-scene,
+.garage {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.garage-layer__back {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-4);
+  z-index: 1;
+  gap: var(--space-2);
+}
+
+/* What is said, written under it: a pill at the bottom. */
+.garage-layer__line {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-5);
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 90%;
+  margin: 0;
+  padding: var(--space-2) var(--space-5);
+  border-radius: 999px;
+  background: var(--route-label-bg);
+  box-shadow: var(--shadow-lifted);
+  font-size: var(--text-xl);
+  font-weight: 900;
+  text-align: center;
+}
+
+.garage-layer__line:empty { display: none; }
+
+.garage-layer__picture {
+  width: 56px;
+  height: 56px;
+}
+
+/* The drawing's colours (tokens.css, --garage-*). */
+.garage__sky-1 { stop-color: var(--garage-sky-1); }
+
+.garage__sky-2 { stop-color: var(--garage-sky-2); }
+
+.garage__sky-3 { stop-color: var(--garage-sky-3); }
+
+.garage__sky-4 { stop-color: var(--garage-sky-4); }
+
+.garage__wall-top { stop-color: var(--garage-wall-top); }
+
+.garage__wall-low { stop-color: var(--garage-wall-low); }
+
+.garage__fuel-top { stop-color: var(--tank-fuel-top); }
+
+.garage__fuel-bottom { stop-color: var(--tank-fuel-bottom); }
+
+.garage__body-light { stop-color: var(--garage-rocket); }
+
+.garage__body-shade { stop-color: var(--garage-rocket-shade); }
+
+.garage__glow-in { stop-color: var(--garage-lamp-light); stop-opacity: 0.45; }
+
+.garage__glow-out { stop-color: var(--garage-lamp-light); stop-opacity: 0; }
+
+.garage__moonglow-in { stop-color: var(--garage-moon); stop-opacity: 0.6; }
+
+.garage__moonglow-out { stop-color: var(--garage-moon); stop-opacity: 0; }
+
+.garage__ready-in { stop-color: var(--garage-light-on); stop-opacity: 0.7; }
+
+.garage__night { fill: var(--garage-sky-1); }
+
+.garage__beam { fill: var(--garage-beam); }
+
+.garage__truss { fill: none; stroke: var(--garage-rivet); stroke-width: 6; }
+
+.garage__rivet { fill: var(--garage-rivet); }
+
+.garage__star { fill: var(--garage-star); opacity: 0.85; }
+
+.garage__moon { fill: var(--garage-moon); }
+
+.garage__moon-edge { fill: var(--garage-moon-edge); }
+
+.garage__hill { fill: var(--garage-hill); }
+
+.garage__hill-near { fill: var(--garage-hill-near); }
+
+.garage__frame { fill: none; stroke: var(--garage-beam); stroke-width: 12; }
+
+.garage__frame--arch { stroke-width: 24; }
+
+.garage__cord { stroke: var(--garage-beam); stroke-width: 5; }
+
+.garage__lamp { fill: var(--garage-lamp); }
+
+.garage__bulb { fill: var(--garage-lamp-light); }
+
+.garage__floor { fill: var(--garage-floor); }
+
+.garage__floor-edge { fill: var(--garage-floor-edge); }
+
+.garage__floor-line { stroke: var(--garage-floor-line); stroke-width: 3; }
+
+.garage__shell { fill: var(--garage-shell); }
+
+.garage__shell-dark { fill: var(--garage-shell-dark); }
+
+.garage__inside { fill: var(--tank-empty); }
+
+.garage__sheen { fill: var(--garage-star); opacity: 0.18; }
+
+.garage__window .garage__sheen, .garage__rocket .garage__sheen { opacity: 0.5; }
+
+.garage__letter { fill: var(--garage-star); opacity: 0.55; font-family: inherit; font-weight: 900; }
+
+.garage__today { fill: none; stroke: var(--tank-now); stroke-width: 7; stroke-dasharray: 20 12; display: none; }
+
+.garage__hose { fill: none; stroke: var(--garage-hose); stroke-width: 12; stroke-linecap: round; }
+
+.garage__hose--full { stroke: var(--garage-hose-full); }
+
+.garage__fin { fill: var(--garage-fin); }
+
+.garage__window { fill: var(--garage-window); stroke: var(--garage-fin); stroke-width: 12; }
+
+.garage__light { fill: var(--garage-light-off); }
+
+.garage__light--on { fill: var(--garage-light-on); filter: drop-shadow(0 0 6px var(--garage-light-on)); }
+
+.garage__scaffold { fill: var(--garage-scaffold); }
+
+.garage__platform { fill: var(--garage-platform); }
+
+.garage__ready { opacity: 0; }
+
+.garage--ready .garage__ready { opacity: 1; }
+
+.garage__flame { fill: var(--tank-fuel-bottom); opacity: 0; }
+
+.garage__smoke circle { fill: var(--garage-smoke); }
+
+.garage__smoke { opacity: 0; }
+
+/* Each tank by its day's state. Full: the fuel, and the letter bright. */
+.garage__fuel { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); }
+
+.garage__tank--full .garage__fuel { transform: scaleY(1); }
+
+.garage__tank--full .garage__letter { opacity: 1; }
+
+.garage__tank--now .garage__today { display: inline; }
+
+.garage__tank--missed .garage__inside,
+.garage__tank--free .garage__inside { stroke: var(--garage-shell-dark); stroke-width: 5; stroke-dasharray: 14 10; }
+
+.garage__tank--free { opacity: 0.45; }
+
+/* Loaded into the rocket: the tank empties and gets a ✓. */
+.garage__check { display: none; }
+
+.garage__check circle { fill: var(--garage-check); }
+
+.garage__check path { fill: none; stroke: var(--garage-check-mark); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+
+.garage__tank--loaded .garage__check { display: inline; }
+
+.garage__tank--loaded .garage__fuel { transform: scaleY(0); }
+
+/* In their place, the child does things: full tanks to load beat; the lever starts it. */
+.garage--visit .garage__tank,
+.garage--visit .garage__lever { cursor: pointer; }
+
+.garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today { display: inline; stroke: var(--garage-light-on); }
+
+.garage__lever { display: none; }
+
+.garage--visit .garage__lever { display: inline; }
+
+.garage__lever-hit { fill: transparent; }
+
+.garage__lever-bar { fill: var(--garage-lever); }
+
+.garage__lever-knob { fill: var(--garage-lever-knob); }
+
+.garage__lever-base { fill: var(--garage-lever-base); }
+
+.garage-layer__line { flex-wrap: wrap; justify-content: center; }
+
+.garage-layer__line .btn { white-space: nowrap; }
