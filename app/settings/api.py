@@ -5,7 +5,7 @@ from app.clock import Clock, app_day
 from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
-from app.settings.repository import HomeLook, RouteLook, Season, SettingsRepository, ShopNotify, StreakWeek
+from app.settings.repository import HomeLook, Notify, RouteLook, Season, SettingsRepository, ShopNotify, StreakWeek
 from app.settings.service import SettingsService
 from app.settings.week_prizes import WeekPrizeImages, Which
 from app.storage.config_store import ConfigStore
@@ -28,6 +28,7 @@ class SettingsPatch(BaseModel):
     seasons: list[Season] | None = None
     home: HomeLook | None = None
     route: RouteLook | None = None
+    notify: Notify | None = None
     shop_notify: ShopNotify | None = None
     streak_rule: str | None = None
     streak_week: StreakWeek | None = None

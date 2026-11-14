@@ -97,12 +97,21 @@ class RouteLook(BaseModel):
     veil: Literal[0, 25, 45] = 45  # % of white over the picture
 
 
-class ShopNotify(BaseModel):
-    """The shop's messages to the parents' phones (tienda-2.html), through Home Assistant."""
+class Notify(BaseModel):
+    """The parents' phones that hear from the app, through Home Assistant (padres-menu.html):
+    chosen once, for everything that sends a message."""
 
     model_config = ConfigDict(extra="ignore", frozen=True)
 
     phones: tuple[str, ...] = ()  # Home Assistant's notify services ("mobile_app_pixel_7")
+
+
+class ShopNotify(BaseModel):
+    """The shop's messages to the phones of Notify (tienda-2.html)."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    on: bool = True  # tell of each order
     remind_at: str = Field(default="17:00", pattern=TIME)  # an order due today and not handed over
 
     _remind_at = field_validator("remind_at", mode="before")(time_from_yaml_number)
@@ -148,6 +157,7 @@ class Settings(BaseModel):
     seasons: tuple[Season, ...] = DEFAULT_SEASONS
     home: HomeLook = HomeLook()
     route: RouteLook = RouteLook()
+    notify: Notify = Notify()
     shop_notify: ShopNotify = ShopNotify()
     # Rachas: a day counts with all their missions done ("all", 13/11) or at least one ("any").
     streak_rule: Literal["any", "all"] = "all"

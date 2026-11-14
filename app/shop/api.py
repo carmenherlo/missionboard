@@ -239,9 +239,3 @@ def set_due(
 def deliver(order_id: int, orders: OrdersService = Depends(get_orders_service), present: Presenter = Depends()):
     order = orders.deliver(order_id)
     return present.order({**order, **orders.tracked(order)})
-
-
-@router.get("/notify/phones", dependencies=parent_only)
-def phones(orders: OrdersService = Depends(get_orders_service)):
-    """Whether Home Assistant is there (only in the add-on), and its phones."""
-    return orders.phones()

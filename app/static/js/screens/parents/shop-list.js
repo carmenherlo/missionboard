@@ -10,13 +10,14 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { timeInput } from "../../components/time-input.js";
+import { phoneName } from "./notify-settings.js";
 import { featurePanel, featureSwitch, loadSettings, saveFeatures, saveSettings } from "./settings-parts.js";
 
 // Like Premios del día, each item with its price in stars. Dragged to reorder, or to the
 // bin to delete (with "Deshacer"); the children's avatars on each say who sees it (13/11).
 export async function viewShopList() {
-  const [first, { features, settings }, phones, children] = await Promise.all([
-    api("GET", "api/shop"), loadSettings(), api("GET", "api/notify/phones"), api("GET", "api/children"), loadAvatars()]);
+  const [first, { features, settings }, notify, children] = await Promise.all([
+    api("GET", "api/shop"), loadSettings(), api("GET", "api/notify"), api("GET", "api/children"), loadAvatars()]);
   let items = first;
   const status = saveStatus();
   const save = (request) => status.track(request);
@@ -123,33 +124,30 @@ export async function viewShopList() {
             on: features.shop, onText: t.settings.shopOn, offText: t.settings.shopOff,
             onChange: (on) => saveFeatures(status, { shop: on }),
           })),
-        notifyPanel(settings.shop_notify, phones, status),
+        notifyPanel(settings.notify, settings.shop_notify, notify, status),
         hint,
         panel(title, list, add, error))));
   draw();
 }
 
-// Avisar al móvil: which phones of Home Assistant hear of each order, and the reminder.
-function notifyPanel(notify, phones, status) {
-  let chosen = [...notify.phones];
-  let remindAt = notify.remind_at;
-  const save = () => saveSettings(status, { shop_notify: { phones: chosen, remind_at: remindAt } });
-  const known = [...new Set([...phones.phones, ...chosen])];
-  const note = !phones.available ? t.shop.notifyOff : phones.error ? t.shop.notifyError
-    : !known.length ? t.shop.notifyNone : null;
+// Avisar al móvil (padres-menu.html): whether each order goes to the phones chosen in
+// Avisos al móvil, and the reminder. Only with Home Assistant.
+function notifyPanel(notify, shop, phones, status) {
+  if (!phones.available) return null;
+  let { on, remind_at: remindAt } = shop;
+  const save = () => saveSettings(status, { shop_notify: { on, remind_at: remindAt } });
+  const none = !notify.phones.length;
   return panel(t.shop.notifyTitle,
-    h("p", { class: "hint" }, t.shop.notifyHint),
-    note && h("p", { class: "hint" }, note),
-    phones.available && known.length > 0 && h("div", { class: "stack stack--tight" },
-      known.map((phone) => h("label", { class: "toggle" },
-        h("input", {
-          type: "checkbox", checked: chosen.includes(phone),
-          onchange: (e) => {
-            chosen = e.target.checked ? [...chosen, phone] : chosen.filter((p) => p !== phone);
-            save();
-          },
-        }),
-        phone.replace(/^mobile_app_/, "").replaceAll("_", " "))),
-      h("label", { class: "time" }, t.shop.remindAt,
-        timeInput({ value: remindAt, required: true, onchange: (e) => { remindAt = e.target.value; save(); } }))));
+    h("div", { class: "stack stack--tight" },
+      none
+        ? h("p", { class: "hint hint--warning" }, t.shop.notifyNoPhones, " ",
+            h("a", { href: "#/parents/config/notify" }, t.shop.notifyChoose))
+        : featureSwitch({
+            on, onText: t.shop.notifyOn, offText: t.shop.notifyOffSwitch,
+            onChange: (value) => { on = value; save(); },
+          }),
+      !none && h("label", { class: "time" }, t.shop.remindAt,
+        timeInput({ value: remindAt, required: true, onchange: (e) => { remindAt = e.target.value; save(); } })),
+      !none && h("p", { class: "hint" }, t.shop.notifyTo(notify.phones.map(phoneName).join(", ")), " · ",
+        h("a", { href: "#/parents/config/notify" }, t.shop.notifyChange))));
 }

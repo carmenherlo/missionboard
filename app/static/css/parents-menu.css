@@ -1,0 +1,127 @@
+/* The parents' menu (padres-menu.html), Material 3's navigation drawer: always open
+   at the side on a wide screen (tablet in landscape, computer); on a narrow one
+   (vertical tablet, phone) behind ☰, over the screen with a scrim. */
+
+.drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: var(--drawer-width);
+  padding: var(--space-2);
+  overflow-y: auto;
+  background: var(--bg);
+  border-right: 1px solid var(--line);
+}
+
+.drawer__brand {
+  margin: var(--space-1) 0 var(--space-1);
+  padding: 0 var(--space-3);
+  color: var(--primary);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.drawer__group {
+  margin: var(--space-2) 0 2px;
+  padding: 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.drawer__line {
+  width: 100%;
+  margin: auto 0 var(--space-1); /* «A los niños» at the bottom */
+  padding-top: var(--space-2);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.nav-item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 38px; /* all of them at once on a tablet in landscape (800 px high) */
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.nav-item[hidden] {
+  display: none;
+}
+
+.nav-item .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.nav-item--on {
+  background: var(--secondary-soft);
+  color: var(--on-secondary-soft);
+  font-weight: 800;
+}
+
+@media (hover: hover) {
+  .nav-item:not(.nav-item--on):hover {
+    background: color-mix(in srgb, var(--text) var(--state-hover), transparent);
+  }
+}
+
+.nav-item:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: -3px;
+}
+
+.drawer-scrim {
+  display: none;
+}
+
+/* Wide: the menu at the side, the screen beside it, no ☰. */
+@media (min-width: 1000px) {
+  #app:has(> .drawer) {
+    padding-left: var(--drawer-width);
+  }
+
+  .menu-button {
+    display: none;
+  }
+
+  .top-bar:not(:has(> :not(.menu-button))) {
+    min-height: var(--space-4); /* nothing in the bar: only some room above the title */
+  }
+}
+
+/* Narrow: behind ☰, sliding in over the screen. */
+@media (max-width: 999.98px) {
+  .drawer {
+    width: min(var(--drawer-width), 85vw);
+    border-right: 0;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    box-shadow: var(--shadow-lifted);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform var(--appear) ease, visibility 0s linear var(--appear);
+  }
+
+  .drawer--open {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--appear) ease;
+  }
+
+  .drawer--open + .drawer-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: var(--scrim);
+  }
+}

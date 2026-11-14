@@ -94,6 +94,8 @@
   --icon-button: 56px;
   --control-height: 52px;
   --page-width: 1000px;
+  --drawer-width: 290px; /* the parents' menu, always open on a wide screen */
+  --scrim: rgb(0 0 0 / 0.35); /* behind the menu opened with ☰ */
 
   /* ---------- The child's screens (paso-3.5.html, model 2) ----------
      Their colour comes from the child: the screen sets --child-color (rings,

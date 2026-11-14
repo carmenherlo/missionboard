@@ -177,3 +177,76 @@
 .first-step--done .row__icon {
   color: var(--success);
 }
+
+/* ---------- Hoy as a board (padres-menu.html) ----------
+   A big panel in its own colour around everything of today, white cards on it. */
+
+.board {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--container);
+}
+
+.board-card {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.board-card--wide {
+  grid-column: 1 / -1;
+}
+
+.board-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--primary);
+  font-size: var(--text-lg);
+}
+
+.board-card .hint {
+  margin: 0;
+}
+
+/* «Por dar»: how many, on its title */
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--space-1);
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: var(--text-sm);
+}
+
+.count[hidden] {
+  display: none;
+}
+
+.week-row__tanks {
+  display: flex;
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 900px) {
+  .board {
+    grid-template-columns: 1fr;
+    padding: var(--space-2);
+  }
+
+  .board-card {
+    padding: var(--space-3);
+  }
+}

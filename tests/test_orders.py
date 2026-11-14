@@ -71,7 +71,9 @@ def mine(client, child):
 
 def with_phones(client):
     client.patch(
-        "/api/settings", json={"shop_notify": {"phones": ["mobile_app_mum"], "remind_at": "18:00"}}, headers=PARENT
+        "/api/settings",
+        json={"notify": {"phones": ["mobile_app_mum"]}, "shop_notify": {"remind_at": "18:00"}},
+        headers=PARENT,
     )
 
 
@@ -125,6 +127,22 @@ def test_buying_tells_the_chosen_phones(client, bea, ha):
     assert message["actions"] == [f"MISSIONBOARD_ORDER_{order_id}_{a}" for a in ("TODAY", "TOMORROW", "GIVEN")]
 
 
+def test_the_shop_can_stop_telling_the_phones(client, bea, ha):
+    with_phones(client)
+    client.patch("/api/settings", json={"shop_notify": {"on": False}}, headers=PARENT)
+    ordered(client, bea)
+    assert ha.sent == []
+
+
+def test_a_test_message_to_the_chosen_phones(client, ha):
+    assert client.post("/api/notify/test").status_code == 401
+    assert client.post("/api/notify/test", headers=PARENT).status_code == 422  # none chosen yet
+    with_phones(client)
+    assert client.post("/api/notify/test", headers=PARENT).json() == {"sent": 1}
+    [message] = ha.sent
+    assert (message["phones"], message["actions"], message["tag"]) == (["mobile_app_mum"], [], "missionboard-test")
+
+
 def test_the_phone_buttons(client, app, bea):
     from app.main import _orders
 
@@ -157,6 +175,7 @@ def test_a_reminder_on_the_day_it_was_due_once(client, app, bea, ha, clock):
 
 
 def test_the_phones_of_home_assistant(client):
+    assert client.get("/api/notify", headers=PARENT).json() == {"available": True}
     assert client.get("/api/notify/phones", headers=PARENT).json() == {
         "available": True,
         "phones": ["mobile_app_mum", "mobile_app_dad"],
@@ -168,6 +187,7 @@ def test_without_home_assistant_nothing_is_sent(data_dir, clock):
         bea = create_child(client)
         ordered(client, bea)
         assert client.get("/api/notify/phones", headers=PARENT).json() == {"available": False, "phones": []}
+        assert client.get("/api/notify", headers=PARENT).json() == {"available": False}
 
 
 def test_the_summary_says_which_orders_arrive_today(client, bea):
@@ -175,3 +195,12 @@ def test_the_summary_says_which_orders_arrive_today(client, bea):
     today_ = MONDAY.date().isoformat()
     client.patch(f"/api/orders/{order_id}", json={"due_day": today_}, headers=PARENT)
     assert client.get("/api/orders/summary").json()[bea["id"]]["today"] == [order_id]
+
+
+def test_migration_19_to_20_moves_the_phones_out_of_the_shop():
+    from app.storage.config_migrations import upgrade
+
+    doc = upgrade({"version": 19, "settings": {"shop_notify": {"phones": ["mobile_app_mum"], "remind_at": "18:00"}}})
+    assert doc["settings"]["notify"] == {"phones": ["mobile_app_mum"]}
+    assert doc["settings"]["shop_notify"] == {"on": True, "remind_at": "18:00"}
+    assert upgrade({"version": 19})["version"] == 20

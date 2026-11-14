@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 19
+CURRENT_VERSION = 20
 
 
 class ConfigVersionError(Exception):
@@ -85,6 +85,22 @@ def _v18_to_v19(doc: dict) -> dict:
 
 
 _MIGRATIONS[18] = _v18_to_v19
+
+
+def _v19_to_v20(doc: dict) -> dict:
+    """The phones, chosen once for everything that sends a message (padres-menu.html):
+    from the shop's settings to their own; the shop keeps a switch, on."""
+    settings = doc.setdefault("settings", {})
+    shop = settings.get("shop_notify")
+    if isinstance(shop, dict):
+        phones = shop.pop("phones", [])
+        shop["on"] = True
+        settings["notify"] = {"phones": list(phones or [])}
+    doc["version"] = 20
+    return doc
+
+
+_MIGRATIONS[19] = _v19_to_v20
 
 
 def upgrade(doc: dict) -> dict:

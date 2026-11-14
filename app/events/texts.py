@@ -50,8 +50,9 @@ _FIELDS = {
     "home": lambda value: "aspecto del inicio cambiado",
     "gift": lambda value: stars_detail(value),
     "route": lambda value: "aspecto de la ruta cambiado",
+    "notify": lambda value: "avisos al móvil: " + (", ".join(value.phones) or "ninguno"),
     "shop_notify": lambda value: (
-        "avisos al móvil: " + (", ".join(value.phones) or "ninguno") + f", recordar a las {value.remind_at}"
+        "avisar de los pedidos: " + ("sí" if value.on else "no") + f", recordar a las {value.remind_at}"
     ),
     "due_day": lambda value: "llega " + (_day(value) if value else "pronto"),
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
@@ -125,6 +126,7 @@ SCREENS = {
     "parents_child": ("Padres · Niño", "Cómo va {child}"),
     "day_settings": ("El día", None),
     "config": ("Configurar", None),
+    "notify": ("Avisos al móvil", None),
     "change_code": ("Código de padres", None),
     "children": ("Niños", None),
     "child_new": ("Añadir niño", None),

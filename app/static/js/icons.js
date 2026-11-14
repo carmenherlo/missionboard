@@ -71,6 +71,10 @@ const PATHS = {
     "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
     "M4 4l16 16",
   ],
+  // The parents' menu (padres-menu.html): open it, Hoy, Avisos al móvil.
+  menu: ["M4 6h16", "M4 12h16", "M4 18h16"],
+  today: ["M4 5h16v15H4z", "M4 10h16", "M9 3v4", "M15 3v4"],
+  phone: ["M7 2h10v20H7z", "M11 18h2"],
 };
 
 // Decorative icon: its meaning must come from nearby text or an aria-label.

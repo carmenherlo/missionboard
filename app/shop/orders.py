@@ -173,17 +173,11 @@ class OrdersService:
             return False
         return True
 
-    def phones(self) -> dict:
-        """For Configurar → Tienda: whether there is Home Assistant, and its phones."""
-        if not self._ha.available:
-            return {"available": False, "phones": []}
-        try:
-            return {"available": True, "phones": self._ha.phones()}
-        except Exception:  # noqa: BLE001 - Home Assistant not answering
-            return {"available": True, "phones": [], "error": True}
-
     def _send(self, order: dict, title: str, message: str, buttons: list[tuple[str, str]]) -> None:
-        phones = list(self._settings.settings().shop_notify.phones)
+        settings = self._settings.settings()
+        phones = list(settings.notify.phones) if settings.shop_notify.on else []
+        if not phones:
+            return
         actions = [(f"{ACTION}_{order['id']}_{code}", text) for code, text in buttons]
         self._ha.send(phones, title, message, actions, tag=f"missionboard-order-{order['id']}")
 

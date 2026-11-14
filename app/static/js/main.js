@@ -9,12 +9,12 @@ import { viewChangeCode } from "./screens/parents/change-code.js";
 import { viewChildMissions, viewMissionChild } from "./screens/parents/mission-child.js";
 import { viewChildForm } from "./screens/parents/child-form.js";
 import { viewChildrenList } from "./screens/parents/children-list.js";
-import { viewConfigIndex } from "./screens/parents/config-index.js";
 import { viewAvatarEdit } from "./screens/parents/avatar-edit.js";
 import { viewAvatarNew } from "./screens/parents/avatar-new.js";
 import { viewAvatarsList } from "./screens/parents/avatars-list.js";
 import { viewBackup } from "./screens/parents/backup.js";
 import { viewDisplaySettings } from "./screens/parents/display-settings.js";
+import { viewNotifySettings } from "./screens/parents/notify-settings.js";
 import { viewAppearance, viewAppearanceHome, viewAppearanceMissions, viewSeasons } from "./screens/parents/settings.js";
 import { viewStarsSettings } from "./screens/parents/rules-settings.js";
 import { viewStreakSettings } from "./screens/parents/streak-settings.js";
@@ -60,11 +60,12 @@ const routes = [
   [/^#\/child\/(?<child>[\w-]+)\/place\/garage$/, (ids) => viewChildPlace(ids.child, { garage: true }), "child", "child_garage"],
   [/^#\/parents\/?$/, () => viewParentsToday(), "parents", "parents_today"],
   [/^#\/parents\/kids\/(?<child>[\w-]+)$/, (ids) => viewParentsChild(ids.child), "parents", "parents_child"],
-  [parentsPath(""), () => viewConfigIndex(), "parents", "config"],
+  [parentsPath(""), () => { location.hash = "#/parents"; }, "parents"], // Configurar is the menu now (padres-menu.html)
   [parentsPath("/code"), () => viewChangeCode(), "parents", "change_code"],
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],
   [parentsPath("/backup"), () => viewBackup(), "parents", "backup"],
   [parentsPath("/display"), () => viewDisplaySettings(), "parents", "display"],
+  [parentsPath("/notify"), () => viewNotifySettings(), "parents", "notify"],
   [parentsPath("/settings"), () => { location.hash = "#/parents/config/appearance"; }, "parents"], // the old Ajustes
   [parentsPath("/appearance"), () => viewAppearance(), "parents", "appearance"],
   [parentsPath("/appearance/home"), () => viewAppearanceHome(), "parents", "appearance_home"],
