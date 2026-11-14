@@ -15,7 +15,7 @@ from app.settings import SettingsRepository
 from app.shop.orders import OrdersService
 from app.shop.repository import PurchasesRepository, ShopItem, ShopRepository
 from app.storage.photo_store import PhotoStore
-from app.today.repository import DayRepository
+from app.stars.repository import StarsRepository
 
 UNSET = object()
 
@@ -28,7 +28,7 @@ class ShopService:
         self,
         items: ShopRepository,
         purchases: PurchasesRepository,
-        days: DayRepository,
+        stars: StarsRepository,
         children: ChildrenRepository,
         settings: SettingsRepository,
         libraries: ImageLibraries,
@@ -40,7 +40,7 @@ class ShopService:
         self._orders = orders
         self._items = items
         self._purchases = purchases
-        self._days = days
+        self._stars = stars
         self._children = children
         self._settings = settings
         self._photos = photos
@@ -128,7 +128,7 @@ class ShopService:
         child = self._child(child_id)
         return {
             "child": child,
-            "stars": self._days.stars(child.id),
+            "stars": self._stars.balance(child.id),
             "items": [i for i in self._items.list() if i.for_child(child.id)] if self._settings.features().shop else [],
             "orders": self._orders.of_child(child.id),
         }

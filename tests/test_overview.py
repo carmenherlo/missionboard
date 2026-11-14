@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from app.today.streaks import streak
+from app.streaks.count import streak
 from tests.conftest import PARENT
 from tests.test_missions import create_child
 from tests.test_prizes import spin

@@ -7,17 +7,19 @@ from pydantic import BaseModel, Field, field_validator
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.deps import (
+    get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, get_stars_repository,
+    require_parent,
+)
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.settings import SettingsRepository
 from app.shop.repository import PurchasesRepository, ShopItem, ShopRepository
 from app.shop.orders import OrdersService
 from app.shop.service import ShopService
+from app.stars.repository import StarsRepository
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
-from app.today.api import get_day_repository
-from app.today.repository import DayRepository
 
 router = APIRouter(prefix="/api", tags=["shop"])
 parent_only = [Depends(require_parent)]
@@ -69,13 +71,13 @@ def get_shop_service(
     orders: OrdersService = Depends(get_orders_service),
     store: ConfigStore = Depends(get_config_store),
     purchases: PurchasesRepository = Depends(get_purchases_repository),
-    days: DayRepository = Depends(get_day_repository),
+    stars: StarsRepository = Depends(get_stars_repository),
     libraries: ImageLibraries = Depends(get_image_libraries),
     photos: PhotoStore = Depends(get_photo_store),
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
 ) -> ShopService:
-    return ShopService(ShopRepository(store), purchases, days, ChildrenRepository(store), SettingsRepository(store),
+    return ShopService(ShopRepository(store), purchases, stars, ChildrenRepository(store), SettingsRepository(store),
                        libraries, photos, clock, events, orders)
 
 

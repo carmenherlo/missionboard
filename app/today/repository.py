@@ -1,13 +1,13 @@
 from datetime import date, datetime
 from pathlib import Path
 
-from app.children.repository import Child
 from app.storage import db
 
 
 class DayRepository:
-    """What each child has done each app day, and their stars (SQLite). `step_checks`
-    keeps the tasks they check (before misiones-3, also steps: see today/service.py)."""
+    """What each child has done each app day (SQLite). `step_checks` keeps the tasks they
+    check (before misiones-3, also steps: see today/service.py). A completed mission puts
+    its stars in `star_movements` in the same transaction (the rest of the stars: stars/)."""
 
     def __init__(self, data_dir: Path):
         self._data_dir = data_dir
@@ -84,29 +84,6 @@ class DayRepository:
                 )
         return bool(inserted)
 
-    def add_starting_stars(self, child: Child, stars: int, day: date, at: datetime) -> None:
-        """What a new child starts with (settings.starting_stars)."""
-        if not stars:
-            return
-        with db.connect(self._data_dir) as conn:
-            conn.execute(
-                "INSERT INTO star_movements (child_id, child_name, amount, reason, day, at)"
-                " VALUES (?, ?, ?, 'starting_stars', ?, ?)",
-                (child.id, child.name, stars, day.isoformat(), at.isoformat(timespec="seconds")),
-            )
-
-    def give_stars(self, child: Child, stars: int, day: date, at: datetime, reason: str = "gift") -> None:
-        """Stars a parent gives a child, as a present (Editar niño → Estrellas), or takes
-        away (reason "taken", stars negative)."""
-        with db.connect(self._data_dir) as conn:
-            conn.execute(
-                "INSERT INTO star_movements (child_id, child_name, amount, reason, day, at)"
-                " VALUES (?, ?, ?, ?, ?, ?)",
-                (child.id, child.name, stars, reason, day.isoformat(), at.isoformat(timespec="seconds")),
-            )
-
-    # ---------- Padres · Hoy and Padres · Niños (step 7) ----------
-
     def completions(self, child_id: str) -> dict[str, set[str]]:
         """Every mission the child has completed, by day ("2026-11-13" → mission ids)."""
         with db.connect(self._data_dir) as conn:
@@ -117,130 +94,3 @@ class DayRepository:
         for row in rows:
             days.setdefault(row["day"], set()).add(row["mission_id"])
         return days
-
-    def movements(self, child_id: str, limit: int) -> list[dict]:
-        """The latest stars in and out, newest first."""
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute(
-                "SELECT amount, reason, mission_name, day, at FROM star_movements WHERE child_id = ?"
-                " ORDER BY at DESC, id DESC LIMIT ?", (child_id, limit),
-            ).fetchall()
-        return [dict(row) for row in rows]
-
-    def earned_by_day(self, child_id: str, since: date) -> dict[str, int]:
-        """Stars won with missions, by day, from `since`."""
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute(
-                "SELECT day, SUM(amount) AS stars FROM star_movements"
-                " WHERE child_id = ? AND reason = 'mission_completed' AND day >= ? GROUP BY day",
-                (child_id, since.isoformat()),
-            ).fetchall()
-        return {row["day"]: row["stars"] for row in rows}
-
-    def prizes_to_give(self) -> list[dict]:
-        """Prizes of the wheel not handed over yet, oldest first."""
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute(
-                "SELECT id, day, child_id, child_name, prize_text, prize_image, at FROM prize_spins"
-                " WHERE delivered_at IS NULL ORDER BY id"
-            ).fetchall()
-        return [dict(row) for row in rows]
-
-    def prize_spin(self, spin_id: int) -> dict | None:
-        with db.connect(self._data_dir) as conn:
-            row = conn.execute("SELECT * FROM prize_spins WHERE id = ?", (spin_id,)).fetchone()
-        return dict(row) if row else None
-
-    def deliver_prize(self, spin_id: int, at: datetime) -> None:
-        with db.connect(self._data_dir) as conn:
-            conn.execute("UPDATE prize_spins SET delivered_at = ? WHERE id = ? AND delivered_at IS NULL",
-                         (at.isoformat(timespec="seconds"), spin_id))
-
-    def prize_spins(self, day: date, child_id: str) -> list[dict]:
-        """The prizes the child won today, in order: {"prize_id", "text", "image"}."""
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute(
-                "SELECT prize_id, prize_text, prize_image FROM prize_spins WHERE day = ? AND child_id = ? ORDER BY id",
-                (day.isoformat(), child_id),
-            ).fetchall()
-        return [{"prize_id": r["prize_id"], "text": r["prize_text"], "image": r["prize_image"]} for r in rows]
-
-    def add_prize_spin(self, day: date, child, prize, at: datetime) -> None:
-        with db.connect(self._data_dir) as conn:
-            conn.execute(
-                "INSERT INTO prize_spins (day, child_id, child_name, prize_id, prize_text, prize_image, at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (day.isoformat(), child.id, child.name, prize.id, prize.text, prize.image,
-                 at.isoformat(timespec="seconds")),
-            )
-
-    def stars(self, child_id: str) -> int:
-        with db.connect(self._data_dir) as conn:
-            return conn.execute(
-                "SELECT COALESCE(SUM(amount), 0) FROM star_movements WHERE child_id = ?", (child_id,)
-            ).fetchone()[0]
-
-    # ---------- rachas: each week's result and the days let off (rachas.html) ----------
-
-    def free_days(self, child_id: str) -> set[str]:
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute("SELECT day FROM free_days WHERE child_id = ?", (child_id,)).fetchall()
-        return {row["day"] for row in rows}
-
-    def set_free_day(self, child_id: str, day: date, free: bool, at: datetime) -> None:
-        with db.connect(self._data_dir) as conn:
-            if free:
-                conn.execute("INSERT OR IGNORE INTO free_days (child_id, day, at) VALUES (?, ?, ?)",
-                             (child_id, day.isoformat(), at.isoformat(timespec="seconds")))
-            else:
-                conn.execute("DELETE FROM free_days WHERE child_id = ? AND day = ?", (child_id, day.isoformat()))
-
-    def fuel_loads(self, child_id: str) -> set[str]:
-        """The days whose tank the child loaded into the rocket."""
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute("SELECT day FROM fuel_loads WHERE child_id = ?", (child_id,)).fetchall()
-        return {row["day"] for row in rows}
-
-    def load_fuel(self, child_id: str, day: date, at: datetime) -> bool:
-        """False if it was loaded already."""
-        with db.connect(self._data_dir) as conn:
-            cursor = conn.execute("INSERT OR IGNORE INTO fuel_loads (child_id, day, at) VALUES (?, ?, ?)",
-                                  (child_id, day.isoformat(), at.isoformat(timespec="seconds")))
-        return cursor.rowcount > 0
-
-    def weeks(self, child_id: str) -> dict[str, dict]:
-        """The weeks already settled for the child, by their last day."""
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute("SELECT * FROM streak_weeks WHERE child_id = ?", (child_id,)).fetchall()
-        return {row["week_end"]: dict(row) for row in rows}
-
-    def settle_week(self, child, end: date, tier: str, prize_text: str, full: int, days: int, at: datetime,
-                    prize_image: str | None = None) -> None:
-        with db.connect(self._data_dir) as conn:
-            conn.execute(
-                "INSERT OR IGNORE INTO streak_weeks"
-                " (child_id, child_name, week_end, tier, prize_text, full_days, days, at, prize_image)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (child.id, child.name, end.isoformat(), tier, prize_text, full, days, at.isoformat(timespec="seconds"),
-                 prize_image),
-            )
-
-    def week_seen(self, child_id: str, end: str, at: datetime) -> None:
-        with db.connect(self._data_dir) as conn:
-            conn.execute("UPDATE streak_weeks SET shown_at = ? WHERE child_id = ? AND week_end = ? AND shown_at IS NULL",
-                         (at.isoformat(timespec="seconds"), child_id, end))
-
-    def week_prizes_to_give(self) -> list[dict]:
-        """The prizes of a week not handed over yet, oldest first."""
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute(
-                "SELECT * FROM streak_weeks WHERE tier != 'none' AND delivered_at IS NULL ORDER BY week_end, child_name"
-            ).fetchall()
-        return [dict(row) for row in rows]
-
-    def deliver_week_prize(self, child_id: str, end: str, at: datetime) -> bool:
-        with db.connect(self._data_dir) as conn:
-            cursor = conn.execute(
-                "UPDATE streak_weeks SET delivered_at = ? WHERE child_id = ? AND week_end = ? AND tier != 'none'"
-                " AND delivered_at IS NULL", (at.isoformat(timespec="seconds"), child_id, end))
-        return cursor.rowcount > 0

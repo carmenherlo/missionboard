@@ -1,21 +1,29 @@
-from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, require_parent
+from app.daily_prize.repository import PrizeSpinsRepository
+from app.daily_prize.state import PrizeBoard
+from app.deps import (
+    get_clock, get_config_store, get_day_repository, get_event_log, get_image_libraries, get_prize_spins_repository,
+    require_parent,
+)
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import ChildTask, MissionsRepository
 from app.prizes.repository import PrizesRepository
 from app.routines.repository import RoutinesRepository
 from app.settings import SettingsRepository
+from app.stars.api import get_stars_service
+from app.stars.service import StarsService
 from app.storage.config_store import ConfigStore
+from app.streaks.api import get_streaks_service
+from app.streaks.service import StreaksService
 from app.today.repository import DayRepository
 from app.today.service import NOTES, DayService, MissionToday, Today
 
@@ -24,7 +32,6 @@ router = APIRouter(prefix="/api", tags=["today"])
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 STAR_IMAGE = "fluent/star"
-MAX_GIFT = 50  # stars a parent can give at once
 CELEBRATION_STAR_IMAGE = "fluent/glowing-star"
 PRIZE_IMAGE = "fluent/wrapped-gift"
 SHOP_IMAGE = "fluent/convenience-store"
@@ -41,19 +48,19 @@ class NoteIn(BaseModel):
     step_id: str | None = Field(default=None, pattern=r"^[\w-]{1,64}$")
 
 
-def get_day_repository(request: Request) -> DayRepository:
-    return request.app.state.day_repository
-
-
 def get_day_service(
     store: ConfigStore = Depends(get_config_store),
     days: DayRepository = Depends(get_day_repository),
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
+    stars: StarsService = Depends(get_stars_service),
+    streaks: StreaksService = Depends(get_streaks_service),
+    spins: PrizeSpinsRepository = Depends(get_prize_spins_repository),
 ) -> DayService:
+    settings = SettingsRepository(store)
     return DayService(
-        ChildrenRepository(store), MissionsRepository(store), days, SettingsRepository(store), clock, events,
-        PrizesRepository(store), RoutinesRepository(store),
+        ChildrenRepository(store), MissionsRepository(store), days, settings, clock, events,
+        RoutinesRepository(store), PrizeBoard(PrizesRepository(store), spins, settings), stars, streaks,
     )
 
 
@@ -163,90 +170,6 @@ def open_today(child_id: str, mission_id: str, days: DayService = Depends(get_da
     return present(days.open_today(child_id, mission_id))
 
 
-class GiftIn(BaseModel):
-    stars: int = Field(ge=1, le=MAX_GIFT)
-
-
-@router.get("/children/{child_id}/stars", dependencies=[Depends(require_parent)])
-def child_stars(child_id: str, days: DayService = Depends(get_day_service)):
-    return {"stars": days.stars(child_id)}
-
-
-@router.post("/children/{child_id}/stars/take", dependencies=[Depends(require_parent)])
-def take_stars(child_id: str, body: GiftIn, days: DayService = Depends(get_day_service)):
-    """A parent takes some stars away (Padres · Niño); 422 if they do not have that many."""
-    return {"stars": days.take_stars(child_id, body.stars)}
-
-
-@router.post("/children/{child_id}/stars/gift", dependencies=[Depends(require_parent)])
-def give_stars(child_id: str, body: GiftIn, days: DayService = Depends(get_day_service)):
-    """A parent gives the child some stars (Editar niño → Estrellas)."""
-    return {"stars": days.give_stars(child_id, body.stars)}
-
-
-@router.post("/children/{child_id}/today/prize/spin")
-def spin(child_id: str, days: DayService = Depends(get_day_service), present: Presenter = Depends()):
-    """Spin the wheel: says which prize came out; the screen turns the wheel to it."""
-    result = days.spin(child_id)
-    return {"prize_id": result.prize.id, "today": present(result.today)}
-
-
 @router.post("/children/{child_id}/today/notes", status_code=204)
 def note(child_id: str, body: NoteIn, days: DayService = Depends(get_day_service)) -> None:
     days.note(child_id, body.kind, body.mission_id, body.step_id)
-
-
-# ---------- Rachas: the week of fuel tanks (rachas.html) ----------
-
-
-def present_week(view: dict | None, libraries: ImageLibraries | None = None) -> dict:
-    """The week for the child's screen and the parents' cards; {"on": False} while rachas are off."""
-    if view is None:
-        return {"on": False}
-    week, result, loaded = view["week"], view["result"], view.get("loaded", set())
-    tanks = lambda w: [{"day": t.day.isoformat(), "letter": t.letter, "state": t.state,  # noqa: E731
-                        "loaded": t.day.isoformat() in loaded} for t in w.tanks]
-    launch = view.get("launch")
-    return {
-        "on": True,
-        "end": week.end.isoformat(),
-        "tanks": tanks(week),
-        # The week whose rocket is ready to take off (or not), with a result not seen yet.
-        "launch_tanks": tanks(launch) if launch else None,
-        "full": week.full,
-        "counted": week.counted,
-        "result": result and {
-            "end": result["week_end"], "tier": result["tier"], "prize_text": result["prize_text"],
-            "full": result["full_days"], "counted": result["days"],
-            **({"prize_image_url": libraries.url(result.get("prize_image"))} if libraries else {}),
-        },
-    }
-
-
-@router.get("/children/{child_id}/week")
-def get_week(child_id: str, days: DayService = Depends(get_day_service),
-             libraries: ImageLibraries = Depends(get_image_libraries)):
-    return present_week(days.week(child_id), libraries)
-
-
-@router.post("/children/{child_id}/week/fuel/{day}")
-def load_fuel(child_id: str, day: date, days: DayService = Depends(get_day_service),
-              libraries: ImageLibraries = Depends(get_image_libraries)):
-    """The child loads a full tank into the rocket, in the workshop (taller.html)."""
-    return present_week(days.load_fuel(child_id, day), libraries)
-
-
-@router.post("/children/{child_id}/week/{end}/seen", status_code=204)
-def week_seen(child_id: str, end: str, days: DayService = Depends(get_day_service)) -> None:
-    """The child has seen how that week ended (the rocket took off, or not)."""
-    days.week_seen(child_id, end)
-
-
-class FreeDayIn(BaseModel):
-    free: bool
-
-
-@router.put("/children/{child_id}/free-days/{day}", status_code=204, dependencies=[Depends(require_parent)])
-def free_day(child_id: str, day: date, body: FreeDayIn, days: DayService = Depends(get_day_service)) -> None:
-    """A parent lets a day off (ill, away): it neither counts nor breaks the week."""
-    days.set_free_day(child_id, day, body.free)

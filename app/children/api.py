@@ -47,7 +47,7 @@ def get_children_service(
 
     def welcome(child: Child) -> None:
         now = clock.now()
-        request.app.state.day_repository.add_starting_stars(
+        request.app.state.stars_repository.add_starting_stars(
             child, settings.starting_stars, app_day(now, settings.day_starts_at), now)
 
     return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions, routines], welcome=welcome,

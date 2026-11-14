@@ -5,8 +5,7 @@ from fastapi import APIRouter, Depends
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, require_parent
-from app.events.service import EventLog
+from app.deps import get_config_store, get_image_libraries, require_parent
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
 from app.overview.service import OverviewService
@@ -14,14 +13,18 @@ from app.parents.repository import DEFAULT_PARENT_CODE, ParentsRepository
 from app.prizes.repository import PrizesRepository
 from app.routines.repository import RoutinesRepository
 from app.shop.repository import ShopRepository
-from app.settings import SettingsRepository
 from app.shop.api import Presenter as ShopPresenter
 from app.shop.api import get_orders_service
 from app.shop.orders import OrdersService
 from app.storage.config_store import ConfigStore
+from app.daily_prize.api import get_daily_prize_service
+from app.daily_prize.service import DailyPrizeService
+from app.stars.api import get_stars_service
+from app.stars.service import StarsService
+from app.streaks.api import get_streaks_service, present_week
+from app.streaks.service import StreaksService
 from app.today.api import Presenter as DayPresenter
-from app.today.api import get_day_repository, get_day_service, present_week
-from app.today.repository import DayRepository
+from app.today.api import get_day_service
 from app.today.service import DayService, Today
 
 router = APIRouter(prefix="/api/overview", tags=["overview"], dependencies=[Depends(require_parent)])
@@ -29,13 +32,13 @@ router = APIRouter(prefix="/api/overview", tags=["overview"], dependencies=[Depe
 
 def get_overview_service(
     days: DayService = Depends(get_day_service),
-    records: DayRepository = Depends(get_day_repository),
+    stars: StarsService = Depends(get_stars_service),
+    prizes: DailyPrizeService = Depends(get_daily_prize_service),
+    streaks: StreaksService = Depends(get_streaks_service),
     orders: OrdersService = Depends(get_orders_service),
     store: ConfigStore = Depends(get_config_store),
-    clock=Depends(get_clock),
-    events: EventLog = Depends(get_event_log),
 ) -> OverviewService:
-    return OverviewService(days, records, orders, ChildrenRepository(store), SettingsRepository(store), clock, events)
+    return OverviewService(days, stars, prizes, streaks, orders, ChildrenRepository(store))
 
 
 class Presenter:
@@ -96,11 +99,11 @@ def overview_child(child_id: str, overview: OverviewService = Depends(get_overvi
 
 
 @router.post("/prizes/{spin_id}/deliver", status_code=204)
-def deliver_prize(spin_id: int, overview: OverviewService = Depends(get_overview_service)) -> None:
-    overview.deliver_prize(spin_id)
+def deliver_prize(spin_id: int, prizes: DailyPrizeService = Depends(get_daily_prize_service)) -> None:
+    prizes.deliver(spin_id)
 
 
 @router.post("/week-prizes/{child_id}/{end}/deliver", status_code=204)
-def deliver_week_prize(child_id: str, end: str, days: DayService = Depends(get_day_service)) -> None:
+def deliver_week_prize(child_id: str, end: str, streaks: StreaksService = Depends(get_streaks_service)) -> None:
     """Entregado: the prize of a full week (or the smaller one) handed over."""
-    days.deliver_week_prize(child_id, end)
+    streaks.deliver_week_prize(child_id, end)

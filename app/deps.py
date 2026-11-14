@@ -17,6 +17,10 @@ from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 from app.songs.repository import SoundFiles
 from app.storage.photo_store import PhotoStore
+from app.daily_prize.repository import PrizeSpinsRepository
+from app.stars.repository import StarsRepository
+from app.streaks.repository import StreaksRepository
+from app.today.repository import DayRepository
 
 
 def get_config_store(request: Request) -> ConfigStore:
@@ -33,6 +37,23 @@ def get_sound_files(request: Request) -> SoundFiles:
 
 def get_avatar_files(request: Request) -> AvatarFiles:
     return request.app.state.avatar_files
+
+
+def get_day_repository(request: Request) -> DayRepository:
+    """What each child has done each day (shared by the day and the rachas)."""
+    return request.app.state.day_repository
+
+
+def get_stars_repository(request: Request) -> StarsRepository:
+    return request.app.state.stars_repository
+
+
+def get_prize_spins_repository(request: Request) -> PrizeSpinsRepository:
+    return request.app.state.prize_spins_repository
+
+
+def get_streaks_repository(request: Request) -> StreaksRepository:
+    return request.app.state.streaks_repository
 
 
 def get_clock(request: Request) -> Clock:

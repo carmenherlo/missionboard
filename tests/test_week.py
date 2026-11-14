@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.settings.repository import StreakWeek
-from app.today.week import build_week, week_end
+from app.streaks.week import build_week, week_end
 from tests.conftest import PARENT
 from tests.test_missions import create_child
 from tests.test_settings import FixedClock

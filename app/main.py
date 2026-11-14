@@ -39,6 +39,12 @@ from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 from app.voice import api as voice_api
 from app.voice.service import MODEL_NAME, Voice
+from app.daily_prize import api as daily_prize_api
+from app.daily_prize.repository import PrizeSpinsRepository
+from app.stars import api as stars_api
+from app.stars.repository import StarsRepository
+from app.streaks import api as streaks_api
+from app.streaks.repository import StreaksRepository
 from app.today import api as today_api
 from app.today.repository import DayRepository
 
@@ -110,7 +116,7 @@ def create_app(
         if with_examples:
             settings = SettingsRepository(config_store).settings()
             for child in ChildrenRepository(config_store).list():
-                app.state.day_repository.add_starting_stars(
+                app.state.stars_repository.add_starting_stars(
                     child, settings.starting_stars, app_day(now, settings.day_starts_at), now)
         # Fail at startup, not mid-use, if settings were mistyped by hand.
         settings = SettingsRepository(config_store)
@@ -134,6 +140,9 @@ def create_app(
     app.state.clock = clock or SystemClock()
     app.state.events_repository = EventsRepository(data_dir)
     app.state.day_repository = DayRepository(data_dir)
+    app.state.stars_repository = StarsRepository(data_dir)
+    app.state.prize_spins_repository = PrizeSpinsRepository(data_dir)
+    app.state.streaks_repository = StreaksRepository(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
     app.state.purchases_repository = PurchasesRepository(data_dir)
     app.state.home_assistant = HomeAssistant()  # only inside the add-on; elsewhere it sends nothing
@@ -161,6 +170,9 @@ def create_app(
     app.include_router(images_api.router)
     app.include_router(events_api.router)
     app.include_router(today_api.router)
+    app.include_router(daily_prize_api.router)
+    app.include_router(stars_api.router)
+    app.include_router(streaks_api.router)
     app.include_router(routines_api.router)
     app.include_router(voice_api.router)
     app.include_router(shop_api.router)

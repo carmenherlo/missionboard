@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass, fields
 
+from app.errors import NotFoundError
 from app.storage.config_store import ConfigStore
 
 
@@ -31,6 +32,13 @@ class ChildrenRepository:
 
     def get(self, child_id: str) -> Child | None:
         return next((c for c in self.list() if c.id == child_id), None)
+
+    def require(self, child_id: str) -> Child:
+        """The child, or NotFoundError (404) if there is none with that id."""
+        child = self.get(child_id)
+        if child is None:
+            raise NotFoundError("Child not found")
+        return child
 
     def add(self, child: Child) -> None:
         with self._store.edit() as doc:

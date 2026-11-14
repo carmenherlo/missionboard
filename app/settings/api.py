@@ -11,7 +11,7 @@ from app.settings.week_prizes import Which, WeekPrizeImages
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 from app.today.api import background_url
-from app.today.service import current_moment, current_season
+from app.today.season import current_moment, current_season
 
 router = APIRouter(prefix="/api/settings", tags=["settings"], dependencies=[Depends(require_parent)])
 # The children's home screen reads how it looks: no parent code.
