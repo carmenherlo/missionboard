@@ -71,16 +71,30 @@ class DayRepository:
             inserted = conn.execute(
                 "INSERT OR IGNORE INTO mission_completions"
                 " (day, child_id, mission_id, child_name, mission_name, stars, at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (day.isoformat(), child.id, mission.id, child.name, mission.name, stars,
-                 at.isoformat(timespec="seconds")),
+                (
+                    day.isoformat(),
+                    child.id,
+                    mission.id,
+                    child.name,
+                    mission.name,
+                    stars,
+                    at.isoformat(timespec="seconds"),
+                ),
             ).rowcount
             if inserted and stars:
                 conn.execute(
                     "INSERT INTO star_movements"
                     " (child_id, child_name, amount, reason, mission_id, mission_name, day, at)"
                     " VALUES (?, ?, ?, 'mission_completed', ?, ?, ?, ?)",
-                    (child.id, child.name, stars, mission.id, mission.name, day.isoformat(),
-                     at.isoformat(timespec="seconds")),
+                    (
+                        child.id,
+                        child.name,
+                        stars,
+                        mission.id,
+                        mission.name,
+                        day.isoformat(),
+                        at.isoformat(timespec="seconds"),
+                    ),
                 )
         return bool(inserted)
 

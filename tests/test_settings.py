@@ -25,11 +25,14 @@ def test_defaults_without_file(tmp_path):
 
 
 def test_values_from_file(tmp_path):
-    repo = repo_with(tmp_path, {
-        "version": CURRENT_VERSION,
-        "settings": {"stars_per_mission": 2, "day_starts_at": "04:30"},
-        "features": {"shop": False},
-    })
+    repo = repo_with(
+        tmp_path,
+        {
+            "version": CURRENT_VERSION,
+            "settings": {"stars_per_mission": 2, "day_starts_at": "04:30"},
+            "features": {"shop": False},
+        },
+    )
     assert repo.settings().stars_per_mission == 2
     assert repo.settings().day_starts_at == "04:30"
     assert repo.features().shop is False
@@ -63,14 +66,22 @@ def test_invalid_values_are_rejected(tmp_path, section, values):
 
 
 def test_missing_settings_are_written_into_the_file_and_kept(tmp_path):
-    repo_with(tmp_path, {"version": CURRENT_VERSION, "settings": {"starting_stars": 5, "mine": "x"},
-                         "features": {"shop": False}})
+    repo_with(
+        tmp_path,
+        {"version": CURRENT_VERSION, "settings": {"starting_stars": 5, "mine": "x"}, "features": {"shop": False}},
+    )
     SettingsRepository(ConfigStore(tmp_path)).complete()
     doc = yaml.safe_load(config_path(tmp_path).read_text())
     assert doc["settings"]["starting_stars"] == 5 and doc["settings"]["mine"] == "x"  # theirs stays
     assert doc["settings"]["stars_per_mission"] == 1
-    assert doc["settings"]["seasons"][3] == {"name": "invierno", "start": "12-21", "manana": "06:30", "dia": "10:30",
-                                             "tarde": "14:30", "noche": "18:30"}
+    assert doc["settings"]["seasons"][3] == {
+        "name": "invierno",
+        "start": "12-21",
+        "manana": "06:30",
+        "dia": "10:30",
+        "tarde": "14:30",
+        "noche": "18:30",
+    }
     assert doc["features"]["shop"] is False and doc["features"]["routines"] is True
     assert list(doc["settings"])[:2] == ["stars_per_mission", "daily_prize_spins"]
     # Written once; the defaults in a later version do not change the family's
@@ -120,10 +131,12 @@ def test_seasons_with_sunrise_and_sunset_become_the_start_of_each_moment(tmp_pat
     tmp_path.mkdir(parents=True, exist_ok=True)
     config_path(tmp_path).write_text(
         "version: 16\nsettings:\n  moment_margin_minutes: 90\n  seasons:\n"
-        "  - {name: otono, start: 09-23, sunrise: 7:30, sunset: '19:00'}\n")
+        "  - {name: otono, start: 09-23, sunrise: 7:30, sunset: '19:00'}\n"
+    )
     store = ConfigStore(tmp_path)
     store.migrate()
     doc = yaml.safe_load(config_path(tmp_path).read_text())
     assert doc["version"] == CURRENT_VERSION and "moment_margin_minutes" not in doc["settings"]
-    assert doc["settings"]["seasons"] == [{"name": "otono", "start": "09-23", "manana": "06:00", "dia": "09:00",
-                                          "tarde": "17:30", "noche": "20:30"}]
+    assert doc["settings"]["seasons"] == [
+        {"name": "otono", "start": "09-23", "manana": "06:00", "dia": "09:00", "tarde": "17:30", "noche": "20:30"}
+    ]

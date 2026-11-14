@@ -44,8 +44,11 @@ class HomeAssistant:
         The same tag replaces the earlier one about the same thing."""
         if not self.available or not phones:
             return
-        body = {"title": title, "message": message,
-                "data": {"tag": tag, "actions": [{"action": a, "title": t} for a, t in actions]}}
+        body = {
+            "title": title,
+            "message": message,
+            "data": {"tag": tag, "actions": [{"action": a, "title": t} for a, t in actions]},
+        }
 
         def run():
             for phone in phones:
@@ -82,7 +85,11 @@ class HomeAssistant:
 
     def _request(self, method: str, path: str, body: dict | None = None):
         data = json.dumps(body).encode() if body is not None else None
-        request = urllib.request.Request(f"{API}{path}", data=data, method=method, headers={
-            "Authorization": f"Bearer {self._token}", "Content-Type": "application/json"})
+        request = urllib.request.Request(
+            f"{API}{path}",
+            data=data,
+            method=method,
+            headers={"Authorization": f"Bearer {self._token}", "Content-Type": "application/json"},
+        )
         with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
             return json.loads(response.read() or "null")

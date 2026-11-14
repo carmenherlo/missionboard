@@ -104,8 +104,9 @@ def get_missions_service(
     photos: PhotoStore = Depends(get_photo_store),
     events: EventLog = Depends(get_event_log),
 ) -> MissionsService:
-    return MissionsService(MissionsRepository(store), ChildrenRepository(store), libraries, photos, events,
-                           RoutinesRepository(store))
+    return MissionsService(
+        MissionsRepository(store), ChildrenRepository(store), libraries, photos, events, RoutinesRepository(store)
+    )
 
 
 def _changes(body: BaseModel, required: set[str] = frozenset()) -> dict:
@@ -125,16 +126,19 @@ class Presenter:
     """Turns missions into JSON: the URL of every image, the tones of its colour, how
     much each child has switched on, and its routine."""
 
-    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries),
-                 store: ConfigStore = Depends(get_config_store)):
+    def __init__(
+        self, libraries: ImageLibraries = Depends(get_image_libraries), store: ConfigStore = Depends(get_config_store)
+    ):
         self._libraries = libraries
         self._store = store
         self._cache = None
 
     def _context(self):
         if self._cache is None:
-            self._cache = (ChildrenRepository(self._store).list(),
-                           links.routine_by_mission(RoutinesRepository(self._store).list()))
+            self._cache = (
+                ChildrenRepository(self._store).list(),
+                links.routine_by_mission(RoutinesRepository(self._store).list()),
+            )
         return self._cache
 
     def __call__(self, mission: Mission) -> dict:
@@ -153,8 +157,12 @@ class Presenter:
         ]
         routine = routines.get(mission.id)
         data["routine"] = routine and {
-            "id": routine.id, "days": list(routine.days), "manual": routine.manual, "anchor": routine.anchor,
-            "kids": [c.id for c in links.kids_of(routine, children)], "every_child": not routine.kids,
+            "id": routine.id,
+            "days": list(routine.days),
+            "manual": routine.manual,
+            "anchor": routine.anchor,
+            "kids": [c.id for c in links.kids_of(routine, children)],
+            "every_child": not routine.kids,
             "start": None if routine.manual else hhmm(routine.starts),
             "end": None if routine.manual else hhmm(routine.timeline()[-1][2]),  # when its parts end
             "goal": None if routine.manual else hhmm(routine.ends),
@@ -168,26 +176,33 @@ def list_missions(missions: MissionsService = Depends(get_missions_service), pre
 
 
 @router.post("/missions", status_code=201, dependencies=parent_only)
-def create_mission(body: MissionCreate, missions: MissionsService = Depends(get_missions_service),
-                   present: Presenter = Depends()):
+def create_mission(
+    body: MissionCreate, missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()
+):
     return present(missions.create(body.name, body.image))
 
 
 @router.put("/missions/order", dependencies=parent_only)
-def reorder_missions(body: OrderIn, missions: MissionsService = Depends(get_missions_service),
-                     present: Presenter = Depends()):
+def reorder_missions(
+    body: OrderIn, missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()
+):
     return [present(m) for m in missions.reorder(body.ids)]
 
 
 @router.get("/missions/{mission_id}")
-def get_mission(mission_id: str, missions: MissionsService = Depends(get_missions_service),
-                present: Presenter = Depends()):
+def get_mission(
+    mission_id: str, missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()
+):
     return present(missions.get(mission_id))
 
 
 @router.patch("/missions/{mission_id}", dependencies=parent_only)
-def update_mission(mission_id: str, body: MissionPatch, missions: MissionsService = Depends(get_missions_service),
-                   present: Presenter = Depends()):
+def update_mission(
+    mission_id: str,
+    body: MissionPatch,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     changes = _changes(body, required={"name", "days", "color"})
     if changes.get("schedule") is not None:
         changes["schedule"] = Schedule(**changes["schedule"].model_dump())
@@ -200,9 +215,13 @@ def delete_mission(mission_id: str, missions: MissionsService = Depends(get_miss
 
 
 @router.put("/missions/{mission_id}/photo", dependencies=parent_only)
-async def upload_mission_photo(mission_id: str, request: Request, content_type: str = Header(),
-                               missions: MissionsService = Depends(get_missions_service),
-                               present: Presenter = Depends()):
+async def upload_mission_photo(
+    mission_id: str,
+    request: Request,
+    content_type: str = Header(),
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     """Upload the raw image as the request body (no multipart needed)."""
     return present(missions.set_photo(mission_id, await request.body(), _media_type(content_type)))
 
@@ -211,33 +230,55 @@ async def upload_mission_photo(mission_id: str, request: Request, content_type: 
 
 
 @router.post("/missions/{mission_id}/tasks", status_code=201, dependencies=parent_only)
-def add_task(mission_id: str, body: TaskCreate, missions: MissionsService = Depends(get_missions_service),
-             present: Presenter = Depends()):
+def add_task(
+    mission_id: str,
+    body: TaskCreate,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.add_task(mission_id, body.text))
 
 
 @router.put("/missions/{mission_id}/tasks/order", dependencies=parent_only)
-def reorder_tasks(mission_id: str, body: OrderIn, missions: MissionsService = Depends(get_missions_service),
-                  present: Presenter = Depends()):
+def reorder_tasks(
+    mission_id: str,
+    body: OrderIn,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.reorder_tasks(mission_id, body.ids))
 
 
 @router.patch("/missions/{mission_id}/tasks/{task_id}", dependencies=parent_only)
-def update_task(mission_id: str, task_id: str, body: TaskPatch,
-                missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+def update_task(
+    mission_id: str,
+    task_id: str,
+    body: TaskPatch,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.update_task(mission_id, task_id, **_changes(body, required={"text"})))
 
 
 @router.delete("/missions/{mission_id}/tasks/{task_id}", dependencies=parent_only)
-def delete_task(mission_id: str, task_id: str, missions: MissionsService = Depends(get_missions_service),
-                present: Presenter = Depends()):
+def delete_task(
+    mission_id: str,
+    task_id: str,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.delete_task(mission_id, task_id))
 
 
 @router.put("/missions/{mission_id}/tasks/{task_id}/photo", dependencies=parent_only)
-async def upload_task_photo(mission_id: str, task_id: str, request: Request, content_type: str = Header(),
-                            missions: MissionsService = Depends(get_missions_service),
-                            present: Presenter = Depends()):
+async def upload_task_photo(
+    mission_id: str,
+    task_id: str,
+    request: Request,
+    content_type: str = Header(),
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.set_task_photo(mission_id, task_id, await request.body(), _media_type(content_type)))
 
 
@@ -245,34 +286,58 @@ async def upload_task_photo(mission_id: str, task_id: str, request: Request, con
 
 
 @router.post("/missions/{mission_id}/tasks/{task_id}/steps", status_code=201, dependencies=parent_only)
-def add_step(mission_id: str, task_id: str, body: StepCreate,
-             missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+def add_step(
+    mission_id: str,
+    task_id: str,
+    body: StepCreate,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.add_step(mission_id, task_id, body.text))
 
 
 @router.patch("/missions/{mission_id}/steps/{step_id}", dependencies=parent_only)
-def update_step(mission_id: str, step_id: str, body: StepPatch,
-                missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+def update_step(
+    mission_id: str,
+    step_id: str,
+    body: StepPatch,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.update_step(mission_id, step_id, **_changes(body, required={"text"})))
 
 
 @router.delete("/missions/{mission_id}/steps/{step_id}", dependencies=parent_only)
-def delete_step(mission_id: str, step_id: str, missions: MissionsService = Depends(get_missions_service),
-                present: Presenter = Depends()):
+def delete_step(
+    mission_id: str,
+    step_id: str,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.delete_step(mission_id, step_id))
 
 
 @router.put("/missions/{mission_id}/steps/{step_id}/place", dependencies=parent_only)
-def place_step(mission_id: str, step_id: str, body: StepPlace,
-               missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+def place_step(
+    mission_id: str,
+    step_id: str,
+    body: StepPlace,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     """Order a step within its task, or drag it to another one."""
     return present(missions.place_step(mission_id, step_id, body.task_id, body.position))
 
 
 @router.put("/missions/{mission_id}/steps/{step_id}/photo", dependencies=parent_only)
-async def upload_step_photo(mission_id: str, step_id: str, request: Request, content_type: str = Header(),
-                            missions: MissionsService = Depends(get_missions_service),
-                            present: Presenter = Depends()):
+async def upload_step_photo(
+    mission_id: str,
+    step_id: str,
+    request: Request,
+    content_type: str = Header(),
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     return present(missions.set_step_photo(mission_id, step_id, await request.body(), _media_type(content_type)))
 
 
@@ -280,7 +345,13 @@ async def upload_step_photo(mission_id: str, step_id: str, request: Request, con
 
 
 @router.put("/missions/{mission_id}/children/{child_id}/items/{item_id}", dependencies=parent_only)
-def set_active(mission_id: str, child_id: str, item_id: str, body: ActiveIn,
-               missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()):
+def set_active(
+    mission_id: str,
+    child_id: str,
+    item_id: str,
+    body: ActiveIn,
+    missions: MissionsService = Depends(get_missions_service),
+    present: Presenter = Depends(),
+):
     """Switch a task or a step on or off for one child."""
     return present(missions.set_active(mission_id, child_id, item_id, body.active))

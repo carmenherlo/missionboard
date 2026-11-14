@@ -76,13 +76,15 @@ def get_settings(service: SettingsService = Depends(get_settings_service), clock
 
 
 @router.patch("")
-def update_settings(body: SettingsPatch, service: SettingsService = Depends(get_settings_service),
-                    clock: Clock = Depends(get_clock)):
+def update_settings(
+    body: SettingsPatch, service: SettingsService = Depends(get_settings_service), clock: Clock = Depends(get_clock)
+):
     changes = _given(body)
     if "streak_week" in changes:  # its pictures change only through their own routes, below
         current = service.settings().streak_week
         changes["streak_week"] = changes["streak_week"].model_copy(
-            update={"prize_image": current.prize_image, "second_image": current.second_image})
+            update={"prize_image": current.prize_image, "second_image": current.second_image}
+        )
     service.update_settings(changes)
     return _present(service, clock)
 
@@ -113,16 +115,18 @@ def set_week_prize_image(which: Which, body: ImageIn, images: WeekPrizeImages = 
 
 
 @router.put("/week-prizes/{which}/photo")
-async def upload_week_prize_photo(which: Which, request: Request,
-                                  images: WeekPrizeImages = Depends(get_week_prize_images)):
+async def upload_week_prize_photo(
+    which: Which, request: Request, images: WeekPrizeImages = Depends(get_week_prize_images)
+):
     """Upload the raw image as the request body (no multipart needed)."""
     media_type = request.headers.get("content-type", "").split(";")[0].strip()
     return images.set_photo(which, await request.body(), media_type)
 
 
 @router.patch("/features")
-def update_features(body: FeaturesPatch, service: SettingsService = Depends(get_settings_service),
-                    clock: Clock = Depends(get_clock)):
+def update_features(
+    body: FeaturesPatch, service: SettingsService = Depends(get_settings_service), clock: Clock = Depends(get_clock)
+):
     service.update_features(_given(body))
     return _present(service, clock)
 

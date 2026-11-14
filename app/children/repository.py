@@ -46,9 +46,7 @@ class ChildrenRepository:
 
     def update(self, child: Child) -> None:
         with self._store.edit() as doc:
-            doc["children"] = [
-                asdict(child) if entry["id"] == child.id else entry for entry in doc["children"]
-            ]
+            doc["children"] = [asdict(child) if entry["id"] == child.id else entry for entry in doc["children"]]
 
     def remove(self, child_id: str) -> None:
         with self._store.edit() as doc:

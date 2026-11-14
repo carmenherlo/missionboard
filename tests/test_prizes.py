@@ -11,10 +11,14 @@ from tests.test_today import MONDAY, check, descriptions, mission, note, today, 
 from tests.test_settings import FixedClock
 
 SAMPLES = [
-    "Guerra de cojines o de cosquillas", "10 minutos de juego con mamá, tú eliges",
-    "10 minutos de juego con papá, tú eliges", "Elige una canción y bailamos todos",
-    "Eliges el cuento de esta noche", "Paseo en dinosaurio por toda la casa",
-    "Eliges tu sitio en la mesa para cenar", "Un petisuí extra",
+    "Guerra de cojines o de cosquillas",
+    "10 minutos de juego con mamá, tú eliges",
+    "10 minutos de juego con papá, tú eliges",
+    "Elige una canción y bailamos todos",
+    "Eliges el cuento de esta noche",
+    "Paseo en dinosaurio por toda la casa",
+    "Eliges tu sitio en la mesa para cenar",
+    "Un petisuí extra",
 ]
 
 
@@ -90,11 +94,14 @@ def test_a_bad_prize_is_refused(client, body):
     assert client.post("/api/prizes", json=body, headers=PARENT).status_code == 422
 
 
-@pytest.mark.parametrize("call", [
-    lambda c: c.post("/api/prizes", json={"text": "X"}),
-    lambda c: c.patch("/api/prizes/petisui", json={"text": "X"}),
-    lambda c: c.delete("/api/prizes/petisui"),
-])
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda c: c.post("/api/prizes", json={"text": "X"}),
+        lambda c: c.patch("/api/prizes/petisui", json={"text": "X"}),
+        lambda c: c.delete("/api/prizes/petisui"),
+    ],
+)
 def test_changes_need_the_parent_code(client, call):
     assert call(client).status_code == 401
 

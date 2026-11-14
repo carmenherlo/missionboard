@@ -55,19 +55,24 @@ class AvatarsService:
     def upload(self, data: bytes, name: str, color: str, suggested: bool) -> FamilyAvatar:
         extension = check_picture(data)
         color = check_color(color)
-        avatar = FamilyAvatar(id=new_id(), name=name, image=self._files.save(data, extension),
-                              color=color, color_suggested=suggested)
+        avatar = FamilyAvatar(
+            id=new_id(), name=name, image=self._files.save(data, extension), color=color, color_suggested=suggested
+        )
         self._avatars.add(avatar)
         self._log("created", avatar)
         return avatar
 
-    def update(self, avatar_id: str, *, name: str | None = None, color: str | None = None,
-               suggested: bool | None = None) -> FamilyAvatar:
+    def update(
+        self, avatar_id: str, *, name: str | None = None, color: str | None = None, suggested: bool | None = None
+    ) -> FamilyAvatar:
         with self._avatars.atomic():
             old = self.get(avatar_id)
-            avatar = replace(old, name=name if name is not None else old.name,
-                             color=check_color(color) if color is not None else old.color,
-                             color_suggested=suggested if suggested is not None else old.color_suggested)
+            avatar = replace(
+                old,
+                name=name if name is not None else old.name,
+                color=check_color(color) if color is not None else old.color,
+                color_suggested=suggested if suggested is not None else old.color_suggested,
+            )
             self._avatars.update(avatar)
             self._recolour(avatar)
         changes = {key: getattr(avatar, key) for key in ("name", "color") if getattr(avatar, key) != getattr(old, key)}
@@ -110,5 +115,6 @@ class AvatarsService:
                 self._children.update(replace(child, color=avatar.color))
 
     def _log(self, action: str, avatar: FamilyAvatar, changes: dict | None = None) -> None:
-        self._events.config_changed("avatar", action, mission=SimpleNamespace(id=avatar.id, name=avatar.name),
-                                    changes=changes)
+        self._events.config_changed(
+            "avatar", action, mission=SimpleNamespace(id=avatar.id, name=avatar.name), changes=changes
+        )

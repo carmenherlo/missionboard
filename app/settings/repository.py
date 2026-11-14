@@ -204,8 +204,10 @@ class SettingsRepository:
             for name, model in sections.items():
                 own = doc.get(name) or {}
                 defaults = model.model_dump(mode="json")
-                doc[name] = {**{key: own.get(key, value) for key, value in defaults.items()},
-                             **{key: value for key, value in own.items() if key not in defaults}}
+                doc[name] = {
+                    **{key: own.get(key, value) for key, value in defaults.items()},
+                    **{key: value for key, value in own.items() if key not in defaults},
+                }
 
     def save(self, section: str, model: BaseModel) -> None:
         """Write one section ("settings" or "features"); keys the app does not know stay."""

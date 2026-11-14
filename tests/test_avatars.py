@@ -60,8 +60,9 @@ def test_a_child_wears_it_and_takes_its_colour(client):
     presets = client.get("/api/avatars").json()["presets"]
     assert all(p["worn_by"] == [] for p in presets)
     # A new colour is the child's too, with its tones worked out
-    response = client.patch(f"/api/avatars/{avatar['id']}", json={"color": "#3366CC", "color_suggested": False},
-                            headers=PARENT)
+    response = client.patch(
+        f"/api/avatars/{avatar['id']}", json={"color": "#3366CC", "color_suggested": False}, headers=PARENT
+    )
     assert response.json()["color"] == "#3366cc"
     assert client.get("/api/children").json()[0]["color"] == "#3366cc"
     colors = client.get(f"/api/children/{bea['id']}/today").json()["colors"]
@@ -70,7 +71,9 @@ def test_a_child_wears_it_and_takes_its_colour(client):
 
 def test_rename_and_log(client):
     avatar = upload(client).json()
-    assert client.patch(f"/api/avatars/{avatar['id']}", json={"name": "Osito"}, headers=PARENT).json()["name"] == "Osito"
+    assert (
+        client.patch(f"/api/avatars/{avatar['id']}", json={"name": "Osito"}, headers=PARENT).json()["name"] == "Osito"
+    )
     assert client.patch(f"/api/avatars/{avatar['id']}", json={"name": " "}, headers=PARENT).status_code == 422
     assert client.patch(f"/api/avatars/{avatar['id']}", json={"name": "X"}).status_code == 401
     texts = [e["description"] for e in client.get("/api/events", headers=PARENT).json()["latest"]]

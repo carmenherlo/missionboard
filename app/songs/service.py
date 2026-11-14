@@ -56,7 +56,9 @@ class SongsService:
             raise UnsupportedTypeError("A song must be MP3, M4A, OGG or WAV")
         if not 0 < seconds <= MAX_SONG_SECONDS:
             raise InvalidError("How long it lasts is missing")
-        song = Song(id=secrets.token_hex(4), name=name, file=self._files.save(data, extension), seconds=round(seconds, 1))
+        song = Song(
+            id=secrets.token_hex(4), name=name, file=self._files.save(data, extension), seconds=round(seconds, 1)
+        )
         self._songs.add(song)
         self._log("created", song)
         return song
@@ -90,4 +92,6 @@ class SongsService:
         return path
 
     def _log(self, action: str, song: Song, changes: dict | None = None) -> None:
-        self._events.config_changed("song", action, mission=SimpleNamespace(id=song.id, name=song.name), changes=changes)
+        self._events.config_changed(
+            "song", action, mission=SimpleNamespace(id=song.id, name=song.name), changes=changes
+        )

@@ -326,8 +326,9 @@ class MissionsService:
                 del mission.off[child_id]
             self._missions.update(mission)
         if changed:
-            self._events.config_changed("activation", "on" if active else "off",
-                                        child=child, mission=mission, step=item)
+            self._events.config_changed(
+                "activation", "on" if active else "off", child=child, mission=mission, step=item
+            )
         return mission
 
     def remove_child_data(self, child_id: str) -> list[str]:
@@ -349,7 +350,7 @@ class MissionsService:
         except ValidationError as err:
             raise InvalidError("It no longer fits in its routine") from err
         for i, routine in enumerate(routines):
-            if any(routine.overlaps(other) for other in routines[i + 1:]):
+            if any(routine.overlaps(other) for other in routines[i + 1 :]):
                 raise ConflictError("Its routine would overlap with another one")
 
     @staticmethod

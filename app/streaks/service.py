@@ -68,16 +68,22 @@ class StreaksService:
             self._settle(child, previous, rules, settled)
         self._settle(child, current, rules, settled)
         settled = self._streaks.weeks(child.id)
-        unseen = [row for row in settled.values()
-                  if row["shown_at"] is None and row["week_end"] >= (end - timedelta(days=7)).isoformat()]
+        unseen = [
+            row
+            for row in settled.values()
+            if row["shown_at"] is None and row["week_end"] >= (end - timedelta(days=7)).isoformat()
+        ]
         result = max(unseen, key=lambda row: row["week_end"]) if unseen else None
         # The week whose rocket takes off (taller.html): this one, or the one before if
         # it closed while nobody looked (Saturday, a new week already).
         launch = None
         if result:
             result_end = date.fromisoformat(result["week_end"])
-            launch = current if result_end == end else build_week(
-                today, result_end, rules, settings.streak_rule, had, done, free)
+            launch = (
+                current
+                if result_end == end
+                else build_week(today, result_end, rules, settings.streak_rule, had, done, free)
+            )
         return {"week": current, "result": result, "launch": launch, "loaded": self._streaks.fuel_loads(child.id)}
 
     def load_fuel(self, child_id: str, day: date) -> dict | None:
@@ -111,8 +117,12 @@ class StreaksService:
     def set_free_day(self, child_id: str, day: date, free: bool) -> None:
         child = self._children.require(child_id)
         self._streaks.set_free_day(child.id, day, free, self._clock.now())
-        self._events.config_changed("free_day", "on" if free else "off", child=child,
-                                    mission=SimpleNamespace(id=day.isoformat(), name=f"{day.day}/{day.month}"))
+        self._events.config_changed(
+            "free_day",
+            "on" if free else "off",
+            child=child,
+            mission=SimpleNamespace(id=day.isoformat(), name=f"{day.day}/{day.month}"),
+        )
 
     def prizes_to_give(self) -> list[dict]:
         return self._streaks.week_prizes_to_give()
@@ -123,5 +133,8 @@ class StreaksService:
             raise NotFoundError("Prize not found")
         if self._streaks.deliver_week_prize(child_id, end, self._clock.now()):
             self._events.config_changed(
-                "week_prize", "delivered", child=SimpleNamespace(id=row["child_id"], name=row["child_name"]),
-                mission=SimpleNamespace(id=end, name=row["prize_text"] or "premio sorpresa"))
+                "week_prize",
+                "delivered",
+                child=SimpleNamespace(id=row["child_id"], name=row["child_name"]),
+                mission=SimpleNamespace(id=end, name=row["prize_text"] or "premio sorpresa"),
+            )

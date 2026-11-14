@@ -50,8 +50,14 @@ class EventLog:
     ) -> None:
         """subject and action are codes ("mission", "changed"); changes holds the new values."""
         self._record(
-            "parents", "config_changed", subject=subject, action=action,
-            child=child, mission=mission, step=step, detail=texts.change_detail(changes or {}),
+            "parents",
+            "config_changed",
+            subject=subject,
+            action=action,
+            child=child,
+            mission=mission,
+            step=step,
+            detail=texts.change_detail(changes or {}),
         )
 
     def child_did(
@@ -77,25 +83,25 @@ class EventLog:
         self._record(None, type_, subject=routine_name, detail=detail)
 
     def screen_opened(self, zone: str | None, screen: str, *, child=None, mission=None, step=None) -> None:
-        self._record(
-            zone, "screen_opened", subject=screen, child=child, mission=mission, step=step, detail=screen
-        )
+        self._record(zone, "screen_opened", subject=screen, child=child, mission=mission, step=step, detail=screen)
 
     def _record(self, zone, type_, *, child=None, mission=None, step=None, **fields) -> None:
         now = self._clock.now()
-        self._events.add(Event(
-            at=now,
-            day=self.day_of(now),
-            zone=zone,
-            type=type_,
-            child_id=child and child.id,
-            child_name=child and child.name,
-            mission_id=mission and mission.id,
-            mission_name=mission and mission.name,
-            step_id=step and step.id,
-            step_text=step and step.text,
-            **fields,
-        ))
+        self._events.add(
+            Event(
+                at=now,
+                day=self.day_of(now),
+                zone=zone,
+                type=type_,
+                child_id=child and child.id,
+                child_name=child and child.name,
+                mission_id=mission and mission.id,
+                mission_name=mission and mission.name,
+                step_id=step and step.id,
+                step_text=step and step.text,
+                **fields,
+            )
+        )
 
     def day_of(self, moment: datetime) -> date:
         return app_day(moment, self._settings.settings().day_starts_at)
@@ -122,17 +128,19 @@ class EventLog:
         writer = csv.writer(out, delimiter=";")
         writer.writerow(texts.CSV_HEADER)
         for event in self._events.all():
-            writer.writerow([
-                event.day.isoformat(),
-                event.at.strftime("%H:%M:%S"),
-                texts.ZONES.get(event.zone, event.zone),
-                event.type,
-                event.child_name or "",
-                event.mission_name or "",
-                event.step_text or "",
-                event.detail or "",
-                texts.describe(event),
-            ])
+            writer.writerow(
+                [
+                    event.day.isoformat(),
+                    event.at.strftime("%H:%M:%S"),
+                    texts.ZONES.get(event.zone, event.zone),
+                    event.type,
+                    event.child_name or "",
+                    event.mission_name or "",
+                    event.step_text or "",
+                    event.detail or "",
+                    texts.describe(event),
+                ]
+            )
         return out.getvalue()
 
 

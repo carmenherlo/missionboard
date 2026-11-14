@@ -48,10 +48,17 @@ def get_children_service(
     def welcome(child: Child) -> None:
         now = clock.now()
         request.app.state.stars_repository.add_starting_stars(
-            child, settings.starting_stars, app_day(now, settings.day_starts_at), now)
+            child, settings.starting_stars, app_day(now, settings.day_starts_at), now
+        )
 
-    return ChildrenService(ChildrenRepository(store), photos, events, dependents=[missions, routines], welcome=welcome,
-                           family_avatars=AvatarsRepository(store))
+    return ChildrenService(
+        ChildrenRepository(store),
+        photos,
+        events,
+        dependents=[missions, routines],
+        welcome=welcome,
+        family_avatars=AvatarsRepository(store),
+    )
 
 
 def public_child(child: Child) -> dict:
@@ -70,9 +77,7 @@ def create_child(body: ChildIn, children: ChildrenService = Depends(get_children
 
 
 @router.put("/children/{child_id}", dependencies=[Depends(require_parent)])
-def update_child(
-    child_id: str, body: ChildIn, children: ChildrenService = Depends(get_children_service)
-):
+def update_child(child_id: str, body: ChildIn, children: ChildrenService = Depends(get_children_service)):
     return public_child(children.update(child_id, ChildData(**body.model_dump())))
 
 

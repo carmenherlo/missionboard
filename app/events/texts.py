@@ -40,12 +40,19 @@ _FIELDS = {
     "starting_stars": lambda value: f"estrellas de un niño nuevo: {value}",
     "day_starts_at": lambda value: f"el día empieza a las {value}",
     "routine_warn_minutes": lambda value: f"aviso antes de acabar cada parte: {value} min",
-    "seasons": lambda value: "estaciones: " + " · ".join(
-        f"{SEASONS.get(s.name, s.name)} {s.start[3:]}/{s.start[:2]} {s.manana} {s.dia} {s.tarde} {s.noche}" for s in value),
+    "seasons": lambda value: (
+        "estaciones: "
+        + " · ".join(
+            f"{SEASONS.get(s.name, s.name)} {s.start[3:]}/{s.start[:2]} {s.manana} {s.dia} {s.tarde} {s.noche}"
+            for s in value
+        )
+    ),
     "home": lambda value: "aspecto del inicio cambiado",
     "gift": lambda value: stars_detail(value),
     "route": lambda value: "aspecto de la ruta cambiado",
-    "shop_notify": lambda value: "avisos al móvil: " + (", ".join(value.phones) or "ninguno") + f", recordar a las {value.remind_at}",
+    "shop_notify": lambda value: (
+        "avisos al móvil: " + (", ".join(value.phones) or "ninguno") + f", recordar a las {value.remind_at}"
+    ),
     "due_day": lambda value: "llega " + (_day(value) if value else "pronto"),
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
@@ -61,7 +68,7 @@ def _day(value) -> str:
 
 
 def change_detail(changes: dict) -> str | None:
-    """"días: L M X J · nombre: Mañana" for the fields that changed."""
+    """ "días: L M X J · nombre: Mañana" for the fields that changed."""
     return " · ".join(_FIELDS[field](value) for field, value in changes.items()) or None
 
 

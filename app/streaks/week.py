@@ -69,8 +69,15 @@ def week_end(day: date, prize_day: str) -> date:
     return day + timedelta(days=(WEEKDAYS.index(prize_day) - day.weekday()) % 7)
 
 
-def build_week(today: date, end: date, rules: StreakWeek, rule: str, had: Callable[[date], set[str]],
-               done: dict[str, set[str]], free: set[str]) -> Week:
+def build_week(
+    today: date,
+    end: date,
+    rules: StreakWeek,
+    rule: str,
+    had: Callable[[date], set[str]],
+    done: dict[str, set[str]],
+    free: set[str],
+) -> Week:
     """The week ending on `end` as it is on `today`. had(day): the missions the child had
     that day; done: what they completed, by day; free: the days let off."""
     week = Week(start=end - timedelta(days=6), end=end)

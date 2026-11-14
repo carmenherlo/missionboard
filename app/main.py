@@ -117,7 +117,8 @@ def create_app(
             settings = SettingsRepository(config_store).settings()
             for child in ChildrenRepository(config_store).list():
                 app.state.stars_repository.add_starting_stars(
-                    child, settings.starting_stars, app_day(now, settings.day_starts_at), now)
+                    child, settings.starting_stars, app_day(now, settings.day_starts_at), now
+                )
         # Fail at startup, not mid-use, if settings were mistyped by hand.
         settings = SettingsRepository(config_store)
         settings.settings()

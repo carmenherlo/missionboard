@@ -118,12 +118,18 @@ def _from_doc(entry: dict) -> Mission:
         schedule=Schedule(start=schedule["start"], end=schedule.get("end")) if schedule else None,
         tasks=[
             Task(
-                id=t["id"], text=t["text"], image=t.get("image"),
+                id=t["id"],
+                text=t["text"],
+                image=t.get("image"),
                 image_suggested=bool(t.get("image_suggested", False)),
                 days=list(t["days"]) if t.get("days") else None,
                 steps=[
-                    Step(id=s["id"], text=s["text"], image=s.get("image"),
-                         image_suggested=bool(s.get("image_suggested", False)))
+                    Step(
+                        id=s["id"],
+                        text=s["text"],
+                        image=s.get("image"),
+                        image_suggested=bool(s.get("image_suggested", False)),
+                    )
                     for s in t.get("steps") or []
                 ],
             )

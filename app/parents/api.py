@@ -23,7 +23,5 @@ def unlock(body: UnlockRequest, parents: ParentsService = Depends(get_parents_se
 
 
 @router.put("/code", status_code=204, dependencies=[Depends(require_parent)])
-def change_code(
-    body: ChangeCodeRequest, parents: ParentsService = Depends(get_parents_service)
-) -> None:
+def change_code(body: ChangeCodeRequest, parents: ParentsService = Depends(get_parents_service)) -> None:
     parents.change_code(body.current_code, body.code)

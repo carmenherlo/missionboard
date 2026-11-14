@@ -15,7 +15,14 @@ from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.routines.repository import (
-    Part, Routine, RoutinesRepository, card_positions, hhmm, minute_of, music_kept, settled,
+    Part,
+    Routine,
+    RoutinesRepository,
+    card_positions,
+    hhmm,
+    minute_of,
+    music_kept,
+    settled,
 )
 from app.songs.repository import SongsRepository
 
@@ -51,8 +58,9 @@ class RoutinesEditor:
             raise NotFoundError("Routine not found")
         return routine
 
-    def create(self, mission_id: str, wake: str | None = None, *, starts: str | None = None,
-               ends: str | None = None) -> Routine:
+    def create(
+        self, mission_id: str, wake: str | None = None, *, starts: str | None = None, ends: str | None = None
+    ) -> Routine:
         """A mission's routine, with all its tasks, 5 minutes each: it rings at `wake` and
         the first starts five minutes later; or it starts at `starts` (ringing then); or
         it ends at `ends`, at its goal, and its parts go backwards from there."""
@@ -80,16 +88,40 @@ class RoutinesEditor:
         self._log("created", routine)
         return routine
 
-    def update(self, routine_id: str, *, days=UNSET, wake=UNSET, remind_every=UNSET, goal=UNSET,
-               offsets=UNSET, notices=UNSET, greeting=UNSET, last_countdown=UNSET, early_goal=UNSET,
-               warn_about=UNSET, **timing) -> Routine:
+    def update(
+        self,
+        routine_id: str,
+        *,
+        days=UNSET,
+        wake=UNSET,
+        remind_every=UNSET,
+        goal=UNSET,
+        offsets=UNSET,
+        notices=UNSET,
+        greeting=UNSET,
+        last_countdown=UNSET,
+        early_goal=UNSET,
+        warn_about=UNSET,
+        **timing,
+    ) -> Routine:
         """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`. The
         sentences (greeting, last_countdown, early_goal): None goes back to the usual one."""
-        changes = {k: v for k, v in
-                   {"days": days, "wake": wake, "remind_every": remind_every, "goal": goal,
-                    "offsets": offsets, "notices": notices, "greeting": greeting,
-                    "last_countdown": last_countdown, "early_goal": early_goal, "warn_about": warn_about}.items()
-                   if v is not UNSET}
+        changes = {
+            k: v
+            for k, v in {
+                "days": days,
+                "wake": wake,
+                "remind_every": remind_every,
+                "goal": goal,
+                "offsets": offsets,
+                "notices": notices,
+                "greeting": greeting,
+                "last_countdown": last_countdown,
+                "early_goal": early_goal,
+                "warn_about": warn_about,
+            }.items()
+            if v is not UNSET
+        }
         if set(timing) - set(TIMING):
             raise TypeError(f"unknown: {set(timing) - set(TIMING)}")
         if timing:
@@ -183,8 +215,9 @@ class RoutinesEditor:
 
     def add_music(self, routine_id: str, song_id: str, start: str, library: SongsRepository) -> Routine:
         """A song from a card, once (until it ends): its screen makes it longer, or adds more."""
-        return self._set_music(routine_id, None, {"id": _new_id(), "songs": [song_id], "start": start, "until": None},
-                               library)
+        return self._set_music(
+            routine_id, None, {"id": _new_id(), "songs": [song_id], "start": start, "until": None}, library
+        )
 
     def update_music(self, routine_id: str, music_id: str, library: SongsRepository, **fields) -> Routine:
         old = next((m for m in self.get(routine_id).music if m.id == music_id), None)
@@ -224,8 +257,11 @@ class RoutinesEditor:
             theirs = (cards[other["start"]], cards[other["until"] or other["start"]])
             if span[0] <= theirs[1] and theirs[0] <= span[1]:
                 raise ConflictError("Two songs at the same time")
-        kept = others + [music] if music_id is None else [music if m.id == music_id else m.model_dump()
-                                                           for m in routine.music]
+        kept = (
+            others + [music]
+            if music_id is None
+            else [music if m.id == music_id else m.model_dump() for m in routine.music]
+        )
         routine = self._change(routine_id, {"music": kept})
         self._log("changed", routine)
         return routine
@@ -233,7 +269,7 @@ class RoutinesEditor:
     # ---------- "Probar ahora" ----------
 
     def trial(self, routine_id: str, from_part: int = 0) -> tuple[Routine, float | None]:
-        """"Probar ahora": the routine with its own times, and the moment of the day to
+        """ "Probar ahora": the routine with its own times, and the moment of the day to
         pretend it is: when it rings, or a little before the part `from_part` (so its
         countdown and announcement are heard as they will be). By hand: None, it
         starts when tried, as when started for real."""

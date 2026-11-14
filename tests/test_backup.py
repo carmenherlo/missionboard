@@ -81,6 +81,8 @@ def test_nothing_outside_its_folders(client, data_dir):
 
 def test_a_copy_from_before_family_missions_is_refused(client):
     create_child(client)
-    old = yaml.safe_dump({"version": 13, "children": [{"id": "c1", "name": "Antes", "preset": "unicorn", "color": "#9471e7"}]})
+    old = yaml.safe_dump(
+        {"version": 13, "children": [{"id": "c1", "name": "Antes", "preset": "unicorn", "color": "#9471e7"}]}
+    )
     assert restore(client, zipped({"config.yaml": old, "missionboard-backup.json": "{}"})).status_code == 422
     assert [c["name"] for c in client.get("/api/children").json()] == ["Bea"]

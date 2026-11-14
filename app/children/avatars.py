@@ -23,8 +23,22 @@ PALETTE = [
     {"id": "pink", "label": "Rosa", "color": "#e865a3", "strong": "#8a4a66", "soft": "#ffd9e5", "on": "#ffffff"},
     {"id": "blue", "label": "Azul", "color": "#2193d6", "strong": "#2a638b", "soft": "#cce5ff", "on": "#ffffff"},
     {"id": "red", "label": "Rojo", "color": "#d3372f", "strong": "#904a43", "soft": "#ffdad5", "on": "#ffffff"},
-    {"id": "dark-blue", "label": "Azul oscuro", "color": "#244d99", "strong": "#244d99", "soft": "#d9e2ff", "on": "#ffffff"},
-    {"id": "turquoise", "label": "Turquesa", "color": "#00978c", "strong": "#006a62", "soft": "#9df2e7", "on": "#ffffff"},
+    {
+        "id": "dark-blue",
+        "label": "Azul oscuro",
+        "color": "#244d99",
+        "strong": "#244d99",
+        "soft": "#d9e2ff",
+        "on": "#ffffff",
+    },
+    {
+        "id": "turquoise",
+        "label": "Turquesa",
+        "color": "#00978c",
+        "strong": "#006a62",
+        "soft": "#9df2e7",
+        "on": "#ffffff",
+    },
     # Only for the rings of the animals of these colours (06/11).
     {"id": "peach", "label": "Melocotón", "color": "#f2a36c", "strong": "#8a5a3c", "soft": "#ffe0cc", "on": "#1a1b21"},
     {"id": "brown", "label": "Marrón", "color": "#8d5a3b", "strong": "#6b4226", "soft": "#f0dccb", "on": "#ffffff"},
@@ -46,7 +60,15 @@ _ANIMALS = [
     ("dark-blue", [("penguin", "Pingüino", "penguin")]),
     ("brown", [("owl", "Búho", "owl")]),
     ("lilac", [("unicorn", "Unicornio", "unicorn"), ("jellyfish", "Medusa", "jellyfish")]),
-    ("pink", [("crab", "Cangrejo", "crab"), ("octopus", "Pulpo", "octopus"), ("pig", "Cerdito", "pig-face"), ("flamingo", "Flamenco", "flamingo")]),
+    (
+        "pink",
+        [
+            ("crab", "Cangrejo", "crab"),
+            ("octopus", "Pulpo", "octopus"),
+            ("pig", "Cerdito", "pig-face"),
+            ("flamingo", "Flamenco", "flamingo"),
+        ],
+    ),
 ]
 
 PRESETS = [
@@ -101,7 +123,7 @@ def _gamma(c: float) -> float:
 
 
 def _rgb(color: str) -> tuple[float, float, float]:
-    return tuple(_linear(int(color[i:i + 2], 16) / 255) for i in (1, 3, 5))
+    return tuple(_linear(int(color[i : i + 2], 16) / 255) for i in (1, 3, 5))
 
 
 def _oklch(color: str) -> tuple[float, float, float]:
@@ -122,9 +144,11 @@ def _from_oklch(lightness: float, chroma: float, hue: float) -> str:
         l_ = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3
         m_ = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3
         s_ = (lightness - 0.0894841775 * a - 1.2914855480 * b) ** 3
-        rgb = (4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
-               -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
-               -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_)
+        rgb = (
+            4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
+            -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
+            -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_,
+        )
         if all(-1e-4 <= c <= 1 + 1e-4 for c in rgb) or chroma < 0.001:
             return "#" + "".join(f"{round(min(1, max(0, _gamma(min(1, max(0, c))))) * 255):02x}" for c in rgb)
         chroma -= 0.005

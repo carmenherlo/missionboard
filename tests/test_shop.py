@@ -59,7 +59,8 @@ def test_add_change_and_remove_an_item(client, data_dir):
     changed = client.patch(url, json={"price": 6, "image": "fluent/popcorn"}, headers=PARENT).json()
     assert changed["price"] == 6 and changed["image"] == "fluent/popcorn"
     assert descriptions(client, limit=1) == [
-        "Cambiaste «Ver una peli» de la tienda · imagen cambiada · precio: 6 estrellas"]
+        "Cambiaste «Ver una peli» de la tienda · imagen cambiada · precio: 6 estrellas"
+    ]
     assert client.delete(url, headers=PARENT).status_code == 204
     assert [i["text"] for i in saved(data_dir)["shop"]] == SAMPLES
 
@@ -82,7 +83,10 @@ def test_the_child_sees_their_stars_and_what_they_can_buy(client, bea):
     view = shop(client, bea)
     assert view["stars"] == 4
     assert [(i["text"], i["affordable"]) for i in view["items"]] == [
-        ("Elegir el postre", True), ("Un globo", False), ("Un peluche", False)]
+        ("Elegir el postre", True),
+        ("Un globo", False),
+        ("Un peluche", False),
+    ]
 
 
 def test_buying_takes_the_stars(client, bea):

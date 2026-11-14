@@ -10,8 +10,14 @@ from app.stars.repository import StarsRepository
 
 
 class StarsService:
-    def __init__(self, children: ChildrenRepository, stars: StarsRepository, settings: SettingsRepository,
-                 clock: Clock, events: EventLog):
+    def __init__(
+        self,
+        children: ChildrenRepository,
+        stars: StarsRepository,
+        settings: SettingsRepository,
+        clock: Clock,
+        events: EventLog,
+    ):
         self._children = children
         self._stars = stars
         self._settings = settings

@@ -204,9 +204,7 @@ def migrate(data_dir: Path, migrations: list[str] = MIGRATIONS) -> None:
     with connect(data_dir) as conn:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
     if version > len(migrations):
-        raise SchemaVersionError(
-            f"Database is version {version}; this app understands up to {len(migrations)}"
-        )
+        raise SchemaVersionError(f"Database is version {version}; this app understands up to {len(migrations)}")
     if version == len(migrations):
         return
 

@@ -24,8 +24,9 @@ class FakeHomeAssistant:
         return ["mobile_app_mum", "mobile_app_dad"]
 
     def send(self, phones, title, message, actions, tag):
-        self.sent.append({"phones": phones, "title": title, "message": message,
-                          "actions": [a for a, _ in actions], "tag": tag})
+        self.sent.append(
+            {"phones": phones, "title": title, "message": message, "actions": [a for a, _ in actions], "tag": tag}
+        )
 
     async def listen(self, on_action):
         pass
@@ -69,19 +70,24 @@ def mine(client, child):
 
 
 def with_phones(client):
-    client.patch("/api/settings", json={"shop_notify": {"phones": ["mobile_app_mum"], "remind_at": "18:00"}},
-                 headers=PARENT)
+    client.patch(
+        "/api/settings", json={"shop_notify": {"phones": ["mobile_app_mum"], "remind_at": "18:00"}}, headers=PARENT
+    )
 
 
 def test_an_order_is_on_its_way_until_a_parent_hands_it_over(client, bea):
     order_id = ordered(client, bea)
     [order] = mine(client, bea)
     assert (order["state"], order["nights"], order["progress"]) == ("on_way", None, 0.15)
-    assert client.get("/api/orders/summary").json() == {bea["id"]: {"on_way": 1, "arrived": 0, "today": [], "arrived_ids": []}}
+    assert client.get("/api/orders/summary").json() == {
+        bea["id"]: {"on_way": 1, "arrived": 0, "today": [], "arrived_ids": []}
+    }
     assert [o["id"] for o in client.get("/api/orders", headers=PARENT).json()["waiting"]] == [order_id]
 
     assert client.post(f"/api/orders/{order_id}/deliver", headers=PARENT).json()["state"] == "arrived"
-    assert client.get("/api/orders/summary").json() == {bea["id"]: {"on_way": 0, "arrived": 1, "today": [], "arrived_ids": [order_id]}}
+    assert client.get("/api/orders/summary").json() == {
+        bea["id"]: {"on_way": 0, "arrived": 1, "today": [], "arrived_ids": [order_id]}
+    }
     assert descriptions(client, limit=1) == ["Entregaste «Elegir el postre» a Bea"]
 
     assert client.post(f"/api/children/{bea['id']}/orders/{order_id}/seen").status_code == 204
@@ -152,7 +158,9 @@ def test_a_reminder_on_the_day_it_was_due_once(client, app, bea, ha, clock):
 
 def test_the_phones_of_home_assistant(client):
     assert client.get("/api/notify/phones", headers=PARENT).json() == {
-        "available": True, "phones": ["mobile_app_mum", "mobile_app_dad"]}
+        "available": True,
+        "phones": ["mobile_app_mum", "mobile_app_dad"],
+    }
 
 
 def test_without_home_assistant_nothing_is_sent(data_dir, clock):

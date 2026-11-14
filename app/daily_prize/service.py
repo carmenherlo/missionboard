@@ -21,8 +21,9 @@ class SpinResult:
 
 
 class DailyPrizeService:
-    def __init__(self, days: DayService, spins: PrizeSpinsRepository, clock: Clock, events: EventLog,
-                 choose=secrets.choice):  # tests can pass their own, to know the prize
+    def __init__(
+        self, days: DayService, spins: PrizeSpinsRepository, clock: Clock, events: EventLog, choose=secrets.choice
+    ):  # tests can pass their own, to know the prize
         self._days = days
         self._spins = spins
         self._clock = clock
@@ -49,5 +50,8 @@ class DailyPrizeService:
         if spin["delivered_at"] is None:
             self._spins.deliver(spin_id, self._clock.now())
             self._events.config_changed(
-                "prize", "delivered", child=SimpleNamespace(id=spin["child_id"], name=spin["child_name"]),
-                mission=SimpleNamespace(id=spin["prize_id"], name=spin["prize_text"]))
+                "prize",
+                "delivered",
+                child=SimpleNamespace(id=spin["child_id"], name=spin["child_name"]),
+                mission=SimpleNamespace(id=spin["prize_id"], name=spin["prize_text"]),
+            )

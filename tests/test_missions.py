@@ -96,24 +96,27 @@ def test_invalid_mission_name(client, name):
     assert create_mission(client, name=name).status_code == 422
 
 
-@pytest.mark.parametrize("method, path", [
-    ("post", "/api/missions"),
-    ("put", "/api/missions/order"),
-    ("patch", "/api/missions/x"),
-    ("delete", "/api/missions/x"),
-    ("put", "/api/missions/x/photo"),
-    ("post", "/api/missions/x/tasks"),
-    ("put", "/api/missions/x/tasks/order"),
-    ("patch", "/api/missions/x/tasks/y"),
-    ("delete", "/api/missions/x/tasks/y"),
-    ("put", "/api/missions/x/tasks/y/photo"),
-    ("post", "/api/missions/x/tasks/y/steps"),
-    ("patch", "/api/missions/x/steps/y"),
-    ("delete", "/api/missions/x/steps/y"),
-    ("put", "/api/missions/x/steps/y/place"),
-    ("put", "/api/missions/x/steps/y/photo"),
-    ("put", "/api/missions/x/children/y/items/z"),
-])
+@pytest.mark.parametrize(
+    "method, path",
+    [
+        ("post", "/api/missions"),
+        ("put", "/api/missions/order"),
+        ("patch", "/api/missions/x"),
+        ("delete", "/api/missions/x"),
+        ("put", "/api/missions/x/photo"),
+        ("post", "/api/missions/x/tasks"),
+        ("put", "/api/missions/x/tasks/order"),
+        ("patch", "/api/missions/x/tasks/y"),
+        ("delete", "/api/missions/x/tasks/y"),
+        ("put", "/api/missions/x/tasks/y/photo"),
+        ("post", "/api/missions/x/tasks/y/steps"),
+        ("patch", "/api/missions/x/steps/y"),
+        ("delete", "/api/missions/x/steps/y"),
+        ("put", "/api/missions/x/steps/y/place"),
+        ("put", "/api/missions/x/steps/y/photo"),
+        ("put", "/api/missions/x/children/y/items/z"),
+    ],
+)
 def test_writes_require_parent_code(client, method, path):
     kwargs = {} if method == "delete" else {"json": {}}
     assert getattr(client, method)(path, **kwargs).status_code == 401
@@ -210,9 +213,14 @@ def test_keeping_the_same_photo(client, mission, data_dir):
     assert len(photo_files(data_dir)) == 1
 
 
-@pytest.mark.parametrize("data, content_type, status", [
-    (b"not an image", "image/jpeg", 422), (JPEG, "image/gif", 415), (b"\xff\xd8\xff" + b"0" * (5 * 1024 * 1024), "image/jpeg", 413),
-])
+@pytest.mark.parametrize(
+    "data, content_type, status",
+    [
+        (b"not an image", "image/jpeg", 422),
+        (JPEG, "image/gif", 415),
+        (b"\xff\xd8\xff" + b"0" * (5 * 1024 * 1024), "image/jpeg", 413),
+    ],
+)
 def test_invalid_photo(client, mission, data, content_type, status):
     assert upload(client, f"/api/missions/{mission['id']}/photo", data, content_type).status_code == status
 
@@ -237,8 +245,9 @@ def test_tasks_with_their_steps(client, mission, aseo, data_dir):
 
 def test_update_a_task_and_a_step(client, mission, aseo):
     url = f"/api/missions/{mission['id']}"
-    task = client.patch(f"{url}/tasks/{aseo['id']}", json={"text": "Lavarse", "image": "fluent/soap"},
-                        headers=PARENT).json()["tasks"][0]
+    task = client.patch(
+        f"{url}/tasks/{aseo['id']}", json={"text": "Lavarse", "image": "fluent/soap"}, headers=PARENT
+    ).json()["tasks"][0]
     assert task["text"] == "Lavarse" and task["image_url"].endswith("soap.svg")
     step = aseo["steps"][0]
     updated = client.patch(f"{url}/steps/{step['id']}", json={"text": "Boca"}, headers=PARENT).json()
@@ -266,7 +275,9 @@ def test_a_step_moves_within_its_task_and_to_another(client, mission, aseo):
     assert [s["text"] for s in moved["tasks"][0]["steps"]] == ["Dientes"]
     assert [s["text"] for s in moved["tasks"][1]["steps"]] == ["Cara"]
     assert client.put(f"{url}/{cara}/place", json={"task_id": "nope", "position": 0}, headers=PARENT).status_code == 404
-    assert client.put(f"{url}/nope/place", json={"task_id": other["id"], "position": 0}, headers=PARENT).status_code == 404
+    assert (
+        client.put(f"{url}/nope/place", json={"task_id": other["id"], "position": 0}, headers=PARENT).status_code == 404
+    )
 
 
 def test_deleting_cleans_up_photos(client, mission, aseo, data_dir):

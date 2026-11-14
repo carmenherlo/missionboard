@@ -84,8 +84,11 @@ class ShopService:
                 item.image_suggested = False
             self._items.update(item)
         self._images.drop_replaced_photo(old.image, item.image)
-        changes = {("name" if f == "text" else f): getattr(item, f) for f in ("text", "image", "price")
-                   if getattr(item, f) != getattr(old, f)}
+        changes = {
+            ("name" if f == "text" else f): getattr(item, f)
+            for f in ("text", "image", "price")
+            if getattr(item, f) != getattr(old, f)
+        }
         if item.hidden_from != old.hidden_from:
             changes["shop_for"] = [c.name for c in self._children.list() if item.for_child(c.id)]
         if changes:
@@ -145,8 +148,9 @@ class ShopService:
         order_id = self._purchases.buy(day, child, item, now)
         if order_id is None:
             raise InvalidError("Not enough stars")
-        self._events.child_did("purchase", child, mission=SimpleNamespace(id=item.id, name=item.text),
-                               stars=-item.price)
+        self._events.child_did(
+            "purchase", child, mission=SimpleNamespace(id=item.id, name=item.text), stars=-item.price
+        )
         self._orders.ordered(order_id)
         return {**self.for_child(child_id), "order_id": order_id}
 

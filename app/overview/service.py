@@ -17,8 +17,15 @@ HISTORY = 30  # and their latest movements
 
 
 class OverviewService:
-    def __init__(self, days: DayService, stars: StarsService, prizes: DailyPrizeService, streaks: StreaksService,
-                 orders: OrdersService, children: ChildrenRepository):
+    def __init__(
+        self,
+        days: DayService,
+        stars: StarsService,
+        prizes: DailyPrizeService,
+        streaks: StreaksService,
+        orders: OrdersService,
+        children: ChildrenRepository,
+    ):
         self._days = days
         self._stars = stars
         self._prizes = prizes
@@ -58,7 +65,9 @@ class OverviewService:
         return {
             "today": today,
             "week": self._streaks.week(child_id),
-            "chart": [{"day": (d := since + timedelta(days=n)).isoformat(), "stars": earned.get(d.isoformat(), 0)}
-                      for n in range(CHART_DAYS)],
+            "chart": [
+                {"day": (d := since + timedelta(days=n)).isoformat(), "stars": earned.get(d.isoformat(), 0)}
+                for n in range(CHART_DAYS)
+            ],
             "movements": self._stars.movements(child_id, HISTORY),
         }

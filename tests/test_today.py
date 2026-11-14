@@ -306,6 +306,7 @@ def test_a_step_off_for_a_child_is_not_shown_to_them(client, bea):
 def test_steps_checked_before_reminders_count_for_their_task(client, bea, data_dir):
     """Checked the old way, the day of the change: every step of a task, then the task."""
     from app.today.repository import DayRepository
+
     despegue = with_steps(client, "Despegue", ("Dientes", "Cara"))
     add_task(client, despegue["id"], "Vestirse")
     task = despegue["tasks"][0]
@@ -393,24 +394,38 @@ def test_an_upcoming_mission_can_be_opened_too(client, bea):
 # ---------- the season, the moment of the day and its picture ----------
 
 
-@pytest.mark.parametrize("moment, season", [
-    (datetime(2026, 1, 15, 12, 0, tzinfo=MADRID), "invierno"),  # the last of the list goes on
-    (datetime(2026, 3, 19, 12, 0, tzinfo=MADRID), "invierno"),
-    (datetime(2026, 3, 20, 12, 0, tzinfo=MADRID), "primavera"),
-    (datetime(2026, 7, 1, 12, 0, tzinfo=MADRID), "verano"),
-    (datetime(2026, 9, 23, 12, 0, tzinfo=MADRID), "otono"),
-    (datetime(2026, 12, 21, 12, 0, tzinfo=MADRID), "invierno"),
-])
+@pytest.mark.parametrize(
+    "moment, season",
+    [
+        (datetime(2026, 1, 15, 12, 0, tzinfo=MADRID), "invierno"),  # the last of the list goes on
+        (datetime(2026, 3, 19, 12, 0, tzinfo=MADRID), "invierno"),
+        (datetime(2026, 3, 20, 12, 0, tzinfo=MADRID), "primavera"),
+        (datetime(2026, 7, 1, 12, 0, tzinfo=MADRID), "verano"),
+        (datetime(2026, 9, 23, 12, 0, tzinfo=MADRID), "otono"),
+        (datetime(2026, 12, 21, 12, 0, tzinfo=MADRID), "invierno"),
+    ],
+)
 def test_the_season(client, bea, clock, moment, season):
     clock.moment = moment
     assert f"/{season}/" in today(client, bea)["background_url"]
 
 
 # Autumn: the morning at 5:30, the day at 9:30, the evening at 17:00, the night at 21:00.
-@pytest.mark.parametrize("time, moment", [
-    ((5, 29), "noche"), ((5, 30), "manana"), ((9, 29), "manana"), ((9, 30), "dia"), ((16, 59), "dia"),
-    ((17, 0), "tarde"), ((20, 59), "tarde"), ((21, 0), "noche"), ((23, 59), "noche"), ((0, 0), "noche"),
-])
+@pytest.mark.parametrize(
+    "time, moment",
+    [
+        ((5, 29), "noche"),
+        ((5, 30), "manana"),
+        ((9, 29), "manana"),
+        ((9, 30), "dia"),
+        ((16, 59), "dia"),
+        ((17, 0), "tarde"),
+        ((20, 59), "tarde"),
+        ((21, 0), "noche"),
+        ((23, 59), "noche"),
+        ((0, 0), "noche"),
+    ],
+)
 def test_the_moment_of_the_day(client, bea, clock, time, moment):
     clock.moment = MONDAY.replace(hour=time[0], minute=time[1])
     day = today(client, bea)
@@ -426,16 +441,42 @@ def test_every_season_has_its_four_pictures():
 
 
 def test_the_seasons_can_be_changed_in_the_settings_and_with_no_picture_no_background(data_dir, clock):
-    write_config(data_dir, {"seasons": [{"name": "siempre", "start": "01-01", "manana": "06:00", "dia": "08:00",
-                                                     "tarde": "18:00", "noche": "20:00"}]})
+    write_config(
+        data_dir,
+        {
+            "seasons": [
+                {
+                    "name": "siempre",
+                    "start": "01-01",
+                    "manana": "06:00",
+                    "dia": "08:00",
+                    "tarde": "18:00",
+                    "noche": "20:00",
+                }
+            ]
+        },
+    )
     with TestClient(create_app(data_dir, clock=clock)) as client:
         day = today(client, create_child(client))
         assert day["moment"] == "dia" and day["background_url"] is None
 
 
 def test_each_moment_starts_at_its_time_in_the_settings(data_dir, clock):
-    write_config(data_dir, {"seasons": [{"name": "otono", "start": "01-01", "manana": "07:00", "dia": "08:30",
-                                         "tarde": "18:00", "noche": "20:00"}]})
+    write_config(
+        data_dir,
+        {
+            "seasons": [
+                {
+                    "name": "otono",
+                    "start": "01-01",
+                    "manana": "07:00",
+                    "dia": "08:30",
+                    "tarde": "18:00",
+                    "noche": "20:00",
+                }
+            ]
+        },
+    )
     with TestClient(create_app(data_dir, clock=clock)) as client:
         bea = create_child(client)
         for (hour, minute), moment in [((6, 59), "noche"), ((7, 0), "manana"), ((8, 30), "dia"), ((20, 0), "noche")]:
@@ -444,9 +485,15 @@ def test_each_moment_starts_at_its_time_in_the_settings(data_dir, clock):
 
 
 def test_seasons_out_of_order_stop_the_app(data_dir, clock):
-    write_config(data_dir, {"seasons": [
-        {"name": "b", "start": "06-01", "manana": "06:00", "dia": "08:00", "tarde": "18:00", "noche": "20:00"},
-        {"name": "a", "start": "01-01", "manana": "06:00", "dia": "08:00", "tarde": "18:00", "noche": "20:00"}]})
+    write_config(
+        data_dir,
+        {
+            "seasons": [
+                {"name": "b", "start": "06-01", "manana": "06:00", "dia": "08:00", "tarde": "18:00", "noche": "20:00"},
+                {"name": "a", "start": "01-01", "manana": "06:00", "dia": "08:00", "tarde": "18:00", "noche": "20:00"},
+            ]
+        },
+    )
     with pytest.raises(Exception):
         with TestClient(create_app(data_dir, clock=clock)):
             pass
@@ -456,6 +503,7 @@ def test_a_parent_gives_a_child_stars_as_a_present(tmp_path):
     from fastapi.testclient import TestClient
     from app.main import create_app
     from tests.conftest import PARENT
+
     with TestClient(create_app(tmp_path)) as client:
         leo = client.post("/api/children", json={"name": "Leo", "preset": "lion"}, headers=PARENT).json()
         before = client.get(f"/api/children/{leo['id']}/stars", headers=PARENT).json()["stars"]
@@ -464,6 +512,9 @@ def test_a_parent_gives_a_child_stars_as_a_present(tmp_path):
         assert got.json() == {"stars": before + 3}
         assert client.get(f"/api/children/{leo['id']}/today").json()["stars"] == before + 3
         for wrong in (0, -2, 51):
-            assert client.post(f"/api/children/{leo['id']}/stars/gift", json={"stars": wrong}, headers=PARENT).status_code == 422
+            assert (
+                client.post(f"/api/children/{leo['id']}/stars/gift", json={"stars": wrong}, headers=PARENT).status_code
+                == 422
+            )
         assert client.post("/api/children/nobody/stars/gift", json={"stars": 1}, headers=PARENT).status_code == 404
         assert "Regalaste estrellas a Leo · +3 estrellas" in client.get("/api/events", headers=PARENT).text

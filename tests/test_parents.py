@@ -22,9 +22,7 @@ def test_unlock_uses_code_from_config(client, data_dir):
 
 
 def change_code(client, code, current_code=DEFAULT_PARENT_CODE, headers=PARENT):
-    return client.put(
-        "/api/parents/code", json={"current_code": current_code, "code": code}, headers=headers
-    )
+    return client.put("/api/parents/code", json={"current_code": current_code, "code": code}, headers=headers)
 
 
 def test_change_code(client, data_dir):

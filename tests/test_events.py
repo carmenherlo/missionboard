@@ -235,11 +235,14 @@ def test_the_home_screen_belongs_to_nobody(client):
     assert csv_rows(client)[1][2:4] == ["", "screen_opened"]
 
 
-@pytest.mark.parametrize("body", [
-    {"zone": "kitchen", "screen": "home"},
-    {"zone": "parents", "screen": "Home!"},
-    {"zone": "parents", "screen": "home", "child_id": "../x"},
-])
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"zone": "kitchen", "screen": "home"},
+        {"zone": "parents", "screen": "Home!"},
+        {"zone": "parents", "screen": "home", "child_id": "../x"},
+    ],
+)
 def test_a_bad_screen_is_refused(client, body):
     assert client.post("/api/events/screen", json=body).status_code == 422
 
@@ -267,14 +270,23 @@ def test_csv_for_a_spreadsheet_in_spanish(client):
     header, *rows = csv_rows(client)
     assert header[0] == "día" and len(rows) == 3  # in the order they happened
     assert rows[2] == [
-        "2026-11-03", "19:41:08", "padres", "config_changed", "", "Aterrizaje; tarde", "",
-        "días: L M", "Cambiaste «Aterrizaje; tarde» · días: L M",
+        "2026-11-03",
+        "19:41:08",
+        "padres",
+        "config_changed",
+        "",
+        "Aterrizaje; tarde",
+        "",
+        "días: L M",
+        "Cambiaste «Aterrizaje; tarde» · días: L M",
     ]
 
 
 def test_the_day_starts_at_the_configured_time(data_dir, clock):
     data_dir.mkdir(parents=True)
-    config_path(data_dir).write_text(yaml.safe_dump({"version": CURRENT_VERSION, "settings": {"day_starts_at": "04:00"}}))
+    config_path(data_dir).write_text(
+        yaml.safe_dump({"version": CURRENT_VERSION, "settings": {"day_starts_at": "04:00"}})
+    )
     clock.moment = datetime(2026, 11, 4, 0, 30, tzinfo=MADRID)
     with TestClient(create_app(data_dir, clock=clock)) as client:
         open_screen(client, screen="config")

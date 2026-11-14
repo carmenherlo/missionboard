@@ -42,8 +42,12 @@ def get_overview_service(
 
 
 class Presenter:
-    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries), day: DayPresenter = Depends(),
-                 shop: ShopPresenter = Depends()):
+    def __init__(
+        self,
+        libraries: ImageLibraries = Depends(get_image_libraries),
+        day: DayPresenter = Depends(),
+        shop: ShopPresenter = Depends(),
+    ):
         self._libraries = libraries
         self._day = day
         self._shop = shop
@@ -56,8 +60,10 @@ class Presenter:
             "colors": avatars.tones(today.child.color),
             "stars": today.stars,
             "streak": today.streak,
-            "missions": [{k: m[k] for k in ("id", "name", "image_url", "state", "schedule", "done", "total")}
-                         for m in full["missions"]],
+            "missions": [
+                {k: m[k] for k in ("id", "name", "image_url", "state", "schedule", "done", "total")}
+                for m in full["missions"]
+            ],
             "prize": full["prize"] and {"state": full["prize"]["state"], "won": full["prize"]["won"]},
         }
 
@@ -72,12 +78,15 @@ class Presenter:
 def overview_today(overview: OverviewService = Depends(get_overview_service), present: Presenter = Depends()):
     view = overview.today()
     return {
-        "children": [{**present.child_day(today), "week": present_week(view["weeks"][today.child.id])}
-                     for today in view["children"]],
+        "children": [
+            {**present.child_day(today), "week": present_week(view["weeks"][today.child.id])}
+            for today in view["children"]
+        ],
         "orders": [present.order(o) for o in view["orders"]],
         "prizes": [present.prize(p) for p in view["prizes"]],
-        "week_prizes": [{k: p[k] for k in ("child_id", "child_name", "week_end", "tier", "prize_text")}
-                        for p in view["week_prizes"]],
+        "week_prizes": [
+            {k: p[k] for k in ("child_id", "child_name", "week_end", "tier", "prize_text")} for p in view["week_prizes"]
+        ],
     }
 
 
@@ -87,15 +96,23 @@ def setup(overview: OverviewService = Depends(get_overview_service), store: Conf
     return overview.setup(
         MissionsRepository(store).list(),
         ParentsRepository(store).code() == DEFAULT_PARENT_CODE,
-        len(PrizesRepository(store).list()), len(ShopRepository(store).list()), len(RoutinesRepository(store).list()))
+        len(PrizesRepository(store).list()),
+        len(ShopRepository(store).list()),
+        len(RoutinesRepository(store).list()),
+    )
 
 
 @router.get("/children/{child_id}")
-def overview_child(child_id: str, overview: OverviewService = Depends(get_overview_service),
-                   present: Presenter = Depends()):
+def overview_child(
+    child_id: str, overview: OverviewService = Depends(get_overview_service), present: Presenter = Depends()
+):
     view = overview.child(child_id)
-    return {**present.child_day(view["today"]), "week": present_week(view["week"]),
-            "chart": view["chart"], "movements": view["movements"]}
+    return {
+        **present.child_day(view["today"]),
+        "week": present_week(view["week"]),
+        "chart": view["chart"],
+        "movements": view["movements"],
+    }
 
 
 @router.post("/prizes/{spin_id}/deliver", status_code=204)

@@ -90,7 +90,8 @@ def _checked_tasks(tasks: list[ChildTask], checked: set[str]) -> set[str]:
     """The tasks checked today. Before misiones-3 a child checked steps: a task whose
     steps were all checked that day counts as checked too, so nobody loses it."""
     return {
-        task.task.id for task in tasks
+        task.task.id
+        for task in tasks
         if task.task.id in checked or (task.steps and all(s.id in checked for s in task.steps))
     }
 
@@ -138,8 +139,12 @@ class DayService:
             if not tasks:  # not today, nothing of theirs today, or still being written
                 continue
             schedule = links.schedule_on(mission, routines.get(mission.id), child.id, weekday)
-            item = MissionToday(mission, self._state(schedule, mission.id in completed, mission.id in opened, time),
-                                tasks, schedule=schedule)
+            item = MissionToday(
+                mission,
+                self._state(schedule, mission.id in completed, mission.id in opened, time),
+                tasks,
+                schedule=schedule,
+            )
             item.checked = _checked_tasks(tasks, checked.get(mission.id, set()))
             missions.append(item)
 

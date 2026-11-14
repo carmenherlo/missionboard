@@ -8,7 +8,12 @@ from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
 from app.deps import (
-    get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, get_stars_repository,
+    get_clock,
+    get_config_store,
+    get_event_log,
+    get_image_libraries,
+    get_photo_store,
+    get_stars_repository,
     require_parent,
 )
 from app.events.service import EventLog
@@ -59,8 +64,9 @@ def get_purchases_repository(request: Request) -> PurchasesRepository:
 
 def build_orders(state, events: EventLog) -> OrdersService:
     """The orders, from the app's shared objects (the routes, and the phones' buttons)."""
-    return OrdersService(state.purchases_repository, SettingsRepository(state.config_store), state.clock,
-                         events, state.home_assistant)
+    return OrdersService(
+        state.purchases_repository, SettingsRepository(state.config_store), state.clock, events, state.home_assistant
+    )
 
 
 def get_orders_service(request: Request, events: EventLog = Depends(get_event_log)) -> OrdersService:
@@ -77,8 +83,18 @@ def get_shop_service(
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
 ) -> ShopService:
-    return ShopService(ShopRepository(store), purchases, stars, ChildrenRepository(store), SettingsRepository(store),
-                       libraries, photos, clock, events, orders)
+    return ShopService(
+        ShopRepository(store),
+        purchases,
+        stars,
+        ChildrenRepository(store),
+        SettingsRepository(store),
+        libraries,
+        photos,
+        clock,
+        events,
+        orders,
+    )
 
 
 class Presenter:
@@ -100,8 +116,20 @@ class Presenter:
         }
 
     def order(self, order: dict) -> dict:
-        keep = ("id", "day", "child_id", "child_name", "item_text", "price", "at", "delivered_at", "due_day",
-                "state", "nights", "progress")
+        keep = (
+            "id",
+            "day",
+            "child_id",
+            "child_name",
+            "item_text",
+            "price",
+            "at",
+            "delivered_at",
+            "due_day",
+            "state",
+            "nights",
+            "progress",
+        )
         return {**{k: order[k] for k in keep}, "image_url": self._libraries.url(order["item_image"])}
 
 
@@ -133,8 +161,9 @@ def get_item(item_id: str, shop: ShopService = Depends(get_shop_service), presen
 
 
 @router.patch("/shop/{item_id}", dependencies=parent_only)
-def update_item(item_id: str, body: ItemPatch, shop: ShopService = Depends(get_shop_service),
-                present: Presenter = Depends()):
+def update_item(
+    item_id: str, body: ItemPatch, shop: ShopService = Depends(get_shop_service), present: Presenter = Depends()
+):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
     for required in ("text", "price", "hidden_from"):
         if changes.get(required, "") is None:
@@ -143,8 +172,13 @@ def update_item(item_id: str, body: ItemPatch, shop: ShopService = Depends(get_s
 
 
 @router.put("/shop/{item_id}/photo", dependencies=parent_only)
-async def upload_item_photo(item_id: str, request: Request, content_type: str = Header(),
-                            shop: ShopService = Depends(get_shop_service), present: Presenter = Depends()):
+async def upload_item_photo(
+    item_id: str,
+    request: Request,
+    content_type: str = Header(),
+    shop: ShopService = Depends(get_shop_service),
+    present: Presenter = Depends(),
+):
     media_type = content_type.split(";")[0].strip().lower()
     return present.item(shop.set_photo(item_id, await request.body(), media_type))
 
@@ -194,8 +228,9 @@ def list_orders(orders: OrdersService = Depends(get_orders_service), present: Pr
 
 
 @router.patch("/orders/{order_id}", dependencies=parent_only)
-def set_due(order_id: int, body: DueIn, orders: OrdersService = Depends(get_orders_service),
-            present: Presenter = Depends()):
+def set_due(
+    order_id: int, body: DueIn, orders: OrdersService = Depends(get_orders_service), present: Presenter = Depends()
+):
     order = orders.set_due(order_id, body.due_day)
     return present.order({**order, **orders.tracked(order)})
 

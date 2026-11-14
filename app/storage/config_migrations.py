@@ -45,9 +45,16 @@ def _v16_to_v17(doc: dict) -> dict:
             seasons.append(season)
             continue
         sunrise, sunset = _minutes(season["sunrise"]), _minutes(season["sunset"])
-        seasons.append({"name": season["name"], "start": season["start"],
-                        "manana": _hhmm(sunrise - margin), "dia": _hhmm(sunrise + margin),
-                        "tarde": _hhmm(sunset - margin), "noche": _hhmm(sunset + margin)})
+        seasons.append(
+            {
+                "name": season["name"],
+                "start": season["start"],
+                "manana": _hhmm(sunrise - margin),
+                "dia": _hhmm(sunrise + margin),
+                "tarde": _hhmm(sunset - margin),
+                "noche": _hhmm(sunset + margin),
+            }
+        )
     if seasons:
         settings["seasons"] = seasons
     doc["settings"] = settings
@@ -84,9 +91,7 @@ def upgrade(doc: dict) -> dict:
     """Return the document at CURRENT_VERSION. The input is not modified."""
     version = doc.get("version", 1)
     if version > CURRENT_VERSION:
-        raise ConfigVersionError(
-            f"config.yaml is version {version}; this app understands up to {CURRENT_VERSION}"
-        )
+        raise ConfigVersionError(f"config.yaml is version {version}; this app understands up to {CURRENT_VERSION}")
     if version < FIRST_VERSION:
         raise ConfigTooOldError(f"config.yaml is version {version}, from before family missions")
     doc = {**initial(), **copy.deepcopy(doc)}  # keys missing from a hand-written file
@@ -103,34 +108,78 @@ def initial() -> dict:
         "parents": {"code": "1234"},
         "children": [],
         "settings": {"stars_per_mission": 1, "daily_prize_spins": 1, "day_starts_at": "00:00"},
-        "features": {"daily_prize": True, "shop": True, "streaks": True, "dashboard": True, "routines": True,
-                     "games": False},
+        "features": {
+            "daily_prize": True,
+            "shop": True,
+            "streaks": True,
+            "dashboard": True,
+            "routines": True,
+            "games": False,
+        },
         "missions": [],
         "routines": [],
         "songs": [],
         "avatars": [],
         "prizes": [
-            {"id": "guerra", "text": "Guerra de cojines o de cosquillas", "image": "fluent/face-with-tears-of-joy",
-             "image_suggested": False},
-            {"id": "juego-mama", "text": "10 minutos de juego con mamá, tú eliges", "image": "fluent/game-die",
-             "image_suggested": False},
-            {"id": "juego-papa", "text": "10 minutos de juego con papá, tú eliges", "image": "fluent/joker",
-             "image_suggested": False},
-            {"id": "bailar", "text": "Elige una canción y bailamos todos", "image": "fluent/woman-dancing",
-             "image_suggested": False},
-            {"id": "cuento", "text": "Eliges el cuento de esta noche", "image": "fluent/open-book",
-             "image_suggested": False},
-            {"id": "dinosaurio", "text": "Paseo en dinosaurio por toda la casa", "image": "fluent/sauropod",
-             "image_suggested": False},
-            {"id": "sitio-en-la-mesa", "text": "Eliges tu sitio en la mesa para cenar", "image": "fluent/chair",
-             "image_suggested": False},
-            {"id": "petisui", "text": "Un petisuí extra", "image": "fluent/custard",
-             "image_suggested": False},
+            {
+                "id": "guerra",
+                "text": "Guerra de cojines o de cosquillas",
+                "image": "fluent/face-with-tears-of-joy",
+                "image_suggested": False,
+            },
+            {
+                "id": "juego-mama",
+                "text": "10 minutos de juego con mamá, tú eliges",
+                "image": "fluent/game-die",
+                "image_suggested": False,
+            },
+            {
+                "id": "juego-papa",
+                "text": "10 minutos de juego con papá, tú eliges",
+                "image": "fluent/joker",
+                "image_suggested": False,
+            },
+            {
+                "id": "bailar",
+                "text": "Elige una canción y bailamos todos",
+                "image": "fluent/woman-dancing",
+                "image_suggested": False,
+            },
+            {
+                "id": "cuento",
+                "text": "Eliges el cuento de esta noche",
+                "image": "fluent/open-book",
+                "image_suggested": False,
+            },
+            {
+                "id": "dinosaurio",
+                "text": "Paseo en dinosaurio por toda la casa",
+                "image": "fluent/sauropod",
+                "image_suggested": False,
+            },
+            {
+                "id": "sitio-en-la-mesa",
+                "text": "Eliges tu sitio en la mesa para cenar",
+                "image": "fluent/chair",
+                "image_suggested": False,
+            },
+            {"id": "petisui", "text": "Un petisuí extra", "image": "fluent/custard", "image_suggested": False},
         ],
         "shop": [
-            {"id": "elegir-postre", "text": "Elegir el postre", "image": "fluent/ice-cream", "image_suggested": False,
-             "price": 3},
+            {
+                "id": "elegir-postre",
+                "text": "Elegir el postre",
+                "image": "fluent/ice-cream",
+                "image_suggested": False,
+                "price": 3,
+            },
             {"id": "globo", "text": "Un globo", "image": "fluent/balloon", "image_suggested": False, "price": 5},
-            {"id": "peluche", "text": "Un peluche", "image": "fluent/teddy-bear", "image_suggested": False, "price": 20},
+            {
+                "id": "peluche",
+                "text": "Un peluche",
+                "image": "fluent/teddy-bear",
+                "image_suggested": False,
+                "price": 20,
+            },
         ],
     }

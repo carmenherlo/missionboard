@@ -14,11 +14,15 @@ from tests.test_settings import FixedClock
 
 MADRID = timezone(timedelta(hours=1))
 MONDAY = datetime(2026, 11, 2, 6, 45, tzinfo=MADRID)
-OLD = {"version": 14, "parents": {"code": "9999"},
-       "children": [{"id": "x", "name": "De antes", "preset": "fox", "color": "#e77300"}],
-       "missions": [{"id": "m", "child_id": "x", "name": "Vieja", "steps": []}],
-       "templates": [], "routines": [],
-       "songs": [{"id": "s", "name": "Canción", "file": "s.mp3", "seconds": 10}]}
+OLD = {
+    "version": 14,
+    "parents": {"code": "9999"},
+    "children": [{"id": "x", "name": "De antes", "preset": "fox", "color": "#e77300"}],
+    "missions": [{"id": "m", "child_id": "x", "name": "Vieja", "steps": []}],
+    "templates": [],
+    "routines": [],
+    "songs": [{"id": "s", "name": "Canción", "file": "s.mp3", "seconds": 10}],
+}
 
 
 def write_old(data_dir):
@@ -53,14 +57,24 @@ def test_an_old_file_is_kept_in_a_copy_and_everything_starts_again(data_dir, clo
         assert client.post("/api/parents/unlock", json={"code": "9999"}).status_code == 401
         assert client.post("/api/parents/unlock", json={"code": "1234"}).status_code == 204
         # The library stays, and the examples' songs join it
-        assert [s["name"] for s in client.get("/api/songs").json()] == ["Canción", "Buenos días, solecito", "Duerme, Estrellita"]
+        assert [s["name"] for s in client.get("/api/songs").json()] == [
+            "Canción",
+            "Buenos días, solecito",
+            "Duerme, Estrellita",
+        ]
     doc = yaml.safe_load(config_path(data_dir).read_text())
     assert doc["version"] == CURRENT_VERSION and doc["parents"]["code"] == "1234"
     assert "templates" not in doc
     copy = next((data_dir / "backups").glob("antes-de-misiones-*.zip"))
     names = zipfile.ZipFile(copy).namelist()
-    assert {"config.yaml", "missionboard.db", "photos/a.jpg", "sounds/s.mp3", "backgrounds/dia.png",
-            "config.yaml.v13.bak"} <= set(names)
+    assert {
+        "config.yaml",
+        "missionboard.db",
+        "photos/a.jpg",
+        "sounds/s.mp3",
+        "backgrounds/dia.png",
+        "config.yaml.v13.bak",
+    } <= set(names)
     assert not any(n.startswith("voices/") for n in names)
     assert yaml.safe_load(zipfile.ZipFile(copy).read("config.yaml"))["parents"]["code"] == "9999"
     assert not (data_dir / "photos").exists() and not (data_dir / "backgrounds").exists()
@@ -112,7 +126,14 @@ def test_the_examples(examples):
     assert missions["Despegue"]["days"] == ["mon", "tue", "wed", "thu", "fri"]
     assert missions["Alunizaje"]["days"] == ["mon", "tue", "wed", "thu", "fri", "sun"]
     assert [t["text"] for t in missions["Despegue"]["tasks"]] == [
-        "Despertarse", "Desayunar", "Recoger el desayuno", "Aseo", "Vestirse", "Acicalarse", "Prepararse para salir"]
+        "Despertarse",
+        "Desayunar",
+        "Recoger el desayuno",
+        "Aseo",
+        "Vestirse",
+        "Acicalarse",
+        "Prepararse para salir",
+    ]
     assert missions["Aterrizaje"]["schedule"] == {"start": "12:00", "end": "18:00"}
     assert missions["Aterrizaje"]["routine"] is None
     every = [item for mission in missions.values() for task in mission["tasks"] for item in (task, *task["steps"])]

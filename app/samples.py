@@ -14,7 +14,12 @@ STARTING_STARS = 5
 # family's song library (data/sounds/), where they can be changed or deleted like any other.
 SOUNDS_DIR = Path(__file__).parent / "samples_sounds"
 SONGS = [
-    {"id": "buenos-dias-solecito", "name": "Buenos días, solecito", "file": "buenos-dias-solecito.m4a", "seconds": 131.2},
+    {
+        "id": "buenos-dias-solecito",
+        "name": "Buenos días, solecito",
+        "file": "buenos-dias-solecito.m4a",
+        "seconds": 131.2,
+    },
     {"id": "duerme-estrellita", "name": "Duerme, Estrellita", "file": "duerme-estrellita.m4a", "seconds": 182.0},
 ]
 
@@ -35,48 +40,106 @@ def _tasks(mission_id: str, tasks: list[tuple]) -> list[dict]:
     for n, (text, image, *rest) in enumerate(tasks, start=1):
         task_id = f"{mission_id}-{n}"
         steps = rest[0] if rest else []
-        found.append({
-            "id": task_id, "text": text,
-            "image": image if "/" in image else f"fluent/{image}", "image_suggested": False,
-            "days": rest[1] if len(rest) > 1 else None,
-            "steps": [_step(task_id, i, *step) for i, step in enumerate(steps, start=1)],
-        })
+        found.append(
+            {
+                "id": task_id,
+                "text": text,
+                "image": image if "/" in image else f"fluent/{image}",
+                "image_suggested": False,
+                "days": rest[1] if len(rest) > 1 else None,
+                "steps": [_step(task_id, i, *step) for i, step in enumerate(steps, start=1)],
+            }
+        )
     return found
 
 
-def _mission(mission_id: str, name: str, image: str, color: str, days: list[str], start: str, end: str, tasks: list[tuple]) -> dict:
+def _mission(
+    mission_id: str, name: str, image: str, color: str, days: list[str], start: str, end: str, tasks: list[tuple]
+) -> dict:
     return {
-        "id": mission_id, "name": name, "image": f"fluent/{image}", "image_suggested": False, "color": color,
-        "days": days, "schedule": {"start": start, "end": end}, "tasks": _tasks(mission_id, tasks), "off": {},
+        "id": mission_id,
+        "name": name,
+        "image": f"fluent/{image}",
+        "image_suggested": False,
+        "color": color,
+        "days": days,
+        "schedule": {"start": start, "end": end},
+        "tasks": _tasks(mission_id, tasks),
+        "off": {},
     }
 
 
 MISSIONS = [
-    _mission("despegue", "Despegue", "rocket", "#2193d6", WEEKDAYS, "06:00", "09:00", [
-        ("Despertarse", "sleeping-face"),
-        ("Desayunar", "bowl-with-spoon"),
-        ("Recoger el desayuno", "fork-and-knife-with-plate"),
-        ("Aseo", "soap", [("Dientes", "toothbrush"), ("Cara", "droplet")]),
-        ("Vestirse", "womans-clothes", [("Ropa", "t-shirt"), ("Reloj", "watch")]),
-        ("Acicalarse", "woman-getting-haircut", [("Peinarse", "hair-pick"), ("Colonia", "lotion-bottle")]),
-        ("Prepararse para salir", "door", [("Gorro", "billed-cap"), ("Bufanda", "scarf"), ("Abrigo", "coat"),
-                                            ("Guantes", "gloves"), ("Mochila", "backpack")]),
-    ]),
-    _mission("aterrizaje", "Aterrizaje", "airplane-arrival", "#e77300", WEEKDAYS, "12:00", "18:00", [
-        ("Guardar abrigo y mochila", "basket", [("Abrigo", "coat"), ("Bufanda", "scarf"), ("Gorro", "billed-cap"),
-                                                 ("Guantes", "gloves"), ("Mochila", "backpack")]),
-        ("Quitarse los zapatos", "running-shoe"),
-        ("Lavarse las manos", "hand-with-fingers-splayed"),
-        ("Ponerse el pijama", "own/pajamas"),
-        ("Guardar la ropa", "basket"),
-    ]),
-    _mission("alunizaje", "Alunizaje", "crescent-moon", "#9471e7", NOT_SATURDAY, "18:00", "20:00", [
-        ("Recoger la cena", "fork-and-knife-with-plate"),
-        ("Recoger la habitación", "teddy-bear"),
-        ("Preparar la ropa de mañana", "t-shirt", [], NOT_SATURDAY_NOR_FRIDAY),
-        ("Preparar la mochila", "backpack", [], NOT_SATURDAY_NOR_FRIDAY),
-        ("Lavarse los dientes", "toothbrush"),
-    ]),
+    _mission(
+        "despegue",
+        "Despegue",
+        "rocket",
+        "#2193d6",
+        WEEKDAYS,
+        "06:00",
+        "09:00",
+        [
+            ("Despertarse", "sleeping-face"),
+            ("Desayunar", "bowl-with-spoon"),
+            ("Recoger el desayuno", "fork-and-knife-with-plate"),
+            ("Aseo", "soap", [("Dientes", "toothbrush"), ("Cara", "droplet")]),
+            ("Vestirse", "womans-clothes", [("Ropa", "t-shirt"), ("Reloj", "watch")]),
+            ("Acicalarse", "woman-getting-haircut", [("Peinarse", "hair-pick"), ("Colonia", "lotion-bottle")]),
+            (
+                "Prepararse para salir",
+                "door",
+                [
+                    ("Gorro", "billed-cap"),
+                    ("Bufanda", "scarf"),
+                    ("Abrigo", "coat"),
+                    ("Guantes", "gloves"),
+                    ("Mochila", "backpack"),
+                ],
+            ),
+        ],
+    ),
+    _mission(
+        "aterrizaje",
+        "Aterrizaje",
+        "airplane-arrival",
+        "#e77300",
+        WEEKDAYS,
+        "12:00",
+        "18:00",
+        [
+            (
+                "Guardar abrigo y mochila",
+                "basket",
+                [
+                    ("Abrigo", "coat"),
+                    ("Bufanda", "scarf"),
+                    ("Gorro", "billed-cap"),
+                    ("Guantes", "gloves"),
+                    ("Mochila", "backpack"),
+                ],
+            ),
+            ("Quitarse los zapatos", "running-shoe"),
+            ("Lavarse las manos", "hand-with-fingers-splayed"),
+            ("Ponerse el pijama", "own/pajamas"),
+            ("Guardar la ropa", "basket"),
+        ],
+    ),
+    _mission(
+        "alunizaje",
+        "Alunizaje",
+        "crescent-moon",
+        "#9471e7",
+        NOT_SATURDAY,
+        "18:00",
+        "20:00",
+        [
+            ("Recoger la cena", "fork-and-knife-with-plate"),
+            ("Recoger la habitación", "teddy-bear"),
+            ("Preparar la ropa de mañana", "t-shirt", [], NOT_SATURDAY_NOR_FRIDAY),
+            ("Preparar la mochila", "backpack", [], NOT_SATURDAY_NOR_FRIDAY),
+            ("Lavarse los dientes", "toothbrush"),
+        ],
+    ),
 ]
 
 
@@ -87,11 +150,30 @@ def _part(part_id: str, minutes: int, spoken: str | None = None, say: str | None
 # From their first part to their goal, with 5 minutes to check the missions before it.
 ROUTINES = [
     {
-        "id": "despegue-rutina", "mission_id": "despegue", "days": WEEKDAYS, "kids": ["bea", "alex"],
-        "wake": "06:35", "anchor": "end", "alarm": True, "remind_every": 5, "offsets": {}, "notices": [],
-        "music": [{"id": "despegue-cancion", "songs": ["buenos-dias-solecito"], "start": "despegue-1", "until": None,
-                   "after_voice": False, "loud": False}],
-        "greeting": "¡Buenos días!", "last_countdown": None, "early_goal": None, "warn_about": "end",
+        "id": "despegue-rutina",
+        "mission_id": "despegue",
+        "days": WEEKDAYS,
+        "kids": ["bea", "alex"],
+        "wake": "06:35",
+        "anchor": "end",
+        "alarm": True,
+        "remind_every": 5,
+        "offsets": {},
+        "notices": [],
+        "music": [
+            {
+                "id": "despegue-cancion",
+                "songs": ["buenos-dias-solecito"],
+                "start": "despegue-1",
+                "until": None,
+                "after_voice": False,
+                "loud": False,
+            }
+        ],
+        "greeting": "¡Buenos días!",
+        "last_countdown": None,
+        "early_goal": None,
+        "warn_about": "end",
         "goal": {"at": "07:35", "image": None, "say": "¡Es hora de salir!", "check_minutes": 5, "check_say": None},
         "parts": [
             _part("despegue-1", 10, say="Ahora toca despertarse.", at="06:40"),
@@ -104,12 +186,37 @@ ROUTINES = [
         ],
     },
     {
-        "id": "alunizaje-rutina", "mission_id": "alunizaje", "days": NOT_SATURDAY, "kids": [],
-        "wake": "18:50", "anchor": "end", "alarm": True, "remind_every": 5, "offsets": {}, "notices": [],
-        "music": [{"id": "alunizaje-cancion", "songs": ["duerme-estrellita"], "start": "goal", "until": None,
-                   "after_voice": True, "loud": False}],
-        "greeting": None, "last_countdown": None, "early_goal": None, "warn_about": "end",
-        "goal": {"at": "19:35", "image": None, "say": "¡A dormir! Buenas noches.", "check_minutes": 5, "check_say": None},
+        "id": "alunizaje-rutina",
+        "mission_id": "alunizaje",
+        "days": NOT_SATURDAY,
+        "kids": [],
+        "wake": "18:50",
+        "anchor": "end",
+        "alarm": True,
+        "remind_every": 5,
+        "offsets": {},
+        "notices": [],
+        "music": [
+            {
+                "id": "alunizaje-cancion",
+                "songs": ["duerme-estrellita"],
+                "start": "goal",
+                "until": None,
+                "after_voice": True,
+                "loud": False,
+            }
+        ],
+        "greeting": None,
+        "last_countdown": None,
+        "early_goal": None,
+        "warn_about": "end",
+        "goal": {
+            "at": "19:35",
+            "image": None,
+            "say": "¡A dormir! Buenas noches.",
+            "check_minutes": 5,
+            "check_say": None,
+        },
         "parts": [
             _part("alunizaje-1", 5, say="Ahora toca recoger la cena.", at="19:00"),
             _part("alunizaje-2", 10, say="Ahora toca recoger la habitación."),

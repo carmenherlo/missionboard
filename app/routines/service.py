@@ -90,8 +90,15 @@ class RoutinesService:
             if minute < start + stored.length:
                 kids = json.loads(run["kids"] or "[]")
                 people = [p for p in self.people(stored) if p.child.id in kids]
-                return Current(stored.on(weekday).started_at(int(start)), day, minute, run, people,
-                               settings.routine_warn_minutes, started=start)
+                return Current(
+                    stored.on(weekday).started_at(int(start)),
+                    day,
+                    minute,
+                    run,
+                    people,
+                    settings.routine_warn_minutes,
+                    started=start,
+                )
         for stored in self._live():
             if not stored.goes_on(weekday) or stored.manual:
                 continue
@@ -113,8 +120,15 @@ class RoutinesService:
         started = None
         if routine.manual:
             started, routine = minute, routine.started_at(int(minute))
-        return Current(routine, app_day(now, settings.day_starts_at), minute, run, self.people(routine, trial=True),
-                       settings.routine_warn_minutes, started=started)
+        return Current(
+            routine,
+            app_day(now, settings.day_starts_at),
+            minute,
+            run,
+            self.people(routine, trial=True),
+            settings.routine_warn_minutes,
+            started=started,
+        )
 
     def notices(self) -> list[dict]:
         """Today's notices before the routines ring: {"routine", "at" (minute of the day), "say"}."""
@@ -172,8 +186,16 @@ class RoutinesService:
         self._runs.set(day, routine_id, started_at=now, kids=json.dumps(kids))
         self._events.routine_did("routine_started", routine.name)
 
-    def note(self, routine_id: str, kind: str, *, part: int | None = None, seconds: int | None = None,
-             early: bool = False, phase: str | None = None) -> None:
+    def note(
+        self,
+        routine_id: str,
+        kind: str,
+        *,
+        part: int | None = None,
+        seconds: int | None = None,
+        early: bool = False,
+        phase: str | None = None,
+    ) -> None:
         """What the screen tells: it rang, someone stopped it, a part or the goal came, it was
         closed, or (started by hand) it ended: its time is up then, so it is no longer on."""
         if kind == "ended":
@@ -209,7 +231,6 @@ class RoutinesService:
             self._runs.set(day, routine.id, closed_phase=None)
             self._events.routine_did("routine_reopened", routine.name)
 
-
     def finish(self, routine_id: str) -> None:
         """Done for today: it does not come back until tomorrow (parents only)."""
         current = self._current(routine_id)
@@ -239,8 +260,18 @@ class RoutinesService:
             else:
                 continue
             if marks:
-                people.append(Person(child, {
-                    "id": mission.id, "name": mission.name, "done": done, "total": len(marks), "completed": completed,
-                    "marks": marks, "colors": avatars.tones(mission.color),
-                }))
+                people.append(
+                    Person(
+                        child,
+                        {
+                            "id": mission.id,
+                            "name": mission.name,
+                            "done": done,
+                            "total": len(marks),
+                            "completed": completed,
+                            "marks": marks,
+                            "colors": avatars.tones(mission.color),
+                        },
+                    )
+                )
         return people

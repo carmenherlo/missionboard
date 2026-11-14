@@ -25,9 +25,7 @@ def test_home_page(client):
 
 STATIC_DIR = Path(__file__).parent.parent / "app" / "static"
 ASSETS = sorted(
-    "/static/" + p.relative_to(STATIC_DIR).as_posix()
-    for p in STATIC_DIR.rglob("*")
-    if p.suffix in {".css", ".js"}
+    "/static/" + p.relative_to(STATIC_DIR).as_posix() for p in STATIC_DIR.rglob("*") if p.suffix in {".css", ".js"}
 )
 
 
@@ -78,8 +76,13 @@ def test_the_front_uses_relative_paths():
     # Under Home Assistant's ingress the page lives under a sub-path: "/api/..." or
     # "/static/..." would leave it, "api/..." and "static/..." stay inside.
     import re
+
     pattern = re.compile(r"""["'`(]/(api|static)/""")
-    found = [f"{p.relative_to(STATIC_DIR)}:{n}" for p in STATIC_DIR.rglob("*")
-             if p.suffix in (".js", ".html", ".css") and "libraries" not in p.parts
-             for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1) if pattern.search(line)]
+    found = [
+        f"{p.relative_to(STATIC_DIR)}:{n}"
+        for p in STATIC_DIR.rglob("*")
+        if p.suffix in (".js", ".html", ".css") and "libraries" not in p.parts
+        for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1)
+        if pattern.search(line)
+    ]
     assert found == []

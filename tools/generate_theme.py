@@ -46,11 +46,18 @@ def scheme(seed: Hct, dark: bool, chroma: float | None) -> DynamicScheme:
     if chroma is None:
         return base
     return DynamicScheme(
-        seed, Variant.TONAL_SPOT, 0.0, dark, spec_version="2021",
+        seed,
+        Variant.TONAL_SPOT,
+        0.0,
+        dark,
+        spec_version="2021",
         primary_palette=TonalPalette.from_hue_and_chroma(seed.hue, chroma),
-        secondary_palette=base.secondary_palette, tertiary_palette=base.tertiary_palette,
-        neutral_palette=base.neutral_palette, neutral_variant_palette=base.neutral_variant_palette,
-        error_palette=base.error_palette)
+        secondary_palette=base.secondary_palette,
+        tertiary_palette=base.tertiary_palette,
+        neutral_palette=base.neutral_palette,
+        neutral_variant_palette=base.neutral_variant_palette,
+        error_palette=base.error_palette,
+    )
 
 
 def main() -> None:
@@ -65,8 +72,10 @@ def main() -> None:
     seed = Hct.from_int(0xFF000000 | int(seed_hex[1:], 16))
     colours = MaterialDynamicColors()
     schemes = {
-        label: {role: f"#{getattr(colours, role).get_argb(scheme(seed, dark, args.chroma)) & 0xFFFFFF:06X}"
-                for role in ROLES}
+        label: {
+            role: f"#{getattr(colours, role).get_argb(scheme(seed, dark, args.chroma)) & 0xFFFFFF:06X}"
+            for role in ROLES
+        }
         for label, dark in (("light", False), ("dark", True))
     }
     variant = f"primary chroma {args.chroma:g}" if args.chroma is not None else "as is"

@@ -35,8 +35,7 @@ class StarsRepository:
         (reason "taken", stars negative)."""
         with db.connect(self._data_dir) as conn:
             conn.execute(
-                "INSERT INTO star_movements (child_id, child_name, amount, reason, day, at)"
-                " VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO star_movements (child_id, child_name, amount, reason, day, at) VALUES (?, ?, ?, ?, ?, ?)",
                 (child.id, child.name, stars, reason, day.isoformat(), at.isoformat(timespec="seconds")),
             )
 
@@ -45,7 +44,8 @@ class StarsRepository:
         with db.connect(self._data_dir) as conn:
             rows = conn.execute(
                 "SELECT amount, reason, mission_name, day, at FROM star_movements WHERE child_id = ?"
-                " ORDER BY at DESC, id DESC LIMIT ?", (child_id, limit),
+                " ORDER BY at DESC, id DESC LIMIT ?",
+                (child_id, limit),
             ).fetchall()
         return [dict(row) for row in rows]
 

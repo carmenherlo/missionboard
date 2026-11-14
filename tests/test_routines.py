@@ -30,7 +30,9 @@ def make_morning(client, kids=None):
     url = f"/api/routines/{routine['id']}"
     for part, (_, minutes) in zip(routine["parts"], PARTS):
         client.patch(f"{url}/parts/{part['id']}", json={"minutes": minutes}, headers=PARENT)
-    client.patch(url, json={"goal": {"at": "07:30", "say": "¡Es hora de irse al cole!", "check_minutes": 5}}, headers=PARENT)
+    client.patch(
+        url, json={"goal": {"at": "07:30", "say": "¡Es hora de irse al cole!", "check_minutes": 5}}, headers=PARENT
+    )
     if kids:
         client.put(f"{url}/kids", json={"kids": kids}, headers=PARENT)
     return client.get(url).json()
@@ -88,7 +90,14 @@ def test_the_routine_follows_the_mission(client, morning):
     client.put(f"{url}/tasks/order", json={"ids": order}, headers=PARENT)
     routine = current(client)
     assert [p["text"] for p in routine["parts"]] == [
-        "El desayuno listo", "Aseo", "Desayuno", "Vestirse", "Mochila", "Salir", "Abrigo"]
+        "El desayuno listo",
+        "Aseo",
+        "Desayuno",
+        "Vestirse",
+        "Mochila",
+        "Salir",
+        "Abrigo",
+    ]
     assert routine["parts"][1]["start"] == "06:45" and routine["parts"][1]["end"] == "06:50"  # its minutes go with it
     assert routine["goal"]["at"] == "07:35"  # it starts at a time: the end follows
     # A task deleted: out of the routine; the first one's time stays
@@ -111,7 +120,10 @@ def test_a_routine_needs_a_task_and_is_one_per_mission(client, morning):
     body = {"mission_id": morning["mission_id"], "wake": "09:00"}
     assert client.post("/api/routines", json=body, headers=PARENT).status_code == 409
     empty = create_mission(client, name="Vacía").json()
-    assert client.post("/api/routines", json={"mission_id": empty["id"], "wake": "09:00"}, headers=PARENT).status_code == 422
+    assert (
+        client.post("/api/routines", json={"mission_id": empty["id"], "wake": "09:00"}, headers=PARENT).status_code
+        == 422
+    )
     assert client.post("/api/routines", json={"mission_id": "nope", "wake": "09:00"}, headers=PARENT).status_code == 404
 
 
@@ -127,7 +139,10 @@ def test_a_task_that_would_break_its_routine_is_refused(client, clock):
 def test_a_task_that_would_make_two_routines_ring_together_is_refused(client, morning):
     other = create_mission(client, name="Otra").json()
     add_task(client, other["id"], "Una")
-    assert client.post("/api/routines", json={"mission_id": other["id"], "wake": "07:40"}, headers=PARENT).status_code == 201
+    assert (
+        client.post("/api/routines", json={"mission_id": other["id"], "wake": "07:40"}, headers=PARENT).status_code
+        == 201
+    )
     assert add_task(client, morning["mission_id"], "Más").status_code == 201  # until 7:35
     assert add_task(client, morning["mission_id"], "Más").status_code == 201  # until 7:40, just in time
     assert add_task(client, morning["mission_id"], "Más").status_code == 409  # until 7:45
@@ -140,13 +155,16 @@ def test_a_one_minute_warning_in_every_part_by_default(client, morning):
     assert warnings == [[1], [5, 1], [1], [1], [1], [1]]
 
 
-@pytest.mark.parametrize("moment, on", [
-    (MONDAY.replace(hour=6, minute=29, second=59), False),
-    (MONDAY.replace(hour=6, minute=30, second=0), True),
-    (MONDAY.replace(hour=7, minute=29, second=59), True),
-    (MONDAY.replace(hour=7, minute=30, second=0), False),
-    (MONDAY.replace(day=7), False),  # Saturday
-])
+@pytest.mark.parametrize(
+    "moment, on",
+    [
+        (MONDAY.replace(hour=6, minute=29, second=59), False),
+        (MONDAY.replace(hour=6, minute=30, second=0), True),
+        (MONDAY.replace(hour=7, minute=29, second=59), True),
+        (MONDAY.replace(hour=7, minute=30, second=0), False),
+        (MONDAY.replace(day=7), False),  # Saturday
+    ],
+)
 def test_it_is_on_from_its_wake_up_until_its_goal_on_its_days(client, morning, clock, moment, on):
     clock.moment = moment
     assert (current(client) is not None) == on
@@ -222,12 +240,19 @@ def test_a_task_not_that_day_and_the_routine_rearranges_itself(client, clock):
     patch(client, mission["id"], days=["mon", "tue", "wed", "thu", "fri", "sun"])
     for text in ("Cena", "Ropa", "Dientes"):
         tasks = add_task(client, mission["id"], text).json()["tasks"]
-    client.patch(f"/api/missions/{mission['id']}/tasks/{tasks[1]['id']}", json={"days": ["mon", "tue", "wed", "thu", "sun"]},
-                 headers=PARENT)
+    client.patch(
+        f"/api/missions/{mission['id']}/tasks/{tasks[1]['id']}",
+        json={"days": ["mon", "tue", "wed", "thu", "sun"]},
+        headers=PARENT,
+    )
     client.post("/api/routines", json={"mission_id": mission["id"], "ends": "19:30"}, headers=PARENT)
     clock.moment = datetime(2026, 11, 2, 19, 20, tzinfo=MADRID)  # Monday: 19:15 to 19:30
     on = current(client)
-    assert [(p["text"], p["start"]) for p in on["parts"]] == [("Cena", "19:15"), ("Ropa", "19:20"), ("Dientes", "19:25")]
+    assert [(p["text"], p["start"]) for p in on["parts"]] == [
+        ("Cena", "19:15"),
+        ("Ropa", "19:20"),
+        ("Dientes", "19:25"),
+    ]
     clock.moment = datetime(2026, 11, 6, 19, 25, tzinfo=MADRID)  # Friday: without Ropa, it still ends at 19:30
     on = current(client)
     assert [(p["text"], p["start"]) for p in on["parts"]] == [("Cena", "19:20"), ("Dientes", "19:25")]
@@ -254,7 +279,9 @@ def test_a_trial_on_any_day_with_what_they_have(client, clock, morning):
     trial = client.get(f"/api/routines/{morning['id']}/trial", headers=PARENT).json()
     assert trial["trial"] is True
     person = trial["people"][0]
-    assert person["child"]["id"] == bea["id"] and person["mission"]["total"] == 6 and len(person["mission"]["marks"]) == 6
+    assert (
+        person["child"]["id"] == bea["id"] and person["mission"]["total"] == 6 and len(person["mission"]["marks"]) == 6
+    )
 
 
 # ---------- what the screen tells ----------
@@ -310,12 +337,27 @@ def test_notes_only_for_the_routine_going_on(client, morning, clock):
 # ---------- the routines in config.yaml ----------
 
 
-@pytest.mark.parametrize("routine", [
-    {"id": "r", "mission_id": "m", "wake": "07:00", "anchor": "end", "goal": {"at": "00:01"},
-     "parts": [{"id": "t", "at": "07:00", "minutes": 10}]},  # it would start the day before
-    {"id": "r", "mission_id": "m", "wake": "07:00", "goal": {"at": "07:05"},
-     "offsets": {"mon": -500}, "parts": [{"id": "t", "at": "07:00", "minutes": 10}]},  # moved out of its day
-])
+@pytest.mark.parametrize(
+    "routine",
+    [
+        {
+            "id": "r",
+            "mission_id": "m",
+            "wake": "07:00",
+            "anchor": "end",
+            "goal": {"at": "00:01"},
+            "parts": [{"id": "t", "at": "07:00", "minutes": 10}],
+        },  # it would start the day before
+        {
+            "id": "r",
+            "mission_id": "m",
+            "wake": "07:00",
+            "goal": {"at": "07:05"},
+            "offsets": {"mon": -500},
+            "parts": [{"id": "t", "at": "07:00", "minutes": 10}],
+        },  # moved out of its day
+    ],
+)
 def test_a_routine_whose_times_do_not_add_up_stops_the_app(data_dir, clock, routine):
     data_dir.mkdir(parents=True)
     mission = {"id": "m", "name": "M", "tasks": [{"id": "t", "text": "T"}]}
@@ -329,7 +371,12 @@ def test_a_routine_whose_times_do_not_add_up_stops_the_app(data_dir, clock, rout
 def test_the_next_routine_to_ring(client, clock, morning):
     clock.moment = MONDAY.replace(hour=5, minute=0)
     assert client.get("/api/routines/next").json() | {"image_url": None} == {
-        "id": morning["id"], "name": "Despegue", "at": "06:30", "in_days": 0, "image_url": None}
+        "id": morning["id"],
+        "name": "Despegue",
+        "at": "06:30",
+        "in_days": 0,
+        "image_url": None,
+    }
     clock.moment = MONDAY.replace(hour=9, minute=0)  # rung already today: tomorrow's
     assert client.get("/api/routines/next").json()["in_days"] == 1
     clock.moment = MONDAY.replace(day=6, hour=9)  # Friday after it: Monday's (no weekends)

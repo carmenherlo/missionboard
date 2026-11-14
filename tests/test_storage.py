@@ -27,7 +27,9 @@ def test_a_migration_is_applied_and_the_old_file_kept(tmp_path, monkeypatch):
     version = config_migrations.CURRENT_VERSION
     write_yaml(tmp_path, CURRENT)
     monkeypatch.setattr(config_migrations, "CURRENT_VERSION", version + 1)
-    monkeypatch.setitem(config_migrations._MIGRATIONS, version, lambda doc: {**doc, "version": version + 1, "new": True})
+    monkeypatch.setitem(
+        config_migrations._MIGRATIONS, version, lambda doc: {**doc, "version": version + 1, "new": True}
+    )
     ConfigStore(tmp_path).migrate()
     doc = read_yaml(tmp_path)
     assert doc["version"] == version + 1 and doc["new"] is True and doc["parents"] == CURRENT["parents"]

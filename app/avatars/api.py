@@ -49,18 +49,34 @@ def picture_url(avatar: FamilyAvatar) -> str:
 
 
 def present(avatar: FamilyAvatar, avatars: AvatarsService) -> dict:
-    return {**asdict(avatar), "label": avatar.name, "family": True, "image_url": picture_url(avatar),
-            "worn_by": [c.name for c in avatars.worn_by(avatar.id)]}
+    return {
+        **asdict(avatar),
+        "label": avatar.name,
+        "family": True,
+        "image_url": picture_url(avatar),
+        "worn_by": [c.name for c in avatars.worn_by(avatar.id)],
+    }
 
 
 @router.get("")
-def list_avatars(avatars: AvatarsService = Depends(get_avatars_service),
-                 libraries: ImageLibraries = Depends(get_image_libraries)):
+def list_avatars(
+    avatars: AvatarsService = Depends(get_avatars_service), libraries: ImageLibraries = Depends(get_image_libraries)
+):
     """The family's, the app's animals (with who wears each) and the palette."""
-    presets = [{**preset, "image_url": libraries.url(preset["image"]),
-                "worn_by": [c.name for c in avatars.worn_by(preset["id"])]} for preset in app_avatars.PRESETS]
-    return {"family": [present(a, avatars) for a in avatars.list()], "presets": presets,
-            "palette": app_avatars.PALETTE, "mission_colors": app_avatars.MISSION_COLORS}
+    presets = [
+        {
+            **preset,
+            "image_url": libraries.url(preset["image"]),
+            "worn_by": [c.name for c in avatars.worn_by(preset["id"])],
+        }
+        for preset in app_avatars.PRESETS
+    ]
+    return {
+        "family": [present(a, avatars) for a in avatars.list()],
+        "presets": presets,
+        "palette": app_avatars.PALETTE,
+        "mission_colors": app_avatars.MISSION_COLORS,
+    }
 
 
 @router.post("", status_code=201, dependencies=parent_only)

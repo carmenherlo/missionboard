@@ -26,7 +26,7 @@ def client(data_dir, clock):
 
 @pytest.fixture
 def landing(client):
-    """"Aterrizaje": started by hand, two parts of 3 and 4 minutes."""
+    """ "Aterrizaje": started by hand, two parts of 3 and 4 minutes."""
     mission = create_mission(client, name="Aterrizaje").json()
     add_task(client, mission["id"], "Guardar las cosas")
     tasks = add_task(client, mission["id"], "Lavarse las manos").json()["tasks"]
@@ -44,8 +44,10 @@ def start(client, routine, kids):
 
 def test_a_routine_by_hand_has_no_times_of_its_own(client, landing):
     assert landing["manual"] is True and landing["wake"] is None and landing["goal"] is None
-    assert [(p["at"], p["start"], p["end"]) for p in landing["parts"]] == [(None, "00:00", "00:03"),
-                                                                          (None, "00:03", "00:07")]
+    assert [(p["at"], p["start"], p["end"]) for p in landing["parts"]] == [
+        (None, "00:00", "00:03"),
+        (None, "00:03", "00:07"),
+    ]
     assert landing["minutes"] == 7
     url = f"/api/routines/{landing['id']}"
     assert client.patch(url, json={"goal": {"at": "18:00"}}, headers=PARENT).status_code == 422

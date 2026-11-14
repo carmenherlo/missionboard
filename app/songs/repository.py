@@ -26,7 +26,9 @@ class SongsRepository:
         return self._store.edit()
 
     def list(self) -> list[Song]:
-        return [Song(**{k: e[k] for k in ("id", "name", "file", "seconds")}) for e in self._store.load().get("songs") or []]
+        return [
+            Song(**{k: e[k] for k in ("id", "name", "file", "seconds")}) for e in self._store.load().get("songs") or []
+        ]
 
     def get(self, song_id: str) -> Song | None:
         return next((s for s in self.list() if s.id == song_id), None)

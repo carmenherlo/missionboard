@@ -66,7 +66,13 @@ def test_tanks_are_the_days_that_count_with_missions():
     done = {(MON - timedelta(days=1)).isoformat(): {"a"}, MON.isoformat(): {"a"}}
     w = build_week(wed, week_end(wed, "fri"), sw, "all", had, done, free={(MON + timedelta(days=1)).isoformat()})
     assert [(t.letter, t.state) for t in w.tanks] == [
-        ("D", "full"), ("L", "full"), ("M", "free"), ("X", "now"), ("J", "later"), ("V", "later")]
+        ("D", "full"),
+        ("L", "full"),
+        ("M", "free"),
+        ("X", "now"),
+        ("J", "later"),
+        ("V", "later"),
+    ]
     assert (w.full, w.counted, w.closed) == (2, 5, False)
 
 
@@ -94,8 +100,14 @@ def test_a_full_week_wins_the_prize_for_the_parents_to_give(client, bea, clock):
     assert [t["state"] for t in view["tanks"]] == ["full"] * 4 + ["later"] and view["result"] is None
     do_day(client, bea, item, clock, 4)  # Friday, the prize day
     view = week(client, bea)
-    assert view["result"] == {"end": "2026-11-06", "tier": "full", "prize_text": "Ir al parque", "full": 5, "counted": 5,
-                              "prize_image_url": None}
+    assert view["result"] == {
+        "end": "2026-11-06",
+        "tier": "full",
+        "prize_text": "Ir al parque",
+        "full": 5,
+        "counted": 5,
+        "prize_image_url": None,
+    }
     assert descriptions(client, limit=5)[0] == "Bea llenó todos los depósitos de la semana · 5 de 5"
 
     [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]

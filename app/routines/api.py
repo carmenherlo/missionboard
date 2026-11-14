@@ -131,7 +131,13 @@ def get_routines_service(
     events: EventLog = Depends(get_event_log),
 ) -> RoutinesService:
     return RoutinesService(
-        RoutinesRepository(store), runs, ChildrenRepository(store), days, SettingsRepository(store), clock, events,
+        RoutinesRepository(store),
+        runs,
+        ChildrenRepository(store),
+        days,
+        SettingsRepository(store),
+        clock,
+        events,
         MissionsRepository(store),
     )
 
@@ -170,9 +176,13 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
             }
             for part, start, end in routine.timeline()
         ],
-        "goal": routine.goal and {
-            "image_url": libraries.url(routine.goal.image), "at": routine.goal.at, "say": routine.goal.say,
-            "check_minutes": routine.goal.check_minutes, "check_say": routine.goal.check_say,
+        "goal": routine.goal
+        and {
+            "image_url": libraries.url(routine.goal.image),
+            "at": routine.goal.at,
+            "say": routine.goal.say,
+            "check_minutes": routine.goal.check_minutes,
+            "check_say": routine.goal.check_say,
         },
         "greeting": routine.greeting,
         "last_countdown": routine.last_countdown,
@@ -197,10 +207,19 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
     for music in routine.music:
         found = [song for song in map(songs.get, music.songs) if song is not None]
         if found:  # one after the other
-            played.append({"id": music.id, "songs": [
-                {"name": song.name, "url": f"api/songs/{song.id}/file", "seconds": song.seconds} for song in found],
-                "start": index.get(music.start, music.start), "until": index.get(music.until, music.until),
-                "after_voice": music.after_voice, "loud": music.loud})
+            played.append(
+                {
+                    "id": music.id,
+                    "songs": [
+                        {"name": song.name, "url": f"api/songs/{song.id}/file", "seconds": song.seconds}
+                        for song in found
+                    ],
+                    "start": index.get(music.start, music.start),
+                    "until": index.get(music.until, music.until),
+                    "after_voice": music.after_voice,
+                    "loud": music.loud,
+                }
+            )
     return played
 
 
@@ -209,30 +228,44 @@ def notices(routines: RoutinesService = Depends(get_routines_service), clock=Dep
     """Today's notices before the routines ring, and the household's time: the screen
     says each one at its minute."""
     now = clock.now()
-    return {"now": now.hour * 60 + now.minute + now.second / 60, "day": now.date().isoformat(),
-            "notices": routines.notices()}
+    return {
+        "now": now.hour * 60 + now.minute + now.second / 60,
+        "day": now.date().isoformat(),
+        "notices": routines.notices(),
+    }
 
 
 @router.get("/next")
-def next_ring(routines: RoutinesService = Depends(get_routines_service), clock=Depends(get_clock),
-              libraries: ImageLibraries = Depends(get_image_libraries)):
+def next_ring(
+    routines: RoutinesService = Depends(get_routines_service),
+    clock=Depends(get_clock),
+    libraries: ImageLibraries = Depends(get_image_libraries),
+):
     """The next routine to ring (the clock screen): its name, icon, time, and in how
     many days (0: today). Null when none rings in the next week."""
     found = routines.next_ring()
     if found is None:
         return None
     routine, ring = found
-    return {"id": routine.id, "name": routine.name, "at": f"{ring:%H:%M}",
-            "in_days": (ring.date() - clock.now().date()).days,
-            "image_url": libraries.url(routine.image)}
+    return {
+        "id": routine.id,
+        "name": routine.name,
+        "at": f"{ring:%H:%M}",
+        "in_days": (ring.date() - clock.now().date()).days,
+        "image_url": libraries.url(routine.image),
+    }
 
 
 @router.get("/by-hand")
 def by_hand(routines: RoutinesService = Depends(get_routines_service)):
     """The routines that can be started by hand today (⏰ on the home screen), with their children."""
     return [
-        {"id": r.id, "name": r.name, "minutes": r.length,
-         "kids": [{**public_child(c), "colors": avatars.tones(c.color)} for c in kids]}
+        {
+            "id": r.id,
+            "name": r.name,
+            "minutes": r.length,
+            "kids": [{**public_child(c), "colors": avatars.tones(c.color)} for c in kids],
+        }
         for r, kids in routines.by_hand()
     ]
 
@@ -292,9 +325,13 @@ class Editing:
             "manual": routine.manual,
             "minutes": routine.length,
             "parts": [
-                {**part.model_dump(mode="json"), "image_url": self._libraries.url(part.image),
-                 "start": hhmm(start), "end": hhmm(end),
-                 "steps": [{"text": s.text, "image_url": self._libraries.url(s.image)} for s in part.steps]}
+                {
+                    **part.model_dump(mode="json"),
+                    "image_url": self._libraries.url(part.image),
+                    "start": hhmm(start),
+                    "end": hhmm(end),
+                    "steps": [{"text": s.text, "image_url": self._libraries.url(s.image)} for s in part.steps],
+                }
                 for part, start, end in timeline
             ],
             "image_url": self._libraries.url(routine.image),
@@ -307,8 +344,9 @@ def list_routines(editor: RoutinesEditor = Depends(get_routines_editor), present
 
 
 @router.post("", status_code=201, dependencies=parent_only)
-def create_routine(body: RoutineCreate, editor: RoutinesEditor = Depends(get_routines_editor),
-                   present: Editing = Depends()):
+def create_routine(
+    body: RoutineCreate, editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()
+):
     return present(editor.create(body.mission_id, body.wake, starts=body.starts, ends=body.ends))
 
 
@@ -318,8 +356,12 @@ def get_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routines_e
 
 
 @router.patch("/{routine_id}", dependencies=parent_only)
-def update_routine(routine_id: str, body: RoutinePatch, editor: RoutinesEditor = Depends(get_routines_editor),
-                   present: Editing = Depends()):
+def update_routine(
+    routine_id: str,
+    body: RoutinePatch,
+    editor: RoutinesEditor = Depends(get_routines_editor),
+    present: Editing = Depends(),
+):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
     for required in ("days", "remind_every", "offsets", "notices", "warn_about", *TIMING):  # wake: null means "by hand"
         if changes.get(required, "") is None:
@@ -337,14 +379,20 @@ def delete_routine(routine_id: str, editor: RoutinesEditor = Depends(get_routine
 
 
 @router.put("/{routine_id}/kids", dependencies=parent_only)
-def set_kids(routine_id: str, body: KidsIn, editor: RoutinesEditor = Depends(get_routines_editor),
-             present: Editing = Depends()):
+def set_kids(
+    routine_id: str, body: KidsIn, editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()
+):
     return present(editor.set_kids(routine_id, body.kids))
 
 
 @router.patch("/{routine_id}/parts/{part_id}", dependencies=parent_only)
-def update_part(routine_id: str, part_id: str, body: PartPatch,
-                editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()):
+def update_part(
+    routine_id: str,
+    part_id: str,
+    body: PartPatch,
+    editor: RoutinesEditor = Depends(get_routines_editor),
+    present: Editing = Depends(),
+):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
     if changes.get("minutes", "") is None:
         changes.pop("minutes")
@@ -366,14 +414,25 @@ class MusicPatch(BaseModel):
 
 
 @router.post("/{routine_id}/music", dependencies=parent_only)
-def add_music(routine_id: str, body: MusicCreate, editor: RoutinesEditor = Depends(get_routines_editor),
-              store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
+def add_music(
+    routine_id: str,
+    body: MusicCreate,
+    editor: RoutinesEditor = Depends(get_routines_editor),
+    store: ConfigStore = Depends(get_config_store),
+    present: Editing = Depends(),
+):
     return present(editor.add_music(routine_id, body.song, body.start, SongsRepository(store)))
 
 
 @router.patch("/{routine_id}/music/{music_id}", dependencies=parent_only)
-def update_music(routine_id: str, music_id: str, body: MusicPatch, editor: RoutinesEditor = Depends(get_routines_editor),
-                 store: ConfigStore = Depends(get_config_store), present: Editing = Depends()):
+def update_music(
+    routine_id: str,
+    music_id: str,
+    body: MusicPatch,
+    editor: RoutinesEditor = Depends(get_routines_editor),
+    store: ConfigStore = Depends(get_config_store),
+    present: Editing = Depends(),
+):
     fields = {name: getattr(body, name) for name in body.model_fields_set}
     for name in ("after_voice", "loud"):  # null: as it was
         if fields.get(name, "") is None:
@@ -384,8 +443,9 @@ def update_music(routine_id: str, music_id: str, body: MusicPatch, editor: Routi
 
 
 @router.delete("/{routine_id}/music/{music_id}", dependencies=parent_only)
-def delete_music(routine_id: str, music_id: str, editor: RoutinesEditor = Depends(get_routines_editor),
-                 present: Editing = Depends()):
+def delete_music(
+    routine_id: str, music_id: str, editor: RoutinesEditor = Depends(get_routines_editor), present: Editing = Depends()
+):
     return present(editor.delete_music(routine_id, music_id))
 
 
@@ -399,7 +459,7 @@ def trial(
     store: ConfigStore = Depends(get_config_store),
     clock=Depends(get_clock),
 ):
-    """"Probar ahora": the routine with its own times, as if it were that moment of the
+    """ "Probar ahora": the routine with its own times, as if it were that moment of the
     day (on this device only; the screen's clock goes on from there)."""
     now = clock.now()
     routine, pretend = editor.trial(routine_id, from_part)

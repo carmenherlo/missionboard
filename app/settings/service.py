@@ -45,8 +45,11 @@ class SettingsService:
             new = type(old).model_validate({**old.model_dump(), **changes})
         except ValidationError as err:
             raise InvalidError(f"Invalid {section}: {err.errors()[0]['msg']}") from err
-        changed = {name: getattr(new, name) for name in type(new).model_fields  # in the model's order
-                   if name in changes and getattr(new, name) != getattr(old, name)}
+        changed = {
+            name: getattr(new, name)
+            for name in type(new).model_fields  # in the model's order
+            if name in changes and getattr(new, name) != getattr(old, name)
+        }
         if changed:
             self._settings.save(section, new)
             self._events.config_changed(section, "changed", changes=changed)

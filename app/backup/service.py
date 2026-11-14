@@ -53,10 +53,18 @@ def build(data_dir: Path, now: datetime) -> bytes:
             for path in sorted((data_dir / folder).glob("*")):
                 if path.is_file() and not path.name.startswith("."):
                     zf.write(path, f"{folder}/{path.name}")
-        zf.writestr(MANIFEST, json.dumps({
-            "app": "missionboard", "created": now.isoformat(timespec="seconds"),
-            "config_version": config["version"], "db_version": len(db.MIGRATIONS),
-        }, indent=2))
+        zf.writestr(
+            MANIFEST,
+            json.dumps(
+                {
+                    "app": "missionboard",
+                    "created": now.isoformat(timespec="seconds"),
+                    "config_version": config["version"],
+                    "db_version": len(db.MIGRATIONS),
+                },
+                indent=2,
+            ),
+        )
     return buffer.getvalue()
 
 
@@ -108,8 +116,9 @@ def _unpack(data: bytes, into: Path) -> None:
             (into / folder).mkdir()
         for name in names - {MANIFEST}:
             path = PurePosixPath(name)
-            allowed = (name in (CONFIG_FILENAME, db.DB_FILENAME)
-                       or (len(path.parts) == 2 and path.parts[0] in FOLDERS and not path.name.startswith(".")))
+            allowed = name in (CONFIG_FILENAME, db.DB_FILENAME) or (
+                len(path.parts) == 2 and path.parts[0] in FOLDERS and not path.name.startswith(".")
+            )
             if not allowed:
                 continue  # not part of a copy: left out
             (into / name).write_bytes(zf.read(name))

@@ -361,28 +361,37 @@ def resolved(stored: dict, mission: dict, children: list[str]) -> dict:
     parts = []
     for task in mission["tasks"]:
         part = own.get(task["id"], {})
-        parts.append({
-            **{key: part.get(key) for key in STORED_PART},
-            "id": task["id"],
-            "at": None,
-            "minutes": part.get("minutes") or NEW_PART_MINUTES,
-            "text": task["text"],
-            "name": part.get("spoken") or task["text"][:1].lower() + task["text"][1:],
-            "image": task.get("image"),
-            "image_suggested": bool(task.get("image_suggested")),
-            "days": [d for d in mission_days if not task.get("days") or d in task["days"]],
-            "steps": [
-                {"text": step["text"], "image": step.get("image")}
-                for step in task.get("steps") or []
-                if not kids or any(step["id"] not in off.get(kid, ()) for kid in kids)
-            ],
-        })
+        parts.append(
+            {
+                **{key: part.get(key) for key in STORED_PART},
+                "id": task["id"],
+                "at": None,
+                "minutes": part.get("minutes") or NEW_PART_MINUTES,
+                "text": task["text"],
+                "name": part.get("spoken") or task["text"][:1].lower() + task["text"][1:],
+                "image": task.get("image"),
+                "image_suggested": bool(task.get("image_suggested")),
+                "days": [d for d in mission_days if not task.get("days") or d in task["days"]],
+                "steps": [
+                    {"text": step["text"], "image": step.get("image")}
+                    for step in task.get("steps") or []
+                    if not kids or any(step["id"] not in off.get(kid, ()) for kid in kids)
+                ],
+            }
+        )
     if stored.get("wake") is not None:
         parts[0]["at"] = first_at or stored["wake"]
-    return music_kept(settled({
-        **stored, "name": mission["name"], "image": mission.get("image"), "parts": parts,
-        "days": [d for d in stored.get("days") or WEEKDAYS if d in mission_days],
-    }))
+    return music_kept(
+        settled(
+            {
+                **stored,
+                "name": mission["name"],
+                "image": mission.get("image"),
+                "parts": parts,
+                "days": [d for d in stored.get("days") or WEEKDAYS if d in mission_days],
+            }
+        )
+    )
 
 
 def _stored(routine: Routine) -> dict:

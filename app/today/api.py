@@ -10,7 +10,12 @@ from app.children.repository import ChildrenRepository
 from app.daily_prize.repository import PrizeSpinsRepository
 from app.daily_prize.state import PrizeBoard
 from app.deps import (
-    get_clock, get_config_store, get_day_repository, get_event_log, get_image_libraries, get_prize_spins_repository,
+    get_clock,
+    get_config_store,
+    get_day_repository,
+    get_event_log,
+    get_image_libraries,
+    get_prize_spins_repository,
     require_parent,
 )
 from app.events.service import EventLog
@@ -59,8 +64,16 @@ def get_day_service(
 ) -> DayService:
     settings = SettingsRepository(store)
     return DayService(
-        ChildrenRepository(store), MissionsRepository(store), days, settings, clock, events,
-        RoutinesRepository(store), PrizeBoard(PrizesRepository(store), spins, settings), stars, streaks,
+        ChildrenRepository(store),
+        MissionsRepository(store),
+        days,
+        settings,
+        clock,
+        events,
+        RoutinesRepository(store),
+        PrizeBoard(PrizesRepository(store), spins, settings),
+        stars,
+        streaks,
     )
 
 
@@ -73,8 +86,9 @@ def background_url(season: str, moment: str) -> str | None:
 class Presenter:
     """Turns a child's day into JSON, with the address of every image."""
 
-    def __init__(self, libraries: ImageLibraries = Depends(get_image_libraries),
-                 store: ConfigStore = Depends(get_config_store)):
+    def __init__(
+        self, libraries: ImageLibraries = Depends(get_image_libraries), store: ConfigStore = Depends(get_config_store)
+    ):
         self._libraries = libraries
         self._store = store
 
@@ -103,8 +117,7 @@ class Presenter:
                     "state": item.state,
                     "focus": item.focus,
                     "schedule": (  # today's: its own, or its routine's (rutinas-8)
-                        {"start": item.schedule.start, "end": item.schedule.end}
-                        if item.schedule else None
+                        {"start": item.schedule.start, "end": item.schedule.end} if item.schedule else None
                     ),
                     "total": len(item.marks),
                     "done": len(item.marks) if item.state == "done" else len(item.checked),
@@ -123,10 +136,7 @@ class Presenter:
             "text": task.task.text,
             "image_url": self._libraries.url(task.task.image),
             "checked": done or task.task.id in item.checked,
-            "steps": [
-                {"id": s.id, "text": s.text, "image_url": self._libraries.url(s.image)}
-                for s in task.steps
-            ],
+            "steps": [{"id": s.id, "text": s.text, "image_url": self._libraries.url(s.image)} for s in task.steps],
         }
 
     def _prize(self, today: Today) -> dict | None:
@@ -138,9 +148,7 @@ class Presenter:
             "image_url": self._libraries.url(PRIZE_IMAGE),
             "spins_left": prize.spins_left,
             "won": [{**w, "image_url": self._libraries.url(w["image"])} for w in prize.won],
-            "wheel": [
-                {"id": p.id, "text": p.text, "image_url": self._libraries.url(p.image)} for p in prize.prizes
-            ],
+            "wheel": [{"id": p.id, "text": p.text, "image_url": self._libraries.url(p.image)} for p in prize.prizes],
         }
 
 
@@ -164,8 +172,9 @@ def set_mark(
 
 
 @router.post("/children/{child_id}/today/missions/{mission_id}/open", dependencies=[Depends(require_parent)])
-def open_today(child_id: str, mission_id: str, days: DayService = Depends(get_day_service),
-               present: Presenter = Depends()):
+def open_today(
+    child_id: str, mission_id: str, days: DayService = Depends(get_day_service), present: Presenter = Depends()
+):
     """A parent opens a closed or upcoming mission, only today (holding it on the route)."""
     return present(days.open_today(child_id, mission_id))
 

@@ -46,8 +46,14 @@ def track(order: dict, today: date) -> dict:
 
 
 class OrdersService:
-    def __init__(self, purchases: PurchasesRepository, settings: SettingsRepository, clock: Clock,
-                 events: EventLog, home_assistant: HomeAssistant):
+    def __init__(
+        self,
+        purchases: PurchasesRepository,
+        settings: SettingsRepository,
+        clock: Clock,
+        events: EventLog,
+        home_assistant: HomeAssistant,
+    ):
         self._purchases = purchases
         self._settings = settings
         self._clock = clock
@@ -100,8 +106,9 @@ class OrdersService:
             if value != order["due_day"]:
                 # A new day: reminded again on it.
                 self._purchases.set(order_id, due_day=value, reminded_day=None)
-                self._events.config_changed("order", "due", child=_child(order), mission=_item(order),
-                                            changes={"due_day": due})
+                self._events.config_changed(
+                    "order", "due", child=_child(order), mission=_item(order), changes={"due_day": due}
+                )
         return self._get(order_id)
 
     def deliver(self, order_id: int) -> dict:
@@ -120,9 +127,12 @@ class OrdersService:
         """Just bought: tell the parents' phones, with buttons to say when it arrives."""
         order = self._get(order_id)
         stars = order["price"]
-        self._send(order, f"🛒 {order['child_name']} ha pedido «{order['item_text']}»",
-                   f"Pagó {stars} {'estrella' if stars == 1 else 'estrellas'}. ¿Cuándo le llega?",
-                   [("TODAY", "Hoy"), ("TOMORROW", "Mañana"), ("GIVEN", "Entregado")])
+        self._send(
+            order,
+            f"🛒 {order['child_name']} ha pedido «{order['item_text']}»",
+            f"Pagó {stars} {'estrella' if stars == 1 else 'estrellas'}. ¿Cuándo le llega?",
+            [("TODAY", "Hoy"), ("TOMORROW", "Mañana"), ("GIVEN", "Entregado")],
+        )
 
     def remind(self) -> None:
         """Orders due today (or before) and not handed over: once a day, from remind_at."""
@@ -136,8 +146,12 @@ class OrdersService:
             if not due or date.fromisoformat(due) > today or order["reminded_day"] == today.isoformat():
                 continue
             self._purchases.set(order["id"], reminded_day=today.isoformat())
-            self._send(order, f"🚚 Hoy llega «{order['item_text']}» de {order['child_name']}",
-                       "¿Ya está entregado?", [("GIVEN", "Entregado"), ("TOMORROW", "Mañana")])
+            self._send(
+                order,
+                f"🚚 Hoy llega «{order['item_text']}» de {order['child_name']}",
+                "¿Ya está entregado?",
+                [("GIVEN", "Entregado"), ("TOMORROW", "Mañana")],
+            )
 
     def on_action(self, action: str) -> bool:
         """A button tapped on a phone ("MISSIONBOARD_ORDER_12_TODAY"); false if it is not ours."""

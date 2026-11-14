@@ -78,9 +78,7 @@ class ImageLibraries:
         self._by_id = {library.id: library for library in libraries}
 
     def catalogs(self) -> list[dict]:
-        return [
-            {**library.catalog, "base_url": library.base_url} for library in self._by_id.values()
-        ]
+        return [{**library.catalog, "base_url": library.base_url} for library in self._by_id.values()]
 
     def suggest(self, text: str) -> str | None:
         """An image for this text among the featured ones, or None."""

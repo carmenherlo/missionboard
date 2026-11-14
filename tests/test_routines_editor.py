@@ -99,7 +99,12 @@ def test_days_wake_and_goal(client):
     # Starting at a time, the goal comes when the parts end (05/11): its own time does not count
     goal = {"at": "07:50", "say": "¡Al autobús!"}
     assert edit(client, "PATCH", goal=goal).json()["goal"] == {
-        "at": "07:25", "say": "¡Al autobús!", "image": None, "check_minutes": 0, "check_say": None}
+        "at": "07:25",
+        "say": "¡Al autobús!",
+        "image": None,
+        "check_minutes": 0,
+        "check_say": None,
+    }
     assert edit(client, "PATCH", goal=None).json()["ends"] == "07:25"
 
 
@@ -146,10 +151,18 @@ def test_what_is_its_own_of_each_part(client):
     assert edit(client, "PATCH", f"/parts/{first}", minutes=0).status_code == 422
 
 
-@pytest.mark.parametrize("method, path", [
-    ("POST", "/parts"), ("POST", "/parts/import"), ("POST", "/parts/delete"), ("PUT", "/parts/order"),
-    ("DELETE", "/parts/x"), ("PUT", "/photo"), ("PUT", "/parts/x/photo"),
-])
+@pytest.mark.parametrize(
+    "method, path",
+    [
+        ("POST", "/parts"),
+        ("POST", "/parts/import"),
+        ("POST", "/parts/delete"),
+        ("PUT", "/parts/order"),
+        ("DELETE", "/parts/x"),
+        ("PUT", "/photo"),
+        ("PUT", "/parts/x/photo"),
+    ],
+)
 def test_tasks_are_changed_in_the_mission_not_here(client, method, path):
     assert edit(client, method, path, x=1).status_code in (404, 405)
 
@@ -214,7 +227,11 @@ def test_notices_before_it_rings(client, clock):
     assert routine["notices"] == notices
     clock.moment = datetime(2026, 11, 2, 5, 0, tzinfo=MADRID)
     assert client.get("/api/routines/notices").json()["notices"] == [
-        {"routine": client.get("/api/routines").json()[0]["id"], "at": 6 * 60 + 10, "say": "Es hora de despertar a los niños."},
+        {
+            "routine": client.get("/api/routines").json()[0]["id"],
+            "at": 6 * 60 + 10,
+            "say": "Es hora de despertar a los niños.",
+        },
         {"routine": client.get("/api/routines").json()[0]["id"], "at": 6 * 60 + 25, "say": "Cinco minutos."},
     ]
     edit(client, "PATCH", offsets={"tue": 15})
@@ -229,8 +246,13 @@ def test_notices_before_it_rings(client, clock):
 def test_a_new_routine_that_ends_at_a_time(client):
     mission = another_mission(client, "Noche", ("Pijama",))
     routine = create(client, mission, ends="20:30").json()
-    assert routine["anchor"] == "end" and routine["goal"] == {"image": None, "at": "20:30", "say": "¡Rutina terminada!",
-                                                              "check_minutes": 0, "check_say": None}
+    assert routine["anchor"] == "end" and routine["goal"] == {
+        "image": None,
+        "at": "20:30",
+        "say": "¡Rutina terminada!",
+        "check_minutes": 0,
+        "check_say": None,
+    }
     assert parts(routine) == [("Pijama", "20:25", "20:30")]
     assert routine["wake"] == "20:25" and routine["alarm_before"] == 0
     # Another task: the end stays, the start moves back
@@ -266,8 +288,13 @@ def test_ending_at_its_goal_keeps_that_time(client):
 def test_ending_at_a_time_without_a_goal_gets_one(client):
     edit(client, "PATCH", goal=None)
     routine = edit(client, "PATCH", anchor="end").json()
-    assert routine["goal"] == {"image": None, "at": "07:25", "say": "¡Rutina terminada!",
-                               "check_minutes": 0, "check_say": None}
+    assert routine["goal"] == {
+        "image": None,
+        "at": "07:25",
+        "say": "¡Rutina terminada!",
+        "check_minutes": 0,
+        "check_say": None,
+    }
 
 
 def test_starts_at_and_the_alarm(client):

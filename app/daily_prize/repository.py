@@ -25,8 +25,15 @@ class PrizeSpinsRepository:
             conn.execute(
                 "INSERT INTO prize_spins (day, child_id, child_name, prize_id, prize_text, prize_image, at)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (day.isoformat(), child.id, child.name, prize.id, prize.text, prize.image,
-                 at.isoformat(timespec="seconds")),
+                (
+                    day.isoformat(),
+                    child.id,
+                    child.name,
+                    prize.id,
+                    prize.text,
+                    prize.image,
+                    at.isoformat(timespec="seconds"),
+                ),
             )
 
     def to_give(self) -> list[dict]:
@@ -45,5 +52,7 @@ class PrizeSpinsRepository:
 
     def deliver(self, spin_id: int, at: datetime) -> None:
         with db.connect(self._data_dir) as conn:
-            conn.execute("UPDATE prize_spins SET delivered_at = ? WHERE id = ? AND delivered_at IS NULL",
-                         (at.isoformat(timespec="seconds"), spin_id))
+            conn.execute(
+                "UPDATE prize_spins SET delivered_at = ? WHERE id = ? AND delivered_at IS NULL",
+                (at.isoformat(timespec="seconds"), spin_id),
+            )
