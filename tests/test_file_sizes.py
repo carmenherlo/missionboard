@@ -19,7 +19,6 @@ SKIPPED = ("static/libraries/", "static/css/themes/")
 TOO_BIG = {
     "static/css/child.css": 2387,
     "static/css/components.css": 2228,
-    "static/js/routine/routine.js": 1011,
     "static/css/effects.css": 641,
     "static/css/routine.css": 483,
     "routines/repository.py": 483,
