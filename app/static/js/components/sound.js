@@ -13,7 +13,6 @@ const USUAL_TICKING = 0.5; // like a real clock's: there, barely heard
 
 let audio = null;
 let settings = read();
-const listeners = new Set();
 
 function read() {
   const fresh = {
@@ -35,7 +34,6 @@ function changed() {
   } catch {
     // storage blocked: the levels last until the page reloads
   }
-  for (const listener of listeners) listener();
 }
 
 export function level(channel) {
@@ -54,16 +52,6 @@ export function volume(channel) {
 export function setLevel(channel, value) {
   settings = { ...settings, [channel]: { level: value, off: false } };
   changed();
-}
-
-export function setOff(channel, off) {
-  settings = { ...settings, [channel]: { ...settings[channel], off, level: settings[channel].level || USUAL_LEVEL } };
-  changed();
-}
-
-export function onSoundChange(listener) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
 }
 
 // The first tap anywhere starts the audio engine (and the voice), so that a

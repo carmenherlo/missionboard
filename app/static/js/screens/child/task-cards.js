@@ -8,7 +8,7 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { picture } from "./ring.js";
 
-// One square. state: "" | "done" | "off".
+// One square. state: "" | "off" (switched off for this child).
 export function square(step, { state = "", disabled = false, onTap, label }) {
   return h("button", {
     type: "button", class: `square${state ? ` square--${state}` : ""}`, disabled,

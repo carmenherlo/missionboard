@@ -138,10 +138,6 @@
   font-weight: 700;
 }
 
-.row__name--md {
-  font-size: var(--text-md);
-}
-
 .row__detail {
   display: flex;
   flex-wrap: wrap;
@@ -265,12 +261,6 @@
   font-weight: 600;
 }
 
-/* "Plantilla" before the name in the top bar */
-.pill--title {
-  padding: 4px 14px;
-  font-size: var(--text-md);
-}
-
 .pill--muted {
   background: color-mix(in srgb, var(--muted) 14%, var(--surface));
   color: var(--muted);
@@ -281,40 +271,4 @@
   width: 4.5rem;
   min-height: 40px;
   text-align: center;
-}
-
-/* "Seleccionar": a whole row is the target while choosing parts to remove. */
-.row--selectable {
-  cursor: pointer;
-}
-
-/* The cover of a card that does something on the spot (a button, not a link). */
-.row__cover--button {
-  display: grid;
-  flex: 1;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* A row whose text is corrected right there (a part's tasks): it looks like text
-   until it is touched. */
-.row input.row__input {
-  flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 var(--space-1);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: none;
-  font: inherit;
-}
-
-.row input.row__input:focus {
-  border-color: var(--outline);
-  background: var(--surface);
-  outline: none;
 }

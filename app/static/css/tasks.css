@@ -178,11 +178,6 @@
   cursor: pointer;
 }
 
-.square--done {
-  border-color: var(--mission-color, var(--child-color));
-  background: var(--mission-soft, var(--child-soft));
-}
-
 .square__picture {
   display: grid;
   place-items: center;

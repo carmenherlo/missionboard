@@ -47,15 +47,11 @@
   inset: -7%; /* the coloured ring is drawn outside the avatar's box */
 }
 
-.avatar--xs { --size: 28px; }
-
 .avatar--sm { --size: 40px; }
 
 .avatar--md { --size: 72px; }
 
 .avatar--lg { --size: 140px; }
-
-.avatar--xl { --size: 130px; }
 
 .avatar--home { --size: var(--home-avatar-size); }
 
@@ -92,25 +88,6 @@
 .child-card__name {
   font-size: 1.5rem;
   font-weight: 800;
-}
-
-.kid-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-3);
-}
-
-.kid-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-3) var(--space-3);
-  background: var(--container);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  color: inherit;
-  text-decoration: none;
 }
 
 /* Avatar picker (child form) */
@@ -160,32 +137,6 @@
   font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-
-/* A child card that is chosen by tapping it (apply a template): ring and ✓ */
-.kid-card--choice {
-  position: relative;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-}
-
-.kid-card__check {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  --icon-button: 40px;
-  border-radius: 50%;
-  font-size: 22px;
-  visibility: hidden;
-}
-
-.kid-card--selected {
-  box-shadow: 0 0 0 3px var(--primary);
-}
-
-.kid-card--selected .kid-card__check {
-  visibility: visible;
 }
 
 .kids-on {

@@ -85,11 +85,6 @@
   padding: var(--space-2) var(--space-5) var(--space-5);
 }
 
-.step-grid--many {
-  --step-tile-size: 88px;
-  grid-template-columns: repeat(4, 1fr);
-}
-
 .step-card {
   position: relative;
 }
@@ -138,50 +133,6 @@
   color: var(--mission-strong, var(--child-strong));
   font-size: calc(var(--step-tile-size) * 0.48);
   font-weight: 800;
-}
-
-/* Done: the light tone of the child's colour and a vivid border (the
-   background is tinted with their colour too, so the fill alone would vanish). */
-.step-card--done .step-card__toggle {
-  background: var(--mission-soft, var(--child-soft));
-  box-shadow: inset 0 0 0 5px var(--mission-color, var(--child-color));
-}
-
-.step-card__check {
-  position: absolute;
-  top: -12px;
-  right: -12px;
-  display: none;
-  place-items: center;
-  width: var(--step-check-size);
-  height: var(--step-check-size);
-  border-radius: 50%;
-  background: var(--mission-color, var(--child-color));
-  color: var(--on-mission, var(--on-child));
-  font-size: calc(var(--step-check-size) * 0.6);
-  box-shadow: 0 0 0 4px var(--surface);
-  pointer-events: none;
-}
-
-.step-card--done .step-card__check {
-  display: grid;
-}
-
-.step-card__speak {
-  position: absolute;
-  top: var(--space-2);
-  left: var(--space-2);
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--primary-soft);
-  color: var(--primary-strong);
-  font-size: 28px;
-  cursor: pointer;
 }
 
 /* A past mission (done, or closed without doing it), opened to look at (05/11): all in

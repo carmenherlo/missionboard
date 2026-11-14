@@ -70,11 +70,6 @@
   gap: var(--space-1);
 }
 
-/* Space before a second section of a page (e.g. Templates below the children) */
-.section-gap {
-  margin-top: var(--space-3);
-}
-
 .columns {
   display: grid;
   gap: var(--space-4);
@@ -133,10 +128,6 @@
 
 .form-actions--start {
   justify-content: flex-start;
-}
-
-.form-actions--center {
-  justify-content: center;
 }
 
 /* ---------- home ---------- */

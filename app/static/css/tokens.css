@@ -129,7 +129,6 @@
   --square-size: 84px; /* a child's finger: not under 64px */
   --task-speak-size: 34px; /* 🔊 on a task's card (13/11: it was hardly seen) */
   --reminder-size: 40px; /* a step on a child's card: a reminder, not a button (misiones-3) */
-  --step-check-size: 56px;
   --shadow-badge: 0 3px 10px rgb(0 0 0 / 0.15);
   --glow-reach: 40px; /* how far the beating glow of a ring goes out, at strength 1 */
   --color-dot-check-shadow: rgb(0 0 0 / 0.5); /* the white ✓ of a chosen colour, legible on any colour */
@@ -157,7 +156,6 @@
   --shop-rod: #7a4a24; /* the bar that holds the awning */
   --shop-wood: #c98a4b; /* the sign, the shelves and the counter */
   --shop-wood-dark: #9a6431;
-  --shop-wood-text: #fff6e8;
   --shop-logo-board: #1b2350; /* the sign: night blue, in a wooden frame (a shop of the stars) */
   --shop-logo-text: #ffffff;
   --shop-logo-tail-start: rgb(255 210 63 / 0); /* the shooting star's trail, fading at its tail */
@@ -351,7 +349,6 @@
   --week-fill: 1100ms; /* today's tank filling */
   --week-stay: 3500ms; /* then it stays, while the voice speaks */
   --week-countdown: 2600ms; /* "tres, dos, uno…" before the rocket goes */
-  --week-result: 6000ms; /* how the week ended, on screen */
   --week-liftoff: 2200ms;
   --kid-off-opacity: 0.35; /* a child's avatar switched off (who sees a shop item) */
   --parcel-bump: 260ms; /* the truck shaking on the road, up and down */

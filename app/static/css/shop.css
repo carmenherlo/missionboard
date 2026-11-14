@@ -16,10 +16,6 @@
   padding: 0 var(--space-5) var(--space-5);
 }
 
-.stars--big {
-  margin: 0;
-}
-
 .stars-body .step-grid {
   width: 100%;
   padding: 0;

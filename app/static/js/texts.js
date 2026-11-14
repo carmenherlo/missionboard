@@ -1,10 +1,5 @@
 // Every text the user sees, in one place.
 
-// "Bea", "Bea y Alex", "Bea, Alex y Leo"
-function joinNames(names) {
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0];
-}
-
 // "Un globo" inside a sentence: "un globo".
 const lower = (text) => text.charAt(0).toLowerCase() + text.slice(1);
 const stars = (n) => `${n === 1 ? "una estrella" : `${n} estrellas`}`;
@@ -41,9 +36,6 @@ export const t = {
   // Rachas (rachas.html): the week of fuel tanks, as the child sees and hears it.
   week: {
     miniLabel: (full, counted) => `Esta semana: ${full} de ${counted} depósitos llenos`,
-    miniSay: (full, counted) => full === 0
-      ? `Cada día que haces tus misiones, se llena un depósito. ¡Llénalos todos y el cohete despegará!`
-      : `Esta semana llevas ${full} ${full === 1 ? "depósito lleno" : "depósitos llenos"} de ${counted}. ¡Llénalos todos y el cohete despegará!`,
     noDays: "Esta semana no hay días de misiones.",
     // The workshop, where the child loads the fuel and starts the rocket (taller.html).
     tapToLoad: "Toca un depósito lleno para cargar el cohete.",
@@ -135,8 +127,6 @@ export const t = {
     spin: "¡Gira!",
     spinAgain: "¡Gira otra vez!",
     youWon: "¡Te ha tocado!",
-    streakSay: (n) => n === 1 ? "¡Llevas un día haciendo tus misiones! Sigue mañana para hacer una racha."
-      : `¡Llevas ${n} días seguidos haciendo tus misiones!`,
     wonSay: (text) => `¡Te ha tocado: ${lower(text)}! Díselo a papá o a mamá.`,
     tellAdult: "Díselo a papá o a mamá",
     prizeLocked: "Primero, tus misiones",
@@ -173,7 +163,6 @@ export const t = {
     done: "¡Hecho! ¡Muy bien!",
     timeUp: "¡Se acabó el tiempo!",
     startByHand: "Empezar una rutina",
-    whoIsHome: "¿Quién ha llegado?",
     start: "Empezar",
     minutes: (n) => `${n} min`,
     chooseKids: "Toca a los que han llegado.",
@@ -360,7 +349,6 @@ export const t = {
     streakSecondMin: "Depósitos que necesita como mínimo",
     streakSecondText: "Premio pequeño",
     streakNoneHint: "Si no llega a ninguno de los dos, en el taller el cohete tose y no despega. Con premio, el niño carga el combustible, tira de la palanca y el cohete vuela hasta una luna, donde sale el premio.",
-    streakTry: "Probar cómo lo ve el niño",
     shopTitle: "Tienda",
     shopOn: "Encendida: los niños gastan sus estrellas desde su ruta",
     shopOff: "Apagada: los niños siguen viendo sus estrellas, pero no pueden comprar.",
@@ -418,7 +406,6 @@ export const t = {
     name: "Astrozon", // the shop's name, on its logo
     tabShop: "Tienda",
     tabOrders: (n) => (n ? `Mis pedidos · ${n}` : "Mis pedidos"),
-    costSay: (text, n) => `${text}. Cuesta ${stars(n)}.`,
     missingSay: (text, n) => `${text}. Te ${n === 1 ? "falta una estrella" : `faltan ${n} estrellas`}.`,
     orderQuestion: (text) => `¿Pides ${lower(text)}?`,
     orderSay: (text, n, left) => `¿Pides ${lower(text)}? Cuesta ${stars(n)}. Te ${left === 1 ? "quedará una" : `quedarán ${left}`}.`,
@@ -443,7 +430,6 @@ export const t = {
     arrivedTitle: "¡Ha llegado tu pedido!",
     arrivedSay: (text) => `¡Ding dong! ¡Ha llegado tu pedido: ${lower(text)}! Corre a buscarlo.`,
     great: "¡Bien!",
-    onTheWay: (n) => `${n} ${n === 1 ? "pedido" : "pedidos"} en camino`,
     // Padres: Configurar → Tienda
     ordersTitle: "Pedidos",
     ordersHint: "Lo que han pedido los niños y todavía no tienen. Di cuándo les llega: en su pantalla lo ven como noches que faltan. Cuando lo tengan (en mano o en la puerta de casa), toca «Entregado»: verán llegar el paquete.",
@@ -555,7 +541,6 @@ export const t = {
     empty: "Todavía no hay música. Sube una canción (MP3, M4A u OPUS) para usarla en las rutinas.",
     panel: (n) => `Canciones (${n})`,
     upload: "Subir una canción (MP3, M4A, OPUS)",
-    uploading: "Subiendo…",
     unreadable: "No se puede leer esa canción: prueba con un MP3, M4A u OPUS.",
     tooBig: "Es demasiado grande (hasta 15 MB).",
     usedIn: (names) => (names.length ? `en ${names.join(", ")}` : "sin usar"),
@@ -580,7 +565,6 @@ export const t = {
     noSongs: "Todavía no hay música.",
     upload: "Subir una canción",
     uploadOther: "Subir otra canción…",
-    toLibrary: "Música",
     clash: (name) => `Se cruza con «${name}»: dos canciones no pueden sonar a la vez.`,
     alarmCard: "La alarma",
     goalCard: "La meta",
@@ -597,12 +581,10 @@ export const t = {
     lasts: (length) => `Dura ${length}.`,
     panelWhen: "Cuándo suena",
     ends: "Acaba",
-    endsWithSong: "Al acabar la canción",
     startsIn: "Empieza en",
     andPlays: "y suena",
     playsOnce: (length) => `una vez (${length})`,
     playsUntil: "hasta que acabe",
-    endsWithPart: "Al acabar una parte",
     hintOnce: (from, length) => `Suena a las ${from}, una vez (${length}).`,
     hintOnceByHand: (card, length) => `Suena al empezar «${card}», una vez (${length}).`,
     hintSpan: (from, to, minutes, length) => `Suena de ${from} a ${to} (${minutes} min). La música dura ${length}: si acaba antes, vuelve a empezar; a las ${to} se apaga despacio.`,
@@ -939,13 +921,11 @@ export const t = {
     at: (time) => `A las ${time}`,
     later: "Más tarde",
     closed: "Cerrada sin hacer",
-    streak: (n) => (n === 1 ? "Racha: 1 día" : `Racha: ${n} días seguidos`),
     prizeLocked: "Premio del día: bloqueado hasta acabar sus misiones",
     prizeUnlocked: "Premio del día: ¡por girar!",
     prizeWon: (text) => `Premio del día: ${text}`,
     prizesTitle: "Premios por dar",
     noPrizes: "No hay premios por dar.",
-    prizesHint: "Lo que les tocó en la ruleta. Al dárselo, toca «Entregado».",
     wonOn: (child, day) => `${child} · le tocó el ${day}`,
     childTitle: (name) => name,
     chartTitle: "Estrellas ganadas (2 semanas)",
