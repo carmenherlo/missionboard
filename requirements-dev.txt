@@ -2,3 +2,5 @@
 pytest==9.1.1
 httpx2==2.13.1  # FastAPI's TestClient
 materialyoucolor==3.0.4  # tools/build_theme.py; pulls in pillow
+ruff==0.17.5  # formatter and linter (pyproject.toml)
+pytest-cov==7.1.0  # test coverage: pytest --cov

@@ -1,0 +1,33 @@
+# Tool settings only: the app is not packaged (it runs from app/ with uvicorn).
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["data", "docs"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle · F: pyflakes (unused, undefined) · I: import order · B: likely bugs
+# UP: modern Python · SIM: simpler code · C4: comprehensions · C90: complexity
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "C90"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependencies are declared as default arguments on purpose.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query", "fastapi.Body", "fastapi.Path"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10  # paths through a function; above this, split it
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tools"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+sort = "Cover"
