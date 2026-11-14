@@ -17,7 +17,9 @@ from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository, child_tasks
 from app.routines.links import kids_of
-from app.routines.repository import Part, Routine, RoutinesRepository, RunsRepository, minute_of
+from app.routines.model import Part, Routine
+from app.routines.repository import RoutinesRepository, RunsRepository
+from app.routines.timing import minute_of
 from app.settings import SettingsRepository
 from app.today.service import DONE, DayService
 

@@ -12,9 +12,11 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
 from app.routines.editor import TIMING, RoutinesEditor
-from app.routines.repository import TIME, Routine, RoutinesRepository, RunsRepository, hhmm
+from app.routines.model import Routine
+from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.service import NOTES, Current, RoutinesService, kids_of
-from app.settings import SettingsRepository
+from app.routines.timing import hhmm
+from app.settings import TIME, SettingsRepository
 from app.songs.repository import SongsRepository
 from app.storage.config_store import ConfigStore
 from app.today.api import get_day_service

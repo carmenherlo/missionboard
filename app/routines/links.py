@@ -6,7 +6,8 @@ open all day. For everyone else, and on the other days, the mission's.
 
 from app.children.repository import Child
 from app.missions.repository import Mission, Schedule
-from app.routines.repository import Routine, hhmm
+from app.routines.model import Routine
+from app.routines.timing import hhmm
 
 
 def kids_of(routine: Routine, children: list[Child]) -> list[Child]:

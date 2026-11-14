@@ -14,21 +14,13 @@ from app.children.repository import ChildrenRepository
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository
-from app.routines.repository import (
-    Part,
-    Routine,
-    RoutinesRepository,
-    card_positions,
-    hhmm,
-    minute_of,
-    music_kept,
-    settled,
-)
+from app.routines.model import Part, Routine
+from app.routines.repository import NEW_PART_MINUTES, RoutinesRepository
+from app.routines.timing import card_positions, hhmm, minute_of, music_kept, settled
 from app.songs.repository import SongsRepository
 
 UNSET = object()
 TRIAL_LEAD_SECONDS = 20  # "Probar desde aquí" starts this long before the part
-NEW_PART_MINUTES = 5
 TIMING = ("anchor", "starts", "ends", "alarm", "alarm_before")
 
 

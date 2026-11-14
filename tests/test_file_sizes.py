@@ -19,13 +19,12 @@ SKIPPED = ("static/libraries/", "static/css/themes/")
 TOO_BIG = {
     "static/css/effects.css": 641,
     "static/css/routine.css": 483,
-    "routines/repository.py": 483,
-    "routines/api.py": 471,
+    "routines/api.py": 473,  # +2 import lines when repository.py was split (1d)
     "static/js/screens/parents/routine-edit.js": 442,
     "static/css/tokens.css": 433,
     "missions/service.py": 377,
-    "missions/api.py": 357,
-    "routines/editor.py": 341,
+    "missions/api.py": 358,  # +1 import line when routines/repository.py was split (1d)
+    "routines/editor.py": 333,
 }
 
 # Over the limit on purpose: every user-facing text in one place (decided 14/11).

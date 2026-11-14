@@ -11,7 +11,8 @@ from app.images.libraries import ImageLibraries
 from app.missions.repository import Mission, MissionsRepository, Schedule
 from app.missions.service import MissionsService
 from app.routines import links
-from app.routines.repository import RoutinesRepository, hhmm
+from app.routines.repository import RoutinesRepository
+from app.routines.timing import hhmm
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 
