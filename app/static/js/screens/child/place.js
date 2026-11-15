@@ -1,8 +1,9 @@
-// Niño · Mi sitio (mi-sitio.html, concept A): what is theirs, away from their missions.
-// Their avatar in the middle of the background of the moment, and a building at each
-// corner: the shop, the rocket's workshop (the week of fuel tanks), the mailbox (the
-// notices of their orders) and the observatory (the stars they keep). They come in by
-// tapping their avatar on the route, and go back with "Mis misiones".
+// Niño · Mi sitio (mi-sitio.html, mi-espacio.html): what is theirs, away from their missions.
+// A landscape with its buildings drawn in (one picture), their avatar in the clearing in the
+// middle, and a place to tap over each building: their house (closed for now), the mailbox
+// (the notices of their orders), the rocket's workshop (the week of fuel tanks), the
+// observatory (the stars they keep) and the shop. They come in by tapping their avatar on the
+// route, and go back with "Mis misiones".
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { cornerButton } from "../../components/corner-button.js";
@@ -17,9 +18,11 @@ import { placeSheet } from "./place-sheet.js";
 import { skyNews, skyView } from "./sky.js";
 import { openStars } from "./stars-sheet.js";
 import { ordersOf, weekOf } from "./today.js";
-import { openWorkshop, rocketReady, weekMini } from "./week-bar.js";
+import { openWorkshop, rocketReady } from "./week-bar.js";
 
 const FLUENT = "static/libraries/fluent";
+// The picture of their space, with its buildings drawn in (autumn, for now: 15/11).
+const SCENE = "static/place/otono.webp";
 const img = (name, className) => h("img", { class: className, src: `${FLUENT}/${name}.svg`, alt: "" });
 
 // garage: open the workshop at once (from "Ir al taller", when their rocket is ready).
@@ -33,13 +36,9 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     const { color, soft, strong, on } = day.colors;
     screen.setAttribute("style",
       `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`);
-    screen.className = `child-screen place-screen child-screen--veil-${day.route_look.veil}`;
     const news = newsOf(orders);
     screen.replaceChildren(
-      h("div", { class: "child-scene", "aria-hidden": "true" },
-        day.background_url && h("img", { class: "child-scene__picture", src: day.background_url, alt: "" }),
-        h("div", { class: "child-scene__veil" })),
-      h("header", { class: "child-bar" },
+      h("header", { class: "child-bar place-bar" },
         h("a", { class: "btn btn--primary btn--big place-back", href: `#/child/${childId}` },
           img("rocket", "place-back__picture"), t.place.back),
         h("span", { class: "child-bar__spacer" }),
@@ -49,20 +48,16 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
         }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
       h("section", { class: "place" },
-        paths(),
-        h("button", { type: "button", class: "place__me", onclick: () => say(t.child.hello(day.child.name)) },
-          avatar(day.child, { size: "hero", fx: "shine" }),
-          h("span", { class: "place__name" }, day.child.name)),
-        day.shop_url && building("tl", t.place.shop, img("convenience-store"), openShop),
-        week.on && building("tr", t.place.garage,
-          h("span", { class: "news-host place-building__garage" },
-            img("rocket", "place-building__rocket"), img("fuel-pump", "place-building__pump"), newsBadge(garageNews())),
-          openGarage, week.tanks.length > 0 && weekMini(week), !!garageNews()),
-        building("bl", t.place.mailbox,
-          h("span", { class: "news-host" },
-            img(news ? "closed-mailbox-with-raised-flag" : "closed-mailbox-with-lowered-flag"), newsBadge(news)),
-          openMail, null, !!news),
-        building("br", t.place.sky, img("telescope"), openSky)));
+        h("div", { class: "place__world" },
+          h("img", { class: "place__picture", src: SCENE, alt: "" }),
+          spot("home", t.place.home, () => say(t.place.homeSay)),
+          spot("mail", t.place.mailbox, openMail, newsBadge(news)),
+          week.on && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
+          spot("sky", t.place.sky, openSky),
+          day.shop_url && spot("shop", t.place.shop, openShop),
+          h("button", { type: "button", class: "place__me", onclick: () => say(t.child.hello(day.child.name)) },
+            avatar(day.child, { size: "lg", fx: "shine" }),
+            h("span", { class: "place__name" }, day.child.name)))));
   }
 
   // The workshop's news: a rocket ready to take off, or fuel to load into it.
@@ -74,19 +69,18 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     return toLoad ? { count: toLoad, picture: `${FLUENT}/fuel-pump.svg` } : null;
   }
 
-  // A building at a corner (tl, tr, bl, br): its picture, its name in a pill, and what it opens.
-  function building(corner, label, picture, onOpen, below = null, news = false) {
-    return h("button", {
-      type: "button", class: `place-building place-building--${corner}${news ? " place-building--news" : ""}`, onclick: onOpen,
-    },
-      h("span", { class: "place-building__picture" }, picture),
-      h("span", { class: "place-building__label" }, label),
-      below);
+  // A building drawn in the picture: a place to tap over it (where, in place.css), its name in a pill
+  // under it, its news sign, and what it opens.
+  function spot(id, label, onOpen, badge = null) {
+    return h("div", { class: `place-spot place-spot--${id}` },
+      h("button", { type: "button", class: "place-spot__tap", "aria-label": label, onclick: onOpen }, badge),
+      h("button", { type: "button", class: "place-spot__label", tabindex: "-1", onclick: onOpen }, label));
   }
 
   async function back() {
     [day, week, orders] = await load();
     draw();
+    centre(screen.querySelector(".place"));
   }
 
   function openShop() {
@@ -123,26 +117,14 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
 
   draw();
   render(screen);
+  centre(screen.querySelector(".place"));
   if (garage && week.on) openGarage();
   else if (newsOf(orders)) say(t.place.mailboxSay);
 }
 
-// The paths from their avatar to each corner, dotted like the route's.
-const GAP = 0.42; // how much of each path is hidden behind their avatar
-function paths() {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("class", "place__paths");
-  svg.setAttribute("viewBox", "0 0 100 100");
-  svg.setAttribute("preserveAspectRatio", "none");
-  svg.setAttribute("aria-hidden", "true");
-  for (const [x, y] of [[16, 22], [84, 22], [16, 80], [84, 80]]) {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    // From the edge of their ring (not across their avatar) to the building.
-    const from = { x1: 50 + (x - 50) * GAP, y1: 50 + (y - 50) * GAP, x2: x, y2: y };
-    for (const [key, value] of Object.entries(from)) line.setAttribute(key, value);
-    svg.append(line);
-  }
-  return svg;
+// On a narrow screen the picture is wider than it: it slides sideways, and starts on their avatar.
+function centre(place) {
+  place.scrollLeft = (place.scrollWidth - place.clientWidth) / 2;
 }
 
 // This tablet's memory of something small (a private window: none, and that is all).

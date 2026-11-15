@@ -10,31 +10,42 @@
   height: 40px;
 }
 
+/* The picture fills the screen (no bands): on a screen wider than it, its sky is cut; on a
+   narrower one (a phone upright), it slides sideways. Everything over it goes in % of it. */
+.place-screen { height: 100vh; }
+
+.place-bar { z-index: 2; }
+
 .place {
-  position: relative;
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  container-type: size;
+  scrollbar-width: none;
 }
 
-.place__paths {
+.place__world {
+  position: absolute;
+  left: 0;
+  /* wider than the picture: cut more sky than ground (a third from below) */
+  bottom: min(0px, (100cqh - 56.25cqw) * 0.3);
+  width: max(100cqw, 100cqh * 16 / 9);
+  aspect-ratio: 16 / 9;
+  container-type: inline-size;
+}
+
+.place__picture {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
 
-.place__paths line {
-  stroke: var(--place-path);
-  stroke-width: var(--place-path-width);
-  stroke-dasharray: var(--place-path-dots);
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
 .place__me {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: 51.6%;
+  top: 77%;
   translate: -50% -50%;
   display: grid;
   justify-items: center;
@@ -45,74 +56,61 @@
   cursor: pointer;
 }
 
+.place__me .avatar { --size: var(--place-avatar-size); }
+
 .place__name,
-.place-building__label {
+.place-spot__label {
   padding: var(--space-1) var(--space-4);
+  border: none;
   border-radius: 999px;
   background: var(--route-label-bg);
+  color: var(--text);
+  font: inherit;
   font-size: var(--text-lg);
   font-weight: 800;
-}
-
-.place-building {
-  position: absolute;
-  display: grid;
-  justify-items: center;
-  gap: var(--space-2);
-  border: none;
-  background: none;
-  color: inherit;
-  font: inherit;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.place-building--tl { left: 6%; top: 4%; }
-
-.place-building--tr { right: 6%; top: 4%; }
-
-.place-building--bl { left: 6%; bottom: 6%; }
-
-.place-building--br { right: 6%; bottom: 6%; }
-
-.place-building__picture,
-.place-building__picture > img,
-.place-building__picture .news-host > img {
-  width: var(--place-building-size);
-  height: var(--place-building-size);
-}
-
-.place-building__picture img {
-  filter: drop-shadow(var(--shadow-news));
-}
-
-.place-building__picture .news-badge img { filter: none; }
-
-/* The workshop: the rocket up, ready, and the fuel pump by it. */
-.place-building__garage {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.place-building__picture .place-building__rocket {
+/* A building of the picture: where it is drawn (x, y, width, height, in % of the picture). */
+.place-spot {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 80%;
-  height: 80%;
-  rotate: -45deg;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
 }
 
-.place-building__picture .place-building__pump {
+.place-spot--home { --x: 8.9%; --y: 45.4%; --w: 26.6%; --h: 43.5%; }
+
+.place-spot--mail { --x: 37.2%; --y: 76.9%; --w: 6.5%; --h: 12%; }
+
+.place-spot--garage { --x: 46.4%; --y: 12.5%; --w: 13.5%; --h: 49.5%; }
+
+.place-spot--sky { --x: 74.5%; --y: 12%; --w: 17.4%; --h: 26%; }
+
+.place-spot--shop { --x: 68.2%; --y: 57.4%; --w: 19.8%; --h: 32.4%; }
+
+.place-spot__tap {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 45%;
-  height: 45%;
+  inset: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
 }
 
-.place-building .week-mini { cursor: pointer; }
+.place-spot__tap .news-badge { right: -4%; top: -4%; }
+
+/* Its name, in a pill under it (the workshop's, on its launch pad: their avatar is below). */
+.place-spot__label {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + var(--space-1));
+  translate: -50% 0;
+}
+
+.place-spot--garage .place-spot__label { top: auto; bottom: 8%; }
 
 .place-sheet__picture {
   width: 56px;

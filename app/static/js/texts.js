@@ -73,6 +73,8 @@ export const t = {
     open: "Mi sitio",
     back: "Mis misiones",
     backHere: "Mi sitio",
+    home: "Mi casa",
+    homeSay: "¡Tu casa está en obras! Muy pronto podrás decorarla.",
     shop: "La tienda",
     garage: "El taller del cohete",
     mailbox: "El buzón",

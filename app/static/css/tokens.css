@@ -171,10 +171,7 @@
   --order-home-ground: #e3f5e4; /* what they have: home, green */
   --order-home-edge: #9fd3a3;
   /* The child's place (mi-sitio.html): their avatar in the middle, a building at each corner. */
-  --place-building-size: min(190px, 16vw); /* a building's picture */
-  --place-path: rgb(255 255 255 / 0.9); /* the dotted paths from their avatar to each building */
-  --place-path-width: 9px;
-  --place-path-dots: 0.1 26px; /* round dots, like the route's */
+  --place-avatar-size: 8cqw; /* their avatar in the clearing, in % of the picture's width (cqw) */
   --place-arrive: 700ms; /* their avatar arriving in the middle */
   --news-size: 44%; /* the sign of something new, of the avatar it is on */
   --news-count-bg: var(--danger); /* how many new things */

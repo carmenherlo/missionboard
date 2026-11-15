@@ -1,7 +1,7 @@
 // Rachas (rachas.html, taller.html): the week as fuel tanks and a rocket. A tank per
 // day that counts, its letter on it; full when the day is done. The server says the
 // states (app/today/week.py); garage-scene.js draws the workshop; this module plays it:
-// - weekMini: the week, small (the parents' screens, the workshop's sign in their place);
+// - weekMini: the week, small (the parents' screens);
 // - playDay: on their route, the workshop comes in and today's tank fills; when the
 //   week is won, "your rocket is ready: go to the workshop";
 // - openWorkshop: the workshop in their place, where the child does things: a tap on a

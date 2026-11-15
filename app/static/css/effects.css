@@ -504,8 +504,8 @@
   78%, 100% { opacity: 1; transform: scale(1); }
 }
 
-/* Something new (mi-sitio.html): the sign on an avatar, and the mailbox of their place, jump now and then. */
-.news-badge, .place-building--news .place-building__picture {
+/* Something new (mi-sitio.html): the sign on an avatar or on a building of their place jumps now and then. */
+.news-badge {
   animation: chip-hop 1.6s ease-in-out infinite;
 }
 @keyframes chip-hop {
@@ -527,7 +527,7 @@
   .fx-shine::after {
     display: none;
   }
-  .news-badge, .place-building--news .place-building__picture, .place__me {
+  .news-badge, .place__me {
     animation: none;
   }
   .wheel__bulb, .wheel__hub, .wheel__pointer--flick, .wheel__slice--won {
