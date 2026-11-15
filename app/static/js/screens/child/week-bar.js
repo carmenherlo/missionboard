@@ -106,6 +106,19 @@ export function playDay(host, week, { day, name, onGarage }) {
   })());
 }
 
+// A day off (the weekend): when the next tank starts, said kindly.
+function restLine(tanks) {
+  const next = tanks.find((tank) => tank.state === "later");
+  if (!next) return t.week.noDays;
+  const day = new Date(`${next.day}T12:00`);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const when = day.toDateString() === tomorrow.toDateString()
+    ? t.week.restTomorrow
+    : t.week.restOn(day.toLocaleDateString("es-ES", { weekday: "long" }));
+  return t.week.rest(when);
+}
+
 // In their place: the workshop, to load the fuel and start the rocket. Shows the week whose
 // rocket waits to take off, if any (it may have closed while nobody looked), or this one.
 export function openWorkshop(host, first, { childId, name, backLabel, onClose }) {
@@ -124,6 +137,7 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
   const toLoad = () => shown().filter((tank) => tank.state === "full" && !tank.loaded).length;
   const status = () => {
     if (rocketReady(week)) return toLoad() ? t.week.loadFirst : t.week.pullLever;
+    if (!week.shown) return restLine(week.tanks);
     if (!tanks.length) return t.week.noDays;
     return toLoad() ? t.week.tapToLoad : t.week.miniLabel(week.full, week.counted);
   };

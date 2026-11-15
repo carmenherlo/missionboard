@@ -37,6 +37,10 @@ export const t = {
   week: {
     miniLabel: (full, counted) => `Esta semana: ${full} de ${counted} depósitos llenos`,
     noDays: "Esta semana no hay días de misiones.",
+    // A day that does not count (the weekend): the workshop rests until the next one.
+    rest: (when) => `¡Hoy el taller descansa! ${when} empezamos a preparar tu cohete.`,
+    restTomorrow: "Mañana",
+    restOn: (weekday) => `El ${weekday}`,
     // The workshop, where the child loads the fuel and starts the rocket (taller.html).
     tapToLoad: "Toca un depósito lleno para cargar el cohete.",
     loadFirst: "Primero, carga todo el combustible en el cohete.",

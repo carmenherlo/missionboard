@@ -52,7 +52,7 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
           h("img", { class: "place__picture", src: SCENE, alt: "" }),
           spot("home", t.place.home, () => say(t.place.homeSay)),
           spot("mail", t.place.mailbox, openMail, newsBadge(news)),
-          week.on && week.shown && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
+          week.on && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
           spot("sky", t.place.sky, openSky),
           day.shop_url && spot("shop", t.place.shop, openShop),
           h("button", { type: "button", class: "place__me", onclick: () => say(t.child.hello(day.child.name)) },
@@ -118,7 +118,7 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
   draw();
   render(screen);
   centre(screen.querySelector(".place"));
-  if (garage && week.on && week.shown) openGarage();
+  if (garage && week.on) openGarage();
   else if (newsOf(orders)) say(t.place.mailboxSay);
 }
 
