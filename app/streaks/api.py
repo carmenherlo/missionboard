@@ -51,8 +51,13 @@ def present_week(view: dict | None, libraries: ImageLibraries | None = None) -> 
         ]
 
     launch = view.get("launch")
+    today = view.get("today")
+    won = bool(result and result["tier"] != "none")
     return {
         "on": True,
+        # Seen only on a day that counts (today has a tank), or while a won week's rocket
+        # waits to take off: on the days off (the weekend) the week stays out of sight.
+        "shown": won or any(t.day == today for t in week.tanks),
         "end": week.end.isoformat(),
         "tanks": tanks(week),
         # The week whose rocket is ready to take off (or not), with a result not seen yet.

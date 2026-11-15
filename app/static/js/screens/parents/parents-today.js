@@ -20,7 +20,7 @@ export async function viewParentsToday() {
     api("GET", "api/overview/today"), api("GET", "api/orders"), api("GET", "api/overview/setup"), loadAvatars()]);
   const status = saveStatus();
   const toGive = toGiveCard(view, orders, status);
-  const weeks = view.children.filter((day) => day.week?.on && day.week.tanks.length > 0);
+  const weeks = view.children.filter((day) => day.week?.on && day.week.shown && day.week.tanks.length > 0);
 
   const date = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   render(

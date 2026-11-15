@@ -84,7 +84,13 @@ class StreaksService:
                 if result_end == end
                 else build_week(today, result_end, rules, settings.streak_rule, had, done, free)
             )
-        return {"week": current, "result": result, "launch": launch, "loaded": self._streaks.fuel_loads(child.id)}
+        return {
+            "week": current,
+            "result": result,
+            "launch": launch,
+            "loaded": self._streaks.fuel_loads(child.id),
+            "today": today,
+        }
 
     def load_fuel(self, child_id: str, day: date) -> dict | None:
         """The child loads a full tank into the rocket (taller.html): one of this week, or

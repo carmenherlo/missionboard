@@ -212,3 +212,24 @@ def test_a_week_prize_picture_can_be_a_photo(client):
     assert client.get(f"/{photo}").content == PNG
     client.patch("/api/settings/week-prizes/second", json={"image": "fluent/rocket"}, headers=PARENT)
     assert client.get(f"/{photo}").status_code == 404  # replaced: its file goes away
+
+
+# ---------- seen only on the days that count ----------
+
+
+def test_the_week_is_shown_on_a_day_that_counts_and_hidden_on_a_day_off(client, bea, clock):
+    mission(client, bea, "Despegue", steps=("Uno",))
+    assert week(client, bea)["shown"] is True  # Monday
+    clock.moment = MONDAY + timedelta(days=5)  # Saturday: not a day that counts
+    assert week(client, bea)["shown"] is False
+
+
+def test_a_won_week_is_shown_on_the_weekend_until_its_rocket_takes_off(client, bea, clock):
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    week(client, bea)
+    for n in range(5):
+        do_day(client, bea, item, clock, n)
+    clock.moment = MONDAY + timedelta(days=5)  # Saturday
+    assert week(client, bea)["shown"] is True
+    client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
+    assert week(client, bea)["shown"] is False
