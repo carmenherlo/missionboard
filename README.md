@@ -31,10 +31,22 @@ La app está en español; el código, los comentarios y los tests, en inglés.
   una voz que dice lo que toca, avisos antes de acabar cada parte, una cuenta atrás de
   diez segundos, cada niño con su misión, y música en las partes que se elijan. Una
   rutina puede sonar a una hora o lanzarse a mano.
-- **Zona de padres:** niños, misiones, rutinas (con un modo de prueba que va más
-  rápido y deja poner las misiones de los niños como se quiera), premios, tienda, el
-  código de padres, un registro de lo que pasa (exportable a CSV) y **copias de
-  seguridad**.
+- **Mi sitio:** tocando su avatar, cada niño entra en su paisaje: su casa, el buzón
+  (los avisos de sus pedidos), el taller del cohete, el observatorio (una estrella por
+  cada una que guarda, que forman constelaciones) y la tienda.
+- **Tienda y pedidos:** con sus estrellas, el niño hace un pedido; un camión se lo lleva
+  y en «Mis pedidos» ve cuándo llega. Los padres marcan el día y cuándo lo entregan.
+- **Rachas:** cada día con sus misiones hechas llena un depósito de combustible; con la
+  semana completa, el niño carga el cohete en el taller, despega y viaja a la luna a
+  por el premio de la semana.
+- **Zona de padres:** un menú lateral y, como pantalla principal, **Hoy**: cómo van los
+  niños, lo que hay pendiente de dar (premios y pedidos) y la semana de cada uno. Desde
+  el menú: niños, misiones, rutinas (con un modo de prueba que va más rápido y deja
+  poner las misiones de los niños como se quiera), estrellas, rachas, premios, tienda,
+  apariencia, avatares propios, el código de padres, un registro de lo que pasa
+  (exportable a CSV) y **copias de seguridad**.
+- **Avisos al móvil** (con Home Assistant): cada pedido llega al móvil de los padres con
+  botones para decir cuándo se entrega.
 - **Voz natural:** las frases se dicen con [Piper](https://github.com/OHF-Voice/piper1-gpl)
   en el servidor y se guardan; si no está, se usa la voz de la propia tablet.
 - **Funciona sin internet:** no depende de servicios externos; las letras y las
@@ -49,6 +61,10 @@ La app está en español; el código, los comentarios y los tests, en inglés.
 | Una rutina en marcha: el reloj, la parte de ahora y los niños | El premio del día: la ruleta |
 | <img src="screenshots/parents-mission.webp" alt="Zona de padres: editar una misión" width="420"> | <img src="screenshots/parents-routine.webp" alt="Zona de padres: editar una rutina" width="420"> |
 | Zona de padres: editar una misión | Zona de padres: editar una rutina |
+| <img src="screenshots/place.webp" alt="Mi sitio: el paisaje del niño con sus edificios" width="420"> | <img src="screenshots/shop.webp" alt="La tienda: lo que puede pedir con sus estrellas" width="420"> |
+| Mi sitio: el paisaje del niño con sus edificios | La tienda: lo que puede pedir con sus estrellas |
+| <img src="screenshots/garage.webp" alt="El taller del cohete: un depósito por día de la semana" width="420"> | <img src="screenshots/parents-today.webp" alt="Zona de padres · Hoy: cómo van los niños" width="420"> |
+| El taller del cohete: un depósito por día de la semana | Zona de padres · Hoy: cómo van los niños |
 
 ## Arrancarla
 
@@ -61,7 +77,7 @@ MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8
 ```
 
 Abre <http://localhost:8002/>. El código de padres por defecto es **1234**: cámbialo
-en *Configurar → Código de padres*. Una instalación nueva trae de ejemplo tres niños
+en *Zona de padres → Código de padres*. Una instalación nueva trae de ejemplo tres niños
 (Bea, Alex y Noa) y tres misiones (Despegue, Aterrizaje y Alunizaje), con sus rutinas y
 dos canciones, para cambiarlos a tu gusto.
 
@@ -108,7 +124,7 @@ día; las fechas y las horas de cada estación están en `settings.seasons`.
   convierte: al arrancar se guarda una copia de todo en `backups/` y se empieza con los
   ejemplos, conservando la biblioteca de canciones. Una copia de seguridad de entonces
   no se puede restaurar.
-- **Copias de seguridad:** *Configurar → Copia de seguridad* descarga todo en un
+- **Copias de seguridad:** *Zona de padres → Copia de seguridad* descarga todo en un
   `.zip` (configuración, historial, fotos y música) y restaura un archivo
   así: primero lo comprueba, y lo que había se guarda en `backups/`. Es la forma de
   llevar una familia a otro aparato.

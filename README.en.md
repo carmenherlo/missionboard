@@ -29,9 +29,21 @@ The interface is in Spanish; the code, comments and tests are in English.
   next, warnings before a part ends, a ten-second countdown, each kid with their
   mission, and music over chosen parts. Routines can ring at a time or be started by
   hand.
-- **Parents' zone:** children, missions, routines (with a trial mode that runs them
-  faster and lets you set the kids' missions at will), prizes, shop, the parents' code,
-  an event log (CSV export) and **backups**.
+- **My place:** tapping their avatar, each child goes into their own landscape: their
+  house, the mailbox (news about their orders), the rocket's workshop, the observatory
+  (a star for each one they keep, forming constellations) and the shop.
+- **Shop and orders:** with their stars, a child places an order; a truck takes it away
+  and "My orders" shows when it arrives. Parents set the day and mark it delivered.
+- **Streaks:** each day with its missions done fills a fuel tank; with the week
+  complete, the child loads the rocket in the workshop, takes off and flies to the moon
+  for the week's prize.
+- **Parents' zone:** a side menu and, as the main screen, **Today**: how the kids are
+  doing, what is waiting to be given (prizes and orders) and each one's week. From the
+  menu: children, missions, routines (with a trial mode that runs them faster and lets
+  you set the kids' missions at will), stars, streaks, prizes, shop, appearance, your
+  own avatars, the parents' code, an event log (CSV export) and **backups**.
+- **Phone notifications** (with Home Assistant): each order reaches the parents' phones,
+  with buttons to say when it will be handed over.
 - **Natural voice:** sentences are spoken with [Piper](https://github.com/OHF-Voice/piper1-gpl)
   on the server and cached; the tablet's own voice is the fallback.
 - **Works offline:** no external services at run time; fonts and images are bundled.
@@ -45,6 +57,10 @@ The interface is in Spanish; the code, comments and tests are in English.
 | A routine running: the clock, the part now and the kids | The daily prize: the wheel |
 | <img src="screenshots/parents-mission.webp" alt="Parents' zone: editing a mission" width="420"> | <img src="screenshots/parents-routine.webp" alt="Parents' zone: editing a routine" width="420"> |
 | Parents' zone: editing a mission | Parents' zone: editing a routine |
+| <img src="screenshots/place.webp" alt="My place: the child's landscape with its buildings" width="420"> | <img src="screenshots/shop.webp" alt="The shop: what they can order with their stars" width="420"> |
+| My place: the child's landscape with its buildings | The shop: what they can order with their stars |
+| <img src="screenshots/garage.webp" alt="The rocket's workshop: a fuel tank per day of the week" width="420"> | <img src="screenshots/parents-today.webp" alt="Parents' zone · Today: how the kids are doing" width="420"> |
+| The rocket's workshop: a fuel tank per day of the week | Parents' zone · Today: how the kids are doing |
 
 ## Quick start
 
@@ -57,7 +73,7 @@ MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8
 ```
 
 Open <http://localhost:8002/>. The default parents' code is **1234**: change it in
-*Configurar → Código de padres*. A new installation comes with three example children
+*Zona de padres → Código de padres*. A new installation comes with three example children
 (Bea, Alex and Noa) and three missions (Despegue, Aterrizaje and Alunizaje), with their
 routines and two songs, to change as you like.
 
@@ -103,7 +119,7 @@ the day; each season's dates and times are in `settings.seasons`.
 - **Starting from scratch:** a `config.yaml` from before family missions is not
   converted: on start-up everything is copied to `backups/` and the app starts with the
   examples, keeping the song library. A backup from then cannot be restored.
-- **Backups:** *Configurar → Copia de seguridad* downloads everything in one `.zip`
+- **Backups:** *Zona de padres → Copia de seguridad* downloads everything in one `.zip`
   (configuration, history, photos, songs) and restores such a file,
   checking it first and keeping what there was in `backups/`. It is the way to move
   a family to another device.
