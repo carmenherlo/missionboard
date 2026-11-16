@@ -272,7 +272,7 @@
   --on-song: #4a2a4a;
   --song-rail: 6px; /* the side of the C */
   --song-indent: 14px; /* the cards inside it move this far right */
-  --hold-to-close: 1.2s; /* "Cerrar" closes only when held this long (a quick tap by mistake does not) */
+  --routine-clock-size: 72px; /* a routine hidden on this device: its clock at the bottom */
 
   /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
   --celebration-duration: 6s; /* "¡Misión cumplida!" closes by itself after this */

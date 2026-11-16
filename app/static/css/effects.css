@@ -164,12 +164,12 @@
 @keyframes beat-0 { from { transform: scale(1.35); opacity: 0.4; } }
 @keyframes beat-1 { from { transform: scale(1.35); opacity: 0.4; } }
 
-/* "Cerrar", held: it fills up until it closes. */
-.routine__close--holding {
-  background: linear-gradient(var(--primary-soft), var(--primary-soft)) left / 0% 100% no-repeat, var(--surface);
-  animation: hold-fill var(--hold-to-close) linear forwards;
+/* A routine hidden on this device: its clock at the bottom beats, a ring going out of it. */
+.routine-banner--clock { animation: clock-beat var(--heartbeat) ease-in-out infinite; }
+@keyframes clock-beat {
+  0%, 100% { scale: 1; box-shadow: var(--shadow-lifted), 0 0 0 0 var(--primary-soft); }
+  50% { scale: 1.08; box-shadow: var(--shadow-lifted), 0 0 0 16px transparent; }
 }
-@keyframes hold-fill { to { background-size: 100% 100%, auto; } }
 
 /* Home (inicio-ajustes.html): a glow round each ring and a light behind each animal, beating
    together, the same in every child. Their colour comes from the child's colour, whichever it is. */

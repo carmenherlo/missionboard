@@ -193,7 +193,6 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
         "music": _music(routine, songs),
         "ends": hhmm(routine.ends),
         "stopped": bool(current.run["stopped_at"]),
-        "closed_phase": current.run["closed_phase"],
         "people": [
             {"child": public_child(p.child), "colors": avatars.tones(p.child.color), "mission": p.mission}
             for p in current.people

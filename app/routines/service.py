@@ -199,7 +199,8 @@ class RoutinesService:
         phase: str | None = None,
     ) -> None:
         """What the screen tells: it rang, someone stopped it, a part or the goal came, it was
-        closed, or (started by hand) it ended: its time is up then, so it is no longer on."""
+        hidden on a device (or shown again), or (started by hand) it ended: its time is up then,
+        so it is no longer on."""
         if kind == "ended":
             routine = next((r for r in self._routines.list() if r.id == routine_id), None)
             if routine is None:
@@ -226,11 +227,9 @@ class RoutinesService:
             if early:  # everyone signed in the last part: it is over for today (04/11)
                 self._runs.set(day, routine.id, finished_at=now)
             self._events.routine_did("routine_goal", routine.name, early=early)
-        elif kind == "closed":
-            self._runs.set(day, routine.id, closed_phase=phase)
+        elif kind == "closed":  # hidden on one device only (16/11): the others go on, nothing to keep
             self._events.routine_did("routine_closed", routine.name)
-        elif kind == "reopened":  # "Volver a la rutina": it shows again before its next part
-            self._runs.set(day, routine.id, closed_phase=None)
+        elif kind == "reopened":  # shown again on that device
             self._events.routine_did("routine_reopened", routine.name)
 
     def finish(self, routine_id: str) -> None:

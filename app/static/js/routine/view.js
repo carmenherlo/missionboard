@@ -14,17 +14,13 @@ export const inParents = () => location.hash.startsWith("#/parents");
 export function view(r) {
   function buildView() {
     const time = h("span", { class: "routine__time" });
-    // ✕ hides the window (it comes back at its next part); "Finalizar rutina" ends it
-    // for today, with the parents' code (04/11: "Cerrar" sounded like turning it off).
+    // ✕ asks (16/11): hide it on this device, or end it for everyone with the parents' code.
     const close = h("button", {
       type: "button", class: "icon-button icon-button--ghost routine__close",
-      "aria-label": t.routine.close, title: t.routine.close,
+      "aria-label": t.routine.close, title: t.routine.close, onclick: () => r.askClose(),
     }, icon("close"));
-    const holdHint = h("span", { class: "routine__hold-hint", hidden: true }, t.routine.holdToClose);
-    const finishButton = h("button", { type: "button", class: "btn", onclick: () => r.askCode() }, t.routine.finishRoutine);
     const musicButton = h("button", { type: "button", class: "btn routine__music", hidden: true, onclick: () => r.silenceSong() },
       icon("music"), t.routine.stopMusic);
-    r.holdToClose(close);
     const stopButton = h("button", { type: "button", class: "btn btn--primary routine__stop", onclick: r.stop },
       t.routine.stop);
     const what = h("h2", { class: "routine__what" });
@@ -44,24 +40,30 @@ export function view(r) {
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
         h("header", { class: "routine__top" }, fullscreenButton(), time, h("span", { class: "child-bar__spacer" }),
-          musicButton, soundButton(), finishButton, holdHint, close),
+          musicButton, soundButton(), close),
         trialTools,
         what, until, champions, dial, stopButton, tasks, next, transcript),
       h("aside", { class: "routine__side" }, people),
       over, finish);
-    // In the parents' zone, or once closed: a button to go back to it.
+    // In the parents' zone, or hidden here: a button to go back to it.
     const banner = h("button", { type: "button", class: "routine-banner", onclick: () => r.reopen() });
-    return { layer, banner, time, close, holdHint, finishButton, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
+    return { layer, banner, time, close, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
       trialTools, transcript };
   }
 
-  // Hidden while closed until its next part; in the parents' zone, only a banner.
+  // Hidden on this device: a clock beating at the bottom; in the parents' zone, a banner.
   function place() {
     const { layer, banner } = r.showing.view;
     const trial = Boolean(r.showing.data.trial);
-    layer.hidden = r.closed() || (inParents() && !trial);
-    banner.hidden = trial || (!r.closed() && !inParents());
-    banner.textContent = r.closed() ? t.routine.reopen : t.routine.banner;
+    const hidden = r.closed();
+    layer.hidden = hidden || (inParents() && !trial);
+    banner.hidden = trial || (!hidden && !inParents());
+    if (banner.dataset.hidden === String(hidden)) return;
+    banner.dataset.hidden = String(hidden);
+    banner.classList.toggle("routine-banner--clock", hidden);
+    banner.setAttribute("aria-label", hidden ? t.routine.reopen : t.routine.banner);
+    banner.title = hidden ? t.routine.reopen : "";
+    banner.replaceChildren(hidden ? icon("clock") : t.routine.banner);
   }
 
   function render(phase, time) {
@@ -70,8 +72,6 @@ export function view(r) {
     // Started by hand, the time of day does not matter: how long is left in total.
     view.time.textContent = !data.manual ? capital(itIs(time))
       : phase.kind === "part" ? t.routine.leftInTotal(countdownText((r.parts().at(-1).to - time) * 60)) : "";
-    view.holdHint.hidden = Date.now() >= r.showing.holdHintUntil;
-    view.finishButton.hidden = Boolean(data.trial) || Boolean(r.showing.finishing);
     view.stopButton.hidden = !r.showing.ringing;
     const toGo = phase.kind === "done" ? "" : countdownText((phase.to - time) * 60);
     let image = null;

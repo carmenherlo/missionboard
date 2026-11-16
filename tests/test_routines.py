@@ -315,10 +315,11 @@ def test_everyone_signed_early_it_is_over_for_today(client, morning):
     assert current(client) is None
 
 
-def test_closed_until_its_next_part(client, morning):
+def test_hidden_on_one_device_only_goes_on_everywhere_else(client, morning):
     note(client, morning, "closed", phase="part-2")
-    assert current(client)["closed_phase"] == "part-2"
-    assert descriptions(client, limit=1) == ["Cerraron la rutina «Despegue»"]
+    assert current(client) is not None
+    assert "closed_phase" not in current(client)
+    assert descriptions(client, limit=1) == ["Escondieron la rutina «Despegue» en un aparato"]
 
 
 def test_finished_for_the_day_by_a_parent(client, morning, clock):

@@ -35,7 +35,8 @@ export function phases(r) {
 
   const keyOf = (phase) => (phase.kind === "part" ? `part-${phase.index}` : phase.kind);
 
-  const closed = () => r.showing.data.closed_phase === r.showing.phaseKey;
+  // Hidden on this device (closing.js): silent and out of sight here, until shown again.
+  const closed = () => Boolean(r.showing.hidden);
 
   // Checking the missions (or about to), and every kid has done theirs: the goal now.
   function allDoneChecking(time) {

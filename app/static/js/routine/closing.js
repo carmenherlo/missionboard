@@ -1,65 +1,73 @@
-// Closing it: "Cerrar" (held a moment) hides it until its next part, "Volver a la
-// rutina" brings it back, and "Finalizar" ends it for today, with the parents' code.
+// Closing it (16/11): ✕ asks what to do. "Esconder en este aparato" hides it here only,
+// silent, with a clock beating at the bottom to bring it back (the other tablets go on);
+// "Finalizar rutina para todos" ends it for today everywhere, with the parents' code.
 import { api } from "../api.js";
 import { codeField } from "../components/code-input.js";
 import { quiet } from "../components/speech.js";
 import { h } from "../dom.js";
 import { t } from "../texts.js";
-import { tokenMs } from "../effects/motion.js";
 import { inParents } from "./view.js";
 
-const HOLD_HINT_MS = 2500; // a quick tap on "Cerrar": "Mantén pulsado para cerrar", this long
+// This device's memory of the routine hidden today: "<routine id>|<day>".
+const HIDDEN_KEY = "missionboard.routineHidden";
+
+function readHidden() {
+  try {
+    return localStorage.getItem(HIDDEN_KEY);
+  } catch {
+    return null; // a private window: it is only remembered while the page is open
+  }
+}
+
+function writeHidden(value) {
+  try {
+    if (value) localStorage.setItem(HIDDEN_KEY, value);
+    else localStorage.removeItem(HIDDEN_KEY);
+  } catch {
+    // nothing to do
+  }
+}
 
 export function closing(r) {
-  // "Cerrar" is held a moment: a kid's tap by mistake hid the routine (03/11).
-  // A trial and "Finalizar" (which asks for the code) still go with one tap,
-  // and so does the keyboard.
-  function holdToClose(button) {
-    let timer = null;
-    const needsHold = () => !r.showing.data.trial;
-    const release = () => {
-      clearTimeout(timer);
-      timer = null;
-      button.classList.remove("routine__close--holding");
-    };
-    button.addEventListener("pointerdown", () => {
-      if (!needsHold()) return;
-      button.classList.add("routine__close--holding");
-      timer = setTimeout(() => {
-        release();
-        r.closeOrFinish();
-      }, tokenMs("--hold-to-close", 1200));
-    });
-    for (const type of ["pointerup", "pointerleave", "pointercancel"]) {
-      button.addEventListener(type, () => {
-        if (!timer) return;
-        release();
-        r.showing.holdHintUntil = Date.now() + HOLD_HINT_MS;
-        r.tick();
-      });
-    }
-    button.addEventListener("click", (event) => {
-      if (!needsHold() || event.detail === 0) r.closeOrFinish();
-    });
-  }
+  const hiddenKey = () => `${r.showing.data.id}|${r.showing.data.day}`;
 
-  function closeOrFinish() {
-    if (r.showing.data.trial || r.showing.finishing) { // a trial, or its goal already celebrated
+  // Hidden here earlier today (the page reloaded): still hidden.
+  const wasHidden = () => !r.showing.data.trial && readHidden() === hiddenKey();
+
+  // ✕: a trial, or its goal already celebrated, just goes; otherwise, the choice.
+  function askClose() {
+    if (r.showing.data.trial || r.showing.finishing) {
       r.end();
       return;
     }
-    r.stopRinging();
-    quiet();
-    r.showing.data.closed_phase = r.showing.phaseKey;
-    r.note("closed", { phase: r.showing.phaseKey });
-    r.place();
+    const cancel = () => r.showing.view.finish.replaceChildren();
+    r.showing.view.finish.replaceChildren(h("div", { class: "routine__code", role: "dialog", "aria-modal": "true" },
+      h("h2", {}, t.routine.closeTitle),
+      h("button", { type: "button", class: "btn btn--primary routine__choice", onclick: () => { cancel(); hideHere(); } },
+        t.routine.hideHere),
+      h("p", { class: "routine__choice-hint" }, t.routine.hideHereHint),
+      h("button", { type: "button", class: "btn routine__choice", onclick: askCode }, t.routine.finishForAll),
+      h("p", { class: "routine__choice-hint" }, t.routine.finishForAllHint),
+      h("div", { class: "form-actions" }, h("button", { type: "button", class: "btn", onclick: cancel }, t.common.cancel))));
   }
 
-  // "Volver a la rutina": closed, it shows again now (on every device); from the
-  // parents' zone, to the home screen with it on top.
+  function hideHere() {
+    r.stopRinging();
+    quiet();
+    r.showing.mission?.close();
+    r.showing.hidden = true;
+    writeHidden(hiddenKey());
+    r.note("closed", { phase: r.showing.phaseKey });
+    r.place();
+    r.tick(); // its songs stop now
+  }
+
+  // The beating clock (or "Rutina en marcha · Abrir", in the parents' zone): shown again here;
+  // from the parents' zone, to the home screen with it on top.
   function reopen() {
-    if (r.closed()) {
-      r.showing.data.closed_phase = null;
+    if (r.showing.hidden) {
+      r.showing.hidden = false;
+      writeHidden(null);
       r.note("reopened");
     }
     if (inParents()) location.hash = "#/";
@@ -67,7 +75,7 @@ export function closing(r) {
     r.tick();
   }
 
-  // "Finalizar": whoever is in charge ends it for today, with the parents' code.
+  // "Finalizar rutina para todos": whoever is in charge ends it for today, with the parents' code.
   function askCode() {
     const { field, input } = codeField(t.routine.code);
     const error = h("p", { class: "form-error", role: "alert" });
@@ -92,5 +100,5 @@ export function closing(r) {
     input.focus();
   }
 
-  return { holdToClose, closeOrFinish, reopen, askCode };
+  return { wasHidden, askClose, hideHere, reopen, askCode };
 }

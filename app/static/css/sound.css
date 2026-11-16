@@ -1,0 +1,50 @@
+/* Sound: the volume panel (sound-panel.js, 🔊 of a routine) and, until the first tap,
+   the notice asking for it (keep-awake.js). */
+
+.sound-control {
+  position: relative;
+}
+
+.sound-panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 220px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-lifted);
+}
+
+.sound-panel[hidden] {
+  display: none;
+}
+
+.sound-panel__row {
+  display: grid;
+  gap: var(--space-1);
+  font-weight: 700;
+}
+
+/* Until the first tap, sound is blocked by the browser: a notice asks for it,
+   over everything (a routine ringing silently would not wake anybody). */
+.sound-notice {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-3);
+  z-index: 60;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 2 * var(--space-3));
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+  box-shadow: var(--shadow-lifted);
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+}

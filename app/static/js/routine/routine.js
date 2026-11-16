@@ -116,11 +116,12 @@ export function startRoutines() {
       // and how they were at each moment, so "Atrás" puts them back.
       pretend: new Map(), // child id → Set of step ids
       pretendLog: [], // [{ time, pretend }]
-      holdHintUntil: 0, // a quick tap on "Cerrar": until then, it says to hold it
+      hidden: false, // hidden on this device (closing.js)
       player: musicPlayer(),
       musicOff: new Set(), // songs silenced today ("Parar", or ♪)
       ticker: setInterval(r.tick, TICK_MS),
     };
+    r.showing.hidden = r.wasHidden();
     document.body.append(view.layer, view.banner);
     if (data.trial) r.startPretending();
     r.renderTrialTools();

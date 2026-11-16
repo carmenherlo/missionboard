@@ -24,13 +24,18 @@ export function heard(r) {
     r.renderPeople(); // "firmar" or not: who beats
     if (phase.kind === "part" && before !== null) r.note("part", { part: phase.index });
     if (phase.kind === "done") {
+      if (r.closed()) { // hidden on this device: it ends quietly (the others celebrate)
+        if (r.showing.data.manual) r.note("ended", { early: r.showing.done === "signed" });
+        r.end();
+        return;
+      }
       if (r.showing.data.manual && before !== null) r.finish(counted);
       else if (r.showing.data.goal && (before?.startsWith("part-") || before === "check")) r.goalAtTheEnd(time, counted);
       else if (r.songLeftMs() > 0) r.songToTheEnd(); // the goal's song is not cut
       else r.end();
       return;
     }
-    if (r.closed()) return; // hidden until its next part
+    if (r.closed()) return; // hidden on this device: silent
     if (counted) {
       sounds.countdown(true);
       const id = r.showing.data.id;

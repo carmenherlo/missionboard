@@ -18,7 +18,7 @@ SKIPPED = ("static/libraries/", "static/css/themes/")
 # Over the limit today; to split in the cleanup (1b–1d).
 TOO_BIG = {
     "static/css/effects.css": 641,
-    "static/css/routine.css": 465,
+    "static/css/routine.css": 432,
     "routines/api.py": 473,  # +2 import lines when repository.py was split (1d)
     "static/js/screens/parents/routine-edit.js": 442,
     "static/css/tokens.css": 432,  # +2: the parents' menu width and its scrim (14/11)

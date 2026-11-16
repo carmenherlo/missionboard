@@ -119,8 +119,8 @@ class RoutinesRepository:
 
 
 class RunsRepository:
-    """What happened to each routine each day: started, stopped (the alarm),
-    closed (until its next part) and finished (for the day)."""
+    """What happened to each routine each day: started, stopped (the alarm) and finished
+    (for the day). `closed_phase` is no longer set (16/11: hidden on one device only)."""
 
     FIELDS = ("started_at", "stopped_at", "closed_phase", "finished_at", "kids")
 
