@@ -191,8 +191,14 @@
   padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
 }
 
+/* A card whose name must stay readable: what is on its right (− / +, the kids) goes under it,
+   on the right, when both do not fit (a phone). After .row--compact, so it wins. */
+.row--wrap { flex-wrap: wrap; }
+.row--wrap .row__text { min-width: 8rem; }
+.row--wrap .row__text + * { margin-left: auto; }
+
 .row--add {
-  flex-wrap: nowrap;
+  flex-wrap: wrap; /* too narrow for both (a phone): the button goes under the text */
   padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
   border: 1px dashed var(--outline);
   background: transparent;
@@ -200,7 +206,7 @@
 }
 
 .row--add input {
-  flex: 1;
+  flex: 1 1 8rem;
   min-width: 0;
   border: 0;
   background: transparent;

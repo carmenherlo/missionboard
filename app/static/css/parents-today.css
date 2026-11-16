@@ -240,7 +240,7 @@
   margin-top: var(--space-1);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 859.98px) {
   .board {
     grid-template-columns: 1fr;
     padding: var(--space-2);

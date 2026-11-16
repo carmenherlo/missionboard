@@ -34,7 +34,7 @@ export async function viewShopList() {
     list.replaceChildren(...shown.map(itemRow));
   }
   function itemRow(item) {
-    return h("li", { class: "row row--sortable row--compact row--covered", "data-id": item.id }, // the whole card opens it
+    return h("li", { class: "row row--sortable row--compact row--covered row--wrap", "data-id": item.id }, // the whole card opens it
       h("span", { class: "drag-handle", "aria-label": t.missions.dragLabel }, icon("drag")),
       imageThumb(item.image_url, { size: "sm", label: item.text, suggested: item.image_suggested }),
       h("a", {

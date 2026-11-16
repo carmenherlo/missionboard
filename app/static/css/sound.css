@@ -33,14 +33,13 @@
    over everything (a routine ringing silently would not wake anybody). */
 .sound-notice {
   position: fixed;
-  left: 50%;
-  bottom: var(--space-3);
+  /* centred with the whole width to grow into (with left: 50% it only had half: a tall blob on a phone) */
+  inset: auto var(--space-3) var(--space-3);
   z-index: 60;
-  transform: translateX(-50%);
-  max-width: calc(100vw - 2 * var(--space-3));
-  margin: 0;
+  width: fit-content;
+  margin: 0 auto;
   padding: var(--space-2) var(--space-4);
-  border-radius: 999px;
+  border-radius: var(--radius-lg);
   background: var(--accent-soft);
   color: var(--on-accent-soft);
   box-shadow: var(--shadow-lifted);
