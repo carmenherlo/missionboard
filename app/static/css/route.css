@@ -376,9 +376,11 @@
   pointer-events: none; /* the finger is on the mission, never on its picture */
 }
 
-/* A phone: bigger rings (the height is there; the width would leave them tiny). */
-@media (max-width: 599.98px) {
+/* A phone sideways: the rings take more of the little height there is. */
+@media (max-height: 599.98px) {
   .child-screen:not(.route-preview) {
-    --drum-card: min(300px, 40vh, 46vw);
+    --drum-card: min(300px, 50vh, 46vw);
   }
+
+  .drum-view { padding-bottom: 5rem; }
 }

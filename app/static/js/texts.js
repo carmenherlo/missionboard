@@ -73,6 +73,7 @@ export const t = {
     great: "¡Bien!",
   },
   // The child's place (mi-sitio.html): their avatar in the middle and four buildings.
+  turnPhone: "Gira el móvil",
   place: {
     slide: { left: "Ver lo de la izquierda", right: "Ver lo de la derecha" },
     open: "Mi sitio",

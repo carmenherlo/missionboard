@@ -264,3 +264,14 @@ span.week-mini { cursor: default; }
 .garage-layer__line { flex-wrap: wrap; justify-content: center; }
 
 .garage-layer__line .btn { white-space: nowrap; }
+
+/* A phone sideways: what is said goes top right, small, off the tanks. */
+@media (max-height: 599.98px) {
+  .garage-layer__line {
+    inset: var(--space-3) var(--space-3) auto auto;
+    max-width: 55%;
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-md);
+  }
+}

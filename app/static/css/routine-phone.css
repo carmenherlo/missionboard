@@ -1,0 +1,36 @@
+/* The routine going on, on a phone sideways (turn-phone.js): little height, so smaller
+   words and a smaller least clock; the clock still grows into what is left. Apart from
+   routine.css, which cannot grow any more. */
+@media (max-height: 599.98px) {
+  .routine-layer {
+    --clock-size: 140px;
+    --routine-side-width: 140px;
+  }
+
+  .routine {
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .routine__time {
+    font-size: var(--text-lg);
+  }
+
+  .routine__what {
+    font-size: 1.75rem;
+  }
+
+  .routine__what img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .routine__until,
+  .routine__task {
+    font-size: var(--text-md);
+  }
+
+  .routine-kid .avatar {
+    --size: 64px;
+  }
+}

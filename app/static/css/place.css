@@ -332,3 +332,9 @@
 .place-slide--right { right: var(--space-2); }
 .place-slide[hidden] { display: none; }
 .place-slide svg { width: 60%; height: 60%; }
+
+/* A phone sideways (short and very wide): all the cut from the sky, so the names on the
+   ground stay in sight. */
+@media (max-height: 599.98px) {
+  .place__world { bottom: 0; }
+}

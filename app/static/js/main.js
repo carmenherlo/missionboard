@@ -39,6 +39,7 @@ import { viewMissionsHome } from "./screens/parents/missions-home.js";
 import { viewStepEdit, viewTaskEdit } from "./screens/parents/item-edit.js";
 import { startKeepAwake } from "./components/keep-awake.js";
 import { startRest } from "./components/rest.js";
+import { startTurnPhone } from "./components/turn-phone.js";
 import { startRoutines } from "./routine/routine.js";
 import { t } from "./texts.js";
 
@@ -143,4 +144,5 @@ window.addEventListener("hashchange", route);
 route();
 startRoutines(); // the routine going on, over any screen (rutinas-1.html)
 startKeepAwake(); // sound allowed and the screen on, for the routines
+startTurnPhone(); // a phone: the children's screens sideways
 startRest(); // the screen black when nobody touches it, on the home screen (reloj.html)

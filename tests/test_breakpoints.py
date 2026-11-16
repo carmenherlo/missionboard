@@ -11,12 +11,12 @@ from pathlib import Path
 CSS_DIR = Path(__file__).resolve().parent.parent / "app" / "static" / "css"
 
 BREAKPOINTS = {
-    600: "a phone: one column where the tablet has two",
+    600: "a phone: narrow upright, short sideways (max-height)",
     860: "two columns of panels in the parents' screens",
     1000: "the parents' menu always open on a side",
 }
 
-WIDTH = re.compile(r"\((min|max)-width:\s*([\d.]+)px\)")
+WIDTH = re.compile(r"\((min|max)-(?:width|height):\s*([\d.]+)px\)")
 
 
 def allowed(kind: str, value: float) -> bool:

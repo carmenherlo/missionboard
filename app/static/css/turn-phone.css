@@ -1,0 +1,53 @@
+/* A phone upright, on the children's screens: a sign asking to turn it (turn-phone.js).
+   Over everything (also a routine); never in the parents' zone. */
+.turn-phone {
+  display: none;
+}
+
+/* pointer: coarse: a finger; a narrow window on a computer is not asked to turn */
+@media (max-width: 599.98px) and (orientation: portrait) and (pointer: coarse) {
+  body:not(.in-parents) .turn-phone {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--bg);
+    color: var(--text);
+    text-align: center;
+  }
+}
+
+.turn-phone__icon {
+  display: grid;
+  width: 120px;
+  height: 120px;
+  color: var(--primary);
+}
+
+.turn-phone__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.turn-phone__text {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+/* The phone turns sideways, again and again (here: effects.css cannot grow any more). */
+@media (prefers-reduced-motion: no-preference) {
+  .turn-phone__icon {
+    animation: turn-phone 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes turn-phone {
+  0%, 25% { rotate: 0deg; }
+  50%, 90% { rotate: -90deg; }
+  100% { rotate: 0deg; }
+}
