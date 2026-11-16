@@ -50,7 +50,7 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
       h("section", { class: "place" },
         h("div", { class: "place__world" },
           h("img", { class: "place__picture", src: SCENE, alt: "" }),
-          spot("home", t.place.home, () => say(t.place.homeSay)),
+          spot("home", t.place.home, openHome),
           spot("mail", t.place.mailbox, openMail, newsBadge(news)),
           week.on && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
           spot("sky", t.place.sky, openSky),
@@ -81,6 +81,16 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     [day, week, orders] = await load();
     draw();
     centre(screen.querySelector(".place"));
+  }
+
+  // Their house, under construction for now: it will be theirs to decorate.
+  function openHome() {
+    const { body } = placeSheet(screen, {
+      title: t.place.homeTitle, picture: `${FLUENT}/house.svg`, colors: day.colors, onClose: back,
+    });
+    body.append(h("button", { type: "button", class: "place-home", onclick: () => say(t.place.homeSay) },
+      img("building-construction", "place-home__picture"), t.place.homeSay));
+    say(t.place.homeSay);
   }
 
   function openShop() {

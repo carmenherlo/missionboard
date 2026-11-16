@@ -109,6 +109,7 @@
   --route-link-width: 6px; /* the thin grey line that joins them */
   --route-walked: color-mix(in srgb, var(--muted) 45%, white); /* the line up to the focus */
   --route-label-bg: rgb(255 255 255 / 0.85); /* names over the illustration need a pill */
+  --place-label-bg: rgb(255 255 255 / 0.6); /* the buildings' names in Mi sitio: lighter (16/11) */
   --child-avatar-size: 112px; /* the child's avatar at the top: "this is your screen" */
 
   /* Background: the illustration of the moment of the day under a white veil (no tint of
@@ -171,6 +172,7 @@
   --order-home-ground: #e3f5e4; /* what they have: home, green */
   --order-home-edge: #9fd3a3;
   /* The child's place (mi-sitio.html): their avatar in the middle, a building at each corner. */
+  --place-home-size: min(40vh, 320px); /* their house, under construction (place-sheet.js) */
   --place-avatar-size: 8cqw; /* their avatar in the clearing, in % of the picture's width (cqw) */
   --place-arrive: 700ms; /* their avatar arriving in the middle */
   --news-size: 44%; /* the sign of something new, of the avatar it is on */
@@ -223,7 +225,8 @@
   --coming-1: #9fb3ff; /* the parts still to come, around the dial */
   --coming-2: #d5ddff;
   --clock-gone: rgb(255 255 255 / 0.7); /* what has gone by of the stretch, faded */
-  --clock-size: min(46vh, 420px);
+  --clock-size: min(46vh, 420px); /* the least; it grows into the free height */
+  --clock-max-size: 720px;
   /* Home (05/11: bigger, more inviting): each child's avatar grows with the screen,
      up to three side by side on a tablet in landscape. */
   --home-avatar-size: clamp(150px, min(24vw, 38vh), 300px);

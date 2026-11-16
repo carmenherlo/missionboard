@@ -1,0 +1,26 @@
+/* The clock face of a routine (clock-face.js), also on the home clock: its stretches,
+   hands and numbers. Colours in tokens.css ("Routines"). */
+
+.clock-face__dial { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.clock-face__stretch--1 { fill: var(--stretch-1); }
+.clock-face__stretch--2 { fill: var(--stretch-2); }
+.clock-face__stretch--3 { fill: var(--stretch-3); }
+.clock-face__stretch--4 { fill: var(--stretch-4); }
+.clock-face__waiting { fill: var(--waiting); }
+.clock-face__gone { fill: var(--clock-gone); }
+.clock-face__coming { fill: none; stroke-width: 5; stroke-linecap: round; }
+.clock-face__coming--1 { stroke: var(--coming-1); }
+.clock-face__coming--2 { stroke: var(--coming-2); }
+.clock-face__number {
+  fill: var(--text);
+  font: 800 15px var(--font);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.clock-face__tick { stroke: var(--muted); stroke-width: 1.2; }
+.clock-face__hour,
+.clock-face__minute { stroke: var(--text); stroke-linecap: round; }
+.clock-face__hour { stroke-width: 6; }
+.clock-face__minute { stroke-width: 4; }
+.clock-face__second { stroke: var(--danger); stroke-width: 1.5; }
+.clock-face__pin { fill: var(--text); }

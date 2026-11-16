@@ -1,11 +1,13 @@
-// A building of the child's place, open over it (mi-sitio.html): the same panel as a
-// mission or the shop, with the building's picture, its name and ✕.
-import { icon } from "../../icons.js";
+// A building of the child's place, open over it (mi-sitio.html): the whole screen, as the
+// rocket's workshop (16/11), with "Mi sitio" to go back, then the building's picture and
+// name (or what `top` brings, as the shop's stars and tabs). The place shows blurred behind.
 import { h } from "../../dom.js";
 import { t } from "../../texts.js";
 
+const FLUENT = "static/libraries/fluent";
+
 // Returns { body, close }: the screen fills the body; close() takes it away and calls onClose.
-export function placeSheet(container, { title, picture, colors, onClose }) {
+export function placeSheet(container, { title, picture, top, colors, onClose }) {
   const { color, soft, strong, on } = colors;
   const body = h("div", { class: "stars-body" });
   const close = () => {
@@ -13,17 +15,17 @@ export function placeSheet(container, { title, picture, colors, onClose }) {
     onClose?.();
   };
   const layer = h("div", {
-    class: "mission-layer",
+    class: "mission-layer place-layer",
     style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
-    onclick: (e) => { if (e.target === e.currentTarget) close(); },
   },
-    h("section", { class: "mission-sheet", role: "dialog", "aria-modal": "true", "aria-label": title },
+    h("section", { class: "mission-sheet place-layer__sheet", role: "dialog", "aria-modal": "true", "aria-label": title },
       h("header", { class: "mission-sheet__bar" },
-        h("img", { class: "place-sheet__picture", src: picture, alt: "" }),
-        h("h2", { class: "mission-sheet__title" }, title),
-        h("span", { class: "child-bar__spacer" }),
-        h("button", { type: "button", class: "icon-button mission-sheet__close", "aria-label": t.child.close, onclick: close },
-          icon("close"))),
+        h("button", { type: "button", class: "btn btn--primary btn--big place-back", onclick: close },
+          h("img", { class: "place-back__picture", src: `${FLUENT}/rocket.svg`, alt: "" }), t.place.backHere),
+        ...(top ?? [
+          h("img", { class: "place-sheet__picture", src: picture, alt: "" }),
+          h("h2", { class: "mission-sheet__title" }, title),
+        ])),
       body));
   container.append(layer);
   return { body, close };

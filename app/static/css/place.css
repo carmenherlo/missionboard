@@ -105,12 +105,40 @@
 /* Its name, in a pill under it (the workshop's, on its launch pad: their avatar is below). */
 .place-spot__label {
   position: absolute;
+  background: var(--place-label-bg);
   left: 50%;
   top: calc(100% + var(--space-1));
   translate: -50% 0;
 }
 
 .place-spot--garage .place-spot__label { top: auto; bottom: 8%; }
+
+/* A building open: the whole screen, as the workshop (place-sheet.js); the place, blurred behind. */
+.place-layer { padding: 0; }
+
+.place-layer__sheet { border-radius: 0; }
+
+/* Their house, under construction. */
+.place-home {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-4);
+  flex: 1;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+
+.place-home__picture {
+  width: var(--place-home-size);
+  height: var(--place-home-size);
+}
 
 .place-sheet__picture {
   width: 56px;
@@ -278,3 +306,6 @@
   font-weight: 700;
   text-align: center;
 }
+
+/* On a phone, the shop's stars and tabs go under "Mi sitio". */
+.place-layer .mission-sheet__bar { flex-wrap: wrap; }

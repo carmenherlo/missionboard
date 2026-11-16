@@ -84,6 +84,8 @@
   display: none;
 }
 
+.top-bar .fullscreen-button { margin-left: auto; }
+
 /* Wide: the menu at the side, the screen beside it, no ☰. */
 @media (min-width: 1000px) {
   #app:has(> .drawer) {
@@ -94,8 +96,15 @@
     display: none;
   }
 
-  .top-bar:not(:has(> :not(.menu-button))) {
+  .top-bar:not(:has(> :not(.menu-button, .fullscreen-button))) {
     min-height: var(--space-4); /* nothing in the bar: only some room above the title */
+  }
+
+  /* full screen in the corner, so the bar can stay that low */
+  .top-bar .fullscreen-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
   }
 }
 

@@ -1,4 +1,4 @@
-// Mis estrellas: the shop and the child's orders, in a panel over their route
+// Mis estrellas: the shop and the child's orders, a screen of their place
 // (tienda-2.html, concept A). Buying is ordering: the stars fly to it, it goes into
 // a box and a truck takes it. "Mis pedidos" shows each order on the road from the
 // shop to home, and how many nights are left; when a parent hands it over, the
@@ -11,6 +11,7 @@ import { h } from "../../dom.js";
 import { bringHome, sendOff } from "../../effects/delivery.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
+import { placeSheet } from "./place-sheet.js";
 import { picture } from "./ring.js";
 
 const FLUENT = "static/libraries/fluent";
@@ -25,25 +26,10 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
   let view = await api("GET", base);
   let showing = tab;
   const head = h("div", { class: "shop-head" });
-  const body = h("div", { class: "stars-body" });
-  const close = () => {
-    layer.remove();
-    onClose(view);
-  };
-  const { color, soft, strong, on } = view.colors;
-  const layer = h("div", {
-    class: "mission-layer",
-    style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
-    onclick: (e) => { if (e.target === e.currentTarget) close(); },
-  },
-    h("section", { class: "mission-sheet", role: "dialog", "aria-modal": "true", "aria-label": t.shop.myStars },
-      h("header", { class: "mission-sheet__bar" },
-        avatar(view.child, { size: "md" }),
-        head,
-        h("span", { class: "child-bar__spacer" }),
-        h("button", { type: "button", class: "icon-button mission-sheet__close", "aria-label": t.child.close, onclick: close },
-          icon("close"))),
-      body));
+  const { body } = placeSheet(container, {
+    title: t.shop.myStars, colors: view.colors, onClose: () => onClose(view),
+    top: [avatar(view.child, { size: "md" }), head],
+  });
 
   const waiting = () => view.orders.filter((o) => o.state !== "done").length;
 
@@ -204,7 +190,6 @@ export async function openStars(container, childId, { onClose, tab = "shop" }) {
       h("button", { type: "button", class: "btn btn--primary spin-button", onclick: () => showOrders() }, t.shop.great));
   }
 
-  container.append(layer);
   if (showing === "orders") showOrders();
   else showShop();
 }
