@@ -20,6 +20,7 @@ const DEPTH = { much: 900, normal: 1300, little: 2200 }; // perspective, in px, 
 const GAP = 40; // px of air between two neighbours, at the narrowest
 const HIDDEN_FROM = 80; // degrees: farther round than this, a stop is not seen
 const PAW_EVERY = 60; // px of the way for each footprint
+const NEIGHBOUR_AT = 0.42; // at most this much of the width from the middle, a neighbour's centre
 const MOVED = 6; // px: a finger that moved more than this was dragging, not tapping
 
 // at: the stop to start on (kept by the screen across its refreshes); onTurn(i): told when it stops.
@@ -41,7 +42,9 @@ export function wheelView(day, handlers, { at = null, onTurn = () => {}, control
   let shown = null; // the stop in the middle, as last drawn
   let frame = 0;
 
-  const radius = () => WIDTH[look.width] * (card / 2 + GAP) / Math.tan((step * Math.PI) / 360);
+  // As the setting asks, but the neighbours always peep in from the sides (a phone: 16/11).
+  const radius = () => Math.min(WIDTH[look.width] * (card / 2 + GAP) / Math.tan((step * Math.PI) / 360),
+    (view.clientWidth * NEIGHBOUR_AT) / Math.sin((Math.min(step, 90) * Math.PI) / 180));
   const maxRot = () => (n - 1) * step;
   const middle = () => {
     const i = Math.round(rot / step);

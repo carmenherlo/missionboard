@@ -375,3 +375,10 @@
   -webkit-user-drag: none;
   pointer-events: none; /* the finger is on the mission, never on its picture */
 }
+
+/* A phone: bigger rings (the height is there; the width would leave them tiny). */
+@media (max-width: 599.98px) {
+  .child-screen:not(.route-preview) {
+    --drum-card: min(300px, 40vh, 46vw);
+  }
+}
