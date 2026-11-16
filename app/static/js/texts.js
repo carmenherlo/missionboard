@@ -457,7 +457,7 @@ export const t = {
     dueTomorrow: "Mañana",
     dueOther: "Otro día",
     dueOn: (day) => `El ${day}`,
-    given: "Entregado",
+    given: "Marcar como entregado",
     notifyTitle: "Avisar al móvil",
     notifyOn: "Avisar de cada pedido al móvil, con botones para decir cuándo llega o que ya se lo has dado",
     notifyOffSwitch: "Sin avisos de los pedidos al móvil",

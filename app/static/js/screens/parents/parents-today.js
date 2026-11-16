@@ -58,7 +58,7 @@ function toGiveCard(first, firstOrders, status) {
     draw();
   }
   const given = (url) => h("button", { type: "button", class: "btn btn--primary", onclick: () => change(api("POST", url)) },
-    icon("check"), t.shop.given);
+    t.shop.given);
   const prizeRow = (picture, text, detail, url) => h("li", { class: "row row--compact" },
     imageThumb(picture, { size: "sm", label: text }),
     h("span", { class: "row__text" }, text, h("span", { class: "row__detail" }, detail)),

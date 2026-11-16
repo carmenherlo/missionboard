@@ -45,5 +45,5 @@ export function orderRow(order, change) {
       h("button", {
         type: "button", class: "btn btn--primary",
         onclick: () => change(api("POST", `api/orders/${order.id}/deliver`)),
-      }, icon("check"), t.shop.given)));
+      }, t.shop.given)));
 }
