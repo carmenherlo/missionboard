@@ -309,3 +309,26 @@
 
 /* On a phone, the shop's stars and tabs go under "Mi sitio". */
 .place-layer .mission-sheet__bar { flex-wrap: wrap; }
+
+/* A phone upright: an arrow on each side that can still slide (place.js). */
+.place-slide {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: var(--icon-button);
+  height: var(--icon-button);
+  translate: 0 -50%;
+  border: 0;
+  border-radius: 50%;
+  background: var(--place-label-bg);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.place-slide--left { left: var(--space-2); }
+.place-slide--right { right: var(--space-2); }
+.place-slide[hidden] { display: none; }
+.place-slide svg { width: 60%; height: 60%; }

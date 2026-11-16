@@ -74,6 +74,7 @@ export const t = {
   },
   // The child's place (mi-sitio.html): their avatar in the middle and four buildings.
   place: {
+    slide: { left: "Ver lo de la izquierda", right: "Ver lo de la derecha" },
     open: "Mi sitio",
     back: "Mis misiones",
     backHere: "Mi sitio",

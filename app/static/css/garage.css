@@ -90,16 +90,15 @@ span.week-mini { cursor: default; }
 /* What is said, written under it: a pill at the bottom. */
 .garage-layer__line {
   position: absolute;
-  left: 50%;
-  bottom: var(--space-5);
-  translate: -50% 0;
+  /* centred with the whole width to grow into (left: 50% left it half: a tall blob on a phone) */
+  inset: auto var(--space-3) var(--space-5);
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  max-width: 90%;
-  margin: 0;
+  width: fit-content;
+  margin: 0 auto;
   padding: var(--space-2) var(--space-5);
-  border-radius: 999px;
+  border-radius: var(--radius-lg);
   background: var(--route-label-bg);
   box-shadow: var(--shadow-lifted);
   font-size: var(--text-xl);

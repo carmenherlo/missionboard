@@ -12,6 +12,7 @@ import { sounds } from "../../components/sound.js";
 import { say } from "../../components/speech.js";
 import { confetti } from "../../effects/confetti.js";
 import { h, render } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { openMailbox } from "./mailbox.js";
 import { placeSheet } from "./place-sheet.js";
@@ -37,6 +38,18 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     screen.setAttribute("style",
       `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`);
     const news = newsOf(orders);
+    const was = screen.querySelector(".place")?.scrollLeft; // drawn again: it stays where it was
+    const place = h("section", { class: "place" },
+        h("div", { class: "place__world" },
+          h("img", { class: "place__picture", src: SCENE, alt: "" }),
+          spot("home", t.place.home, openHome),
+          spot("mail", t.place.mailbox, openMail, newsBadge(news)),
+          week.on && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
+          spot("sky", t.place.sky, openSky),
+          day.shop_url && spot("shop", t.place.shop, openShop),
+          h("button", { type: "button", class: "place__me", onclick: () => say(t.child.hello(day.child.name)) },
+            avatar(day.child, { size: "lg", fx: "shine" }),
+            h("span", { class: "place__name" }, day.child.name))));
     screen.replaceChildren(
       h("header", { class: "child-bar place-bar" },
         h("a", { class: "btn btn--primary btn--big place-back", href: `#/child/${childId}` },
@@ -47,17 +60,9 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
           onclick: () => say(t.shop.youHave(day.stars)),
         }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
-      h("section", { class: "place" },
-        h("div", { class: "place__world" },
-          h("img", { class: "place__picture", src: SCENE, alt: "" }),
-          spot("home", t.place.home, openHome),
-          spot("mail", t.place.mailbox, openMail, newsBadge(news)),
-          week.on && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
-          spot("sky", t.place.sky, openSky),
-          day.shop_url && spot("shop", t.place.shop, openShop),
-          h("button", { type: "button", class: "place__me", onclick: () => say(t.child.hello(day.child.name)) },
-            avatar(day.child, { size: "lg", fx: "shine" }),
-            h("span", { class: "place__name" }, day.child.name)))));
+      place,
+      ...slideArrows(place));
+    if (was !== undefined) place.scrollLeft = was;
   }
 
   // The workshop's news: a rocket ready to take off, or fuel to load into it.
@@ -81,6 +86,7 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     [day, week, orders] = await load();
     draw();
     centre(screen.querySelector(".place"));
+  screen.querySelector(".place").dispatchEvent(new Event("scroll")); // its arrows, once centred
   }
 
   // Their house, under construction for now: it will be theirs to decorate.
@@ -135,6 +141,31 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
 // On a narrow screen the picture is wider than it: it slides sideways, and starts on their avatar.
 function centre(place) {
   place.scrollLeft = (place.scrollWidth - place.clientWidth) / 2;
+}
+
+// A phone upright: the picture is wider than the screen. An arrow on each side that can still
+// slide (a hint that there is more, and a way for a small finger), gone at each end.
+const SLIDE = 0.7; // of the screen's width, each tap
+const WORTH_SLIDING = 0.25; // arrows only when this much of the screen's width is out of sight
+
+function slideArrows(place) {
+  const arrow = (side, sign) => h("button", {
+    type: "button", class: `place-slide place-slide--${side}`, hidden: true, "aria-label": t.place.slide[side],
+    onclick: () => place.scrollBy({ left: sign * place.clientWidth * SLIDE, behavior: "smooth" }),
+  }, icon(sign < 0 ? "previous" : "next"));
+  const left = arrow("left", -1);
+  const right = arrow("right", 1);
+  const update = () => {
+    if (!place.isConnected) return window.removeEventListener("resize", update);
+    const hidden = place.scrollWidth - place.clientWidth; // a tablet hides a strip: no arrows for it
+    const few = hidden < place.clientWidth * WORTH_SLIDING;
+    left.hidden = few || place.scrollLeft < 8;
+    right.hidden = few || place.scrollLeft > hidden - 8;
+  };
+  place.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update);
+  requestAnimationFrame(update);
+  return [left, right];
 }
 
 // This tablet's memory of something small (a private window: none, and that is all).

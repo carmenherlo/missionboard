@@ -149,4 +149,20 @@
   .avatar--child {
     --size: 72px;
   }
+
+  .child-bar .stars {
+    height: 48px;
+    font-size: var(--text-lg);
+  }
+
+  .child-bar .stars img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .child-bar .place-back {
+    min-height: 48px;
+    padding-inline: var(--space-3);
+    font-size: var(--text-md);
+  }
 }
