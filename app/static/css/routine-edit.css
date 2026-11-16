@@ -132,6 +132,11 @@
   font-weight: 600;
 }
 
+/* A phone: the sentence on its own line under the time, not a word per line. */
+@media (max-width: 599.98px) {
+  .voice-line__text { grid-column: 1 / -1; grid-row: 2; }
+}
+
 .voice-line--auto .voice-line__text,
 .voice-line--sound .voice-line__text {
   color: var(--muted);

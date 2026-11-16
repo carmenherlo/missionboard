@@ -33,7 +33,7 @@ export function orderRow(order, change) {
       h("span", { class: "row__detail" },
         t.overview.orderDetail(t.shop.orderedOn(order.child_name, dayMonth(order.at), order.at.slice(11, 16))))),
     h("div", { class: "row__actions" },
-      h("div", { class: "tabs" },
+      h("div", { class: "tabs tabs--wrap" },
         tab(!due, t.shop.dueNone, () => setDue(null)),
         tab(due === now, t.shop.dueToday, () => setDue(now)),
         tab(due === tomorrow, t.shop.dueTomorrow, () => setDue(tomorrow)),

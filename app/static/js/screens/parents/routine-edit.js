@@ -236,7 +236,7 @@ export async function viewRoutineEdit(routineId) {
     renderCards();
     someDaysDiffer.hidden = !routine.parts.some((part) => routine.days.some((day) => !part.days.includes(day)));
     partsList.replaceChildren(...routine.parts.map((part) =>
-      h("li", { class: "row row--compact row--covered row--wrap", "data-id": part.id, "data-card": part.id },
+      h("li", { class: "row row--compact row--covered", "data-id": part.id, "data-card": part.id },
         imageThumb(part.image_url, { size: "sm", label: part.text, suggested: part.image_suggested }),
         // The whole card opens it; − / + do not.
         h("a", {

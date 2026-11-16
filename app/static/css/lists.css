@@ -133,7 +133,7 @@
 
 .row__name {
   flex: 1;
-  min-width: 0;
+  min-width: min(8rem, 100%); /* see .row__text */
   font-size: var(--text-lg);
   font-weight: 700;
 }
@@ -149,7 +149,9 @@
 
 .row__text {
   flex: 1;
-  min-width: 0;
+  /* never squeezed to a word per line by what is on its right (a button, − / +, the kids):
+     on a phone that goes under it instead, on the right */
+  min-width: min(8rem, 100%);
   font-weight: 600;
 }
 
@@ -186,16 +188,13 @@
 }
 
 .row--compact {
-  flex-wrap: nowrap;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
 }
 
-/* A card whose name must stay readable: what is on its right (− / +, the kids) goes under it,
-   on the right, when both do not fit (a phone). After .row--compact, so it wins. */
-.row--wrap { flex-wrap: wrap; }
-.row--wrap .row__text { min-width: 8rem; }
-.row--wrap .row__text + * { margin-left: auto; }
+/* What is on the right of a card's name, when it goes under it (a phone): still on the right. */
+.row__text + *,
+.row__name + * { margin-left: auto; }
 
 .row--add {
   flex-wrap: wrap; /* too narrow for both (a phone): the button goes under the text */
