@@ -109,7 +109,7 @@ export function startRoutines() {
       warned: new Set(), // the warnings of this part already said
       count: null,
       heralded: null,
-      earlyGoal: null, // the minute everyone had done their mission, checking them: the goal comes then
+      earlyGoal: null, // the minute everyone had done their mission: the goal comes then
       goalReminded: Infinity,
       mission: null, // a kid's mission open over the clock: { close }
       // A trial (rutinas-7): the missions are pretend, each kid's checked steps, here only;
@@ -161,7 +161,7 @@ export function startRoutines() {
   function tick() {
     if (!r.showing) return;
     const time = r.now();
-    if (r.showing.earlyGoal == null && r.allDoneChecking(time)) r.showing.earlyGoal = time;
+    if (r.showing.earlyGoal == null && r.allDoneEarly(time)) r.showing.earlyGoal = time;
     if (r.showing.data.manual && !r.showing.done && r.everyoneSigned()) r.showing.done = "signed"; // it ends now
     const phase = r.phaseAt(time);
     const key = r.keyOf(phase);

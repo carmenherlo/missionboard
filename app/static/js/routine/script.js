@@ -83,7 +83,7 @@ export function wellDone(kids, mission) {
     : ["¡Enhorabuena!", `Habéis completado con éxito todas vuestras tareas de la misión ${mission}.`];
 }
 
-// Everyone signed in the last part: the goal comes early.
+// Everyone signed before the goal: it comes early.
 export function earlyGoal(routine, done, minutesLeft) {
   return [...done, ...(minutesLeft >= 1 ? [untilGoal(minutesLeft)] : []), routine.early_goal ?? USUAL.earlyGoal];
 }

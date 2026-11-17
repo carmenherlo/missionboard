@@ -75,7 +75,7 @@ export function heard(r) {
     } else if (phase.kind === "goal") {
       r.note("goal", { early: r.showing.earlyGoal != null });
       if (r.showing.earlyGoal != null) {
-        // Everyone signed in the last part (04/11): no waiting for the goal's time, they
+        // Everyone signed (in any part, 17/11): no waiting for the goal's time, they
         // have gone. The goal now, with its celebration, and then it ends for today.
         say(script.earlyGoal(data, r.wellDone(), 0));
         r.celebrateGoal();

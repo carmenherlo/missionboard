@@ -38,10 +38,13 @@ export function phases(r) {
   // Hidden on this device (closing.js): silent and out of sight here, until shown again.
   const closed = () => Boolean(r.showing.hidden);
 
-  // Checking the missions (or about to), and every kid has done theirs: the goal now.
-  function allDoneChecking(time) {
-    const end = r.parts().at(-1).to;
-    return r.checkMinutes() > 0 && time >= end && time < end + r.checkMinutes() && r.everyoneSigned();
+  // Every kid has done their mission, from the first part to the goal (also before checking,
+  // 17/11): the goal now. Started by hand it has no goal: it ends in finish() instead.
+  function allDoneEarly(time) {
+    const { data } = r.showing;
+    if (data.manual || !data.goal) return false;
+    const all = r.parts();
+    return time >= all[0].from && time < minuteOf(data.goal.at) && r.everyoneSigned();
   }
 
   // Who has not done their mission yet: [[name, steps left]].
@@ -55,5 +58,5 @@ export function phases(r) {
     return withMission.length > 0 && withMission.every((p) => p.mission.completed);
   }
 
-  return { parts, phaseAt, checkMinutes, keyOf, closed, allDoneChecking, missing, everyoneSigned };
+  return { parts, phaseAt, checkMinutes, keyOf, closed, allDoneEarly, missing, everyoneSigned };
 }
