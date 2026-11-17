@@ -1,0 +1,143 @@
+/* Design tokens of what moves and shines (effects.css, static/js/effects/ and the child's
+   animations): split from tokens.css, which only holds the rest. Like it, the only other
+   place where colours are written by hand. */
+:root {
+  /* ---------- Effects (static/css/effects.css, static/js/effects/) ---------- */
+  --celebration-duration: 6s; /* "¡Misión cumplida!" closes by itself after this */
+  --celebration-star-delay: 700ms; /* then the star won pops up and flies to the avatar */
+  --parcel-send: 9s; /* an order leaving: stars → box → the truck backs up, takes it and goes (effects/delivery.js) */
+  /* Rachas (rachas.html): the week of fuel tanks, a little space over the route. */
+  --week-card-top: #1b2350; /* the week, small (week-mini) */
+  --week-card-bottom: #2c2f6e;
+  --tank-empty: #252a5c;
+  --tank-line: #5d64a8;
+  --tank-letter: #9aa0d8;
+  --tank-fuel-top: #ffd25a;
+  --tank-fuel-bottom: #ff7a1a;
+  --tank-fuel-letter: #7a3a00;
+  --tank-now: #ffb347;
+  /* The rocket's workshop (taller.html): a hangar at night, in the style of the backgrounds. */
+  --garage-wall-top: #3d4372;
+  --garage-wall-low: #4b5288;
+  --garage-beam: #2b3058;
+  --garage-rivet: #5d64a8;
+  --garage-floor: #6b709e;
+  --garage-floor-edge: #8a8fbe;
+  --garage-floor-line: #5c6190;
+  --garage-sky-1: #0b1236; /* the night in its window: the backgrounds' night */
+  --garage-sky-2: #141c4c;
+  --garage-sky-3: #232a66;
+  --garage-sky-4: #3a3f82;
+  --garage-hill: #2c3468;
+  --garage-hill-near: #3b4580;
+  --garage-moon: #f6f2d8;
+  --garage-moon-edge: #dfe3f6;
+  --garage-star: #ffffff;
+  --garage-lamp: #e0a030;
+  --garage-lamp-light: #ffd76e;
+  --garage-shell: #c9cde6; /* a tank's metal */
+  --garage-shell-dark: #9aa0c8;
+  --garage-hose: #7d82b0;
+  --garage-hose-full: #ff9a3a;
+  --garage-rocket: #ffffff; /* the backgrounds' rocket: white with red fins */
+  --garage-rocket-shade: #e4e6f4;
+  --garage-fin: #e0483f;
+  --garage-window: #8fc3e8;
+  --garage-light-off: #4b5288; /* a light per day on the rocket */
+  --garage-light-on: #ffd25a;
+  --garage-scaffold: #aab0d8;
+  --garage-platform: #8a90c8;
+  --garage-smoke: #e8eaf6;
+  --garage-in: 500ms; /* the workshop coming in over the route, and going */
+  --garage-check: #1fbf8f; /* a tank already loaded into the rocket */
+  --garage-check-mark: #ffffff;
+  --garage-lever: #9aa0c8;
+  --garage-lever-knob: #e0483f;
+  --garage-lever-base: #2b3058;
+  /* The trip to the moon of the prize (space-trip.js): a moon colour per week. */
+  --trip-moon-1: #ffc4dc; /* pink */
+  --trip-moon-1-dark: #e892b6;
+  --trip-moon-2: #b9f0d8; /* mint */
+  --trip-moon-2-dark: #7fd1ad;
+  --trip-moon-3: #d9c8ff; /* lilac */
+  --trip-moon-3-dark: #ad94ee;
+  --trip-moon-4: #ffd6a8; /* orange */
+  --trip-moon-4-dark: #f2ad69;
+  --trip-moon-5: #bfe3ff; /* sky blue */
+  --trip-moon-5-dark: #82bdeb;
+  --trip-moon-6: #fff1a8; /* yellow */
+  --trip-moon-6-dark: #ecd46a;
+  --trip-moon-glow: rgb(255 255 255 / 0.35);
+  --trip-streak: rgb(255 255 255 / 0.7);
+  --trip-dust: #f4f1ff;
+  --trip-bubble: #ffffff;
+  --trip-ray: rgb(255 226 120 / 0.55);
+  --trip-flight: 3800ms; /* from the workshop to the moon */
+  --trip-land: 900ms; /* touching down: dust */
+  --trip-shake: 900ms; /* the moon shakes, then the prize comes out */
+  --week-ready: 9000ms; /* "your rocket is ready: go to the workshop", on screen */
+  --week-fill: 1100ms; /* today's tank filling */
+  --week-stay: 3500ms; /* then it stays, while the voice speaks */
+  --week-countdown: 2600ms; /* "tres, dos, uno…" before the rocket goes */
+  --week-liftoff: 2200ms;
+  --kid-off-opacity: 0.35; /* a child's avatar switched off (who sees a shop item) */
+  --parcel-bump: 260ms; /* the truck shaking on the road, up and down */
+  --parcel-home: 5s; /* an order arriving: truck → "ding-dong" → it opens */
+  --star-flight: 1.6s; /* a star won: in from outside the screen, tumbling, to where it stays */
+  --star-spark: 600ms; /* each spark of its trail */
+  --landing-pause: 400ms; /* back on the route: before the star comes */
+  --landing-glow: 900ms; /* the mission lighting up once its star is on it */
+  --paw-step: 180ms; /* footprints lighting up one after another, towards the next stop */
+  --paw-light: 400ms; /* each footprint taking its colour */
+  --landing-turn: 2s; /* the wheel turning slowly to the next stop, clicking */
+  --landing-linger: 700ms; /* from a routine: the route stays this long, then back to the routine */
+  --drum-done-glow: 0.55; /* a mission done, on the wheel: its glow, still (open ones beat) */
+  --heartbeat: 1.1s; /* "latido": a light in its colour behind, growing and fading */
+  --heartbeat-strength: 60%; /* how much of the colour that light has */
+  --shine: 1.4s; /* "resplandor": a reflection going once round a ring */
+  --shine-light: rgb(255 252 235 / 1);
+  --shine-light-soft: rgb(255 248 220 / 0.6);
+  --shine-band: 12%; /* how much of the ring's width the reflection covers */
+  --celebration-glow-breath: 2.2s; /* the ring around the avatar in the celebration */
+  /* Home: each avatar's glow round its ring and light behind the animal, beating together.
+     Their colour comes from each child's colour; "white" is this one. */
+  --home-light: white;
+  --home-light-white: 60%; /* the white light is see-through */
+  --home-glow-1: 1; /* how wide the glow is: "Suave", "Más fuerte", "Mucho más" */
+  --home-glow-2: 1.6;
+  --home-glow-3: 2.3;
+  --home-solid-1: 40%; /* how full the light in the centre is */
+  --home-solid-2: 55%;
+  --home-solid-3: 70%;
+  --home-beat-fast: 2s; /* the beat: "Rápido", "Lento", "Muy lento" */
+  --home-beat-slow: 3.5s;
+  --home-beat-slower: 5s;
+
+  /* The route as a wheel (prueba-ruta-rueda.html): every stop as big; the open ones glow
+     like the avatars of the home (their mission's colour round the ring, white light in the
+     centre); from one to the next, footprints or dots, grey after one not done. */
+  --drum-card: min(300px, 40vh, 30vw);
+  --drum-room: 120px; /* room round each ring for its glow, so it is not cut off */
+  --drum-glow: var(--home-glow-2);
+  --drum-solid: var(--home-solid-2);
+  --drum-beat: var(--home-beat-slow);
+  --drum-joint-off: rgb(150 150 150 / 0.7);
+  --drum-joint-done: 70%; /* how much of the mission's colour (the rest, see-through) */
+  --drum-mark: rgb(255 255 255 / 0.8);
+  --drum-mark-edge: rgb(0 0 0 / 0.15);
+  --mask-solid: black; /* what a CSS mask keeps */
+  --star-shine: 2.4s; /* the star won, shining */
+  --appear: 220ms; /* panels and messages coming in */
+  --state-hover: 8%; /* Material 3 state layer: the text's colour over what is touched */
+  --state-pressed: 10%;
+  --wheel-spin: 5s; /* the wheel turning until it stops on the prize (after a short wind-up) */
+  --wheel-pause: 1.4s; /* stopped, the slice won shining, before "¡Te ha tocado!" */
+  --wheel-chase: 0.9s; /* the rim's lights taking turns; three times as fast while it turns */
+  --confetti-1: #5b4ae6;
+  --confetti-2: #ff9f43;
+  --confetti-3: #2fb37a;
+  --confetti-4: #ff6fb5;
+  --confetti-5: #4fa3ff;
+  --confetti-6: #ffd43b;
+  --confetti-star: #ffc93c;
+}

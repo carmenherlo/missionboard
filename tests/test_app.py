@@ -55,15 +55,16 @@ def test_fonts_ship_with_the_app(client):
 
 
 def test_colours_only_in_tokens():
-    """Design tokens live in tokens.css; other stylesheets must not hard-code colours."""
+    """Design tokens live in tokens*.css; other stylesheets must not hard-code colours."""
     for sheet in (STATIC_DIR / "css").glob("*.css"):
-        if sheet.name == "tokens.css":
+        if sheet.name.startswith("tokens"):
             continue
         assert not re.search(r"#[0-9a-fA-F]{3,8}\b|rgba?\(", sheet.read_text()), sheet.name
 
 
 def test_every_theme_defines_the_roles_the_app_uses(client):
-    used = set(re.findall(r"var\((--md-[\w-]+)\)", (STATIC_DIR / "css" / "tokens.css").read_text()))
+    tokens = "".join(sheet.read_text() for sheet in (STATIC_DIR / "css").glob("tokens*.css"))
+    used = set(re.findall(r"var\((--md-[\w-]+)\)", tokens))
     themes = sorted((STATIC_DIR / "css" / "themes").glob("*.css"))
     assert used and themes
     for theme in themes:

@@ -21,7 +21,6 @@ TOO_BIG = {
     "static/css/routine.css": 432,
     "routines/api.py": 473,  # +2 import lines when repository.py was split (1d)
     "static/js/screens/parents/routine-edit.js": 442,
-    "static/css/tokens.css": 432,  # +2: the parents' menu width and its scrim (14/11)
     "missions/service.py": 377,
     "missions/api.py": 358,  # +1 import line when routines/repository.py was split (1d)
     "routines/editor.py": 333,
