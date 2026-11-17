@@ -14,6 +14,8 @@ import { confetti } from "../../effects/confetti.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
+import { chest } from "../../components/chest.js";
+import { openChest } from "./chest-room.js";
 import { openMailbox } from "./mailbox.js";
 import { placeSheet } from "./place-sheet.js";
 import { skyNews, skyView } from "./sky.js";
@@ -28,8 +30,9 @@ const img = (name, className) => h("img", { class: className, src: `${FLUENT}/${
 
 // garage: open the workshop at once (from "Ir al taller", when their rocket is ready).
 export async function viewChildPlace(childId, { garage = false } = {}) {
-  const load = () => Promise.all([api("GET", `api/children/${childId}/today`), weekOf(childId), ordersOf(childId)]);
-  let [day, week, orders] = await Promise.all([load(), loadAvatars()]).then(([data]) => data);
+  const load = () => Promise.all([api("GET", `api/children/${childId}/today`), weekOf(childId), ordersOf(childId),
+    api("GET", `api/children/${childId}/vouchers`)]);
+  let [day, week, orders, vouchers] = await Promise.all([load(), loadAvatars()]).then(([data]) => data);
   const screen = h("main", { class: "child-screen place-screen" });
 
   function draw() {
@@ -42,7 +45,7 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     const place = h("section", { class: "place" },
         h("div", { class: "place__world" },
           h("img", { class: "place__picture", src: SCENE, alt: "" }),
-          spot("home", t.place.home, openHome),
+          spot("home", t.place.home, openHome, newsBadge(homeNews()), vouchers.moment?.can_pick),
           spot("mail", t.place.mailbox, openMail, newsBadge(news)),
           week.on && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
           spot("sky", t.place.sky, openSky),
@@ -74,29 +77,53 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     return toLoad ? { count: toLoad, picture: `${FLUENT}/fuel-pump.svg` } : null;
   }
 
+  // Their house's news: the gift cards in their chest.
+  function homeNews() {
+    const count = vouchers.cards.length;
+    return count ? { count, picture: `${FLUENT}/wrapped-gift.svg` } : null;
+  }
+
   // A building drawn in the picture: a place to tap over it (where, in place.css), its name in a pill
-  // under it, its news sign, and what it opens.
-  function spot(id, label, onOpen, badge = null) {
-    return h("div", { class: `place-spot place-spot--${id}` },
+  // under it, its news sign, and what it opens. glow: it calls them (a momento de vales, at home).
+  function spot(id, label, onOpen, badge = null, glow = false) {
+    return h("div", { class: `place-spot place-spot--${id}${glow ? " place-spot--glow" : ""}` },
       h("button", { type: "button", class: "place-spot__tap", "aria-label": label, onclick: onOpen }, badge),
       h("button", { type: "button", class: "place-spot__label", tabindex: "-1", onclick: onOpen }, label));
   }
 
   async function back() {
-    [day, week, orders] = await load();
+    [day, week, orders, vouchers] = await load();
     draw();
     centre(screen.querySelector(".place"));
   screen.querySelector(".place").dispatchEvent(new Event("scroll")); // its arrows, once centred
   }
 
-  // Their house, under construction for now: it will be theirs to decorate.
+  // Their house, under construction for now (it will be theirs to decorate), and in front of it
+  // their chest with their gift cards (vales-2.html).
   function openHome() {
     const { body } = placeSheet(screen, {
       title: t.place.homeTitle, picture: `${FLUENT}/house.svg`, colors: day.colors, onClose: back,
     });
-    body.append(h("button", { type: "button", class: "place-home", onclick: () => say(t.place.homeSay) },
-      img("building-construction", "place-home__picture"), t.place.homeSay));
-    say(t.place.homeSay);
+    const count = vouchers.cards.length;
+    const box = h("button", {
+      type: "button", class: `home-chest${vouchers.moment?.can_pick ? " home-chest--glow" : ""}`,
+      "aria-label": t.gift.chestTitle(day.child.name), onclick: () => openChest(body, day.child, { onClose: refresh }),
+    }, chest(day.child, { badge: count > 0 && h("b", { class: "home-chest__count" }, String(count)) }),
+    h("span", { class: "home-chest__label" }, t.gift.chest));
+    body.append(
+      h("button", { type: "button", class: "place-home place-home--small", onclick: () => say(t.place.homeSay) },
+        img("building-construction", "place-home__picture"), t.place.homeSay),
+      box);
+    say(vouchers.moment?.can_pick ? t.gift.momentSay : t.gift.homeSay);
+
+    async function refresh() {
+      vouchers = await api("GET", `api/children/${childId}/vouchers`);
+      box.querySelector(".home-chest__count")?.remove();
+      box.classList.toggle("home-chest--glow", Boolean(vouchers.moment?.can_pick));
+      if (vouchers.cards.length) {
+        box.querySelector(".chest").append(h("b", { class: "home-chest__count" }, String(vouchers.cards.length)));
+      }
+    }
   }
 
   function openShop() {

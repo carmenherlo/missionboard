@@ -1,0 +1,171 @@
+/* The child's chest open (vales-2.html, chest-room.js): the whole screen is its inside, with their
+   gift cards lying in it; and a card picked in a momento de vales, big. Moves: gift-effects.css. */
+
+/* ---------- The chest, open: the whole screen is its inside (chest-room.js) ---------- */
+.chest-room {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: var(--space-3);
+  background: var(--chest-frame);
+}
+
+.chest-room__lid {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-bottom: var(--space-2) solid var(--chest-frame);
+  background: var(--chest-lid-inside);
+  color: var(--gift-light);
+}
+
+.chest-room__animal img {
+  display: block;
+  width: 56px;
+  height: 56px;
+}
+
+.chest-room__title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.chest-room__moment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--accent-vivid);
+  color: var(--chest-line);
+  font-weight: 900;
+}
+
+.chest-room__moment img { width: 28px; }
+
+.chest-room__wood {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 40vw), 1fr));
+  gap: var(--space-4) var(--space-5);
+  align-content: start;
+  padding: var(--space-5);
+  overflow-y: auto;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: repeating-linear-gradient(0deg, var(--chest-wood) 0 64px, var(--chest-wood-dark) 64px 68px);
+  box-shadow: inset 0 20px 30px var(--chest-inside-shadow);
+}
+
+.chest-room__card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  border: none;
+  padding: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  filter: drop-shadow(0 6px 8px var(--gift-card-shadow));
+}
+
+/* Lying in the chest, a little crooked. */
+.chest-room__card:nth-child(4n + 1) { rotate: -4deg; }
+.chest-room__card:nth-child(4n + 2) { rotate: 3deg; translate: 0 var(--space-2); }
+.chest-room__card:nth-child(4n + 3) { rotate: -2deg; }
+.chest-room__card:nth-child(4n + 4) { rotate: 5deg; }
+
+.chest-room__week {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 800;
+}
+
+.chest-room__week img { width: 24px; }
+
+.chest-room__empty {
+  grid-column: 1 / -1;
+  margin-top: var(--space-6);
+  color: var(--gift-light);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  text-align: center;
+}
+
+.chest-room__notice {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-5);
+  margin: 0;
+  translate: -50% 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-align: center;
+  box-shadow: var(--shadow-sheet);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chest-room__notice--on { opacity: 1; }
+
+/* Picked in a momento de vales: the card big, then it opens into light. */
+.gift-open {
+  position: fixed;
+  inset: 0;
+  z-index: 31;
+  display: grid;
+  place-items: center;
+  container-type: size;
+  overflow: hidden;
+  background: var(--gift-scrim);
+}
+
+.gift-open__card { width: min(56cqw, 66cqh); }
+
+.gift-open__answers {
+  position: absolute;
+  bottom: 6cqh;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.gift-open__light {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10cqmin;
+  height: 10cqmin;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gift-light) 0 25%, var(--gift-light-edge) 45%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gift-open__enjoy {
+  position: absolute;
+  top: 40%;
+  margin: 0;
+  color: var(--gift-light);
+  font-size: min(9cqw, 14cqh);
+  font-weight: 900;
+  text-shadow: 0 0.3rem 1.2rem var(--gift-enjoy-shadow);
+  opacity: 0;
+}
+
+.gift-open--still .gift-open__card { opacity: 0; }
+
+.gift-open--still .gift-open__enjoy { opacity: 1; }

@@ -194,6 +194,10 @@ _CONFIG = {
     ("shop_item", "deleted"): "Quitaste «{mission}» de la tienda",
     ("shop_item", "reordered"): "Ordenaste la tienda",
     ("week_prize", "delivered"): "Entregaste el premio de la semana a {child} · «{mission}»",
+    ("vouchers", "moment_started"): "Empezaste un momento de vales",
+    ("vouchers", "moment_ended"): "Terminaste el momento de vales",
+    ("voucher", "used"): "Marcaste como usada la tarjeta regalo «{mission}» de {child}",
+    ("voucher", "undone"): "Devolviste al baúl la tarjeta regalo «{mission}» de {child}",
     ("free_day", "on"): "Marcaste el {mission} como día libre de {child}",
     ("free_day", "off"): "Quitaste el día libre del {mission} de {child}",
     ("prize", "created"): "Añadiste el premio «{mission}»",
@@ -227,6 +231,7 @@ _CHILD = {
     "week_second": "{child} ganó el premio pequeño de la semana · {detail}",
     "week_none": "A {child} le faltó combustible esta semana · {detail}",
     "fuel_loaded": "{child} cargó en el cohete el depósito del {detail}",
+    "voucher_used": "{child} eligió su tarjeta regalo «{detail}»",
 }
 
 

@@ -293,6 +293,41 @@ export const sounds = {
       }
     });
   },
+
+  // A gift card shining (vales-2.html): a quick run of high bells going up, over a soft chord.
+  shimmer() {
+    play((ctx, out, now) => {
+      [1568, 1760, 2093, 2349, 2637, 3136, 3520, 4186, 3136, 4186].forEach((freq, i) => {
+        blip(ctx, out, { at: now + i * 0.065, freq, length: 1.1, type: "sine", volume: 0.12 });
+        blip(ctx, out, { at: now + i * 0.065 + 0.02, freq: freq * 1.5, length: 0.5, type: "sine", volume: 0.03 });
+      });
+      blip(ctx, out, { at: now, freq: 523, length: 1.6, type: "sine", volume: 0.08 });
+      blip(ctx, out, { at: now, freq: 784, length: 1.6, type: "sine", volume: 0.06 });
+    });
+  },
+
+  // The chest's lid shutting: a wooden "toc".
+  lid() {
+    play((ctx, out, now) => {
+      blip(ctx, out, { at: now, freq: 160, to: 60, length: 0.18, type: "triangle", volume: 0.6 });
+    });
+  },
+
+  // Not now (a gift card out of its moment): two short low notes.
+  nope() {
+    play((ctx, out, now) => {
+      for (const at of [0, 0.16]) blip(ctx, out, { at: now + at, freq: 330, to: 220, length: 0.12, type: "square", volume: 0.12 });
+    });
+  },
+
+  // A gift card opening into light: four bright notes going up.
+  enjoy() {
+    play((ctx, out, now) => {
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        blip(ctx, out, { at: now + i * 0.12, freq, length: 0.5, type: "triangle", volume: 0.25 });
+      });
+    });
+  },
 };
 
 // ---------- building blocks ----------

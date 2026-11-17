@@ -1,25 +1,24 @@
 // Zona de padres · Hoy (padres-menu.html): the first screen after the code, a board in
-// its own colour with what is going on today, as cards: how each child is doing, what
-// is left to give (prizes and orders, in one list) and this week's tanks.
+// its own colour with what is going on today, as cards: how each child is doing, their gift
+// cards and the momento de vales (vouchers-card.js), the orders to hand over and this week's tanks.
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
-import { imageThumb } from "../../components/image-thumb.js";
 import { saveStatus } from "../../components/save-status.js";
+import { imageThumb } from "../../components/image-thumb.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { rocketReady, weekMini } from "../child/week-bar.js";
 import { parentsHeader } from "./common.js";
-import { dayMonth, orderRow } from "./orders-panel.js";
+import { orderRow } from "./orders-panel.js";
+import { vouchersCard } from "./vouchers-card.js";
 
 const STAR = "static/libraries/fluent/star.svg";
-const GIFT = "static/libraries/fluent/wrapped-gift.svg";
 
 export async function viewParentsToday() {
-  const [view, orders, setup] = await Promise.all([
-    api("GET", "api/overview/today"), api("GET", "api/orders"), api("GET", "api/overview/setup"), loadAvatars()]);
+  const [view, orders, setup, vouchers] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/orders"),
+    api("GET", "api/overview/setup"), api("GET", "api/vouchers"), loadAvatars()]);
   const status = saveStatus();
-  const toGive = toGiveCard(view, orders, status);
   const weeks = view.children.filter((day) => day.week?.on && day.week.shown && day.week.tanks.length > 0);
 
   const date = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
@@ -32,54 +31,39 @@ export async function viewParentsToday() {
           view.children.length
             ? h("div", { class: "day-cards" }, view.children.map(dayCard))
             : h("p", { class: "hint" }, t.overview.noChildren)),
-        toGive,
+        vouchersCard(vouchers, status, boardCard),
+        ordersCard(orders, status),
         weeks.length > 0 && boardCard(t.overview.weekTitle, {},
           h("ul", { class: "rows" }, weeks.map(weekRow))))));
 }
 
-function boardCard(title, { wide = false, count = null } = {}, ...content) {
+export function boardCard(title, { wide = false, count = null } = {}, ...content) {
   return h("section", { class: `board-card${wide ? " board-card--wide" : ""}` },
     h("h2", { class: "board-card__title" }, title, count),
     ...content);
 }
 
-// Por dar: the prizes of the wheel and of the week and the orders, in one list.
-function toGiveCard(first, firstOrders, status) {
-  let { prizes, week_prizes: weekPrizes } = first;
-  let waiting = firstOrders.waiting;
+// Pedidos: the orders of the shop not handed over yet.
+function ordersCard(first, status) {
+  let waiting = first.waiting;
   const count = h("span", { class: "count" });
   const body = h("div", { class: "stack stack--tight" });
 
   async function change(request) {
     await status.track(request).catch(() => {});
-    const [view, orders] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/orders")]);
-    ({ prizes, week_prizes: weekPrizes } = view);
-    waiting = orders.waiting;
+    waiting = (await api("GET", "api/orders")).waiting;
     draw();
   }
-  const given = (url) => h("button", { type: "button", class: "btn btn--primary", onclick: () => change(api("POST", url)) },
-    t.shop.given);
-  const prizeRow = (picture, text, detail, url) => h("li", { class: "row row--compact" },
-    imageThumb(picture, { size: "sm", label: text }),
-    h("span", { class: "row__text" }, text, h("span", { class: "row__detail" }, detail)),
-    given(url));
 
   function draw() {
-    const total = prizes.length + weekPrizes.length + waiting.length;
-    count.textContent = String(total);
-    count.hidden = !total;
-    body.replaceChildren(total
-      ? h("ul", { class: "rows" },
-          weekPrizes.map((won) => prizeRow(GIFT, won.prize_text || t.overview.weekSurprise,
-            t.overview.weekWon(won.child_name, won.tier, dayMonth(won.week_end)),
-            `api/overview/week-prizes/${won.child_id}/${won.week_end}/deliver`)),
-          prizes.map((spin) => prizeRow(spin.image_url, spin.prize_text,
-            t.overview.wonOn(spin.child_name, dayMonth(spin.day)), `api/overview/prizes/${spin.id}/deliver`)),
-          waiting.map((order) => orderRow(order, change)))
-      : h("p", { class: "hint" }, t.overview.nothingToGive));
+    count.textContent = String(waiting.length);
+    count.hidden = !waiting.length;
+    body.replaceChildren(waiting.length
+      ? h("ul", { class: "rows" }, waiting.map((order) => orderRow(order, change)))
+      : h("p", { class: "hint" }, t.overview.noOrders));
   }
   draw();
-  return boardCard(t.overview.giveTitle, { count }, body);
+  return boardCard(t.overview.ordersTitle, { count }, body);
 }
 
 // Esta semana: each child's tanks, and whether their rocket is ready.

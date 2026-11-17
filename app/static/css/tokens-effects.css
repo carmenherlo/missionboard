@@ -140,4 +140,9 @@
   --confetti-5: #4fa3ff;
   --confetti-6: #ffd43b;
   --confetti-star: #ffc93c;
+  /* Gift cards (vales-2.html, effects/gift-card.js, gift-effects.css). */
+  --gift-win: 6.6s; /* won: it grows and shines, then drops into the chest and the lid shuts */
+  --gift-open: 5s; /* picked in a momento de vales: it lights up, turns and opens into light */
+  --gift-still: 3s; /* with "reduce motion": how long a card stays before going on */
+  --gift-notice: 4s; /* "¡Todavía no es momento de vales!" under the chest, then gone */
 }

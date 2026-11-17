@@ -56,3 +56,8 @@ class PrizeSpinsRepository:
                 "UPDATE prize_spins SET delivered_at = ? WHERE id = ? AND delivered_at IS NULL",
                 (at.isoformat(timespec="seconds"), spin_id),
             )
+
+    def undeliver(self, spin_id: int) -> None:
+        """Back to not handed over (a gift card picked by mistake)."""
+        with db.connect(self._data_dir) as conn:
+            conn.execute("UPDATE prize_spins SET delivered_at = NULL WHERE id = ?", (spin_id,))

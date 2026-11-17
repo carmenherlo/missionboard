@@ -273,6 +273,27 @@
   --song-rail: 6px; /* the side of the C */
   --song-indent: 14px; /* the cards inside it move this far right */
   --routine-clock-size: 72px; /* a routine hidden on this device: its clock at the bottom */
+
+  /* ---------- Gift cards and the chest (vales-2.html) ---------- */
+  --gift-text: #4a4038; /* the prize's text on the card, under its orange «Vale por…» */
+  --gift-glow: rgb(255 214 64 / 0.9); /* the golden light round a card that shines */
+  --gift-sparkle: #fffbd0; /* the fine stars that twinkle over it, as on the card's frame */
+  --gift-sparkle-glow: rgb(255 250 200 / 0.9);
+  --gift-gleam: rgb(255 255 255 / 0.85); /* the gleam that crosses it */
+  --gift-light: #fff; /* a card opening into light */
+  --gift-light-edge: rgb(255 230 120 / 0.9);
+  --gift-enjoy-shadow: rgb(160 90 0 / 0.8);
+  --gift-scrim: rgb(0 0 0 / 0.6);
+  --gift-card-shadow: rgb(0 0 0 / 0.45);
+  --gift-card-big: min(60cqw, 75cqh); /* a card big, as it shines */
+  --chest-frame: #f29a1a; /* the chest, as in the sketch */
+  --chest-wood: #7a4a1f;
+  --chest-wood-dark: #6a3f19;
+  --chest-line: #4a2a0e;
+  --chest-lid-inside: #5e3714;
+  --chest-inside-shadow: rgb(0 0 0 / 0.45);
+  --chest-size: min(40vh, 300px); /* the chest in front of their house */
+  --chest-plank: 7cqi; /* the wood's planks, inside the chest */
 }
 
 

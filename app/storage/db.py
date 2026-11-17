@@ -177,6 +177,26 @@ MIGRATIONS: list[str] = [
     """
     ALTER TABLE streak_weeks ADD COLUMN prize_image TEXT
     """,
+    # 13 · Momentos de vales (vales-2.html): a parent opens one for a while, and each child
+    # picks a gift card from their chest (a copy of its text; the card itself is the prize
+    # of the wheel or of the week, used once delivered).
+    """
+    CREATE TABLE voucher_moments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        started_at TEXT NOT NULL,
+        ends_at TEXT NOT NULL,
+        ended_at TEXT
+    );
+    CREATE TABLE voucher_picks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        moment_id INTEGER NOT NULL,
+        child_id TEXT NOT NULL,
+        child_name TEXT,
+        voucher_id TEXT NOT NULL,
+        prize_text TEXT NOT NULL,
+        at TEXT NOT NULL
+    )
+    """,
 ]
 
 

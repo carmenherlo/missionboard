@@ -21,6 +21,7 @@ from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
 from app.streaks.repository import StreaksRepository
 from app.today.repository import DayRepository
+from app.vouchers.repository import MomentsRepository
 
 
 def get_config_store(request: Request) -> ConfigStore:
@@ -54,6 +55,10 @@ def get_prize_spins_repository(request: Request) -> PrizeSpinsRepository:
 
 def get_streaks_repository(request: Request) -> StreaksRepository:
     return request.app.state.streaks_repository
+
+
+def get_moments_repository(request: Request) -> MomentsRepository:
+    return request.app.state.moments_repository
 
 
 def get_clock(request: Request) -> Clock:

@@ -48,6 +48,8 @@ from app.today import api as today_api
 from app.today.repository import DayRepository
 from app.voice import api as voice_api
 from app.voice.service import MODEL_NAME, Voice
+from app.vouchers import api as vouchers_api
+from app.vouchers.repository import MomentsRepository
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
@@ -145,6 +147,7 @@ def create_app(
     app.state.stars_repository = StarsRepository(data_dir)
     app.state.prize_spins_repository = PrizeSpinsRepository(data_dir)
     app.state.streaks_repository = StreaksRepository(data_dir)
+    app.state.moments_repository = MomentsRepository(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
     app.state.purchases_repository = PurchasesRepository(data_dir)
     app.state.home_assistant = HomeAssistant()  # only inside the add-on; elsewhere it sends nothing
@@ -175,6 +178,7 @@ def create_app(
     app.include_router(daily_prize_api.router)
     app.include_router(stars_api.router)
     app.include_router(streaks_api.router)
+    app.include_router(vouchers_api.router)
     app.include_router(routines_api.router)
     app.include_router(voice_api.router)
     app.include_router(shop_api.router)

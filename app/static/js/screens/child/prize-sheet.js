@@ -2,18 +2,19 @@
 // lights round its rim and "¡Gira!" in its middle. A tap asks the server for the
 // prize (it chooses and keeps it); then the wheel winds up, turns to it with a
 // "clac" at each peg, rings a bell, lights the slice won and shows what came out.
-// The turning, the lights and the confetti are effects.
+// The turning, the lights and the confetti are effects. What came out is a gift card
+// (vales-2.html): it grows, shines and drops into the child's chest.
 import { api } from "../../api.js";
 import { avatar } from "../../components/avatar.js";
 import { h } from "../../dom.js";
-import { confetti } from "../../effects/confetti.js";
+import { giftCard } from "../../components/gift-card.js";
+import { winCard } from "../../effects/gift-card.js";
 import { sounds } from "../../components/sound.js";
 import { say } from "../../components/speech.js";
 import { tokenMs } from "../../effects/motion.js";
 import { spinTo } from "../../effects/spin.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
-import { picture } from "./ring.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const R = 92; // the slices' radius in the wheel's 224 × 224 drawing
@@ -65,6 +66,9 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
           disc.querySelector(`[data-slice="${index}"]`)?.classList.add("wheel__slice--won");
           sounds.chime();
           await new Promise((resolve) => setTimeout(resolve, tokenMs("--wheel-pause", 1400)));
+          const won = result.today.prize.won.at(-1);
+          setTimeout(() => say(t.gift.wonSay(won.text)), SAY_AFTER_SHINE_MS);
+          await winCard(layer, won, day.child);
           showWon(result.today.prize, { justWon: true });
         } catch {
           onClose(); // it was not unlocked any more: back to the route as it is now
@@ -75,26 +79,18 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
     body.replaceChildren(box);
   }
 
+  // What came out, already in their chest. Tapping the card says it again (not every child reads).
   function showWon(prize, { justWon = false } = {}) {
     const won = prize.won.at(-1);
     body.replaceChildren(...[
       h("h3", { class: "prize-body__title" }, t.child.youWon),
-      // Said too (not every child reads): tapping it says it again.
-      h("button", { type: "button", class: "prize-won", onclick: () => say(t.child.wonSay(won.text)) },
-        h("span", { class: "step-tile" }, picture(won.image_url, won.text, "step-tile__letter")),
-        won.text),
-      h("p", { class: "prize-body__hint" }, t.child.tellAdult),
+      h("button", { type: "button", class: "prize-card", onclick: () => say(t.gift.wonSay(won.text)) }, giftCard(won)),
+      h("p", { class: "prize-body__hint" }, t.gift.inChest),
       prize.spins_left > 0 && h("button", {
         type: "button", class: "btn btn--primary spin-button", onclick: () => showWheel(prize),
       }, t.child.spinAgain),
     ].filter(Boolean));
-    if (justWon) {
-      confetti(layer);
-      sounds.win();
-      setTimeout(() => say(t.child.wonSay(won.text)), SAY_AFTER_FANFARE_MS);
-    } else {
-      say(t.child.wonSay(won.text));
-    }
+    if (!justWon) say(t.gift.wonSay(won.text)); // just won: it was said while it shone
   }
 
   if (day.prize.state === "unlocked" && !day.prize.won.length) showWheel(day.prize);
@@ -102,7 +98,7 @@ export function prizeSheet(day, { spinUrl, onDay, onClose }) {
   return layer;
 }
 
-const SAY_AFTER_FANFARE_MS = 1600; // the voice once the fanfare is over
+const SAY_AFTER_SHINE_MS = 1300; // the voice once the card has grown
 
 // The four pastel colours in turn, without two neighbours alike (the last one
 // also touches the first).

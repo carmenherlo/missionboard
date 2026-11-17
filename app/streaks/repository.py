@@ -100,3 +100,9 @@ class StreaksRepository:
                 (at.isoformat(timespec="seconds"), child_id, end),
             )
         return cursor.rowcount > 0
+
+    def undeliver_week_prize(self, child_id: str, end: str) -> None:
+        with db.connect(self._data_dir) as conn:
+            conn.execute(
+                "UPDATE streak_weeks SET delivered_at = NULL WHERE child_id = ? AND week_end = ?", (child_id, end)
+            )
