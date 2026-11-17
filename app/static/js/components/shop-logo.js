@@ -30,6 +30,6 @@ export function shopLogo() {
     // The trail: thin at its tail, thicker towards the star.
     svg("path", { class: "shop-logo__tail", d: "M8 6 Q90 48 160 18 Q92 26 8 6 Z" }),
     svg("polygon", { class: "shop-logo__star", points: starPoints(174, 15, 15, 6.5) }));
-  return h("span", { class: "shop-logo", role: "img", "aria-label": t.shop.name },
-    h("span", { class: "shop-logo__name" }, t.shop.name), trail);
+  return h("span", { class: "shop-logo", role: "img", "aria-label": t.shop.brand },
+    h("span", { class: "shop-logo__name" }, t.shop.brand), trail);
 }
