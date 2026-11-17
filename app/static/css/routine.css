@@ -187,14 +187,14 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-2);
-  margin: 0;
-  padding: 0;
+  margin: 0; padding: 0;
   list-style: none;
 }
 
 .routine__task img { width: 28px; height: 28px; vertical-align: middle; margin-right: var(--space-1); }
 
-.routine__task {
+.routine__task { /* a button: a tap says it (17/11: some pictures are not clear) */
+  color: inherit; cursor: pointer;
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--line);
   border-radius: 999px;

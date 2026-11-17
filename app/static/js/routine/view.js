@@ -2,6 +2,7 @@
 // once closed) and, each tick, the phase, the clock, the tasks and what comes next.
 import { fullscreenButton } from "../components/fullscreen-button.js";
 import { soundButton } from "../components/sound-panel.js";
+import { say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { t } from "../texts.js";
@@ -112,8 +113,9 @@ export function view(r) {
     const steps = phase.kind === "part" ? phase.part.steps : [];
     if (view.tasks.dataset.key !== r.showing.phaseKey) {
       view.tasks.dataset.key = r.showing.phaseKey;
-      view.tasks.replaceChildren(...steps.map((step) => h("li", { class: "routine__task" },
-        step.image_url && h("img", { src: step.image_url, alt: "" }), step.text)));
+      view.tasks.replaceChildren(...steps.map((step) => h("li", {},
+        h("button", { type: "button", class: "routine__task", onclick: () => say(step.text) },
+          step.image_url && h("img", { src: step.image_url, alt: "" }), step.text))));
     }
     // What comes next, with the time each one starts.
     const coming = r.parts()
