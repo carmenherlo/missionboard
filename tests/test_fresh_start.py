@@ -142,6 +142,15 @@ def test_the_examples(examples):
             assert task["image"] not in [step["image"] for step in task["steps"]]
 
 
+def test_the_examples_ids_are_not_their_names(examples):
+    # A family renames the examples: the address of their screens must not keep the old name.
+    children = examples.get("/api/children").json()
+    assert all(c["id"] != c["name"].lower() for c in children)
+    by_id = {c["id"]: c["name"] for c in children}
+    routines = {r["name"]: r for r in examples.get("/api/routines", headers=PARENT).json()}
+    assert [by_id[kid] for kid in routines["Despegue"]["kids"]] == ["Bea", "Alex"]
+
+
 def test_each_child_starts_with_five_stars_and_so_does_a_new_one(examples):
     client = examples
     first = client.get("/api/children").json()[0]

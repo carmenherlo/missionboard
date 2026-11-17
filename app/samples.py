@@ -1,6 +1,9 @@
 """What a new installation starts with: three children and three missions, for each
-family to change. Fixed ids, so what they refer to is easy to follow in config.yaml."""
+family to change. Fixed ids, so what they refer to is easy to follow in config.yaml;
+the children's are drawn on each installation, like a child added by hand: they are in
+the address of their screens, and a family renames the examples to their own children."""
 
+import secrets
 from pathlib import Path
 
 from app.storage.config_migrations import initial
@@ -230,11 +233,12 @@ ROUTINES = [
 
 def document() -> dict:
     """The whole config.yaml of a new installation."""
+    ids = {child["id"]: secrets.token_hex(4) for child in CHILDREN}
     return {
         **initial(),
         "settings": {"starting_stars": STARTING_STARS},
-        "children": [dict(child) for child in CHILDREN],
+        "children": [{**child, "id": ids[child["id"]]} for child in CHILDREN],
         "missions": MISSIONS,
-        "routines": ROUTINES,
+        "routines": [{**routine, "kids": [ids[kid] for kid in routine["kids"]]} for routine in ROUTINES],
         "songs": [dict(song) for song in SONGS],
     }
