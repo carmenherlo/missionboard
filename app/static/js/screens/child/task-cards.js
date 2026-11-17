@@ -51,10 +51,11 @@ export function childTaskCard(task, { locked, current, onMark, onSpeak }) {
     onMark(task, e.currentTarget);
   };
   return h("article", {
-    class: `task-card${task.checked ? " task-card--done" : ""}${current ? " task-card--current" : ""}${!locked ? " task-card--tap" : ""}`,
+    class: `task-card${task.checked ? " task-card--done" : ""}${!locked ? " task-card--tap" : ""}`,
     "data-task": task.id,
     role: "button", tabindex: locked ? "-1" : "0", "aria-pressed": String(Boolean(task.checked)),
-    "aria-disabled": String(Boolean(locked)), "aria-label": t.child.stepLabel(task.text, task.checked),
+    "aria-disabled": String(Boolean(locked)),
+    "aria-label": [current && t.child.now, t.child.stepLabel(task.text, task.checked)].filter(Boolean).join(", "),
     onclick: tap,
     onkeydown: (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -62,6 +63,7 @@ export function childTaskCard(task, { locked, current, onMark, onSpeak }) {
       tap(e);
     },
   },
+    current && h("span", { class: "task-card__now", "aria-hidden": "true" }, t.child.now),
     head(task, {
       onTap: null,
       trailing: [
