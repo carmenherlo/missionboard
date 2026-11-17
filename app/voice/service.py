@@ -22,6 +22,10 @@ SPEAKER = "F"  # the woman's voice
 # Piper's usual style reads rather flat: a livelier intonation, a less even
 # rhythm and a bit faster (as chosen in an earlier version).
 STYLE = {"noise_scale": 0.9, "noise_w_scale": 1.0, "length_scale": 0.88}
+# Piper may stop while the last sound still rings ("gorr" for "gorro"), and Android
+# drops the very end of a short clip: a full stop to close the sentence, and some silence after.
+TAIL_SECONDS = 0.3
+CACHE_VERSION = 2  # raise it when what is generated changes: the old files are not used again
 MAX_TEXT = 600  # characters; a routine's sentence is far shorter
 
 
@@ -56,7 +60,10 @@ class Voice:
 
     def speak(self, text: str) -> bytes:
         """The text said aloud, as a WAV file (from the cache when it was said before)."""
-        key = hashlib.sha256(f"{self.model_path.name}|{SPEAKER}|{sorted(STYLE.items())}|{text}".encode()).hexdigest()
+        text = closed(text)
+        key = hashlib.sha256(
+            f"{CACHE_VERSION}|{self.model_path.name}|{SPEAKER}|{sorted(STYLE.items())}|{text}".encode()
+        ).hexdigest()
         cached = self.cache_dir / f"{key}.wav"
         if cached.is_file():
             return cached.read_bytes()
@@ -68,6 +75,8 @@ class Voice:
             buffer = io.BytesIO()
             with wave.open(buffer, "wb") as wav:
                 piper.synthesize_wav(text, wav, syn_config=SynthesisConfig(speaker_id=speaker, **STYLE))
+                silence = int(wav.getframerate() * TAIL_SECONDS) * wav.getsampwidth() * wav.getnchannels()
+                wav.writeframes(bytes(silence))
         audio = buffer.getvalue()
         try:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -86,3 +95,9 @@ class Voice:
                 raise VoiceUnavailableError("Piper is not installed (pip install piper-tts)") from error
             self._piper = PiperVoice.load(self.model_path)
         return self._piper
+
+
+def closed(text: str) -> str:
+    """The text ending like a sentence: Piper cuts a bare word short."""
+    text = text.strip()
+    return text if not text or text[-1] in '.!?…»)"' else f"{text}."

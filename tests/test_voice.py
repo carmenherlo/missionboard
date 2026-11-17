@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from app.voice.service import MODEL_NAME, Voice
+from app.voice.service import MODEL_NAME, Voice, closed
 
 DEV_MODEL = Path(__file__).parent.parent / "data" / "voices" / MODEL_NAME
 
@@ -24,3 +24,21 @@ def test_the_natural_voice_says_it_and_keeps_it(tmp_path):
     assert audio[:4] == b"RIFF" and len(audio) > 10_000
     assert len(list((tmp_path / "cache").glob("*.wav"))) == 1
     assert voice.speak("Comienza el aseo.") == audio
+
+
+def test_a_bare_word_is_closed_like_a_sentence():
+    # Piper cuts a bare word short ("gorr" for "gorro").
+    assert closed("Gorro") == "Gorro."
+    assert closed(" Bufanda ") == "Bufanda."
+    assert closed("¡Muy bien!") == "¡Muy bien!"
+
+
+@pytest.mark.skipif(not DEV_MODEL.is_file(), reason="the voice model is only on a development machine")
+def test_the_voice_ends_in_silence(tmp_path):
+    import io
+    import wave
+
+    with wave.open(io.BytesIO(Voice(DEV_MODEL, tmp_path).speak("Gorro"))) as wav:
+        frames = wav.readframes(wav.getnframes())
+        tail = int(wav.getframerate() * 0.2) * wav.getsampwidth()
+    assert frames[-tail:] == bytes(tail)
