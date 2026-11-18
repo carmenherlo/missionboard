@@ -64,11 +64,11 @@ The interface is in Spanish; the code, comments and tests are in English.
 
 ## Quick start
 
-Requirements: Python 3.12.
+Requirements: Python 3.12. With [uv](https://docs.astral.sh/uv/) (it downloads Python 3.12 if you don't have it):
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # or a conda environment
-pip install -r requirements.txt -r requirements-dev.txt
+uv venv --python 3.12 .venv && source .venv/bin/activate
+uv pip install -r requirements.txt -r requirements-dev.txt
 MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 ```
 
@@ -77,7 +77,7 @@ Open <http://localhost:8002/>. The default parents' code is **1234**: change it 
 (Bea, Alex and Noa) and three missions (Despegue, Aterrizaje and Alunizaje), with their
 routines and two songs, to change as you like.
 
-`bash dev.sh` does the same with a conda environment named `missionboard` and
+`bash dev.sh` does the same with the `.venv` environment (no need to activate it) and
 prints the address to open from a tablet on the same network.
 
 ### The natural voice (optional)

@@ -68,11 +68,11 @@ La app está en español; el código, los comentarios y los tests, en inglés.
 
 ## Arrancarla
 
-Hace falta Python 3.12.
+Hace falta Python 3.12. Con [uv](https://docs.astral.sh/uv/) (descarga Python 3.12 si no lo tienes):
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # o un entorno de conda
-pip install -r requirements.txt -r requirements-dev.txt
+uv venv --python 3.12 .venv && source .venv/bin/activate
+uv pip install -r requirements.txt -r requirements-dev.txt
 MISSIONBOARD_DATA_DIR=data uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 ```
 
@@ -81,7 +81,7 @@ en *Zona de padres → Código de padres*. Una instalación nueva trae de ejempl
 (Bea, Alex y Noa) y tres misiones (Despegue, Aterrizaje y Alunizaje), con sus rutinas y
 dos canciones, para cambiarlos a tu gusto.
 
-`bash dev.sh` hace lo mismo con un entorno de conda llamado `missionboard`, y escribe
+`bash dev.sh` hace lo mismo con el entorno `.venv` (sin activarlo), y escribe
 la dirección para abrirla desde una tablet de la misma red.
 
 ### La voz natural (opcional)
