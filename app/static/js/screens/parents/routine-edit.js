@@ -114,7 +114,6 @@ export async function viewRoutineEdit(routineId) {
     manual && h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes))].filter(Boolean));
     timed.hidden = manual;
     timedPanels.hidden = manual;
-    goalPanel.hidden = manual;
   }
   function renderWhen() {
     const ending = routine.anchor === "end";
@@ -277,7 +276,6 @@ export async function viewRoutineEdit(routineId) {
   // ---------- the goal ----------
   const goalBox = h("div", { class: "stack stack--tight" });
   function renderGoal() {
-    if (routine.manual) return;
     const withGoal = Boolean(routine.goal);
     const tabs = h("div", { class: "tabs" },
       [[true, t.routineEdit.withGoal], [false, t.routineEdit.noGoal]].map(([value, label]) =>
@@ -309,7 +307,7 @@ export async function viewRoutineEdit(routineId) {
     goalBox.replaceChildren(...[!ending && tabs,
       h("label", { class: "toggle" }, checkOn, t.routineEdit.checkFirst),
       checking && h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.checkDuring, during)),
-      h("p", { class: "hint" }, checking
+      h("p", { class: "hint" }, routine.manual ? t.routineEdit.goalByHand(goal.check_minutes) : checking
         ? t.routineEdit.checkHint(shortTime(partsEnd()), shortTime(goal.at))
         : ending ? t.routineEdit.goalIsTheEnd(shortTime(goal.at)) : t.routineEdit.goalAfterParts(shortTime(goal.at))),
       h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.panelSay),

@@ -1,5 +1,5 @@
-// How the routine ends: the goal and its celebration, or, started by hand,
-// "¡Hecho!" (or who still has tasks); on screen a while, then it closes.
+// How the routine ends: the goal and its celebration, or, started by hand without
+// a goal, "¡Hecho!" (or who still has tasks); on screen a while, then it closes.
 import { avatar } from "../components/avatar.js";
 import { sounds } from "../components/sound.js";
 import { say } from "../components/speech.js";
@@ -7,7 +7,7 @@ import { h } from "../dom.js";
 import { confetti } from "../effects/confetti.js";
 import { AFTER_ZERO_MS } from "./heard.js";
 import * as script from "./script.js";
-import { minuteOf, tasksLeft } from "./words.js";
+import { tasksLeft } from "./words.js";
 
 const DONE_MS = 30_000; // started by hand: "¡Hecho!" (or "¡Se acabó el tiempo!") stays this long
 
@@ -81,12 +81,12 @@ export function goal(r) {
   }
 
   function timeToGo(time) {
-    const late = minuteOf(r.showing.data.goal.at) - time < 1; // opened in its last seconds
+    const late = r.goalAt() - time < 1; // opened in its last seconds
     say([...script.goalReached(r.showing.data, time, late ? 0 : r.minutesToGoal(time)), ...r.missed()]);
   }
 
   function minutesToGoal(time) {
-    return Math.round(minuteOf(r.showing.data.goal.at) - time);
+    return Math.round(r.goalAt() - time);
   }
 
   // At the goal, after checking: whoever did not finish their mission.

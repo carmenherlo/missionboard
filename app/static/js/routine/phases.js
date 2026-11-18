@@ -6,18 +6,21 @@ import { minuteOf } from "./words.js";
 export const JUST_STARTED_S = 5;
 
 export function phases(r) {
-  // Each part's start and end, in minutes of the day; started by hand, to the second
-  // it was started (the server's times are whole minutes).
+  // Started by hand, the server's whole minutes moved to the second it was started.
+  const shift = () => (r.showing.data.manual ? r.showing.data.started - minuteOf(r.showing.data.parts[0].start) : 0);
+
+  // Each part's start and end, in minutes of the day.
   function parts() {
-    const { data } = r.showing;
-    const shift = data.manual ? data.started - minuteOf(data.parts[0].start) : 0;
-    return data.parts.map((p) => ({ ...p, from: minuteOf(p.start) + shift, to: minuteOf(p.end) + shift }));
+    return r.showing.data.parts.map((p) => ({ ...p, from: minuteOf(p.start) + shift(), to: minuteOf(p.end) + shift() }));
   }
+
+  // When the goal comes, at the latest (the routine has one).
+  const goalAt = () => minuteOf(r.showing.data.goal.at) + shift();
 
   function phaseAt(time) {
     const { data } = r.showing;
     const all = r.parts();
-    const goalAt = data.goal && minuteOf(data.goal.at);
+    const goalAt = data.goal && r.goalAt();
     const checkTo = all.at(-1).to + r.checkMinutes();
     if (r.showing.done) return { kind: "done" };
     if (r.showing.earlyGoal != null && time < goalAt) return { kind: "goal", from: r.showing.earlyGoal, to: goalAt };
@@ -31,7 +34,7 @@ export function phases(r) {
   }
 
   // Checking the missions before the goal (rutinas-6), in minutes; 0: none.
-  const checkMinutes = () => (r.showing.data.manual ? 0 : r.showing.data.goal?.check_minutes ?? 0);
+  const checkMinutes = () => r.showing.data.goal?.check_minutes ?? 0;
 
   const keyOf = (phase) => (phase.kind === "part" ? `part-${phase.index}` : phase.kind);
 
@@ -39,12 +42,10 @@ export function phases(r) {
   const closed = () => Boolean(r.showing.hidden);
 
   // Every kid has done their mission, from the first part to the goal (also before checking,
-  // 17/11): the goal now. Started by hand it has no goal: it ends in finish() instead.
+  // 17/11): the goal now. Without a goal (started by hand) it ends in finish() instead.
   function allDoneEarly(time) {
-    const { data } = r.showing;
-    if (data.manual || !data.goal) return false;
-    const all = r.parts();
-    return time >= all[0].from && time < minuteOf(data.goal.at) && r.everyoneSigned();
+    if (!r.showing.data.goal) return false;
+    return time >= r.parts()[0].from && time < r.goalAt() && r.everyoneSigned();
   }
 
   // Who has not done their mission yet: [[name, steps left]].
@@ -58,5 +59,5 @@ export function phases(r) {
     return withMission.length > 0 && withMission.every((p) => p.mission.completed);
   }
 
-  return { parts, phaseAt, checkMinutes, keyOf, closed, allDoneEarly, missing, everyoneSigned };
+  return { parts, goalAt, phaseAt, checkMinutes, keyOf, closed, allDoneEarly, missing, everyoneSigned };
 }

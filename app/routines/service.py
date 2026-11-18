@@ -81,21 +81,21 @@ class RoutinesService:
         settings = self._settings.settings()
         now = self._clock.now()
         day = app_day(now, settings.day_starts_at)
-        minute = now.hour * 60 + now.minute + now.second / 60
+        minute = _minute(now)
         weekday = WEEKDAYS[day.weekday()]
         for stored in self._live():
             run = self._runs.get(day, stored.id) if stored.manual else None
             if not run or not run["started_at"] or run["finished_at"]:
                 continue
-            started = datetime.fromisoformat(run["started_at"])
-            start = started.hour * 60 + started.minute + started.second / 60
-            if minute < start + stored.length:
+            start = _minute(datetime.fromisoformat(run["started_at"]))
+            at = _minute(datetime.fromisoformat(run["paused_at"])) if run["paused_at"] else minute  # paused: still
+            if at < start + stored.length:
                 kids = json.loads(run["kids"] or "[]")
                 people = [p for p in self.people(stored) if p.child.id in kids]
                 return Current(
                     stored.on(weekday).started_at(int(start)),
                     day,
-                    minute,
+                    at,
                     run,
                     people,
                     settings.routine_warn_minutes,
@@ -238,6 +238,22 @@ class RoutinesService:
         self._runs.set(current.day, routine_id, finished_at=self._clock.now())
         self._events.routine_did("routine_finished", current.routine.name)
 
+    def pause(self, routine_id: str, paused: bool) -> None:
+        """Started by hand, a parent pauses it (its time stands still) or lets it go on
+        (18/11): then it starts that much later, so it goes on where it was."""
+        current = self._current(routine_id)
+        run, now = current.run, self._clock.now()
+        if current.started is None:
+            raise ConflictError("Only a routine started by hand can be paused")
+        if paused and not run["paused_at"]:
+            self._runs.set(current.day, routine_id, paused_at=now)
+        elif not paused and run["paused_at"]:
+            started = datetime.fromisoformat(run["started_at"]) + (now - datetime.fromisoformat(run["paused_at"]))
+            self._runs.set(current.day, routine_id, started_at=started, paused_at=None)
+        else:
+            return
+        self._events.routine_did("routine_paused" if paused else "routine_resumed", current.routine.name)
+
     def _current(self, routine_id: str) -> Current:
         current = self.current()
         if current is None or current.routine.id != routine_id:
@@ -276,3 +292,8 @@ class RoutinesService:
                     )
                 )
         return people
+
+
+def _minute(moment: datetime) -> float:
+    """Minute of the day, with seconds."""
+    return moment.hour * 60 + moment.minute + moment.second / 60

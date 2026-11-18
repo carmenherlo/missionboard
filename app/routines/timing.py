@@ -29,7 +29,9 @@ def settled(doc: dict) -> dict:
     after the other. Starting at a time ("Empieza a las"): from the first part's time,
     and the goal comes when they end (after checking the missions). Ending at a time
     ("Termina a las"): the last ends at its goal; the first part (and when it rings, as
-    many minutes before as it was) moves to fit. Started by hand, as it is."""
+    many minutes before as it was) moves to fit. Started by hand, its goal has no time."""
+    if doc.get("wake") is None and doc.get("goal"):
+        return {**doc, "goal": {**doc["goal"], "at": None}}
     if doc.get("wake") is None or not doc.get("parts"):
         return doc
     if doc.get("anchor") != "end":

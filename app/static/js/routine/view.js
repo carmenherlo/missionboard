@@ -7,7 +7,7 @@ import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { t } from "../texts.js";
 import { clockFace, timerFace } from "./clock-face.js";
-import { capital, countdownText, hourWords, itIs, minuteOf, shortTime } from "./words.js";
+import { capital, countdownText, hourWords, itIs, shortTime } from "./words.js";
 
 // In the parents' zone the routine does not cover the screen: a banner says it is on.
 export const inParents = () => location.hash.startsWith("#/parents");
@@ -22,6 +22,8 @@ export function view(r) {
     }, icon("close"));
     const musicButton = h("button", { type: "button", class: "btn routine__music", hidden: true, onclick: () => r.silenceSong() },
       icon("music"), t.routine.stopMusic);
+    // Started by hand, a parent can pause it (pause.js): ⏸ Pausar, or ▶ Seguir.
+    const pauseButton = h("button", { type: "button", class: "btn routine__pause", hidden: true, onclick: () => r.askPause() });
     const stopButton = h("button", { type: "button", class: "btn btn--primary routine__stop", onclick: r.stop },
       t.routine.stop);
     const what = h("h2", { class: "routine__what" });
@@ -41,14 +43,14 @@ export function view(r) {
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
         h("header", { class: "routine__top" }, fullscreenButton(), time, h("span", { class: "child-bar__spacer" }),
-          musicButton, soundButton(), close),
+          pauseButton, musicButton, soundButton(), close),
         trialTools,
         what, until, champions, dial, stopButton, tasks, next, transcript),
       h("aside", { class: "routine__side" }, people),
       over, finish);
     // In the parents' zone, or hidden here: a button to go back to it.
     const banner = h("button", { type: "button", class: "routine-banner", onclick: () => r.reopen() });
-    return { layer, banner, time, close, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
+    return { layer, banner, time, close, pauseButton, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
       trialTools, transcript };
   }
 
@@ -71,8 +73,10 @@ export function view(r) {
     const { view, data } = r.showing;
     view.layer.dataset.phase = phase.kind;
     // Started by hand, the time of day does not matter: how long is left in total.
-    view.time.textContent = !data.manual ? capital(itIs(time))
-      : phase.kind === "part" ? t.routine.leftInTotal(countdownText((r.parts().at(-1).to - time) * 60)) : "";
+    const toEnd = r.parts().at(-1).to + r.checkMinutes() - time;
+    view.time.textContent = data.paused ? t.routine.paused : !data.manual ? capital(itIs(time))
+      : ["part", "check"].includes(phase.kind) ? t.routine.leftInTotal(countdownText(toEnd * 60)) : "";
+    renderPause(phase);
     view.stopButton.hidden = !r.showing.ringing;
     const toGo = phase.kind === "done" ? "" : countdownText((phase.to - time) * 60);
     let image = null;
@@ -90,14 +94,15 @@ export function view(r) {
       what = data.goal.say;
     } else if (phase.kind === "check") {
       what = t.routine.checkTitle;
-      until = t.routine.goalAt(hourWords(minuteOf(data.goal.at)), toGo);
+      until = data.manual ? t.routine.endsIn(toGo) : t.routine.goalAt(hourWords(r.goalAt()), toGo);
     } else if (phase.kind === "goal") {
       image = data.goal.image_url;
       what = data.goal.say;
-      until = t.routine.goalAt(hourWords(phase.to), toGo);
+      until = data.manual ? t.routine.endsIn(toGo) : t.routine.goalAt(hourWords(phase.to), toGo);
     } else if (r.showing.finished) {
       what = r.showing.finished === "done" ? t.routine.done : t.routine.timeUp;
     }
+    if (data.paused && phase.kind !== "done") until = t.routine.pausedLeft(toGo);
     view.what.replaceChildren(...[image && h("img", { src: image, alt: "" }), what].filter(Boolean));
     view.until.textContent = until;
     view.clock.replaceChildren(data.manual
@@ -122,11 +127,25 @@ export function view(r) {
       .filter((p, index) => phase.kind === "wake" || (phase.kind === "part" && index > phase.index))
       .map((p) => (data.manual ? p.name : `${shortTime(p.from)} ${p.name}`));
     if (r.checkMinutes() && (phase.kind === "wake" || phase.kind === "part")) {
-      coming.push(`${shortTime(r.parts().at(-1).to)} ${t.routine.checkTitle.toLowerCase()}`);
+      const check = t.routine.checkTitle.toLowerCase();
+      coming.push(data.manual ? check : `${shortTime(r.parts().at(-1).to)} ${check}`);
     }
-    if (data.goal && (phase.kind === "wake" || phase.kind === "part")) coming.push(`${shortTime(minuteOf(data.goal.at))} ${t.routine.goal}`);
+    if (data.goal && (phase.kind === "wake" || phase.kind === "part")) {
+      coming.push(data.manual ? t.routine.goal : `${shortTime(r.goalAt())} ${t.routine.goal}`);
+    }
     view.next.textContent = phase.kind === "check" && !r.showing.finishing ? t.routine.checkHint
       : coming.length ? t.routine.next(coming) : "";
+  }
+
+  // ⏸ Pausar or ▶ Seguir: started by hand, for real (not a trial), until its goal or end.
+  function renderPause(phase) {
+    const { view, data } = r.showing;
+    const paused = Boolean(data.paused);
+    view.pauseButton.hidden = !data.manual || Boolean(data.trial) || phase.kind === "done" || Boolean(r.showing.finishing);
+    if (view.pauseButton.dataset.paused === String(paused)) return;
+    view.pauseButton.dataset.paused = String(paused);
+    view.pauseButton.replaceChildren(icon(paused ? "play" : "pause"), paused ? t.routine.resume : t.routine.pause);
+    view.layer.classList.toggle("routine-layer--paused", paused);
   }
 
   return { buildView, place, render };

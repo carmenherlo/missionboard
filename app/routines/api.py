@@ -53,7 +53,7 @@ class RoutineCreate(BaseModel):
 
 class GoalIn(BaseModel):
     image: str | None = None
-    at: str = Field(pattern=TIME)
+    at: str | None = Field(default=None, pattern=TIME)  # started by hand: none
     say: str = Field(default="¡Rutina terminada!", max_length=200)
     check_minutes: int = Field(default=0, ge=0, le=30)  # checking the missions before it (rutinas-6)
     check_say: str | None = Field(default=None, max_length=200)
@@ -193,6 +193,7 @@ def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository
         "music": _music(routine, songs),
         "ends": hhmm(routine.ends),
         "stopped": bool(current.run["stopped_at"]),
+        "paused": bool(current.run["paused_at"]),  # started by hand: its time stands still
         "people": [
             {"child": public_child(p.child), "colors": avatars.tones(p.child.color), "mission": p.mission}
             for p in current.people
@@ -288,15 +289,10 @@ def current_routine(
     return _present(current, libraries, SongsRepository(store)) if current else None
 
 
-# The routine's screen is for everyone in the house: no parent code, except to finish it.
+# The routine's screen is for everyone in the house: no parent code (finishing and pausing: control_api.py).
 @router.post("/{routine_id}/notes", status_code=204)
 def note(routine_id: str, body: NoteIn, routines: RoutinesService = Depends(get_routines_service)) -> None:
     routines.note(routine_id, body.kind, part=body.part, seconds=body.seconds, early=body.early, phase=body.phase)
-
-
-@router.post("/{routine_id}/finish", status_code=204, dependencies=parent_only)
-def finish(routine_id: str, routines: RoutinesService = Depends(get_routines_service)) -> None:
-    routines.finish(routine_id)
 
 
 # ---------- Configurar → Rutinas ----------

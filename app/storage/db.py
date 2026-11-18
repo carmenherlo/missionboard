@@ -197,6 +197,9 @@ MIGRATIONS: list[str] = [
         at TEXT NOT NULL
     )
     """,
+    # 14 · A routine started by hand, paused by a parent (18/11): since when. On going on,
+    # its start moves forward as long as it was paused.
+    "ALTER TABLE routine_runs ADD COLUMN paused_at TEXT",
 ]
 
 

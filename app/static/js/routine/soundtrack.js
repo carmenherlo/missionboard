@@ -7,7 +7,7 @@ export function soundtrack(r) {
   // The songs (music.js): silent while out of sight, and in a trial faster than real time.
   function playMusic(time) {
     const { view, player } = r.showing;
-    player.update(r.songWindows(), time, !view.layer.hidden && r.showing.speed === 1);
+    player.update(r.songWindows(), time, !view.layer.hidden && r.showing.speed === 1 && !r.showing.data.paused);
     view.musicButton.hidden = !player.playing();
   }
 
@@ -16,7 +16,7 @@ export function soundtrack(r) {
     const all = r.parts();
     return musicWindows(data.music ?? [], {
       wake: data.manual ? all[0].from : minuteOf(data.wake), parts: all,
-      goalAt: data.goal ? minuteOf(data.goal.at) : all.at(-1).to,
+      goalAt: data.goal ? r.goalAt() : all.at(-1).to,
       goalFrom: r.showing.earlyGoal ?? all.at(-1).to + r.checkMinutes(), // everyone done early: its song then
     }).filter((w) => !r.showing.musicOff.has(w.id));
   }

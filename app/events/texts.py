@@ -103,6 +103,8 @@ _ROUTINE = {
     "routine_closed": "Escondieron la rutina «{routine}» en un aparato",
     "routine_reopened": "Volvieron a ver la rutina «{routine}» en un aparato",
     "routine_finished": "Finalizaron la rutina «{routine}» por hoy",
+    "routine_paused": "Pausaron la rutina «{routine}»",
+    "routine_resumed": "La rutina «{routine}» siguió tras la pausa",
     "routine_ended": "Acabó la rutina «{routine}»",
 }
 

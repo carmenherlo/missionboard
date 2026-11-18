@@ -2,10 +2,10 @@
 // silent, with a clock beating at the bottom to bring it back (the other tablets go on);
 // "Finalizar rutina para todos" ends it for today everywhere, with the parents' code.
 import { api } from "../api.js";
-import { codeField } from "../components/code-input.js";
 import { quiet } from "../components/speech.js";
 import { h } from "../dom.js";
 import { t } from "../texts.js";
+import { askParentCode } from "./code-dialog.js";
 import { inParents } from "./view.js";
 
 // This device's memory of the routine hidden today: "<routine id>|<day>".
@@ -77,27 +77,13 @@ export function closing(r) {
 
   // "Finalizar rutina para todos": whoever is in charge ends it for today, with the parents' code.
   function askCode() {
-    const { field, input } = codeField(t.routine.code);
-    const error = h("p", { class: "form-error", role: "alert" });
-    const form = h("form", {
-      class: "routine__code", novalidate: true,
-      onsubmit: async (event) => {
-        event.preventDefault();
-        try {
-          await api("POST", `api/routines/${r.showing.data.id}/finish`, { parentCode: input.value });
-          r.end();
-        } catch {
-          error.textContent = t.errors.badParentCode;
-          input.value = "";
-          input.focus();
-        }
+    askParentCode(r, {
+      title: t.routine.finishTitle, hint: t.routine.finishHint, submit: t.routine.finish,
+      send: async (parentCode) => {
+        await api("POST", `api/routines/${r.showing.data.id}/finish`, { parentCode });
+        r.end();
       },
-    }, h("h2", {}, t.routine.finishTitle), h("p", {}, t.routine.finishHint), field, error,
-      h("div", { class: "form-actions" },
-        h("button", { type: "button", class: "btn", onclick: () => r.showing.view.finish.replaceChildren() }, t.common.cancel),
-        h("button", { type: "submit", class: "btn btn--primary" }, t.routine.finish)));
-    r.showing.view.finish.replaceChildren(form);
-    input.focus();
+    });
   }
 
   return { wasHidden, askClose, hideHere, reopen, askCode };

@@ -50,7 +50,7 @@ def test_a_routine_by_hand_has_no_times_of_its_own(client, landing):
     ]
     assert landing["minutes"] == 7
     url = f"/api/routines/{landing['id']}"
-    assert client.patch(url, json={"goal": {"at": "18:00"}}, headers=PARENT).status_code == 422
+    assert client.patch(url, json={"anchor": "end"}, headers=PARENT).status_code == 422
     # Back to a time: the first part five minutes after it rings
     back = client.patch(url, json={"wake": "18:00"}, headers=PARENT).json()
     assert back["manual"] is False and back["parts"][0]["start"] == "18:05"
@@ -121,3 +121,43 @@ def test_trying_one_by_hand_starts_it_now(client, landing):
 def test_it_never_overlaps_a_routine_with_a_time(client, landing):
     url = f"/api/routines/{landing['id']}"
     assert client.patch(url, json={"days": ["mon", "tue", "wed", "thu", "fri"]}, headers=PARENT).status_code == 200
+
+
+def test_by_hand_it_can_have_its_goal_after_checking(client, landing, clock):
+    bea = create_child(client)
+    url = f"/api/routines/{landing['id']}"
+    routine = client.patch(url, json={"goal": {"check_minutes": 5, "at": "10:00"}}, headers=PARENT).json()
+    assert routine["manual"] is True and routine["goal"]["at"] is None and routine["minutes"] == 12
+    start(client, landing, [bea["id"]])
+    current = client.get("/api/routines/current").json()
+    assert current["goal"]["at"] == "17:12" and current["goal"]["check_minutes"] == 5
+    clock.moment = MONDAY + timedelta(minutes=11)  # checking the missions
+    assert client.get("/api/routines/current").json() is not None
+    clock.moment = MONDAY + timedelta(minutes=12)
+    assert client.get("/api/routines/current").json() is None
+    # With a time again, the goal gets its own; and by hand once more, it keeps its checking
+    timed = client.patch(url, json={"wake": "18:00"}, headers=PARENT).json()
+    assert timed["goal"]["at"] == "18:17"  # its first part five minutes after it rings
+    again = client.patch(url, json={"wake": None}, headers=PARENT).json()
+    assert again["goal"] == {**timed["goal"], "at": None}
+
+
+def test_a_parent_pauses_it_and_it_goes_on_where_it_was(client, landing, clock):
+    bea = create_child(client)
+    url = f"/api/routines/{landing['id']}/paused"
+    assert client.put(url, json={"paused": True}, headers=PARENT).status_code == 409  # not on
+    start(client, landing, [bea["id"]])
+    assert client.put(url, json={"paused": True}).status_code == 401
+    clock.moment = MONDAY + timedelta(minutes=2)
+    assert client.put(url, json={"paused": True}, headers=PARENT).status_code == 204
+    clock.moment = MONDAY + timedelta(minutes=30)  # long after its time: still there, still
+    current = client.get("/api/routines/current").json()
+    assert current["paused"] is True and current["now"] == pytest.approx(17 * 60 + 2 + 1 / 6)
+    assert client.put(url, json={"paused": False}, headers=PARENT).status_code == 204
+    current = client.get("/api/routines/current").json()
+    assert current["paused"] is False and current["started"] == pytest.approx(17 * 60 + 28 + 1 / 6)
+    assert current["now"] - current["started"] == pytest.approx(2)
+    assert descriptions(client, limit=2) == [
+        "La rutina «Aterrizaje» siguió tras la pausa",
+        "Pausaron la rutina «Aterrizaje»",
+    ]

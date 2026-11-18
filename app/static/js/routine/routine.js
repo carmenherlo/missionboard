@@ -16,10 +16,11 @@
 // clock. "Cerrar" hides it until its next part; "Finalizar" (parents' code)
 // ends it for today. In the parents' zone it does not cover the screen: a
 // banner says it is on.
-// A routine started by hand (⏰ on the home screen, rutinas-2): no alarm, no goal,
-// no time of day; its parts go one after the other from when it started, with
-// a timer instead of the clock, and it ends once its kids have done their
-// mission ("¡Muy bien!") or its time is up (who still has steps).
+// A routine started by hand (⏰ on the home screen, rutinas-2): no alarm, no time
+// of day; its parts go one after the other from when it started, with a timer
+// instead of the clock. With a goal (18/11), checking and the goal as above;
+// without, it ends once its kids have done their mission ("¡Muy bien!") or its
+// time is up (who still has steps). A parent can pause it (pause.js).
 // "Probar ahora" (Configurar → Rutinas) shows a routine the same way, at its own
 // times, on this device only: over any screen, nothing logged, and "Cerrar"
 // ends it. Its clock can go faster (×10, ×20) or jump to just before the next
@@ -41,6 +42,7 @@ import { heard } from "./heard.js";
 import { kids } from "./kids.js";
 import { musicPlayer } from "./music.js";
 import { startNotices } from "./notices.js";
+import { pause } from "./pause.js";
 import { phases } from "./phases.js";
 import { soundtrack } from "./soundtrack.js";
 import { trial } from "./trial.js";
@@ -67,7 +69,7 @@ export function startRoutines() {
   // now (null: nothing), and every piece adds its functions to it, so they call each other.
   const r = { showing: null };
   Object.assign(r, { check, begin, sync, end, note, now, tick },
-    phases(r), heard(r), goal(r), soundtrack(r), trial(r), view(r), kids(r), closing(r));
+    phases(r), heard(r), goal(r), soundtrack(r), trial(r), view(r), kids(r), closing(r), pause(r));
 
   async function check() {
     if (r.showing?.data.trial) return; // a trial goes on until it is closed
@@ -131,6 +133,7 @@ export function startRoutines() {
   }
 
   function sync(data) {
+    if (data.paused && !r.showing.data.paused) r.paused(); // paused from another device
     r.showing.data = data;
     r.showing.fetchedAt = Date.now();
     r.renderPeople();
@@ -153,8 +156,9 @@ export function startRoutines() {
     api("POST", `api/routines/${r.showing.data.id}/notes`, { json: { kind, ...extra } }).catch(() => {});
   }
 
-  // Minute of the day by the household's clock, with seconds.
+  // Minute of the day by the household's clock, with seconds (paused: it stands still).
   function now() {
+    if (r.showing.data.paused) return r.showing.data.now;
     return r.showing.data.now + ((Date.now() - r.showing.fetchedAt) / 60_000) * r.showing.speed;
   }
 
@@ -162,7 +166,8 @@ export function startRoutines() {
     if (!r.showing) return;
     const time = r.now();
     if (r.showing.earlyGoal == null && r.allDoneEarly(time)) r.showing.earlyGoal = time;
-    if (r.showing.data.manual && !r.showing.done && r.everyoneSigned()) r.showing.done = "signed"; // it ends now
+    const { data } = r.showing;
+    if (data.manual && !data.goal && !r.showing.done && r.everyoneSigned()) r.showing.done = "signed"; // it ends now
     const phase = r.phaseAt(time);
     const key = r.keyOf(phase);
     if (key !== r.showing.phaseKey) {
@@ -172,7 +177,7 @@ export function startRoutines() {
       r.enter(phase, time, before, counted);
       if (!r.showing) return; // "done": it ended
     }
-    if (!r.closed() && !r.showing.finishing) {
+    if (!r.closed() && !r.showing.finishing && !data.paused) {
       r.remind(phase, time);
       r.tickTock(phase, time);
       r.countDown(phase, time, key);

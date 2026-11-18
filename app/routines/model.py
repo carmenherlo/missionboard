@@ -50,12 +50,13 @@ class Goal(BaseModel):
     """Where the routine ends, at 07:45: "¡Es hora de irse al cole!". No name since
     rutinas-5 (the voice says "Quedan cinco minutos para terminar"). Before it, from
     the end of the last part, `check_minutes` to check the missions (rutinas-6): as
-    soon as every child has done theirs, the goal comes and the routine is over."""
+    soon as every child has done theirs, the goal comes and the routine is over.
+    Started by hand (18/11), no `at`: it comes after the parts and the checking."""
 
     model_config = ConfigDict(extra="ignore", frozen=True)
 
     image: str | None = None
-    at: str = Field(pattern=TIME)
+    at: str | None = Field(default=None, pattern=TIME)  # None: started by hand
     say: str = "¡Rutina terminada!"
     check_minutes: int = Field(default=0, ge=0, le=30)  # 0: no checking
     check_say: str | None = Field(default=None, max_length=200)  # None: "Es hora de revisar las misiones."
@@ -160,14 +161,16 @@ class Routine(BaseModel):
 
     @property
     def length(self) -> int:
-        """How long a routine started by hand lasts, in minutes."""
-        return sum(part.minutes for part in self.parts)
+        """How long a routine started by hand lasts, in minutes (its checking too)."""
+        return sum(part.minutes for part in self.parts) + (self.goal.check_minutes if self.goal else 0)
 
     def started_at(self, minute: int) -> "Routine":
         """A routine started by hand, as if it rang at `minute` with its first part right then."""
         doc = self.to_doc()
         doc["wake"] = hhmm(minute % (24 * 60))
         doc["parts"][0]["at"] = doc["wake"]
+        if doc.get("goal"):  # after the parts and the checking (18/11)
+            doc["goal"]["at"] = hhmm((minute + self.length) % (24 * 60))
         return Routine.model_validate(doc)
 
     def shifted(self, minutes: int) -> "Routine":
@@ -207,15 +210,17 @@ class Routine(BaseModel):
         """Each part with its start and end, in minutes of the day (started by hand:
         in minutes from when it starts)."""
         if self.wake is None:
-            if any(part.at for part in self.parts) or self.goal or self.offsets or self.notices or self.anchor == "end":
-                raise ValueError(f"{self.id!r} is started by hand: no times of its own, no goal")
+            if any(part.at for part in self.parts) or (self.goal and self.goal.at) or self.offsets or self.notices:
+                raise ValueError(f"{self.id!r} is started by hand: no times of its own")
+            if self.anchor == "end":
+                raise ValueError(f"{self.id!r} is started by hand: it cannot end at a time")
             timed, start = [], 0
             for part in self.parts:
                 timed.append((part, start, start + part.minutes))
                 start += part.minutes
             return timed
-        if self.parts[0].at is None:
-            raise ValueError(f"the first part of {self.id!r} needs a time of its own (at)")
+        if self.parts[0].at is None or (self.goal and self.goal.at is None):
+            raise ValueError(f"the first part and the goal of {self.id!r} need a time of their own (at)")
         timed = []
         previous_end = minute_of(self.wake)
         for part in self.parts:
@@ -247,7 +252,11 @@ class Routine(BaseModel):
     @property
     def ends(self) -> int:
         """When it is over, in minutes of the day (started by hand: from when it starts)."""
-        return minute_of(self.goal.at) if self.goal else self.timeline()[-1][2]
+        return (
+            minute_of(self.goal.at)
+            if self.goal and self.goal.at
+            else self.timeline()[-1][2] + (self.goal.check_minutes if self.goal else 0)
+        )
 
     def overlaps(self, other: "Routine") -> bool:
         """Both ring on some day and their times cross that day (by hand: never)."""

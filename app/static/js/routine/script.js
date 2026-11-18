@@ -72,8 +72,11 @@ export function wakeUp(routine, first, time, n) {
 
 export const untilGoal = (n) => `${left(n)} para terminar.`;
 
+// Started by hand, the time of day does not matter: not said.
+const timeSaid = (routine, time) => (routine.manual ? [] : [`${capital(itIs(time))}.`]);
+
 export function goalReached(routine, time, minutesLeft) {
-  return [`${capital(itIs(time))}.`, ...(minutesLeft >= 1 ? [untilGoal(minutesLeft)] : []), routine.goal.say];
+  return [...timeSaid(routine, time), ...(minutesLeft >= 1 ? [untilGoal(minutesLeft)] : []), routine.goal.say];
 }
 
 // "¡Enhorabuena! Habéis completado con éxito todas vuestras tareas de la misión Despegue."
@@ -92,7 +95,7 @@ export function earlyGoal(routine, done, minutesLeft) {
 export const checkOpening = (routine) => routine.goal.check_say ?? USUAL.check;
 
 export function checkStart(routine, time, missing) {
-  return [`${capital(itIs(time))}.`, checkOpening(routine), ...missing.map(([name, n]) => someoneMissing(name, n))];
+  return [...timeSaid(routine, time), checkOpening(routine), ...missing.map(([name, n]) => someoneMissing(name, n))];
 }
 
 // At the goal, whoever did not finish: "A Alex le faltaron 2 tareas."

@@ -101,7 +101,7 @@ const TIMER_BARS = 100;
 export function timerFace(phase, now) {
   const svg = el("svg", { viewBox: "-110 -110 220 220", class: "timer-face", "aria-hidden": "true" });
   svg.append(el("circle", { class: "timer-face__case", r: 108 }));
-  if (phase.kind !== "part") return svg;
+  if (phase.kind !== "part" && phase.kind !== "check") return svg; // checking the missions too (18/11)
   const left = Math.max(0, Math.min(1, (phase.to - now) / (phase.to - phase.from)));
   for (let bar = 0; bar < TIMER_BARS; bar += 1) {
     const angle = ((bar + 0.5) * 360) / TIMER_BARS; // clockwise from 12

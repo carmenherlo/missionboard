@@ -174,7 +174,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
     for (const n of (part.warnings ?? (minutes > 2 ? [USUAL_WARNING] : [])).filter((w) => w < minutes).sort((a, b) => b - a)) {
       lines.push(auto(to - n, script.partWarning(part, n, script.nextFor(routine, routine.parts, index))));
     }
-    const check = !manual && routine.goal?.check_minutes > 0; // then the last part does not lead to the goal
+    const check = routine.goal?.check_minutes > 0; // then the last part does not lead to the goal
     const herald = script.partHerald(part, last && !check, routine, script.nextFor(routine, routine.parts, index));
     lines.push(last && !check
       ? own(to - HERALD_S / 60, herald, {
@@ -182,21 +182,23 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
         save: (value) => patchRoutine({ last_countdown: value }),
       })
       : auto(to - HERALD_S / 60, herald));
-    if (last && manual) {
+    if (last && manual && !routine.goal) {
       lines.push(auto(to, t.routineVoice.byHandDone), auto(to, t.routineVoice.byHandTimeUp));
     }
     groups.push({ id: part.id, title: `${manual ? when(from) : part.start.replace(/^0/, "")} · ${part.text}`, lines, end: to });
   });
 
   // The goal: its sentence when the last part ends, and how long is left until its time.
-  if (routine.goal && !manual) {
-    const end = span(routine.parts.at(-1))[1];
-    const at = minuteOf(routine.goal.at);
+  // Started by hand (18/11): right after checking, and never the time of day.
+  if (routine.goal) {
+    const end = manual ? offset : span(routine.parts.at(-1))[1];
     const check = routine.goal.check_minutes;
     const reach = end + check; // the goal comes after checking the missions (rutinas-6)
+    const at = manual ? reach : minuteOf(routine.goal.at);
+    const itsTime = (minute) => (manual ? [] : [auto(minute, `${capital(itIs(minute))}.`)]);
     const lines = [
       ...(check ? [
-        auto(end, `${capital(itIs(end))}.`),
+        ...itsTime(end),
         own(end, script.checkOpening(routine), {
           value: routine.goal.check_say, usual: script.USUAL.check, label: t.routineVoice.checkLabel,
           save: (value) => patchRoutine({ goal: { ...routine.goal, check_say: value } }),
@@ -207,7 +209,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
           save: (value) => patchRoutine({ last_countdown: value }),
         }),
       ] : []),
-      auto(reach, `${capital(itIs(reach))}.`),
+      ...itsTime(reach),
       ...(at - reach >= 1 ? [auto(reach, script.untilGoal(at - reach))] : []),
       // Always one of its own (no usual one to go back to): left empty, it stays as it was.
       own(reach, routine.goal.say, {
@@ -227,7 +229,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
         when: t.routineVoice.early,
       });
     }
-    groups.push({ id: "goal", title: `${shortTime(check ? end : at)} · ${t.routineEdit.goalCard}`, lines, end: at });
+    groups.push({ id: "goal", title: `${manual ? when(end) : shortTime(check ? end : at)} · ${t.routineEdit.goalCard}`, lines, end: at });
   }
 
   // The songs (rutinas-4): heard, not said, at the start of their card and the end of the last one.

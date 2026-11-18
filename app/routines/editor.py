@@ -128,10 +128,10 @@ class RoutinesEditor:
         if "wake" in changes:
             current = self.get(routine_id)
             parts = [_dump(p) for p in current.parts]
-            if changes["wake"] is None:  # started by hand: parts one after the other, no goal
+            if changes["wake"] is None:  # started by hand: parts one after the other; the goal after them
                 for part in parts:
                     part["at"] = None
-                changes.update(parts=parts, goal=None, offsets={}, notices=[], anchor="start")
+                changes.update(parts=parts, offsets={}, notices=[], anchor="start")
             elif current.manual:  # back to a time: the first part, five minutes after it rings
                 parts[0]["at"] = hhmm((minute_of(changes["wake"]) + NEW_PART_MINUTES) % (24 * 60))
                 changes["parts"] = parts
