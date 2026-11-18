@@ -85,7 +85,7 @@ class RoutinesService:
         weekday = WEEKDAYS[day.weekday()]
         for stored in self._live():
             run = self._runs.get(day, stored.id) if stored.manual else None
-            if not run or not run["started_at"]:
+            if not run or not run["started_at"] or run["finished_at"]:
                 continue
             started = datetime.fromisoformat(run["started_at"])
             start = started.hour * 60 + started.minute + started.second / 60

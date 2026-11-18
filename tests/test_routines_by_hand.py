@@ -83,6 +83,15 @@ def test_it_ends_and_can_start_again(client, landing):
     assert start(client, landing, [bea["id"]]).status_code == 204
 
 
+def test_finished_for_everyone_it_does_not_come_back(client, landing):
+    bea = create_child(client)
+    start(client, landing, [bea["id"]])
+    assert client.post(f"/api/routines/{landing['id']}/finish", headers=PARENT).status_code == 204
+    assert client.get("/api/routines/current").json() is None
+    assert start(client, landing, [bea["id"]]).status_code == 204
+    assert client.get("/api/routines/current").json()["manual"] is True
+
+
 def test_each_child_with_their_mission_and_it_is_open_all_day(client, landing):
     bea = create_child(client)
     mission = client.get(f"/api/missions/{landing['mission_id']}").json()
