@@ -606,7 +606,7 @@
 
 /* A full tank waiting to be loaded beats; the lever is pulled down and springs back. */
 .garage--visit .garage__tank--full:not(.garage__tank--loaded) .garage__today { animation: today-beat 1.4s ease-in-out infinite; }
-.garage__lever-stick { transform-box: view-box; transform-origin: 1480px 930px; transition: rotate 200ms ease-in; }
+.garage__lever-stick { transform-box: view-box; transform-origin: 1090px 720px; transition: rotate 200ms ease-in; }
 .garage--pull .garage__lever-stick { rotate: 50deg; }
 
 /* What it won (or not) comes in once it is decided. */

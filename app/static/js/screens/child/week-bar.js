@@ -163,9 +163,10 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
     scene.hoses[i].classList.add("garage__hose--flow");
     sounds.fill();
     el.classList.add("garage__tank--loaded");
+    // The tank empties as the rocket's next hole fills, from the bottom: the level goes up.
+    scene.lights.find((light) => !light.classList.contains("garage__light--on"))?.classList.add("garage__light--on");
     await wait(tokenMs("--week-fill", 1100));
     scene.hoses[i].classList.remove("garage__hose--flow");
-    scene.lights[i].classList.add("garage__light--on");
     sounds.ding();
     busy = false;
     line(status());

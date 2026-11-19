@@ -10,7 +10,8 @@ const H = 1000;
 const FLOOR = 760;
 const ARCH = "M300 700 V330 A390 250 0 0 1 1080 330 V700 Z";
 const ROCKET_X = 1330; // the rocket's middle
-const HATCH = [1140, 1520]; // the roof over the rocket, which opens for take-off
+const HATCH = [1140, 1520];
+const LEVER_X = 1090; // the lever: between the tanks and the rocket, in the middle of any screen // the roof over the rocket, which opens for take-off
 
 // The stars in the window: always the same.
 let seed = 3;
@@ -148,20 +149,30 @@ function rocket(n, tanks) {
     <circle class="garage__window" cx="${cx}" cy="${top + 225}" r="40"/>
     <circle class="garage__sheen" cx="${cx - 12}" cy="${top + 212}" r="12"/>
     <rect class="garage__beam" x="${cx - 18}" y="${ry - 20}" width="36" height="22" rx="4"/>`);
-  const step = n > 1 ? 190 / (n - 1) : 0;
-  tanks.forEach((tank, i) => {
-    o.push(`<circle class="garage__light${tank.loaded ? " garage__light--on" : ""}" cx="${cx}" cy="${top + 300 + i * step}" r="${n > 5 ? 11 : 13}"/>`);
+  // The holes fill from the bottom up, like a level: as many full as tanks loaded,
+  // and each one fills with fuel from its bottom (19/11).
+  const step = n > 1 ? 210 / (n - 1) : 0;
+  const r = n > 5 ? 15 : 18;
+  const loaded = tanks.filter((tank) => tank.loaded).length;
+  tanks.forEach((_, i) => {
+    const cy = top + 500 - i * step;
+    o.push(`<clipPath id="garage-hole-${i}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
+      <g class="garage__light${i < loaded ? " garage__light--on" : ""}">
+      <circle class="garage__light-hole" cx="${cx}" cy="${cy}" r="${r}"/>
+      <rect class="garage__light-fuel" x="${cx - r}" y="${cy - r}" width="${2 * r}" height="${2 * r}" clip-path="url(#garage-hole-${i})"/>
+      <circle class="garage__light-rim" cx="${cx}" cy="${cy}" r="${r}"/></g>`);
   });
   o.push(`</g>`);
   o.push(`<rect class="garage__platform" x="${cx - 190}" y="${ry}" width="380" height="34" rx="8"/>`);
   for (const lx of [cx - 170, cx + 150]) o.push(`<rect class="garage__beam" x="${lx}" y="${ry + 30}" width="20" height="50"/>`);
-  // The lever that starts the rocket, on the floor in front of it.
-  const lx = cx + 150;
+  // The lever that starts the rocket: big, on the floor between the tanks and the rocket,
+  // where no screen cuts it (19/11: on the tablet, in the corner, it was cut and hard to hit).
+  const lx = LEVER_X;
   o.push(`<g class="garage__lever">
-    <rect class="garage__lever-hit" x="${lx - 90}" y="${ry + 40}" width="180" height="200"/>
-    <g class="garage__lever-stick"><rect class="garage__lever-bar" x="${lx - 9}" y="${ry + 50}" width="18" height="110" rx="9"/>
-      <circle class="garage__lever-knob" cx="${lx}" cy="${ry + 50}" r="30"/></g>
-    <rect class="garage__lever-base" x="${lx - 55}" y="${ry + 150}" width="110" height="50" rx="12"/>
+    <rect class="garage__lever-hit" x="${lx - 75}" y="${FLOOR - 250}" width="150" height="290"/>
+    <g class="garage__lever-stick"><rect class="garage__lever-bar" x="${lx - 12}" y="${FLOOR - 190}" width="24" height="150" rx="12"/>
+      <circle class="garage__lever-knob" cx="${lx}" cy="${FLOOR - 190}" r="42"/></g>
+    <rect class="garage__lever-base" x="${lx - 60}" y="${FLOOR - 50}" width="120" height="60" rx="14"/>
   </g>`);
   // Smoke at take-off, in front of the platform (it stays when the rocket goes).
   o.push(`<g class="garage__smoke">${[[-110, 20, 60], [0, 40, 80], [110, 20, 60]].map(([dx, dy, r]) =>

@@ -204,6 +204,19 @@ span.week-mini { cursor: default; }
 
 .garage__light--on { fill: var(--garage-light-on); filter: drop-shadow(0 0 6px var(--garage-light-on)); }
 
+/* A hole on the rocket: its fuel fills it from the bottom, like the tanks. */
+.garage__light-hole { fill: var(--garage-light-off); }
+
+.garage__light-fuel { fill: var(--garage-light-on); transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); }
+
+.garage__light--on .garage__light-fuel { transform: scaleY(1); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .garage__light-fuel { transition: transform var(--week-fill) ease-in-out; }
+}
+
+.garage__light-rim { fill: none; stroke: var(--garage-fin); stroke-width: 4; }
+
 .garage__scaffold { fill: var(--garage-scaffold); }
 
 .garage__platform { fill: var(--garage-platform); }
