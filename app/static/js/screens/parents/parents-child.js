@@ -10,23 +10,21 @@ import { t } from "../../texts.js";
 import { childStarsPanel } from "./child-stars.js";
 import { parentsHeader } from "./common.js";
 import { dayMonth } from "./orders-panel.js";
+import { askDay } from "./day-fix.js";
 import { askUndo } from "./undo-mission.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
-// Esta semana (rachas.html): its tanks; a tap lets a day off (ill, away), or takes it back.
+// Esta semana (rachas.html): its tanks; a tap says what a day was (day-fix.js).
 function weekPanel(view, onChange) {
   const { week } = view;
   if (!week.on) return panel(t.overview.weekTitle, h("p", { class: "hint" }, t.overview.weekOff));
   return panel(t.overview.weekTitle,
     h("div", { class: "week-days" }, week.tanks.map((tank) => h("button", {
       type: "button", class: `week-mini__tank week-mini__tank--${tank.state} week-days__day`,
-      disabled: tank.state === "full", "aria-pressed": String(tank.state === "free"),
+      "aria-pressed": String(tank.state === "free"),
       title: `${dayMonth(tank.day)}${tank.state === "free" ? ` · ${t.overview.freeDay}` : ""}`,
-      onclick: async () => {
-        await api("PUT", `api/children/${view.child.id}/free-days/${tank.day}`, { json: { free: tank.state !== "free" } });
-        onChange();
-      },
+      onclick: () => askDay(view.child, week.tanks, tank, { onDone: onChange }),
     }, tank.letter))),
     h("div", { class: "week-legend" }, Object.entries(t.overview.weekLegend).map(([state, label]) =>
       h("span", { class: "week-legend__item" }, h("span", { class: `week-mini__tank week-mini__tank--${state}` }), label))),

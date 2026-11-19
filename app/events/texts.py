@@ -210,6 +210,7 @@ _CONFIG = {
     ("mission_off", "on"): "Dejaste libre «{mission}» a {child}",
     ("mission_off", "off"): "Quitaste lo libre de «{mission}» a {child}",
     ("mission", "undone"): "Deshiciste «{mission}» de {child}: no la había hecho",
+    ("mission", "marked_done"): "Marcaste «{mission}» de {child} como hecha",
     ("prize", "created"): "Añadiste el premio «{mission}»",
     ("prize", "changed"): "Cambiaste el premio «{mission}»",
     ("prize", "deleted"): "Borraste el premio «{mission}»",

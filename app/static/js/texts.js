@@ -953,6 +953,20 @@ export const t = {
   },
   // Padres · Hoy and Padres · Niño (step 7)
   // Días libres and undoing a mission (dias-libres.html, 19/11).
+  dayFix: {
+    title: (name, day) => {
+      const d = new Date(`${day}T12:00:00`);
+      return `${name} · ${d.toLocaleDateString("es-ES", { weekday: "long" })} ${d.getDate()}/${d.getMonth() + 1}`;
+    },
+    now: (state) => `Ahora: ${state.toLowerCase()}.`,
+    done: "Lo hizo",
+    doneHint: "Sus misiones de ese día, hechas: gana sus estrellas y se llena el depósito.",
+    missed: "No lo hizo",
+    missedHint: "Se deshacen sus misiones de ese día: pierde sus estrellas y la tarjeta regalo de ese día, si no la ha usado.",
+    free: "Libre",
+    freeHint: "Ese día no cuenta ni rompe la semana.",
+    error: "No se ha podido cambiar: ese día ya no es de esta semana o su cohete ya despegó.",
+  },
   dayOff: {
     offTag: "Hoy no toca",
     offSay: (mission, phrase) => `Hoy ${mission} no toca.${phrase ? ` ${phrase}` : ""}`,
@@ -1016,7 +1030,7 @@ export const t = {
     ordersTitle: "Pedidos",
     noOrders: "✓ No hay pedidos por entregar.",
     weekTitle: "Esta semana",
-    weekHint: "Toca un día que no hizo para dejarlo libre: no cuenta ni rompe la semana. Otra vez para quitarlo.",
+    weekHint: "Toca un día para cambiarlo: lo hizo, no lo hizo o libre. Uno que aún no ha llegado solo se puede dejar libre.",
     weekLegend: { full: "Lleno", missed: "No lo hizo", now: "Hoy", later: "Por venir", free: "Libre" },
     weekOff: "Las rachas están apagadas (menú → Rachas).",
     freeDay: "libre",
