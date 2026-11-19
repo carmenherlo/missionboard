@@ -33,9 +33,13 @@ export function weekMini(week, { onTap = null } = {}) {
 // Is the rocket ready to take off? A week won, not launched yet.
 export const rocketReady = (week) => !!(week?.on && week.result && week.result.tier !== "none");
 
+// A day let off is not in the workshop: neither its tank nor its hole on the rocket (19/11).
+const inWorkshop = (tanks) => tanks.filter((tank) => tank.state !== "free");
+
 // The workshop's scene in a layer over everything, with a caption.
 // fillDay: the day whose tank is drawn empty, to fill it now (playDay).
-function workshop(tanks, { fillDay = null, line = "" } = {}) {
+function workshop(all, { fillDay = null, line = "" } = {}) {
+  const tanks = inWorkshop(all);
   const scene = garageScene(tanks.map((tank) => (tank.day === fillDay ? { ...tank, state: "now", loaded: false } : tank)));
   const caption = h("p", { class: "garage-layer__line" }, line);
   const layer = h("div", { class: "garage-layer", role: "status" }, scene.root, caption);
@@ -123,7 +127,7 @@ function restLine(tanks) {
 // rocket waits to take off, if any (it may have closed while nobody looked), or this one.
 export function openWorkshop(host, first, { childId, name, backLabel, onClose }) {
   let week = first;
-  const shown = () => week.launch_tanks ?? week.tanks;
+  const shown = () => inWorkshop(week.launch_tanks ?? week.tanks);
   const tanks = shown();
   const scene = workshop(tanks);
   scene.layer.classList.add("garage-layer--visit");

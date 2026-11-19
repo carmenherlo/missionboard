@@ -40,7 +40,40 @@ span.week-mini { cursor: default; }
 
 .week-mini__tank--free { border-style: dashed; opacity: 0.4; }
 
-.week-mini__tank--missed { border-style: dashed; opacity: 0.6; }
+/* Not done (only parents see these tanks): reddish, with a small ✕ in its corner. */
+.week-mini__tank--missed {
+  position: relative;
+  border-color: var(--tank-missed-line);
+  background: var(--tank-missed);
+  color: var(--tank-missed-letter);
+}
+
+.week-mini__tank--missed::after {
+  content: "✕";
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--tank-missed-mark);
+  color: var(--tank-missed-mark-text);
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+.week-days__day.week-mini__tank--missed::after { width: 20px; height: 20px; font-size: 0.7rem; }
+
+/* What each tank means, under Padres · Niño's week. */
+.week-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); font-size: var(--text-sm); }
+
+.week-legend__item { display: inline-flex; align-items: center; gap: var(--space-1); }
+
+.week-legend .week-mini__tank { width: 20px; height: 20px; }
+
+.week-legend .week-mini__tank::after { content: none; }
 
 .week-mini__tank--now { border-color: var(--tank-now); }
 

@@ -16,6 +16,11 @@
   --tank-fuel-bottom: #ff7a1a;
   --tank-fuel-letter: #7a3a00;
   --tank-now: #ffb347;
+  --tank-missed: #5a2335; /* parents' screens only: a day not done */
+  --tank-missed-line: #ff8a7a;
+  --tank-missed-letter: #ffb3a8;
+  --tank-missed-mark: #e0574a;
+  --tank-missed-mark-text: #fff;
   /* The rocket's workshop (taller.html): a hangar at night, in the style of the backgrounds. */
   --garage-wall-top: #3d4372;
   --garage-wall-low: #4b5288;

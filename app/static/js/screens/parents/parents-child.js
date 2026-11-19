@@ -28,6 +28,8 @@ function weekPanel(view, onChange) {
         onChange();
       },
     }, tank.letter))),
+    h("div", { class: "week-legend" }, Object.entries(t.overview.weekLegend).map(([state, label]) =>
+      h("span", { class: "week-legend__item" }, h("span", { class: `week-mini__tank week-mini__tank--${state}` }), label))),
     h("p", { class: "hint" }, t.overview.weekHint));
 }
 
