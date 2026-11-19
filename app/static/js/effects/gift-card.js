@@ -51,9 +51,9 @@ export async function openCard(layer) {
   await wait(total);
 }
 
-// Not now: the card shakes its head.
-export function shake(element) {
-  element.classList.remove("gift-card--shake");
-  void element.offsetWidth; // so the same shake starts again
-  element.classList.add("gift-card--shake");
+// Not now: the card hops up, glows and settles back, waiting (nothing negative).
+export function peek(element) {
+  element.classList.remove("gift-card--peek");
+  void element.offsetWidth; // so the same hop starts again
+  element.classList.add("gift-card--peek");
 }

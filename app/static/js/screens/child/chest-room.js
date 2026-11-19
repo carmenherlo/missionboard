@@ -1,13 +1,13 @@
 // The child's chest, open (vales-2.html): the whole screen is the inside of their chest, as the
 // shop is a shop front, so they always know where they are. Their gift cards lie in it. Out of
-// a momento de vales a card only shakes and says what it is; in one, they pick a card and it
+// a momento de vales a card only hops up and says what it is; in one, they pick a card and it
 // opens into light («¡A disfrutar!»): its prize is handed over, and it leaves the chest.
 import { api } from "../../api.js";
 import { avatarPicture } from "../../components/avatar.js";
 import { giftCard, shiningCard } from "../../components/gift-card.js";
 import { sounds } from "../../components/sound.js";
 import { say } from "../../components/speech.js";
-import { openCard, shake } from "../../effects/gift-card.js";
+import { openCard, peek } from "../../effects/gift-card.js";
 import { tokenMs } from "../../effects/motion.js";
 import { h } from "../../dom.js";
 import { t } from "../../texts.js";
@@ -58,8 +58,8 @@ export async function openChest(container, child, { onClose }) {
 
   function tap(card, item) {
     if (!view.moment?.can_pick) {
-      shake(item);
-      sounds.nope();
+      peek(item);
+      sounds.twinkle();
       say(card.text);
       tell(view.moment ? t.gift.picked : t.gift.notYet);
       return;

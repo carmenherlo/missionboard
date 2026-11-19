@@ -313,10 +313,12 @@ export const sounds = {
     });
   },
 
-  // Not now (a gift card out of its moment): two short low notes.
-  nope() {
+  // A gift card out of its moment, hopping up: a soft twinkle going up (not an error).
+  twinkle() {
     play((ctx, out, now) => {
-      for (const at of [0, 0.16]) blip(ctx, out, { at: now + at, freq: 330, to: 220, length: 0.12, type: "square", volume: 0.12 });
+      [1319, 1568, 2093].forEach((freq, i) => {
+        blip(ctx, out, { at: now + i * 0.09, freq, length: 0.6, type: "sine", volume: 0.1 });
+      });
     });
   },
 
