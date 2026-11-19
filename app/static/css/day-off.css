@@ -65,6 +65,7 @@
 
 .hold-menu__choice {
   display: grid;
+  justify-content: start;
   justify-items: start;
   gap: 2px;
   text-align: left;
@@ -143,4 +144,11 @@ button.row--link {
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+/* A small window (components/layer.js, and holding a mission): centred, over the side menu too. */
+.mission-layer.layer {
+  z-index: 40;
+  display: grid;
+  place-items: center;
 }

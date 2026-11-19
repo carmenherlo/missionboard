@@ -8,7 +8,7 @@ export function layer(content, { onClose = () => {} } = {}) {
     onClose();
   };
   const element = h("div", {
-    class: "mission-layer open-today", role: "dialog", "aria-modal": "true",
+    class: "mission-layer open-today layer", role: "dialog", "aria-modal": "true",
     onclick: (e) => { if (e.target === e.currentTarget) close(); },
   }, content);
   document.body.append(element);

@@ -57,7 +57,7 @@ export function holdMenu(container, day, mission, { onDone, onCancel }) {
   }
 
   const layer = h("div", {
-    class: "mission-layer open-today",
+    class: "mission-layer open-today layer",
     onclick: (e) => { if (e.target === e.currentTarget) { close(); onCancel(); } },
   }, h("form", { class: "open-today__form panel", novalidate: true, onsubmit: (e) => e.preventDefault() },
     h("h2", { class: "panel__title" }, t.dayOff.holdTitle(mission.name, day.child.name)),
