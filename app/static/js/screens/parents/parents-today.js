@@ -10,7 +10,9 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { rocketReady, weekMini } from "../child/week-bar.js";
 import { parentsHeader } from "./common.js";
+import { askDayOff } from "./day-off.js";
 import { orderRow } from "./orders-panel.js";
+import { askUndo } from "./undo-mission.js";
 import { vouchersCard } from "./vouchers-card.js";
 
 const STAR = "static/libraries/fluent/star.svg";
@@ -29,7 +31,7 @@ export async function viewParentsToday() {
         firstSteps(setup),
         boardCard(t.overview.howTitle, { wide: true },
           view.children.length
-            ? h("div", { class: "day-cards" }, view.children.map(dayCard))
+            ? h("div", { class: "day-cards" }, view.children.map((day) => dayCard(day, viewParentsToday)))
             : h("p", { class: "hint" }, t.overview.noChildren)),
         vouchersCard(vouchers, status, boardCard),
         ordersCard(orders, status),
@@ -107,30 +109,44 @@ const STATE = {
   open: (m) => ["day-card__state--open", t.overview.progress(m.done, m.total)],
   upcoming: (m) => ["", m.schedule ? t.overview.at(m.schedule.start) : t.overview.later],
   closed: () => ["day-card__state--closed", t.overview.closed],
+  off: () => ["day-card__state--off", t.dayOff.stateOff],
 };
 
-// One child's day, as a card that opens Padres · Niño.
-function dayCard(day) {
+// One child's day, as a card: its head opens Padres · Niño; a mission done opens «¿no la ha
+// hecho?» (undo-mission.js), and "Hoy no puede…" lets them off (day-off.js).
+function dayCard(day, redraw) {
   const prize = day.prize;
-  return h("a", {
-    class: "day-card", href: `#/parents/kids/${day.child.id}`,
+  const mission = (m) => {
+    const [kind, text] = STATE[m.state](m);
+    const content = [
+      imageThumb(m.image_url, { size: "sm", label: m.name }),
+      h("span", { class: "day-card__mission" }, m.name),
+      h("span", { class: `day-card__state ${kind}` }, text)];
+    return h("li", {}, m.state === "done"
+      ? h("button", {
+          type: "button", class: "day-card__undo", "aria-label": t.dayOff.undoTitle(m.name, day.child.name),
+          onclick: () => askUndo(day.child, m.id, day.day, { onDone: redraw }),
+        }, ...content)
+      : content);
+  };
+  return h("div", {
+    class: `day-card${day.day_off ? " day-card--off" : ""}`,
     style: `--child-color: ${day.colors.color}`, // the child's colour: the one style from code
-    "aria-label": t.overview.openChild(day.child.name),
   },
-    h("div", { class: "day-card__head" },
+    h("a", { class: "day-card__head", href: `#/parents/kids/${day.child.id}`, "aria-label": t.overview.openChild(day.child.name) },
       avatar(day.child, { size: "md" }),
       h("b", { class: "day-card__name" }, day.child.name),
       h("span", { class: "day-card__count" }, h("img", { src: STAR, alt: "" }), String(day.stars))),
-    day.missions.length
-      ? h("ul", { class: "day-card__missions" }, day.missions.map((m) => {
-          const [kind, text] = STATE[m.state](m);
-          return h("li", {},
-            imageThumb(m.image_url, { size: "sm", label: m.name }),
-            h("span", { class: "day-card__mission" }, m.name),
-            h("span", { class: `day-card__state ${kind}` }, text));
-        }))
-      : h("p", { class: "hint" }, t.overview.noMissions),
+    day.day_off
+      ? h("p", { class: "day-card__off" }, icon("today"), t.dayOff.dayOffCard)
+      : day.missions.length
+        ? h("ul", { class: "day-card__missions" }, day.missions.map(mission))
+        : h("p", { class: "hint" }, t.overview.noMissions),
     prize && h("p", { class: "day-card__prize" }, icon("prize"),
       prize.state === "won" ? t.overview.prizeWon(prize.won.map((w) => w.text).join(", "))
-        : prize.state === "unlocked" ? t.overview.prizeUnlocked : t.overview.prizeLocked));
+        : prize.state === "unlocked" ? t.overview.prizeUnlocked : t.overview.prizeLocked),
+    h("button", {
+      type: "button", class: "btn day-card__can-not",
+      onclick: () => askDayOff(day.child, day.day, { onClose: redraw }),
+    }, t.dayOff.canNot));
 }

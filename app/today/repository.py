@@ -98,6 +98,45 @@ class DayRepository:
                 )
         return bool(inserted)
 
+    def completion(self, day: date, child_id: str, mission_id: str) -> dict | None:
+        with db.connect(self._data_dir) as conn:
+            row = conn.execute(
+                "SELECT * FROM mission_completions WHERE day = ? AND child_id = ? AND mission_id = ?",
+                (day.isoformat(), child_id, mission_id),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def uncomplete(self, day: date, child, mission_id: str, stars: int, at: datetime) -> dict | None:
+        """A mission marked done by mistake (dias-libres.html, section 6): it is no longer
+        done that day, its tasks go back unchecked and `stars` go out of the bank (as a
+        movement, so the history keeps both). One transaction; None if it was not done."""
+        with db.connect(self._data_dir) as conn:
+            row = conn.execute(
+                "SELECT * FROM mission_completions WHERE day = ? AND child_id = ? AND mission_id = ?",
+                (day.isoformat(), child.id, mission_id),
+            ).fetchone()
+            if row is None:
+                return None
+            keys = (day.isoformat(), child.id, mission_id)
+            conn.execute("DELETE FROM mission_completions WHERE day = ? AND child_id = ? AND mission_id = ?", keys)
+            conn.execute("DELETE FROM step_checks WHERE day = ? AND child_id = ? AND mission_id = ?", keys)
+            if stars:
+                conn.execute(
+                    "INSERT INTO star_movements"
+                    " (child_id, child_name, amount, reason, mission_id, mission_name, day, at)"
+                    " VALUES (?, ?, ?, 'undone', ?, ?, ?, ?)",
+                    (
+                        child.id,
+                        child.name,
+                        -stars,
+                        mission_id,
+                        row["mission_name"],
+                        day.isoformat(),
+                        at.isoformat(timespec="seconds"),
+                    ),
+                )
+        return dict(row)
+
     def completions(self, child_id: str) -> dict[str, set[str]]:
         """Every mission the child has completed, by day ("2026-11-13" → mission ids)."""
         with db.connect(self._data_dir) as conn:

@@ -200,6 +200,21 @@ MIGRATIONS: list[str] = [
     # 14 · A routine started by hand, paused by a parent (18/11): since when. On going on,
     # its start moves forward as long as it was paused.
     "ALTER TABLE routine_runs ADD COLUMN paused_at TEXT",
+    # 15 · Días libres (dias-libres.html, 19/11): a day a child does not have to do, whole
+    # (mission_id '') or one mission of it, with an optional sentence the voice says. It
+    # takes in the free days of rachas (migration 10), which were whole days.
+    """
+    CREATE TABLE day_offs (
+        child_id TEXT NOT NULL,
+        day TEXT NOT NULL,
+        mission_id TEXT NOT NULL DEFAULT '',
+        phrase TEXT NOT NULL DEFAULT '',
+        at TEXT NOT NULL,
+        PRIMARY KEY (child_id, day, mission_id)
+    );
+    INSERT INTO day_offs (child_id, day, mission_id, phrase, at) SELECT child_id, day, '', '', at FROM free_days;
+    DROP TABLE free_days
+    """,
 ]
 
 

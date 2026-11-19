@@ -5,27 +5,12 @@ from app.storage import db
 
 
 class StreaksRepository:
-    """Rachas (rachas.html), in SQLite: the days a parent let off (`free_days`), the tanks
-    loaded into the rocket (`fuel_loads`) and each settled week with its prize
-    (`streak_weeks`). Which missions were completed is in today/repository.py."""
+    """Rachas (rachas.html), in SQLite: the tanks loaded into the rocket (`fuel_loads`) and
+    each settled week with its prize (`streak_weeks`). Which missions were completed is in
+    today/repository.py; the days let off, in day_off/."""
 
     def __init__(self, data_dir: Path):
         self._data_dir = data_dir
-
-    def free_days(self, child_id: str) -> set[str]:
-        with db.connect(self._data_dir) as conn:
-            rows = conn.execute("SELECT day FROM free_days WHERE child_id = ?", (child_id,)).fetchall()
-        return {row["day"] for row in rows}
-
-    def set_free_day(self, child_id: str, day: date, free: bool, at: datetime) -> None:
-        with db.connect(self._data_dir) as conn:
-            if free:
-                conn.execute(
-                    "INSERT OR IGNORE INTO free_days (child_id, day, at) VALUES (?, ?, ?)",
-                    (child_id, day.isoformat(), at.isoformat(timespec="seconds")),
-                )
-            else:
-                conn.execute("DELETE FROM free_days WHERE child_id = ? AND day = ?", (child_id, day.isoformat()))
 
     def fuel_loads(self, child_id: str) -> set[str]:
         """The days whose tank the child loaded into the rocket."""
@@ -41,6 +26,20 @@ class StreaksRepository:
                 (child_id, day.isoformat(), at.isoformat(timespec="seconds")),
             )
         return cursor.rowcount > 0
+
+    def unload_fuel(self, child_id: str, day: date) -> None:
+        """A tank no longer full (a mission undone): its fuel goes back out of the rocket."""
+        with db.connect(self._data_dir) as conn:
+            conn.execute("DELETE FROM fuel_loads WHERE child_id = ? AND day = ?", (child_id, day.isoformat()))
+
+    def unsettle_week(self, child_id: str, end: str) -> None:
+        """A week settled but not seen (a mission undone): it is settled again when it closes."""
+        with db.connect(self._data_dir) as conn:
+            conn.execute(
+                "DELETE FROM streak_weeks WHERE child_id = ? AND week_end = ? AND shown_at IS NULL"
+                " AND delivered_at IS NULL",
+                (child_id, end),
+            )
 
     def weeks(self, child_id: str) -> dict[str, dict]:
         """The weeks already settled for the child, by their last day."""

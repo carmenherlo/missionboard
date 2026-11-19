@@ -10,26 +10,20 @@ import json
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
-from app.children import avatars
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
-from app.missions.repository import WEEKDAYS, MissionsRepository, child_tasks
+from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.routines.links import kids_of
 from app.routines.model import Part, Routine
+from app.routines.people import People, Person
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.timing import minute_of
 from app.settings import SettingsRepository
-from app.today.service import DONE, DayService
+from app.today.service import DayService
 
 NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
-
-
-@dataclass
-class Person:
-    child: Child
-    mission: dict  # {"id", "name", "done", "total", "completed", "marks", "colors"}
 
 
 @dataclass
@@ -63,6 +57,7 @@ class RoutinesService:
         missions: MissionsRepository,
     ):
         self._missions = missions
+        self._people = People(children, days, missions)
         self._routines = routines
         self._runs = runs
         self._children = children
@@ -108,7 +103,7 @@ class RoutinesService:
             if not minute_of(routine.wake) <= minute < routine.ends:
                 continue
             run = self._runs.get(day, routine.id)
-            if run["finished_at"]:
+            if run["finished_at"] or self._everyone_off(routine):
                 continue
             return Current(routine, day, minute, run, self.people(routine), settings.routine_warn_minutes)
         return None
@@ -261,37 +256,10 @@ class RoutinesService:
         return current
 
     def people(self, routine: Routine, trial: bool = False) -> list[Person]:
-        """The routine's children with something to do: each with their part of its
-        mission today. The goal only waits for them. In a trial, whatever the day: all
-        they have of it, to try it on any day."""
-        people = []
-        for child in kids_of(routine, self._children.list()):
-            item = next((m for m in self._days.today(child.id).missions if m.mission.id == routine.mission_id), None)
-            if item is not None:
-                done = len(item.marks) if item.state == DONE else len(item.checked)
-                mission, marks, completed = item.mission, item.marks, item.state == DONE
-            elif trial:
-                mission = self._missions.get(routine.mission_id)
-                marks = [mark for task in child_tasks(mission, child.id) for mark in task.marks]
-                done, completed = 0, False
-            else:
-                continue
-            if marks:
-                people.append(
-                    Person(
-                        child,
-                        {
-                            "id": mission.id,
-                            "name": mission.name,
-                            "done": done,
-                            "total": len(marks),
-                            "completed": completed,
-                            "marks": marks,
-                            "colors": avatars.tones(mission.color),
-                        },
-                    )
-                )
-        return people
+        return self._people.of(routine, trial)
+
+    def _everyone_off(self, routine: Routine) -> bool:
+        return self._people.everyone_off(routine)
 
 
 def _minute(moment: datetime) -> float:

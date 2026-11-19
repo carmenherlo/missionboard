@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.children.repository import ChildrenRepository
+from app.day_off.repository import DayOffsRepository
 from app.deps import (
     get_clock,
     get_config_store,
+    get_day_offs_repository,
     get_day_repository,
     get_event_log,
     get_image_libraries,
@@ -32,9 +34,17 @@ def get_streaks_service(
     streaks: StreaksRepository = Depends(get_streaks_repository),
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
+    offs: DayOffsRepository = Depends(get_day_offs_repository),
 ) -> StreaksService:
     return StreaksService(
-        ChildrenRepository(store), MissionsRepository(store), days, streaks, SettingsRepository(store), clock, events
+        ChildrenRepository(store),
+        MissionsRepository(store),
+        days,
+        streaks,
+        SettingsRepository(store),
+        clock,
+        events,
+        offs,
     )
 
 
@@ -108,5 +118,5 @@ class FreeDayIn(BaseModel):
 
 @router.put("/children/{child_id}/free-days/{day}", status_code=204, dependencies=[Depends(require_parent)])
 def free_day(child_id: str, day: date, body: FreeDayIn, streaks: StreaksService = Depends(get_streaks_service)) -> None:
-    """A parent lets a day off (ill, away): it neither counts nor breaks the week."""
+    """A parent lets a whole day off: it neither counts nor breaks the week (day_off/ does the rest)."""
     streaks.set_free_day(child_id, day, body.free)

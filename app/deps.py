@@ -9,6 +9,7 @@ from fastapi import Depends, Header, HTTPException, Request
 from app.avatars.repository import AvatarFiles
 from app.clock import Clock
 from app.daily_prize.repository import PrizeSpinsRepository
+from app.day_off.repository import DayOffsRepository
 from app.events.repository import EventsRepository
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
@@ -55,6 +56,11 @@ def get_prize_spins_repository(request: Request) -> PrizeSpinsRepository:
 
 def get_streaks_repository(request: Request) -> StreaksRepository:
     return request.app.state.streaks_repository
+
+
+def get_day_offs_repository(request: Request) -> DayOffsRepository:
+    """Días libres: read by the day, the prize, the rachas and the routines."""
+    return request.app.state.day_offs_repository
 
 
 def get_moments_repository(request: Request) -> MomentsRepository:

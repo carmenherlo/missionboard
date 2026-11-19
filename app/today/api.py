@@ -9,9 +9,11 @@ from app.children.api import public_child
 from app.children.repository import ChildrenRepository
 from app.daily_prize.repository import PrizeSpinsRepository
 from app.daily_prize.state import PrizeBoard
+from app.day_off.repository import DayOffsRepository
 from app.deps import (
     get_clock,
     get_config_store,
+    get_day_offs_repository,
     get_day_repository,
     get_event_log,
     get_image_libraries,
@@ -61,6 +63,7 @@ def get_day_service(
     stars: StarsService = Depends(get_stars_service),
     streaks: StreaksService = Depends(get_streaks_service),
     spins: PrizeSpinsRepository = Depends(get_prize_spins_repository),
+    offs: DayOffsRepository = Depends(get_day_offs_repository),
 ) -> DayService:
     settings = SettingsRepository(store)
     return DayService(
@@ -74,6 +77,7 @@ def get_day_service(
         PrizeBoard(PrizesRepository(store), spins, settings),
         stars,
         streaks,
+        offs,
     )
 
 
@@ -105,6 +109,9 @@ class Presenter:
             "star_url": self._libraries.url(STAR_IMAGE),
             "celebration_star_url": self._libraries.url(CELEBRATION_STAR_IMAGE),
             "focus_is_now": today.focus_is_now,
+            # Días libres: the whole day let off, and the sentence the voice says about it.
+            "day_off": today.day_off,
+            "off_phrase": today.off_phrase,
             "route_look": SettingsRepository(self._store).settings().route.model_dump(mode="json"),
             # The shop's own button (13/11), apart from their stars; none while the shop is off.
             "shop_url": self._libraries.url(SHOP_IMAGE) if SettingsRepository(self._store).features().shop else None,
@@ -175,7 +182,7 @@ def set_mark(
 def open_today(
     child_id: str, mission_id: str, days: DayService = Depends(get_day_service), present: Presenter = Depends()
 ):
-    """A parent opens a closed or upcoming mission, only today (holding it on the route)."""
+    """A parent opens a closed, upcoming or let-off mission, only today (holding it on the route)."""
     return present(days.open_today(child_id, mission_id))
 
 

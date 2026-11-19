@@ -111,6 +111,8 @@
   --route-label-bg: rgb(255 255 255 / 0.85); /* names over the illustration need a pill */
   --place-label-bg: rgb(255 255 255 / 0.6); /* the buildings' names in Mi sitio: lighter (16/11) */
   --child-avatar-size: 112px; /* the child's avatar at the top: "this is your screen" */
+  --day-off: color-mix(in srgb, var(--muted) 55%, var(--surface)); /* let off today: neither done nor missed */
+  --day-off-soft: color-mix(in srgb, var(--muted) 12%, var(--surface));
 
   /* Background: the illustration of the moment of the day under a white veil (no tint of
      the child's colour since 03/11: the ring of their avatar says whose screen it is). */

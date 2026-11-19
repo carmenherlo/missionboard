@@ -7,14 +7,15 @@ from types import SimpleNamespace
 
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
-from app.errors import NotFoundError
+from app.day_off.repository import WHOLE_DAY, DayOffsRepository
+from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import MissionsRepository
 from app.settings import SettingsRepository
 from app.streaks.count import streak
 from app.streaks.repository import StreaksRepository
 from app.streaks.week import FULL, Week, build_week, week_end
-from app.today.plan import missions_by_day
+from app.today.plan import missions_by_day, whole_days_off
 from app.today.repository import DayRepository
 
 
@@ -28,7 +29,9 @@ class StreaksService:
         settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
+        offs: DayOffsRepository,  # the days and missions let off (day_off/)
     ):
+        self._offs = offs
         self._children = children
         self._missions = missions
         self._days = days
@@ -41,8 +44,15 @@ class StreaksService:
         """Days in a row with their missions done (count.py)."""
         settings = self._settings.settings()
         day = day or app_day(self._clock.now(), settings.day_starts_at)
-        had = missions_by_day(self._missions.list(), child_id)
-        return streak(day, settings.streak_rule, had, self._days.completions(child_id))
+        offs = self._offs.by_day(child_id)
+        had, free = missions_by_day(self._missions.list(), child_id, offs), whole_days_off(offs)
+        # A day let off neither counts nor breaks it, as a day without missions.
+        return streak(
+            day,
+            settings.streak_rule,
+            lambda d: set() if d.isoformat() in free else had(d),
+            self._days.completions(child_id),
+        )
 
     def week(self, child_id: str) -> dict | None:
         """This week's tanks and the result of a week the child has not seen yet (once
@@ -53,8 +63,9 @@ class StreaksService:
         settings = self._settings.settings()
         rules = settings.streak_week
         today = app_day(self._clock.now(), settings.day_starts_at)
-        had = missions_by_day(self._missions.list(), child.id)
-        done, free = self._days.completions(child.id), self._streaks.free_days(child.id)
+        offs = self._offs.by_day(child.id)
+        had = missions_by_day(self._missions.list(), child.id, offs)
+        done, free = self._days.completions(child.id), whole_days_off(offs)
         end = week_end(today, rules.prize_day)
         settled = self._streaks.weeks(child.id)
         current = build_week(today, end, rules, settings.streak_rule, had, done, free)
@@ -121,14 +132,43 @@ class StreaksService:
         self._streaks.week_seen(self._children.require(child_id).id, end, self._clock.now())
 
     def set_free_day(self, child_id: str, day: date, free: bool) -> None:
+        """The whole day off, or not (Padres · Niño, the week's tanks): the missions let off
+        that day stay as they are."""
         child = self._children.require(child_id)
-        self._streaks.set_free_day(child.id, day, free, self._clock.now())
+        off = self._offs.on(child.id, day)
+        if free:
+            self._offs.replace(child.id, day, {*off, WHOLE_DAY}, next(iter(off.values()), ""), self._clock.now())
+        else:
+            self._offs.remove(child.id, day, WHOLE_DAY)
         self._events.config_changed(
             "free_day",
             "on" if free else "off",
             child=child,
             mission=SimpleNamespace(id=day.isoformat(), name=f"{day.day}/{day.month}"),
         )
+
+    def undo_check(self, child_id: str, day: date) -> None:
+        """Before undoing a mission done that day (undo/): only in this week of tanks, and
+        not once its rocket has taken off or its prize was handed over."""
+        settings = self._settings.settings()
+        today = app_day(self._clock.now(), settings.day_starts_at)
+        end = week_end(today, settings.streak_week.prize_day)
+        if not end - timedelta(days=6) <= day <= today:
+            raise ConflictError("Only this week's days can be undone")
+        row = self._streaks.weeks(child_id).get(end.isoformat())
+        if row and (row["shown_at"] or row["delivered_at"]):
+            raise ConflictError("That week is over: its rocket took off")
+
+    def after_undo(self, child_id: str, day: date) -> None:
+        """A mission done that day was undone: if the week had closed with it, it opens
+        again; if that day's tank is no longer full, its fuel goes back out of the rocket."""
+        settings = self._settings.settings()
+        today = app_day(self._clock.now(), settings.day_starts_at)
+        self._streaks.unsettle_week(child_id, week_end(today, settings.streak_week.prize_day).isoformat())
+        view = self.week(child_id)
+        tank = view and next((t for t in view["week"].tanks if t.day == day), None)
+        if not tank or tank.state != FULL:
+            self._streaks.unload_fuel(child_id, day)
 
     def prizes_to_give(self) -> list[dict]:
         return self._streaks.week_prizes_to_give()

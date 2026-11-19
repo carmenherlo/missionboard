@@ -36,6 +36,19 @@ class PrizeSpinsRepository:
                 ),
             )
 
+    def spins_of(self, day: date, child_id: str) -> list[dict]:
+        """The wheel's spins of a child that day, whole rows (a card is used once handed over)."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT * FROM prize_spins WHERE day = ? AND child_id = ? ORDER BY id", (day.isoformat(), child_id)
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def remove(self, spin_id: int) -> None:
+        """A gift card not earned after all (a mission undone), while still unused."""
+        with db.connect(self._data_dir) as conn:
+            conn.execute("DELETE FROM prize_spins WHERE id = ? AND delivered_at IS NULL", (spin_id,))
+
     def to_give(self) -> list[dict]:
         """Prizes of the wheel not handed over yet, oldest first."""
         with db.connect(self._data_dir) as conn:

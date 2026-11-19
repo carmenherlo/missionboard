@@ -18,6 +18,8 @@ from app.children.repository import ChildrenRepository
 from app.clock import Clock, SystemClock, app_day
 from app.daily_prize import api as daily_prize_api
 from app.daily_prize.repository import PrizeSpinsRepository
+from app.day_off import api as day_off_api
+from app.day_off.repository import DayOffsRepository
 from app.events import api as events_api
 from app.events.repository import EventsRepository
 from app.events.service import EventLog
@@ -47,6 +49,7 @@ from app.streaks import api as streaks_api
 from app.streaks.repository import StreaksRepository
 from app.today import api as today_api
 from app.today.repository import DayRepository
+from app.undo import api as undo_api
 from app.voice import api as voice_api
 from app.voice.service import MODEL_NAME, Voice
 from app.vouchers import api as vouchers_api
@@ -148,6 +151,7 @@ def create_app(
     app.state.stars_repository = StarsRepository(data_dir)
     app.state.prize_spins_repository = PrizeSpinsRepository(data_dir)
     app.state.streaks_repository = StreaksRepository(data_dir)
+    app.state.day_offs_repository = DayOffsRepository(data_dir)
     app.state.moments_repository = MomentsRepository(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
     app.state.purchases_repository = PurchasesRepository(data_dir)
@@ -179,6 +183,8 @@ def create_app(
     app.include_router(daily_prize_api.router)
     app.include_router(stars_api.router)
     app.include_router(streaks_api.router)
+    app.include_router(day_off_api.router)
+    app.include_router(undo_api.router)
     app.include_router(vouchers_api.router)
     app.include_router(routines_api.router)
     app.include_router(routine_control_api.router)

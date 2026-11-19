@@ -7,9 +7,10 @@ import { cornerButton } from "../../components/corner-button.js";
 import { newsBadge, newsOf, withRocket } from "../../components/news.js";
 import { say } from "../../components/speech.js";
 import { h, render } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { openMission as openMissionOver } from "./mission-flow.js";
-import { askToOpen } from "./open-today.js";
+import { holdMenu } from "./open-today.js";
 import { prizeSheet } from "./prize-sheet.js";
 import { routeView } from "./route.js";
 import { landStar, prepareLanding, stopIndex } from "./star-landing.js";
@@ -54,12 +55,43 @@ export async function viewChildToday(childId) {
           onclick: () => say(t.shop.youHave(day.stars)),
         }, h("img", { src: day.star_url, alt: "" }), String(day.stars)),
         cornerButton("#/", "home", t.home.homeLabel)),
-      day.missions.length
-        ? routeView(day,
-            { onOpen: openMission, onLocked: showLocked, onHold: holdMission, onPrize: openPrize, onPrizeLocked: showPrizeLocked },
-            { at: turned, onTurn: (i) => { turned = i; }, control: wheel })
-        : h("section", { class: "route route__empty" },
-            avatar(day.child, { size: "hero" }), t.child.noMissions));
+      day.day_off
+        ? dayOffCard()
+        : day.missions.length
+          ? routeView(day,
+              { onOpen: openMission, onLocked: showLocked, onHold: holdMission, onOff: sayOff, onPrize: openPrize,
+                onPrizeLocked: showPrizeLocked },
+              { at: turned, onTurn: (i) => { turned = i; }, control: wheel })
+          : h("section", { class: "route route__empty" },
+              avatar(day.child, { size: "hero" }), t.child.noMissions));
+  }
+
+  // A whole day let off (dias-libres.html, section 2): no route, a quiet card instead.
+  // Tapping it says it again. Parents change it from Zona de padres.
+  function dayOffCard() {
+    const rocket = week.on && week.tanks.some((tank) => tank.day === day.day);
+    return h("section", { class: "route route__empty" },
+      h("button", {
+        type: "button", class: "day-off-card",
+        onclick: () => say(t.dayOff.daySay(day.child.name, day.off_phrase, rocket)),
+      },
+        h("span", { class: "day-off-card__icon", "aria-hidden": "true" }, icon("today")),
+        h("span", {},
+          h("b", {}, t.dayOff.dayTitle),
+          h("small", {}, day.off_phrase || t.dayOff.dayLine),
+          rocket && h("small", {}, t.dayOff.dayRocket))));
+  }
+
+  // Said once a day in this tablet, when they come in on a day off.
+  function dayOffNews() {
+    if (!day.day_off || wasTold(`off-${childId}-${day.day}`)) return;
+    told(`off-${childId}-${day.day}`);
+    say(t.dayOff.daySay(day.child.name, day.off_phrase, week.on && week.tanks.some((tank) => tank.day === day.day)));
+  }
+
+  function sayOff(mission) {
+    say(t.dayOff.offSay(mission.name, day.off_phrase));
+    toast(t.dayOff.offTag);
   }
 
   // Something new (an order arrived, or arriving today): the voice tells them once per
@@ -126,11 +158,11 @@ export async function viewChildToday(childId) {
     overlay = false;
   }
 
-  // Held down, a mission that is not open: with the parents' code, open only today.
+  // Held down, a mission: with the parents' code, open it today, let it off or undo it.
   function holdMission(mission) {
     overlay = true;
-    askToOpen(screen, mission, `${base}/missions/${mission.id}/open`, {
-      onOpened: (next) => {
+    holdMenu(screen, day, mission, {
+      onDone: (next) => {
         day = next;
         overlay = false;
         draw();
@@ -172,9 +204,14 @@ export async function viewChildToday(childId) {
   }
 
   async function refresh() {
+    const before = day;
     [day, orders, week] = await Promise.all([api("GET", base), ordersOf(childId), weekOf(childId)]);
     draw();
     arrivals();
+    dayOffNews();
+    // Undone by a parent in another device (a mission marked without doing it): the voice tells them.
+    const undone = day.missions.find((m) => m.state === "open" && before.missions.find((b) => b.id === m.id)?.state === "done");
+    if (undone && !overlay) say(t.dayOff.undoneSay(undone.name));
   }
 
   // Look again every minute (a mission may open or close), but never under the
@@ -189,6 +226,7 @@ export async function viewChildToday(childId) {
   render(screen);
   await weekNews();
   arrivals();
+  dayOffNews();
 }
 
 export async function weekOf(childId) {

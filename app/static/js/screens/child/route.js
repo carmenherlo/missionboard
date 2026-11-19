@@ -8,7 +8,7 @@ import { t } from "../../texts.js";
 import { missionStyle, picture, ring } from "./ring.js";
 import { wheelView } from "./route-wheel.js";
 
-const HOLD_MS = 1000; // holding a mission that is not open: a parent opens it, only today
+const HOLD_MS = 1000; // holding a mission: a parent opens it today, lets it off or undoes it (dias-libres.html)
 
 // options (the wheel's): at, the stop to start on; onTurn(i), told where it stopped;
 // control, an object that gets goTo(i) to turn it from outside (a star landing).
@@ -29,7 +29,7 @@ export function stopNode(stop, distance, day, handlers) {
   return stop.mission ? missionNode(stop.mission, distance, day, handlers) : prizeNode(stop.prize, distance, handlers);
 }
 
-function lineView(day, { onOpen, onLocked, onHold, onPrize, onPrizeLocked }) {
+function lineView(day, handlers) {
   const stops = routeStops(day);
   const focus = stops.findIndex((s) => s.focus);
   // Without a focus (all done) they all go at the middle size.
@@ -38,7 +38,7 @@ function lineView(day, { onOpen, onLocked, onHold, onPrize, onPrizeLocked }) {
   const line = h("div", { class: "route__line" });
   stops.forEach((stop, i) => {
     if (i > 0) line.append(link(i, focus, stops));
-    line.append(stopNode(stop, distance(i), day, { onOpen, onLocked, onHold, onPrize, onPrizeLocked }));
+    line.append(stopNode(stop, distance(i), day, handlers));
   });
 
   const allDone = stops.every((s) => s.done);
@@ -60,9 +60,10 @@ function link(i, focus, stops) {
 
 const sizeFor = (distance) => (distance === 0 ? "focus" : distance === 1 ? "near" : "far");
 
-function missionNode(mission, distance, day, { onOpen, onLocked, onHold }) {
+function missionNode(mission, distance, day, { onOpen, onLocked, onHold, onOff }) {
   const { state, schedule, done, total } = mission;
   const isNow = mission.focus && state === "open";
+  const off = state === "off"; // let off today: neither done nor missed
 
   let detail = null;
   if (isNow) detail = t.child.stepsDone(done, total);
@@ -72,24 +73,29 @@ function missionNode(mission, distance, day, { onOpen, onLocked, onHold }) {
   let tag = null;
   if (isNow) tag = t.child.now;
   else if (mission.focus && state === "upcoming") tag = t.child.at(schedule.start);
+  else if (off) tag = t.dayOff.offTag;
 
   const canOpen = state !== "upcoming"; // a past one opens too, to look at (05/11)
-  const hold = (state === "upcoming" || state === "closed") ? holdable(() => onHold(mission)) : null;
+  const hold = holdable(() => onHold(mission));
   return h("button", {
     type: "button", style: missionStyle(mission.colors), "data-mission": mission.id,
-    ...(hold?.events ?? {}),
+    ...hold.events,
     class: `route-node route-node--${state} route-node--${sizeFor(distance)}${mission.focus ? " route-node--focus" : ""}`,
     "aria-label": [mission.name, tag, ...(Array.isArray(detail) ? [detail[1]] : [detail])].filter(Boolean).join(", "),
     onclick: () => {
-      if (hold?.fired()) return;
-      if (canOpen) onOpen(mission);
+      if (hold.fired()) return;
+      if (off) onOff(mission);
+      else if (canOpen) onOpen(mission);
       else onLocked(mission);
     },
   },
     tag && h("span", { class: "route-node__tag" }, tag),
-    ring(state === "done" ? 1 : done / total,
-      picture(mission.image_url, mission.name, "ring__letter"),
-      { star: state === "done" ? day.star_url : null }),
+    off
+      ? h("span", { class: "ring-holder" }, ring(0, picture(mission.image_url, mission.name, "ring__letter")),
+          h("span", { class: "ring__lock ring__lock--off", "aria-hidden": "true" }, icon("today")))
+      : ring(state === "done" ? 1 : done / total,
+          picture(mission.image_url, mission.name, "ring__letter"),
+          { star: state === "done" ? day.star_url : null }),
     h("span", { class: "route-node__label" },
       mission.name,
       detail && h("small", { class: "route-node__detail" }, detail)));

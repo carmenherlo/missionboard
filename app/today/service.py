@@ -7,6 +7,9 @@ States of a mission today (paso-4.html, "Las reglas del día"):
   its star and the prize). Things can be checked and unchecked.
 - upcoming: before its start time. It cannot be opened yet.
 - closed: past its end time without being done. No star.
+- off: a parent let it off today, or the whole day (dias-libres.html): neither done nor
+  missed. No star, but the prize does not wait for it. What is done wins: a mission done
+  (or opened by a parent) is not off.
 Which hours count: for a child who follows the mission's routine, on the routine's
 days, the routine's; for everyone else, and on other days, the mission's.
 The focus (the big one on the route) is the first open mission in route
@@ -22,6 +25,7 @@ from datetime import date
 from app.children.repository import Child, ChildrenRepository
 from app.clock import Clock, app_day
 from app.daily_prize.state import LOCKED, UNLOCKED, PrizeBoard, PrizeToday
+from app.day_off.repository import WHOLE_DAY, DayOffsRepository
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, ChildTask, Mission, MissionsRepository, Schedule, child_tasks
@@ -33,7 +37,7 @@ from app.streaks.service import StreaksService
 from app.today.repository import DayRepository
 from app.today.season import current_moment, current_season
 
-DONE, OPEN, UPCOMING, CLOSED = "done", "open", "upcoming", "closed"
+DONE, OPEN, UPCOMING, CLOSED, OFF = "done", "open", "upcoming", "closed", "off"
 
 # What a child can do on the route that only goes to the event log.
 NOTES = ("mission_opened", "step_spoken", "mission_locked", "prize_locked")
@@ -73,6 +77,8 @@ class Today:
     stars: int
     prize: PrizeToday | None = None  # None: no prize at the end of the route
     streak: int | None = None  # days in a row (step 8); None: rachas switched off
+    day_off: bool = False  # the whole day let off (dias-libres.html)
+    off_phrase: str = ""  # what the voice says about it, written by a parent (may be empty)
 
     @property
     def focus_is_now(self) -> bool:
@@ -109,7 +115,9 @@ class DayService:
         prize: PrizeBoard,
         stars: StarsService,
         streaks: StreaksService,
+        offs: DayOffsRepository,
     ):
+        self._offs = offs
         self._children = children
         self._missions = missions
         self._days = days
@@ -132,6 +140,7 @@ class DayService:
         checked = self._days.checked_steps(day, child.id)
         completed = self._days.completed_missions(day, child.id)
         opened = self._days.opened_missions(day, child.id)
+        off = self._offs.on(child.id, day)
         routines = links.routine_by_mission(self._routines.list())
         missions = []
         for mission in self._missions.list():
@@ -141,7 +150,9 @@ class DayService:
             schedule = links.schedule_on(mission, routines.get(mission.id), child.id, weekday)
             item = MissionToday(
                 mission,
-                self._state(schedule, mission.id in completed, mission.id in opened, time),
+                self._state(
+                    schedule, mission.id in completed, mission.id in opened, WHOLE_DAY in off or mission.id in off, time
+                ),
                 tasks,
                 schedule=schedule,
             )
@@ -152,6 +163,7 @@ class DayService:
         focus = focus or next((m for m in missions if m.state == UPCOMING), None)
         if focus:
             focus.focus = True
+        counted = [m for m in missions if m.state != OFF]  # the prize does not wait for those let off
         return Today(
             child=child,
             day=day,
@@ -159,8 +171,10 @@ class DayService:
             moment=current_moment(season, time),
             missions=missions,
             stars=self._stars.balance(child.id),
-            prize=self._prize.today(day, child, len(missions), all(m.state == DONE for m in missions)),
+            prize=self._prize.today(day, child, len(counted), all(m.state == DONE for m in counted)),
             streak=self._streaks.streak(child.id, day) if self._settings.features().streaks else None,
+            day_off=WHOLE_DAY in off,
+            off_phrase=next(iter(off.values()), ""),
         )
 
     def set_mark(self, child_id: str, mission_id: str, item_id: str, checked: bool) -> StepResult:  # noqa: C901 (to split)
@@ -203,11 +217,11 @@ class DayService:
         return StepResult(after, completed=checked and all_checked, stars_earned=stars)
 
     def open_today(self, child_id: str, mission_id: str) -> Today:
-        """A parent opens a closed or upcoming mission for this child, only today: it
-        can be done and gives its star. It goes to the log; the child sees no option."""
+        """A parent opens a closed, upcoming or let-off mission for this child, only today:
+        it can be done and gives its star. It goes to the log; the child sees no option."""
         today = self.today(child_id)
         item = self._mission_today(today, mission_id)
-        if item.state in (UPCOMING, CLOSED):
+        if item.state in (UPCOMING, CLOSED, OFF):
             self._days.open_mission(today.day, today.child.id, mission_id, self._clock.now())
             self._events.config_changed("mission", "opened_today", child=today.child, mission=item.mission)
         return self.today(child_id)
@@ -238,11 +252,13 @@ class DayService:
     # ---------- helpers ----------
 
     @staticmethod
-    def _state(schedule: Schedule | None, done: bool, opened: bool, time: str) -> str:
+    def _state(schedule: Schedule | None, done: bool, opened: bool, off: bool, time: str) -> str:
         if done:
             return DONE
         if opened:
             return OPEN
+        if off:
+            return OFF
         if schedule and time < schedule.start:
             return UPCOMING
         if schedule and schedule.end and time >= schedule.end:

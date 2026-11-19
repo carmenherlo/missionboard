@@ -3,11 +3,14 @@
 import { api } from "../../api.js";
 import { loadAvatars } from "../../components/avatar.js";
 import { panel } from "../../components/panel.js";
+import { imageThumb } from "../../components/image-thumb.js";
 import { h, render } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { childStarsPanel } from "./child-stars.js";
 import { parentsHeader } from "./common.js";
 import { dayMonth } from "./orders-panel.js";
+import { askUndo } from "./undo-mission.js";
 
 const WEEKDAY = ["D", "L", "M", "X", "J", "V", "S"];
 
@@ -28,8 +31,24 @@ function weekPanel(view, onChange) {
     h("p", { class: "hint" }, t.overview.weekHint));
 }
 
+// Hechas esta semana (dias-libres.html, section 6): a mission marked without doing it is undone here.
+function doneThisWeek(child, done, onChange) {
+  return panel(t.dayOff.weekDoneTitle,
+    done.length
+      ? h("ul", { class: "rows" }, done.map((d) => h("li", {},
+          h("button", {
+            type: "button", class: "row row--link", onclick: () => askUndo(child, d.id, d.day, { onDone: onChange }),
+          },
+            imageThumb(d.image_url, { size: "sm", label: d.name }),
+            h("span", { class: "row__text" }, d.name, h("span", { class: "row__detail" }, dayMonth(d.day))),
+            h("span", { class: "row__icon" }, icon("history"))))))
+      : h("p", { class: "hint" }, t.dayOff.noneDone),
+    done.length > 0 && h("p", { class: "hint" }, t.dayOff.weekDoneHint));
+}
+
 export async function viewParentsChild(childId) {
-  const [view] = await Promise.all([api("GET", `api/overview/children/${childId}`), loadAvatars()]);
+  const [view, done] = await Promise.all([api("GET", `api/overview/children/${childId}`),
+    api("GET", `api/children/${childId}/undoable`), loadAvatars()]);
   const stars = await childStarsPanel(view.child, { take: true });
   const top = Math.max(1, ...view.chart.map((d) => d.stars));
 
@@ -39,6 +58,7 @@ export async function viewParentsChild(childId) {
       h("div", { class: "stack" },
         stars,
         weekPanel(view, () => viewParentsChild(childId)),
+        doneThisWeek(view.child, done, () => viewParentsChild(childId)),
         panel(t.overview.chartTitle,
           // A bar per day; its height, the stars won (the only number passed to the styles).
           h("div", { class: "star-chart", role: "img", "aria-label": t.overview.chartLabel(view.chart.reduce((n, d) => n + d.stars, 0)) },

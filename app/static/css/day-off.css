@@ -1,0 +1,146 @@
+/* Días libres and undoing a mission (dias-libres.html): «hoy no toca» on the child's route,
+   the quiet card of a whole day off, what a parent can do holding a mission, and the
+   windows of Zona de padres. */
+
+/* ---------- the child's route ---------- */
+
+/* Let off: in its colour but faded, with a dashed ring; neither the grey of a closed one
+   nor the glow of a done one. */
+.route-node--off .ring__track {
+  stroke: var(--day-off);
+  stroke-dasharray: 6 5;
+}
+
+.route-node--off .ring__inner img,
+.route-node--off .ring__letter { opacity: 0.55; }
+
+.route-node--off .route-node__tag { background: var(--day-off); }
+
+.ring__lock--off { color: var(--day-off); }
+
+.day-off-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: min(640px, 90vw);
+  padding: var(--space-4) var(--space-5);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--route-label-bg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.day-off-card__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--day-off-soft);
+  color: var(--day-off);
+  font-size: 56px;
+}
+
+.day-off-card b {
+  display: block;
+  font-size: var(--text-xl);
+}
+
+.day-off-card small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+/* Holding a mission: each thing a parent can do, with a line saying what it does. */
+.hold-menu {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.hold-menu__choice {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  text-align: left;
+}
+
+.hold-menu__choice small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---------- Zona de padres ---------- */
+
+.day-card__head {
+  color: inherit;
+  text-decoration: none;
+}
+
+.day-card__undo {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.day-card__state--off { color: var(--day-off); }
+
+.day-card--off { background: var(--day-off-soft); }
+
+.day-card__off {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.day-card__can-not { justify-self: start; }
+
+.day-off__option img,
+.day-off__option .image-thumb { flex: none; }
+
+.day-off__date {
+  margin-left: var(--space-1);
+  border: 0;
+  background: none;
+  font: inherit;
+}
+
+.undo {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.undo__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+}
+
+button.row--link {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}

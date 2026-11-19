@@ -58,8 +58,10 @@ class Presenter:
         return {
             "child": public_child(today.child),
             "colors": avatars.tones(today.child.color),
+            "day": today.day.isoformat(),
             "stars": today.stars,
             "streak": today.streak,
+            "day_off": today.day_off,  # the whole day let off (dias-libres.html)
             "missions": [
                 {k: m[k] for k in ("id", "name", "image_url", "state", "schedule", "done", "total")}
                 for m in full["missions"]
