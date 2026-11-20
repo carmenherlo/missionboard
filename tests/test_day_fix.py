@@ -10,7 +10,7 @@ from tests.conftest import PARENT
 from tests.test_missions import create_child
 from tests.test_settings import FixedClock
 from tests.test_today import MONDAY, check, descriptions, mission, today
-from tests.test_week import do_day, week
+from tests.test_week import do_day, set_week, week
 
 MON = "2026-11-02"
 
@@ -95,13 +95,28 @@ def test_a_week_closed_without_a_prize_can_still_be_fixed_until_the_next_one(cli
     assert week(client, bea)["result"]["tier"] == "full"  # the rocket can take off now
 
 
-def test_a_week_whose_rocket_took_off_with_its_prize_cannot_be_changed(client, bea, clock):
+def test_a_week_that_took_off_can_be_fixed_till_the_next_one_starts(client, bea, clock):
+    """Alex, 20/11: off with the smaller prize (3 of 5); then days changed. The rocket only
+    takes off again for a better prize; from Monday, nothing changes."""
+    set_week(client, second_on=True)
     item = mission(client, bea, "Despegue", steps=("Uno",))
-    for offset in range(5):
+    for offset in (0, 2, 4):
         do_day(client, bea, item, clock, offset)
-    end = week(client, bea)["result"]["end"]
-    client.post(f"/api/children/{bea['id']}/week/{end}/seen")
-    assert fix(client, bea, MON, "missed").status_code == 409
+    fri = "2026-11-06"
+    assert fix(client, bea, fri, "missed").status_code == 204  # settled again: 2 of 5, nothing
+    assert fix(client, bea, fri, "done").status_code == 204
+    view = week(client, bea)
+    assert view["result"]["tier"] == "second"
+    client.post(f"/api/children/{bea['id']}/week/{fri}/seen")  # the rocket took off
+    assert fix(client, bea, "2026-11-03", "free").status_code == 204  # 3 of 4: the same prize, not again
+    assert week(client, bea)["took_off"] is True
+    assert fix(client, bea, "2026-11-05", "done").status_code == 204
+    view = week(client, bea)
+    assert (view["took_off"], view["result"]["tier"]) == (False, "full")  # better: ready to go again
+    clock.moment = MONDAY + timedelta(days=5)  # Saturday: still that week
+    assert fix(client, bea, fri, "done").status_code == 204
+    clock.moment = MONDAY + timedelta(days=7)  # Monday: the next one has started
+    assert fix(client, bea, fri, "missed").status_code == 409
 
 
 def test_days_let_off_after_the_week_closed_settle_it_again(client, bea, clock):

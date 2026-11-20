@@ -973,7 +973,7 @@ export const t = {
     missedHint: "Se deshacen sus misiones de ese día: pierde sus estrellas y la tarjeta regalo de ese día, si no la ha usado.",
     free: "Libre",
     freeHint: "Ese día no cuenta ni rompe la semana.",
-    error: "No se ha podido cambiar: ese día ya no es de esta semana o su cohete ya despegó.",
+    error: "No se ha podido cambiar: ese día es de una semana que ya terminó (empezó la siguiente).",
   },
   dayOff: {
     offTag: "Hoy no toca",

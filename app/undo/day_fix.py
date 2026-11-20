@@ -1,8 +1,8 @@
 """Arreglar un día (19/11): in Padres · Niño a parent taps a day of this week and says
 what it was: «Lo hizo» (they forgot to sign: its missions done, with their stars, and its
 tank full), «No lo hizo» (its missions undone, as UndoService does one) or «Libre» (the
-whole day off). Done and not done only for this week's days up to today, while its
-rocket has not taken off; a day ahead can only be let off. No gift card is won here:
+whole day off). A day gone by, until the next week starts (its first day that counts,
+20/11), even if its rocket took off; a day ahead can only be let off. No gift card is won here:
 the wheel is the child's."""
 
 from datetime import date
@@ -49,10 +49,13 @@ class DayFix:
         if choice not in CHOICES:
             raise InvalidError("Choose done, missed or free")
         child = self._children.require(child_id)
+        if choice == "free" and day > self._streaks.today():  # a day to come: only let off
+            self._streaks.set_free_day(child.id, day, True)
+            return
+        self._streaks.undo_check(child.id, day)  # up to today, till the next week starts
         if choice == "free":
             self._streaks.set_free_day(child.id, day, True)
             return
-        self._streaks.undo_check(child.id, day)  # this week, up to today, rocket not gone
         if WHOLE_DAY in self._offs.on(child.id, day):
             self._streaks.set_free_day(child.id, day, False)
         had = missions_by_day(self._missions.list(), child.id, self._offs.by_day(child.id))(day)

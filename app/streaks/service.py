@@ -14,7 +14,7 @@ from app.missions.repository import MissionsRepository
 from app.settings import SettingsRepository
 from app.streaks.count import streak
 from app.streaks.repository import StreaksRepository
-from app.streaks.week import FULL, Week, build_week, week_end
+from app.streaks.week import FULL, WEEKDAYS, Week, build_week, week_end
 from app.today.plan import missions_by_day, whole_days_off
 from app.today.repository import DayRepository
 
@@ -60,23 +60,17 @@ class StreaksService:
         if not self._settings.features().streaks:
             return None
         child = self._children.require(child_id)
-        settings = self._settings.settings()
-        rules = settings.streak_week
-        today = app_day(self._clock.now(), settings.day_starts_at)
-        offs = self._offs.by_day(child.id)
-        had = missions_by_day(self._missions.list(), child.id, offs)
-        done, free = self._days.completions(child.id), whole_days_off(offs)
+        rules, today, build = self._builder(child.id)
         end = week_end(today, rules.prize_day)
         settled = self._streaks.weeks(child.id)
-        current = build_week(today, end, rules, settings.streak_rule, had, done, free)
+        current = build(end)
         previous_end = end - timedelta(days=7)
         if not settled:  # the first time: the weeks before rachas existed are not judged
             now = self._clock.now()
             self._streaks.settle_week(child, previous_end, "none", "", 0, 0, now)
             self._streaks.week_seen(child.id, previous_end.isoformat(), now)
         else:  # a week can close while nobody looks (Friday missed): settled on the next look
-            previous = build_week(today, previous_end, rules, settings.streak_rule, had, done, free)
-            self._settle(child, previous, rules, settled)
+            self._settle(child, build(previous_end), rules, settled)
         self._settle(child, current, rules, settled)
         settled = self._streaks.weeks(child.id)
         unseen = [
@@ -90,11 +84,7 @@ class StreaksService:
         launch = None
         if result:
             result_end = date.fromisoformat(result["week_end"])
-            launch = (
-                current
-                if result_end == end
-                else build_week(today, result_end, rules, settings.streak_rule, had, done, free)
-            )
+            launch = current if result_end == end else build(result_end)
         row = settled.get(end.isoformat())
         return {
             "week": current,
@@ -122,14 +112,26 @@ class StreaksService:
             view["loaded"].add(day.isoformat())
         return view
 
-    def _settle(self, child: Child, week: Week, rules, settled: dict) -> None:
+    def _builder(self, child_id: str):
+        """The rules, today, and build(end): the week ending then, as it is today."""
+        settings = self._settings.settings()
+        today = app_day(self._clock.now(), settings.day_starts_at)
+        offs = self._offs.by_day(child_id)
+        had = missions_by_day(self._missions.list(), child_id, offs)
+        done, free = self._days.completions(child_id), whole_days_off(offs)
+        rules = settings.streak_week
+        return rules, today, lambda end: build_week(today, end, rules, settings.streak_rule, had, done, free)
+
+    def _settle(self, child: Child, week: Week, rules, settled: dict, before: str | None = None) -> None:
+        """Keep a closed week's result. before: its tier until a day changed (logged only if it moves)."""
         if not week.closed or not week.counted or week.end.isoformat() in settled:
             return
         tier = week.tier(rules)
         text = {"full": rules.prize, "second": rules.second}.get(tier, "")
         image = {"full": rules.prize_image, "second": rules.second_image}.get(tier)
         self._streaks.settle_week(child, week.end, tier, text, week.full, week.counted, self._clock.now(), image)
-        self._events.child_did(f"week_{tier}", child, prize=f"{week.full} de {week.counted}")
+        if tier != before:
+            self._events.child_did(f"week_{tier}", child, prize=f"{week.full} de {week.counted}")
 
     def week_seen(self, child_id: str, end: str) -> None:
         self._streaks.week_seen(self._children.require(child_id).id, end, self._clock.now())
@@ -151,30 +153,41 @@ class StreaksService:
             mission=SimpleNamespace(id=day.isoformat(), name=f"{day.day}/{day.month}"),
         )
 
+    def today(self) -> date:
+        return app_day(self._clock.now(), self._settings.settings().day_starts_at)
+
     def undo_check(self, child_id: str, day: date) -> None:
-        """Before changing a day (undo/): only in this week of tanks, and not once its rocket
-        has taken off with a prize or the prize was handed over. A week closed without a
-        prize can be fixed until the next one starts (20/11)."""
+        """Before changing a day gone by (undo/): its week can be changed until the next one
+        starts, its first day that counts (20/11: with Monday to Friday, until Monday), even
+        if its rocket took off. A day to come is only let off."""
         settings = self._settings.settings()
         today = app_day(self._clock.now(), settings.day_starts_at)
-        end = week_end(today, settings.streak_week.prize_day)
-        if not end - timedelta(days=6) <= day <= today:
-            raise ConflictError("Only this week's days can be undone")
-        row = self._streaks.weeks(child_id).get(end.isoformat())
-        if row and row["tier"] != "none" and (row["shown_at"] or row["delivered_at"]):
-            raise ConflictError("That week is over: its rocket took off")
+        if day > today:
+            raise ConflictError("A day to come cannot be done or undone")
+        if today >= _next_start(week_end(day, settings.streak_week.prize_day), settings.streak_week.days):
+            raise ConflictError("That week is over: the next one has started")
 
     def after_change(self, child_id: str, day: date) -> None:
-        """A day changed (a mission undone or marked done, the day let off or back): if the
-        week had closed without a prize, or with one not seen yet, it is settled again; if
-        that day's tank is no longer full, its fuel goes back out of the rocket."""
-        settings = self._settings.settings()
-        today = app_day(self._clock.now(), settings.day_starts_at)
-        self._streaks.unsettle_week(child_id, week_end(today, settings.streak_week.prize_day).isoformat())
-        view = self.week(child_id)
-        tank = view and next((t for t in view["week"].tanks if t.day == day), None)
+        """A day changed (a mission undone or marked done, the day let off or back): its week
+        is settled again. If its rocket took off already, it only takes off again for a
+        better prize; a prize handed over stays handed over. If that day's tank is no longer
+        full, its fuel goes back out of the rocket."""
+        if not self._settings.features().streaks:
+            return
+        child = self._children.require(child_id)
+        rules, _, build = self._builder(child.id)
+        week = build(week_end(day, rules.prize_day))
+        end = week.end.isoformat()
+        old = self._streaks.weeks(child.id).get(end)
+        self._streaks.forget_week(child.id, end)
+        self._settle(child, week, rules, {}, before=old and old["tier"])
+        new = self._streaks.weeks(child.id).get(end)
+        if old and new:
+            shown = old["shown_at"] if RANK[new["tier"]] <= RANK[old["tier"]] else None
+            self._streaks.restore_week(child.id, end, shown, old["delivered_at"] if new["tier"] != "none" else None)
+        tank = next((t for t in week.tanks if t.day == day), None)
         if not tank or tank.state != FULL:
-            self._streaks.unload_fuel(child_id, day)
+            self._streaks.unload_fuel(child.id, day)
 
     def prizes_to_give(self) -> list[dict]:
         return self._streaks.week_prizes_to_give()
@@ -190,3 +203,14 @@ class StreaksService:
                 child=SimpleNamespace(id=row["child_id"], name=row["child_name"]),
                 mission=SimpleNamespace(id=end, name=row["prize_text"] or "premio sorpresa"),
             )
+
+
+RANK = {"none": 0, "second": 1, "full": 2}
+
+
+def _next_start(end: date, days) -> date:
+    """The first day that counts after a week's end: the next week has started."""
+    day = end + timedelta(days=1)
+    while WEEKDAYS[day.weekday()] not in days:
+        day += timedelta(days=1)
+    return day

@@ -32,14 +32,17 @@ class StreaksRepository:
         with db.connect(self._data_dir) as conn:
             conn.execute("DELETE FROM fuel_loads WHERE child_id = ? AND day = ?", (child_id, day.isoformat()))
 
-    def unsettle_week(self, child_id: str, end: str) -> None:
-        """A week settled without a prize, or with one not seen yet (a day changed): it is
-        settled again when it closes."""
+    def forget_week(self, child_id: str, end: str) -> None:
+        """A day of it changed: it is settled again (StreaksService.after_change)."""
+        with db.connect(self._data_dir) as conn:
+            conn.execute("DELETE FROM streak_weeks WHERE child_id = ? AND week_end = ?", (child_id, end))
+
+    def restore_week(self, child_id: str, end: str, shown_at: str | None, delivered_at: str | None) -> None:
+        """A week settled again keeps that its rocket took off, or that its prize was given."""
         with db.connect(self._data_dir) as conn:
             conn.execute(
-                "DELETE FROM streak_weeks WHERE child_id = ? AND week_end = ?"
-                " AND (tier = 'none' OR (shown_at IS NULL AND delivered_at IS NULL))",
-                (child_id, end),
+                "UPDATE streak_weeks SET shown_at = ?, delivered_at = ? WHERE child_id = ? AND week_end = ?",
+                (shown_at, delivered_at, child_id, end),
             )
 
     def weeks(self, child_id: str) -> dict[str, dict]:
