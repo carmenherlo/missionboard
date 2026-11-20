@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 21
+CURRENT_VERSION = 22
 
 
 class ConfigVersionError(Exception):
@@ -117,6 +117,17 @@ def _v20_to_v21(doc: dict) -> dict:
 
 
 _MIGRATIONS[20] = _v20_to_v21
+
+
+def _v21_to_v22(doc: dict) -> dict:
+    """Rachas (20/11): a day fills its tank only with all its missions done.
+    The choice "at least one" goes."""
+    doc.get("settings", {}).pop("streak_rule", None)
+    doc["version"] = 22
+    return doc
+
+
+_MIGRATIONS[21] = _v21_to_v22
 
 
 def upgrade(doc: dict) -> dict:

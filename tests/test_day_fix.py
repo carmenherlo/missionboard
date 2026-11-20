@@ -28,7 +28,9 @@ def client(data_dir, clock):
 
 @pytest.fixture
 def bea(client):
-    return create_child(client)
+    child = create_child(client)
+    client.get(f"/api/children/{child['id']}/week")  # their racha starts today (Monday)
+    return child
 
 
 def fix(client, child, day, choice, headers=PARENT):

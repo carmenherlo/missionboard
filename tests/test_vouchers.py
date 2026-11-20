@@ -1,6 +1,6 @@
 """Gift cards and the momento de vales (vales-2.html)."""
 
-from datetime import date, timedelta
+from datetime import timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -28,7 +28,9 @@ def client(data_dir, clock):
 
 @pytest.fixture
 def bea(client):
-    return create_child(client)
+    child = create_child(client)
+    client.get(f"/api/children/{child['id']}/week")  # their racha starts today (Monday)
+    return child
 
 
 def win(client, child, item=None):
@@ -134,8 +136,8 @@ def test_the_parents_routes_need_the_code(client):
 def test_a_weeks_prize_is_not_a_card_it_waits_for_the_parents(client, bea, data_dir):
     streaks = StreaksRepository(data_dir)
     child = SimpleNamespace(id=bea["id"], name="Bea")
-    streaks.settle_week(child, date(2026, 10, 30), "full", "", 5, 5, MONDAY)
-    streaks.week_seen(bea["id"], "2026-10-30", MONDAY)  # the rocket took off
+    streaks.freeze(child, "2026-10-30", "full", 5, 5, "", None, MONDAY)  # a week over, won
+    streaks.launched(child, "2026-10-30", "full", "", None, MONDAY)  # the rocket took off
     assert chest(client, bea)["cards"] == []
     assert client.get("/api/vouchers", headers=PARENT).json()["children"][0]["cards"] == []
     [waiting] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]

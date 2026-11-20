@@ -160,8 +160,7 @@ class Settings(BaseModel):
     route: RouteLook = RouteLook()
     notify: Notify = Notify()
     shop_notify: ShopNotify = ShopNotify()
-    # Rachas: a day counts with all their missions done ("all", 13/11) or at least one ("any").
-    streak_rule: Literal["any", "all"] = "all"
+    # Rachas: a day counts with all their missions done (fixed, 20/11).
     streak_week: StreakWeek = StreakWeek()
     # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
     # (in parts longer than this, so it does not clash with the 10-second countdown).

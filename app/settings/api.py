@@ -2,7 +2,15 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict
 
 from app.clock import Clock, app_day
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, get_photo_store, require_parent
+from app.deps import (
+    get_clock,
+    get_config_store,
+    get_event_log,
+    get_image_libraries,
+    get_photo_store,
+    get_streaks_repository,
+    require_parent,
+)
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.settings.repository import HomeLook, Notify, RouteLook, Season, SettingsRepository, ShopNotify, StreakWeek
@@ -10,6 +18,7 @@ from app.settings.service import SettingsService
 from app.settings.week_prizes import WeekPrizeImages, Which
 from app.storage.config_store import ConfigStore
 from app.storage.photo_store import PhotoStore
+from app.streaks.repository import StreaksRepository
 from app.today.api import background_url
 from app.today.season import current_moment, current_season
 
@@ -30,7 +39,6 @@ class SettingsPatch(BaseModel):
     route: RouteLook | None = None
     notify: Notify | None = None
     shop_notify: ShopNotify | None = None
-    streak_rule: str | None = None
     streak_week: StreakWeek | None = None
     routine_warn_minutes: int | None = None
 
@@ -126,8 +134,13 @@ async def upload_week_prize_photo(
 
 @router.patch("/features")
 def update_features(
-    body: FeaturesPatch, service: SettingsService = Depends(get_settings_service), clock: Clock = Depends(get_clock)
+    body: FeaturesPatch,
+    service: SettingsService = Depends(get_settings_service),
+    clock: Clock = Depends(get_clock),
+    streaks: StreaksRepository = Depends(get_streaks_repository),
 ):
+    if body.streaks and not service.features().streaks:
+        streaks.restart()  # rachas switched on: each child's starts today, nothing before is judged
     service.update_features(_given(body))
     return _present(service, clock)
 

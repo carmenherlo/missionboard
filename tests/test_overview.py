@@ -27,7 +27,9 @@ def client(data_dir, clock):
 
 @pytest.fixture
 def bea(client):
-    return create_child(client)
+    child = create_child(client)
+    client.get(f"/api/children/{child['id']}/week")  # their racha starts today (Monday)
+    return child
 
 
 def overview(client):
@@ -41,11 +43,12 @@ MON = date(2026, 11, 2)
 
 def test_a_streak_counts_days_in_a_row_and_skips_days_without_missions():
     had = lambda d: set() if d.weekday() == 6 else {"a", "b"}  # nothing on Sundays  # noqa: E731
-    done = {(MON - timedelta(days=n)).isoformat(): {"a"} for n in (1, 2, 3)}  # Sun, Sat, Fri
-    assert streak(MON, "any", had, done) == 2  # Mon not yet: Sat and Fri (Sunday skipped)
+    done = {(MON - timedelta(days=n)).isoformat(): {"a", "b"} for n in (1, 2, 3)}  # Sun, Sat, Fri
+    assert streak(MON, had, done) == 2  # Mon not yet: Sat and Fri (Sunday skipped)
     done[MON.isoformat()] = {"a", "b"}
-    assert streak(MON, "any", had, done) == 3
-    assert streak(MON, "all", had, done) == 1  # Saturday had only one of two
+    assert streak(MON, had, done) == 3
+    done[(MON - timedelta(days=2)).isoformat()] = {"a"}
+    assert streak(MON, had, done) == 1  # Saturday had only one of two: all their missions count
 
 
 def test_the_childs_day_brings_their_streak(client, bea, clock):

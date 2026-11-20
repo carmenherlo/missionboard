@@ -73,8 +73,7 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
   // The workshop's news: a rocket ready to take off, or fuel to load into it.
   function garageNews() {
     if (!week.on) return null;
-    const tanks = week.launch_tanks ?? week.tanks;
-    const toLoad = tanks.filter((tank) => tank.state === "full" && !tank.loaded).length;
+    const toLoad = week.tanks.filter((tank) => tank.state === "full" && !tank.loaded).length;
     if (rocketReady(week)) return withRocket(null, true);
     return toLoad ? { count: toLoad, picture: `${FLUENT}/fuel-pump.svg` } : null;
   }

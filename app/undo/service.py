@@ -5,8 +5,8 @@ done and completed a mission. A parent undoes it, and with it all that hung from
 - its stars: out of the bank, never below 0 (if they were spent, they are gone);
 - the daily prize: locked again; a gift card won that day and still unused is taken back,
   unless the parent keeps it for them;
-- the week of tanks: that day's tank empties if it is no longer full, and its fuel goes
-  back out of the rocket. Only this week's days, while its rocket has not taken off.
+- the week of tanks: worked out again (streaks/), that day's tank is no longer full. Only
+  until the next week starts.
 
 Each piece stays in its module; this one only puts them in order."""
 
@@ -92,7 +92,6 @@ class UndoService:
                 if not card["used"]:
                     self._spins.remove(card["id"])
                     taken.append(card["text"])
-        self._streaks.after_change(child.id, day)
         changes = {"gift": -before["stars"]} if before["stars"] else {}
         if taken:
             changes["card"] = ", ".join(taken)
@@ -131,9 +130,5 @@ class UndoService:
         """With rachas on, whether that day's full tank would no longer be full."""
         view = self._streaks.week(child_id)
         tank = view and next((t for t in view["week"].tanks if t.day == day), None)
-        if not tank or tank.state != FULL:
-            return False
         had = missions_by_day(self._missions.list(), child_id, self._offs.by_day(child_id))(day)
-        left = (self._days.completions(child_id).get(day.isoformat(), set()) - {mission_id}) & had
-        kept = left >= had if self._settings.settings().streak_rule == "all" else bool(left)
-        return not kept
+        return bool(tank and tank.state == FULL and mission_id in had)

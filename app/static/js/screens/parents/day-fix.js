@@ -35,7 +35,8 @@ export async function askDay(child, tanks, tank, { onDone }) {
     h("h2", { class: "panel__title" }, t.dayFix.title(child.name, tank.day)),
     now && h("p", { class: "hint" }, t.dayFix.now(now)),
     error,
-    h("div", { class: "hold-menu" }, ["done", "missed", "free"].map((choice) =>
+    // A day done stays full even if let off (streaks/week.py): no «Libre» for it.
+    h("div", { class: "hold-menu" }, (tank.state === "full" ? ["missed"] : ["done", "missed", "free"]).map((choice) =>
       h("button", { type: "button", class: "btn hold-menu__choice", onclick: () => run(choice) },
         h("b", {}, t.dayFix[choice]), h("small", {}, t.dayFix[`${choice}Hint`])))),
     h("div", { class: "form-actions" },

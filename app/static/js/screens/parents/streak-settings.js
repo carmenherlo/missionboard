@@ -7,7 +7,6 @@ import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
-import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { WEEKDAYS } from "./mission-summary.js";
@@ -38,10 +37,6 @@ export async function viewStreakSettings() {
     draw();
   };
 
-  const tabs = (options, current, onPick) => h("div", { class: "tabs" }, options.map(([value, label]) => h("button", {
-    type: "button", class: `tab${current === value ? " tab--on" : ""}`, "aria-pressed": String(current === value),
-    onclick: () => onPick(value),
-  }, current === value && icon("check"), label)));
   const chip = (day, on, onclick) => h("button", {
     type: "button", class: `chip chip--day${on ? " chip--on" : ""}`, "aria-pressed": String(on),
     "aria-label": t.dayNames[day], title: t.dayNames[day], onclick,
@@ -56,7 +51,6 @@ export async function viewStreakSettings() {
     h("span", { class: "prize-preview__bubble" }, h("img", { src: url || `${FLUENT}/wrapped-gift.svg`, alt: "" })),
     h("b", { class: "prize-preview__title" }, t.week.wonTitle(text)));
 
-  let rule = settings.streak_rule;
   const box = h("div", { class: "stack" });
   function draw() {
     // The week starts the day after the prize day.
@@ -69,12 +63,6 @@ export async function viewStreakSettings() {
           if (days.length) save({ days: WEEKDAYS.filter((d) => days.includes(d)) });
         }))),
         h("p", { class: "hint" }, t.settings.streakDaysHint),
-        h("p", { class: "setting__label" }, t.settings.streakCounts),
-        tabs([["all", t.settings.streakAll], ["any", t.settings.streakAny]], rule, (value) => {
-          rule = value;
-          saveSettings(status, { streak_rule: value });
-          draw();
-        }),
         h("p", { class: "hint" }, t.settings.streakHint)),
       panel(t.settings.streakPrizeTitle,
         h("p", { class: "setting__label" }, t.settings.streakPrizeDay),

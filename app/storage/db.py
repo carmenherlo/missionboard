@@ -215,6 +215,43 @@ MIGRATIONS: list[str] = [
     INSERT INTO day_offs (child_id, day, mission_id, phrase, at) SELECT child_id, day, '', '', at FROM free_days;
     DROP TABLE free_days
     """,
+    # 16 · Rachas worked out each time (20/11): a week's result is no longer
+    # stored when it closes, but read from the missions done and the days let off. A row
+    # keeps only what happened: the child launched it (with the tier they saw), the prize
+    # was handed over, and, once the week can no longer change, its final result (frozen_at).
+    # Weeks that ended a week ago or more are over: their stored result stays as it was.
+    # Each child's racha starts on a day (streak_starts): the days before are not judged.
+    """
+    CREATE TABLE streak_weeks_new (
+        child_id TEXT NOT NULL,
+        child_name TEXT NOT NULL,
+        week_end TEXT NOT NULL,
+        tier TEXT,
+        full_days INTEGER,
+        days INTEGER,
+        frozen_at TEXT,
+        prize_text TEXT NOT NULL DEFAULT '',
+        prize_image TEXT,
+        launched_at TEXT,
+        launched_tier TEXT,
+        delivered_at TEXT,
+        PRIMARY KEY (child_id, week_end)
+    );
+    INSERT INTO streak_weeks_new
+        SELECT child_id, child_name, week_end, tier, full_days, days,
+               CASE WHEN week_end <= date('now', '-7 days') THEN at END,
+               prize_text, prize_image, shown_at, CASE WHEN shown_at IS NOT NULL THEN tier END, delivered_at
+        FROM streak_weeks;
+    CREATE TABLE streak_starts (
+        child_id TEXT PRIMARY KEY,
+        day TEXT NOT NULL
+    );
+    INSERT INTO streak_starts (child_id, day)
+        SELECT child_id, MIN(CASE WHEN days > 0 THEN date(week_end, '-6 days') ELSE date(week_end, '+1 day') END)
+        FROM streak_weeks GROUP BY child_id;
+    DROP TABLE streak_weeks;
+    ALTER TABLE streak_weeks_new RENAME TO streak_weeks
+    """,
 ]
 
 

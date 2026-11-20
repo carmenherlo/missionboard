@@ -377,10 +377,7 @@ export const t = {
     streaksTitle: "Rachas",
     streaksOn: "Encendidas: cada niño llena un depósito por día y, si los llena todos, su cohete despega en el taller y gana el premio de la semana",
     streaksOff: "Apagadas: no se ven",
-    streakCounts: "Un día llena su depósito si hace",
-    streakAny: "Al menos una misión",
-    streakAll: "Todas sus misiones",
-    streakHint: "Los días en que un niño no tiene misiones no salen en su semana: ni llenan ni rompen.",
+    streakHint: "Un día llena su depósito cuando el niño hace todas sus misiones. Los días en que no tiene misiones no salen en su semana: ni llenan ni rompen. La racha de un niño empieza el día en que se encienden las rachas.",
     // Configurar → Rachas (rachas.html)
     streakDaysTitle: "Qué días cuentan",
     streakDaysHint: "Un depósito por cada uno de estos días. El que no cuenta no sale en la barra.",

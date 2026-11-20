@@ -110,11 +110,10 @@ export function playDay(host, week, { day, name, onGarage }) {
   })());
 }
 
-// A day off (the weekend): when the next tank starts, said kindly.
-function restLine(tanks) {
-  const next = tanks.find((tank) => tank.state === "later");
-  if (!next) return t.week.noDays;
-  const day = new Date(`${next.day}T12:00`);
+// A day off (the weekend), or a week over: when the next tank starts, said kindly.
+function restLine(week) {
+  if (!week.next_day) return t.week.noDays;
+  const day = new Date(`${week.next_day}T12:00`);
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const when = day.toDateString() === tomorrow.toDateString()
@@ -123,11 +122,11 @@ function restLine(tanks) {
   return t.week.rest(when);
 }
 
-// In their place: the workshop, to load the fuel and start the rocket. Shows the week whose
-// rocket waits to take off, if any (it may have closed while nobody looked), or this one.
+// In their place: the workshop, to load the fuel and start the rocket. The server says which
+// week: this one, or the one just closed until the next one starts (streaks/week.py).
 export function openWorkshop(host, first, { childId, name, backLabel, onClose }) {
   let week = first;
-  const shown = () => inWorkshop(week.launch_tanks ?? week.tanks);
+  const shown = () => inWorkshop(week.tanks);
   const tanks = shown();
   const scene = workshop(tanks);
   scene.layer.classList.add("garage-layer--visit");
@@ -144,7 +143,8 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
   const status = () => {
     if (gone()) return t.week.tookOff;
     if (rocketReady(week)) return toLoad() ? t.week.loadFirst : t.week.pullLever;
-    if (!week.shown) return restLine(week.tanks);
+    const closed = week.tanks.length > 0 && week.tanks.every((tank) => ["full", "free", "missed"].includes(tank.state));
+    if (!week.shown || closed) return restLine(week);
     if (!tanks.length) return t.week.noDays;
     return toLoad() ? t.week.tapToLoad : t.week.miniLabel(week.full, week.counted);
   };
@@ -228,7 +228,7 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
       await wait(tokenMs("--week-liftoff", 2200));
     }
     await spaceTrip(scene.layer, result);
-    week = { ...week, result: null, launch_tanks: null, took_off: week.took_off || result.end === week.end };
+    week = { ...week, result: null, took_off: result.tier !== "none" };
   }
 
   host.append(scene.layer);

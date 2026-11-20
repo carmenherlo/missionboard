@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.settings.repository import StreakWeek
+from app.streaks.repository import StreaksRepository
 from app.streaks.week import build_week, week_end
 from tests.conftest import PARENT
 from tests.test_missions import create_child
@@ -29,7 +30,9 @@ def client(data_dir, clock):
 
 @pytest.fixture
 def bea(client):
-    return create_child(client)
+    child = create_child(client)
+    client.get(f"/api/children/{child['id']}/week")  # their racha starts today (Monday)
+    return child
 
 
 def week(client, child):
@@ -64,7 +67,7 @@ def test_tanks_are_the_days_that_count_with_missions():
     had = lambda d: {"a"}  # noqa: E731
     wed = MON + timedelta(days=2)
     done = {(MON - timedelta(days=1)).isoformat(): {"a"}, MON.isoformat(): {"a"}}
-    w = build_week(wed, week_end(wed, "fri"), sw, "all", had, done, free={(MON + timedelta(days=1)).isoformat()})
+    w = build_week(wed, week_end(wed, "fri"), sw, had, done, free={(MON + timedelta(days=1)).isoformat()})
     assert [(t.letter, t.state) for t in w.tanks] == [
         ("D", "full"),
         ("L", "full"),
@@ -81,11 +84,11 @@ def test_a_closed_week_has_a_tier():
     fri = MON + timedelta(days=4)
     done = {(MON + timedelta(days=n)).isoformat(): {"a"} for n in (0, 1, 2)}
     sw = StreakWeek()
-    w = build_week(fri + timedelta(days=1), fri, sw, "all", had, done, set())
+    w = build_week(fri + timedelta(days=1), fri, sw, had, done, set())
     assert w.closed and w.tier(sw) == "none"
     assert w.tier(StreakWeek(second_on=True, second_percent=60)) == "second"
     done |= {(MON + timedelta(days=n)).isoformat(): {"a"} for n in (3, 4)}
-    assert build_week(fri, fri, sw, "all", had, done, set()).tier(sw) == "full"
+    assert build_week(fri, fri, sw, had, done, set()).tier(sw) == "full"
 
 
 def test_the_smaller_prize_is_a_share_of_the_days_that_count():
@@ -99,7 +102,6 @@ def test_the_smaller_prize_is_a_share_of_the_days_that_count():
         fri + timedelta(days=1),
         fri,
         rules,
-        "all",
         had,
         {(MON + timedelta(days=n)).isoformat(): {"a"} for n in days},
         free,
@@ -127,8 +129,6 @@ def test_a_full_week_wins_the_prize_for_the_parents_to_give(client, bea, clock):
         "counted": 5,
         "prize_image_url": None,
     }
-    assert descriptions(client, limit=5)[0] == "Bea llenó todos los depósitos de la semana · 5 de 5"
-
     [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
     assert prize["prize_text"] == "Ir al parque"
     url = f"/api/overview/week-prizes/{bea['id']}/2026-11-06/deliver"
@@ -137,6 +137,7 @@ def test_a_full_week_wins_the_prize_for_the_parents_to_give(client, bea, clock):
 
     assert client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen").status_code == 204
     assert week(client, bea)["result"] is None
+    assert descriptions(client, limit=5)[0] == "Bea llenó todos los depósitos de la semana · 5 de 5"
 
 
 def test_a_week_short_of_fuel_has_no_prize_but_the_smaller_one_can_be_won(client, bea, clock):
@@ -191,13 +192,62 @@ def test_a_week_closed_while_nobody_looked_keeps_its_rocket(client, bea, clock):
     week(client, bea)
     for n in range(5):
         do_day(client, bea, item, clock, n)
-    clock.moment = MONDAY + timedelta(days=5)  # Saturday: a new week, the rocket not launched yet
+    clock.moment = MONDAY + timedelta(days=5)  # Saturday: the week just closed is still the one shown
     view = week(client, bea)
-    assert view["result"]["tier"] == "full" and {t["state"] for t in view["tanks"]} == {"later"}
-    assert [t["state"] for t in view["launch_tanks"]] == ["full"] * 5
-    assert load(client, bea, "2026-11-06").json()["launch_tanks"][-1]["loaded"] is True
+    assert view["result"]["tier"] == "full" and [t["state"] for t in view["tanks"]] == ["full"] * 5
+    assert load(client, bea, "2026-11-06").json()["tanks"][-1]["loaded"] is True
     client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
-    assert week(client, bea)["launch_tanks"] is None
+    view = week(client, bea)
+    assert view["result"] is None and view["took_off"] is True and view["end"] == "2026-11-06"
+    clock.moment = MONDAY + timedelta(days=7)  # Monday: the next week starts, an empty one
+    view = week(client, bea)
+    assert view["end"] == "2026-11-13" and view["took_off"] is False
+    assert [t["state"] for t in view["tanks"]] == ["now"] + ["later"] * 4
+
+
+def test_a_week_not_launched_before_the_next_starts_has_no_rocket_but_its_prize_waits(client, bea, clock):
+    """The bug of 20/11: last week's rocket could take off in the middle of a new week."""
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    for n in range(5):
+        do_day(client, bea, item, clock, n)
+    clock.moment = MONDAY + timedelta(days=8)  # next Tuesday: the rocket was never launched
+    view = week(client, bea)
+    assert view["result"] is None and view["end"] == "2026-11-13"
+    [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
+    assert prize["week_end"] == "2026-11-06" and prize["tier"] == "full"
+
+
+def test_a_day_fixed_changes_the_week_and_a_better_prize_takes_off_again(client, bea, clock):
+    set_week(client, second_on=True, second_percent=60, prize="Parque", second="Cuento")
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    for n in (0, 1, 2, 3):
+        do_day(client, bea, item, clock, n)
+    clock.moment = MONDAY + timedelta(days=5)  # Saturday: Friday was missed (they forgot to sign)
+    assert week(client, bea)["result"]["tier"] == "second"
+    client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")  # took off with the smaller prize
+    fix = f"/api/children/{bea['id']}/days/2026-11-06"
+    assert client.put(fix, json={"choice": "done"}, headers=PARENT).status_code == 204
+    view = week(client, bea)
+    assert view["result"]["tier"] == "full" and view["result"]["prize_text"] == "Parque"  # ready again
+    client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
+    assert client.put(fix, json={"choice": "missed"}, headers=PARENT).status_code == 204
+    view = week(client, bea)
+    assert view["result"] is None and view["took_off"] is True  # worse: it stays where it landed
+    [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
+    assert prize["tier"] == "second" and prize["prize_text"] == "Cuento"
+
+
+def test_days_let_off_leave_fewer_tanks_and_the_prize_counts_on_the_rest(client, bea, clock):
+    set_week(client, second_on=True, second_percent=60)
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    for n in (0, 1):
+        do_day(client, bea, item, clock, n)
+    clock.moment = MONDAY + timedelta(days=5)  # Saturday: 2 of 5, no prize
+    assert week(client, bea)["result"]["tier"] == "none"
+    for day in ("2026-11-04", "2026-11-05"):  # ill on Wednesday and Thursday
+        client.put(f"/api/children/{bea['id']}/free-days/{day}", json={"free": True}, headers=PARENT)
+    result = week(client, bea)["result"]
+    assert (result["tier"], result["full"], result["counted"]) == ("second", 2, 3)
 
 
 # ---------- the pictures of the week's prizes ----------
@@ -205,7 +255,7 @@ def test_a_week_closed_while_nobody_looked_keeps_its_rocket(client, bea, clock):
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 64
 
 
-def test_a_week_prize_has_a_picture_copied_when_the_week_closes(client, bea, clock):
+def test_a_week_prize_has_a_picture_copied_when_the_rocket_lands(client, bea, clock, data_dir):
     url = "/api/settings/week-prizes/prize"
     assert client.patch(url, json={"image": "fluent/rocket"}).status_code == 401
     assert client.patch(url, json={"image": "fluent/nope"}, headers=PARENT).status_code == 422
@@ -218,9 +268,13 @@ def test_a_week_prize_has_a_picture_copied_when_the_week_closes(client, bea, clo
     item = mission(client, bea, "Despegue", steps=("Uno",))
     for n in range(5):
         do_day(client, bea, item, clock, n)
-    week(client, bea)  # the week closes (it is settled when someone looks)
-    client.patch(url, json={"image": None}, headers=PARENT)  # changed after: the week keeps its copy
     assert week(client, bea)["result"]["prize_image_url"].endswith("/rocket.svg")
+    client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")  # the rocket lands with it
+    client.patch(url, json={"image": None}, headers=PARENT)  # changed after: the week keeps its copy
+    clock.moment = MONDAY + timedelta(days=7)  # the week is over: its result stays as it was
+    [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
+    assert prize["week_end"] == "2026-11-06"
+    assert StreaksRepository(data_dir).weeks(bea["id"])["2026-11-06"]["prize_image"] == "fluent/rocket"
 
 
 def test_a_week_prize_picture_can_be_a_photo(client):
@@ -261,3 +315,10 @@ def test_the_smaller_prize_in_days_becomes_a_share_of_the_week():
     assert week({"days": ["mon", "tue", "wed", "thu", "fri"], "second_min": 3})["second_percent"] == 60
     assert week({"days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"], "second_min": 3})["second_percent"] == 40
     assert "second_min" not in week({"second_min": 5}) and week({"second_min": 5})["second_percent"] == 90
+
+
+def test_a_day_fills_its_tank_only_with_all_its_missions():
+    from app.storage.config_migrations import upgrade
+
+    settings = upgrade({"version": 21, "settings": {"streak_rule": "any"}})["settings"]
+    assert "streak_rule" not in settings

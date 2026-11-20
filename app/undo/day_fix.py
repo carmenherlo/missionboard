@@ -10,7 +10,7 @@ from datetime import date
 from app.children.repository import ChildrenRepository
 from app.clock import Clock
 from app.day_off.repository import WHOLE_DAY, DayOffsRepository
-from app.errors import InvalidError
+from app.errors import ConflictError, InvalidError
 from app.events.service import EventLog
 from app.missions.repository import MissionsRepository
 from app.settings import SettingsRepository
@@ -53,13 +53,15 @@ class DayFix:
             self._streaks.set_free_day(child.id, day, True)
             return
         self._streaks.undo_check(child.id, day)  # up to today, till the next week starts
+        had = missions_by_day(self._missions.list(), child.id, self._offs.by_day(child.id))(day)
+        done = self._days.completions(child.id).get(day.isoformat(), set())
         if choice == "free":
+            if had and done >= had:  # a day done stays full (streaks/week.py)
+                raise ConflictError("A day done: undo it first («No lo hizo»)")
             self._streaks.set_free_day(child.id, day, True)
             return
         if WHOLE_DAY in self._offs.on(child.id, day):
             self._streaks.set_free_day(child.id, day, False)
-        had = missions_by_day(self._missions.list(), child.id, self._offs.by_day(child.id))(day)
-        done = self._days.completions(child.id).get(day.isoformat(), set())
         if choice == "done":
             self._mark_done(child, day, had - done)
         else:
@@ -73,4 +75,3 @@ class DayFix:
             if self._days.complete(day, child, mission, stars, now):
                 changes = {"gift": stars, "day": f"{day.day}/{day.month}"}
                 self._events.config_changed("mission", "marked_done", child=child, mission=mission, changes=changes)
-        self._streaks.after_change(child.id, day)  # a week closed without this day opens again
