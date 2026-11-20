@@ -98,6 +98,14 @@ class UndoService:
         self._events.config_changed("mission", "undone", child=child, mission=before["mission"], changes=changes)
         return before
 
+    def stars_lost(self, child_id: str, day: date) -> int:
+        """The stars undoing all that day's missions would take: what they won, never below 0."""
+        won = sum(
+            self._days.completion(day, child_id, m)["stars"]
+            for m in self._days.completions(child_id).get(day.isoformat(), set())
+        )
+        return min(won, self._stars.balance(child_id))
+
     # ---------- helpers ----------
 
     def _today(self) -> date:

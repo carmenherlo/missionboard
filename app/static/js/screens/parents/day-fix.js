@@ -1,5 +1,6 @@
 // Arreglar un día (19/11): in Padres · Niño a tap on a day of the week asks what it was:
-// «Lo hizo» (they forgot to sign), «No lo hizo» (they signed without doing it) or «Libre».
+// «Lo hizo» (they forgot to sign), «No lo hizo» (they signed without doing it) or «Libre»,
+// each with what it does to the stars (the stars follow the missions, the racha the days).
 // A day still to come can only be let off: a tap lets it off, or takes it back, as before.
 import { api } from "../../api.js";
 import { layer } from "../../components/layer.js";
@@ -20,6 +21,8 @@ export async function askDay(child, tanks, tank, { onDone }) {
     onDone();
     return;
   }
+  const stars = await api("GET", `api/children/${child.id}/days/${tank.day}`).catch(() => ({ gain: 0, loss: 0 }));
+  const effect = { done: stars.gain, missed: stars.loss, free: 0 };
   const error = h("p", { class: "form-error", role: "alert" });
   const run = async (choice) => {
     try {
@@ -37,7 +40,7 @@ export async function askDay(child, tanks, tank, { onDone }) {
     error,
     h("div", { class: "hold-menu" }, ["done", "missed", "free"].map((choice) =>
       h("button", { type: "button", class: "btn hold-menu__choice", onclick: () => run(choice) },
-        h("b", {}, t.dayFix[choice]), h("small", {}, t.dayFix[`${choice}Hint`])))),
+        h("b", {}, t.dayFix[choice]), h("small", {}, t.dayFix[`${choice}Hint`](effect[choice]))))),
     h("div", { class: "form-actions" },
       h("button", { type: "button", class: "btn", onclick: () => close() }, t.common.cancel))));
 }

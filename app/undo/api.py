@@ -147,6 +147,12 @@ def get_day_fix(
     )
 
 
+@router.get("/children/{child_id}/days/{day}")
+def day_fix_preview(child_id: str, day: date, fix: DayFix = Depends(get_day_fix)) -> dict:
+    """What «Lo hizo» and «No lo hizo» would do to the stars that day (the menu says it)."""
+    return fix.preview(child_id, day)
+
+
 @router.put("/children/{child_id}/days/{day}", status_code=204)
 def fix_day(child_id: str, day: date, body: DayFixIn, fix: DayFix = Depends(get_day_fix)) -> None:
     """Padres · Niño: what a day of this week was: «Lo hizo», «No lo hizo» or «Libre»."""

@@ -46,6 +46,17 @@ class DayFix:
         self._clock = clock
         self._events = events
 
+    def preview(self, child_id: str, day: date) -> dict:
+        """What each choice would do to the stars, for the menu: «Lo hizo» wins those of the
+        missions not done; «No lo hizo» takes back those won; «Libre» does not touch them."""
+        child = self._children.require(child_id)
+        had = missions_by_day(self._missions.list(), child.id, self._offs.by_day(child.id))(day)
+        done = self._days.completions(child.id).get(day.isoformat(), set())
+        return {
+            "gain": len(had - done) * self._settings.settings().stars_per_mission,
+            "loss": self._undo.stars_lost(child.id, day),
+        }
+
     def fix(self, child_id: str, day: date, choice: str) -> None:
         if choice not in CHOICES:
             raise InvalidError("Choose done, missed or free")

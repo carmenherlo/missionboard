@@ -965,11 +965,16 @@ export const t = {
     },
     now: (state) => `Ahora: ${state.toLowerCase()}.`,
     done: "Lo hizo",
-    doneHint: "Sus misiones de ese día, hechas: gana sus estrellas y se llena el depósito.",
+    // Each choice says what it does (20/11): the stars follow the missions, the racha the days.
+    doneHint: (gain) => gain
+      ? `Marca sus misiones como hechas: +${gain} ${gain === 1 ? "estrella" : "estrellas"}. El depósito se llena.`
+      : "Sus misiones ya están hechas: el depósito se llena.",
     missed: "No lo hizo",
-    missedHint: "Se deshacen sus misiones de ese día: pierde sus estrellas y la tarjeta regalo de ese día, si no la ha usado.",
+    missedHint: (loss) => loss
+      ? `Deshace sus misiones: −${loss} ${loss === 1 ? "estrella" : "estrellas"} (y la tarjeta regalo de ese día, si no la ha usado). El depósito queda en rojo.`
+      : "No tiene misiones hechas: las estrellas no cambian. El depósito queda en rojo.",
     free: "Libre",
-    freeHint: "Ese día no cuenta ni rompe la semana.",
+    freeHint: () => "No pudo (enfermo, de viaje…): ese día no cuenta en la racha. Las estrellas no cambian.",
     error: "No se ha podido cambiar: ese día es de una semana que ya terminó (empezó la siguiente).",
   },
   dayOff: {

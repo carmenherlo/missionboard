@@ -158,3 +158,14 @@ def test_the_parents_last_word_is_the_days_state(client, bea, clock):
     assert monday_tank(client, bea) == "missed"
     assert fix(client, bea, "2026-11-05", "done").status_code == 409  # Thursday has not happened
     assert fix(client, bea, "2026-11-05", "free").status_code == 204  # but it can be let off
+
+
+def test_the_menu_says_what_each_choice_does_to_the_stars(client, bea, clock):
+    mission(client, bea, "Despegue", steps=("Uno",))
+    mission(client, bea, "Aterrizaje", steps=("Uno",))
+    clock.moment = MONDAY + timedelta(days=1)
+    url = f"/api/children/{bea['id']}/days/{MON}"
+    assert client.get(url).status_code == 401
+    assert client.get(url, headers=PARENT).json() == {"gain": 2, "loss": 0}
+    fix(client, bea, MON, "done")
+    assert client.get(url, headers=PARENT).json() == {"gain": 0, "loss": 2}
