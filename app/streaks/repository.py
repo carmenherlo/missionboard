@@ -33,11 +33,12 @@ class StreaksRepository:
             conn.execute("DELETE FROM fuel_loads WHERE child_id = ? AND day = ?", (child_id, day.isoformat()))
 
     def unsettle_week(self, child_id: str, end: str) -> None:
-        """A week settled but not seen (a mission undone): it is settled again when it closes."""
+        """A week settled without a prize, or with one not seen yet (a day changed): it is
+        settled again when it closes."""
         with db.connect(self._data_dir) as conn:
             conn.execute(
-                "DELETE FROM streak_weeks WHERE child_id = ? AND week_end = ? AND shown_at IS NULL"
-                " AND delivered_at IS NULL",
+                "DELETE FROM streak_weeks WHERE child_id = ? AND week_end = ?"
+                " AND (tier = 'none' OR (shown_at IS NULL AND delivered_at IS NULL))",
                 (child_id, end),
             )
 

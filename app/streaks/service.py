@@ -148,15 +148,16 @@ class StreaksService:
         )
 
     def undo_check(self, child_id: str, day: date) -> None:
-        """Before undoing a mission done that day (undo/): only in this week of tanks, and
-        not once its rocket has taken off or its prize was handed over."""
+        """Before changing a day (undo/): only in this week of tanks, and not once its rocket
+        has taken off with a prize or the prize was handed over. A week closed without a
+        prize can be fixed until the next one starts (20/11)."""
         settings = self._settings.settings()
         today = app_day(self._clock.now(), settings.day_starts_at)
         end = week_end(today, settings.streak_week.prize_day)
         if not end - timedelta(days=6) <= day <= today:
             raise ConflictError("Only this week's days can be undone")
         row = self._streaks.weeks(child_id).get(end.isoformat())
-        if row and (row["shown_at"] or row["delivered_at"]):
+        if row and row["tier"] != "none" and (row["shown_at"] or row["delivered_at"]):
             raise ConflictError("That week is over: its rocket took off")
 
     def after_undo(self, child_id: str, day: date) -> None:

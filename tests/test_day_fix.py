@@ -10,7 +10,7 @@ from tests.conftest import PARENT
 from tests.test_missions import create_child
 from tests.test_settings import FixedClock
 from tests.test_today import MONDAY, check, descriptions, mission, today
-from tests.test_week import week
+from tests.test_week import do_day, week
 
 MON = "2026-11-02"
 
@@ -81,3 +81,24 @@ def test_a_day_ahead_can_only_be_let_off(client, bea):
     tuesday = "2026-11-03"
     assert fix(client, bea, tuesday, "done").status_code == 409
     assert fix(client, bea, tuesday, "free").status_code == 204
+
+
+def test_a_week_closed_without_a_prize_can_still_be_fixed_until_the_next_one(client, bea, clock):
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    clock.moment = MONDAY + timedelta(days=4)  # Friday, the prize day: only today done
+    check(client, bea, item, 0)
+    view = week(client, bea)
+    assert view["result"]["tier"] == "none"
+    client.post(f"/api/children/{bea['id']}/week/{view['result']['end']}/seen")  # as the child's screen does
+    for day in ("2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"):
+        assert fix(client, bea, day, "done").status_code == 204
+    assert week(client, bea)["result"]["tier"] == "full"  # the rocket can take off now
+
+
+def test_a_week_whose_rocket_took_off_with_its_prize_cannot_be_changed(client, bea, clock):
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    for offset in range(5):
+        do_day(client, bea, item, clock, offset)
+    end = week(client, bea)["result"]["end"]
+    client.post(f"/api/children/{bea['id']}/week/{end}/seen")
+    assert fix(client, bea, MON, "missed").status_code == 409

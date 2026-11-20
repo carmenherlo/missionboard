@@ -45,7 +45,9 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     const place = h("section", { class: "place" },
         h("div", { class: "place__world" },
           h("img", { class: "place__picture", src: SCENE, alt: "" }),
-          spot("home", t.place.home, openHome, newsBadge(homeNews()), vouchers.moment?.can_pick),
+          // No sign of the gift cards waiting (20/11: they are daily, it would always be there);
+          // it only glows in a momento de vales.
+          spot("home", t.place.home, openHome, null, vouchers.moment?.can_pick),
           spot("mail", t.place.mailbox, openMail, newsBadge(news)),
           week.on && spot("garage", t.place.garage, openGarage, newsBadge(garageNews())),
           spot("sky", t.place.sky, openSky),
@@ -75,12 +77,6 @@ export async function viewChildPlace(childId, { garage = false } = {}) {
     const toLoad = tanks.filter((tank) => tank.state === "full" && !tank.loaded).length;
     if (rocketReady(week)) return withRocket(null, true);
     return toLoad ? { count: toLoad, picture: `${FLUENT}/fuel-pump.svg` } : null;
-  }
-
-  // Their house's news: the gift cards in their chest.
-  function homeNews() {
-    const count = vouchers.cards.length;
-    return count ? { count, picture: `${FLUENT}/wrapped-gift.svg` } : null;
   }
 
   // A building drawn in the picture: a place to tap over it (where, in place.css), its name in a pill
