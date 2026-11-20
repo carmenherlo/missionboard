@@ -114,14 +114,16 @@ def test_the_parents_see_every_card_and_who_picked_what_and_can_undo_it(client, 
     assert chest(client, bea)["moment"]["can_pick"] is True
 
 
-def test_a_parent_marks_a_card_used_without_a_moment(client, bea):
+def test_a_parent_removes_a_card_from_the_chest_and_the_parents_list(client, bea):
     win(client, bea)
     [card] = chest(client, bea)["cards"]
-    url = f"/api/children/{bea['id']}/vouchers/{card['id']}/used"
-    assert client.post(url).status_code == 401
-    assert client.post(url, headers=PARENT).status_code == 204
+    url = f"/api/children/{bea['id']}/vouchers/{card['id']}"
+    assert client.delete(url).status_code == 401
+    assert client.delete(url, headers=PARENT).status_code == 204
     assert chest(client, bea)["cards"] == []
-    assert client.post(url, headers=PARENT).status_code == 404
+    assert client.get("/api/vouchers", headers=PARENT).json()["children"][0]["cards"] == []
+    assert descriptions(client, limit=1)[0] == f"Eliminaste la tarjeta regalo «{card['text']}» de Bea"
+    assert client.delete(url, headers=PARENT).status_code == 404
 
 
 def test_the_parents_routes_need_the_code(client):

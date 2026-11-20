@@ -1,16 +1,19 @@
 // Zona de padres · Hoy, the card «Tarjetas regalo» (vales-2.html): every child's gift cards
-// not used yet (the prizes of the wheel and of the week), each one can be marked used (given
-// without the tablet), and the momento de vales: a parent opens it whenever they like, for
-// 30 minutes; meanwhile each child picks a card in their chest, and here, who picked what.
+// not used yet (the prizes of the wheel and of the week), grouped by child, each one can be
+// removed (it leaves their chest too), and the momento de vales: a parent opens it whenever
+// they like, for 30 minutes; meanwhile each child picks a card in their chest, and here, who
+// picked what. It asks the server again every few seconds: the chests change on the tablet.
 import { api } from "../../api.js";
 import { avatar } from "../../components/avatar.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { say } from "../../components/speech.js";
+import { undoBar } from "../../components/undo-bar.js";
 import { h } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { dayMonth } from "./orders-panel.js";
 
-const REFRESH_MS = 15000; // while a moment is open, who has picked comes in by itself
+const REFRESH_MS = 15000; // cards used in a chest, and who picked what, come in by itself
 
 // boardCard: the board's card (parents-today.js).
 export function vouchersCard(first, status, boardCard) {
@@ -27,20 +30,35 @@ export function vouchersCard(first, status, boardCard) {
 
   async function reload() {
     if (!body.isConnected) return clearInterval(timer);
-    view = await api("GET", "api/vouchers");
+    view = await api("GET", "api/vouchers").catch(() => view);
     draw();
   }
 
-  const used = (row, card) => h("button", {
-    type: "button", class: "btn",
-    onclick: () => change(api("POST", `api/children/${row.child.id}/vouchers/${card.id}/used`)),
-  }, t.overview.markUsed);
+  // Removed here at once; on the server once «Deshacer» has gone by.
+  const removing = new Set();
+  function remove(row, card) {
+    removing.add(card.id);
+    draw();
+    undoBar({
+      message: t.overview.voucherRemoved(card.text, row.child.name),
+      onUndo: () => { removing.delete(card.id); draw(); },
+      onTimeout: () => change(api("DELETE", `api/children/${row.child.id}/vouchers/${card.id}`),
+        () => removing.delete(card.id)),
+    });
+  }
 
-  const cardRow = (row, card) => h("li", { class: "row row--compact" },
+  const cardChip = (row, card) => h("li", { class: "voucher-chip" },
     imageThumb(card.image_url, { size: "sm", label: card.text }),
-    h("span", { class: "row__text" }, card.text, h("span", { class: "row__detail" },
-      (card.source === "week" ? t.overview.voucherWeek : t.overview.voucherWheel)(row.child.name, dayMonth(card.day)))),
-    used(row, card));
+    h("span", { class: "voucher-chip__text" }, card.text, h("span", { class: "row__detail" },
+      (card.source === "week" ? t.overview.voucherWeek : t.overview.voucherWheel)(dayMonth(card.day)))),
+    h("button", {
+      type: "button", class: "voucher-chip__remove", "aria-label": t.overview.removeVoucher(card.text),
+      title: t.overview.removeVoucher(card.text), onclick: () => remove(row, card),
+    }, icon("trash")));
+
+  const kidRow = (row) => h("li", { class: "voucher-kid", style: `--child-color: ${row.colors.color}` },
+    h("span", { class: "voucher-kid__head" }, avatar(row.child, { size: "sm" }), h("b", {}, row.child.name)),
+    h("ul", { class: "voucher-chips" }, row.cards.map((card) => cardChip(row, card))));
 
   function momentBox(moment) {
     const picks = moment.picks;
@@ -60,14 +78,16 @@ export function vouchersCard(first, status, boardCard) {
   }
 
   function draw() {
-    const rows = view.children.filter((row) => row.cards.length);
+    const rows = view.children
+      .map((row) => ({ ...row, cards: row.cards.filter((card) => !removing.has(card.id)) }))
+      .filter((row) => row.cards.length);
     const total = rows.reduce((n, row) => n + row.cards.length, 0);
     count.textContent = String(total);
     count.hidden = !total;
     body.replaceChildren(...[
       view.moment && momentBox(view.moment),
       total
-        ? h("ul", { class: "rows" }, rows.flatMap((row) => row.cards.map((card) => cardRow(row, card))))
+        ? h("ul", { class: "voucher-kids" }, rows.map(kidRow))
         : h("p", { class: "hint" }, t.overview.noVouchers),
       !view.moment && total > 0 && h("p", { class: "hint" }, t.overview.momentHint),
       !view.moment && total > 0 && h("button", {
@@ -75,9 +95,8 @@ export function vouchersCard(first, status, boardCard) {
         onclick: () => change(api("POST", "api/vouchers/moment"), () => say(t.overview.momentSay)),
       }, t.overview.startMoment),
     ].filter(Boolean));
-    clearInterval(timer);
-    if (view.moment) timer = setInterval(reload, REFRESH_MS);
   }
   draw();
+  timer = setInterval(reload, REFRESH_MS);
   return boardCard(t.overview.vouchersTitle, { count }, body);
 }

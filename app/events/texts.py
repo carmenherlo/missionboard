@@ -202,6 +202,7 @@ _CONFIG = {
     ("vouchers", "moment_started"): "Empezaste un momento de vales",
     ("vouchers", "moment_ended"): "Terminaste el momento de vales",
     ("voucher", "used"): "Marcaste como usada la tarjeta regalo «{mission}» de {child}",
+    ("voucher", "removed"): "Eliminaste la tarjeta regalo «{mission}» de {child}",
     ("voucher", "undone"): "Devolviste al baúl la tarjeta regalo «{mission}» de {child}",
     ("free_day", "on"): "Marcaste el {mission} como día libre de {child}",
     ("free_day", "off"): "Quitaste el día libre del {mission} de {child}",

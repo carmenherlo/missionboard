@@ -112,12 +112,14 @@ class VouchersService:
         self._moments.add_pick(moment["id"], child, card, self._clock.now())
         self._events.child_did("voucher_used", child, prize=card["text"])
 
-    def mark_used(self, child_id: str, card_id: str) -> None:
-        """A parent gave the prize without the tablet (in the car…)."""
+    def remove(self, child_id: str, card_id: str) -> None:
+        """A parent takes a card out of the chest (given without the tablet, or not to be
+        given). Its prize is kept as handed over: the history stays, and a week's prize is
+        not settled again."""
         child = self._children.require(child_id)
         card = self._card(child.id, card_id, unseen_weeks=True)
         self._deliver(child.id, card_id)
-        self._events.config_changed("voucher", "used", child=child, mission=_named(card_id, card["text"]))
+        self._events.config_changed("voucher", "removed", child=child, mission=_named(card_id, card["text"]))
 
     def undo(self, pick_id: int) -> None:
         """A card picked by mistake goes back to the chest."""

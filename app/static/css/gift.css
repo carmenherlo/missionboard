@@ -284,3 +284,72 @@
 }
 
 .voucher-moment .rows { width: 100%; }
+
+/* ---------- Zona de padres · Hoy: the gift cards, by child ---------- */
+.voucher-kids {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.voucher-kid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--container);
+}
+
+.voucher-kid__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 64px;
+  font-size: var(--text-sm);
+}
+
+.voucher-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.voucher-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 2px 2px var(--space-1);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.voucher-chip .thumb--sm { --size: 32px; }
+
+.voucher-chip__text {
+  display: grid;
+  line-height: 1.2;
+}
+
+.voucher-chip__remove {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.voucher-chip__remove svg { width: 20px; height: 20px; }

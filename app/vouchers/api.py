@@ -1,5 +1,5 @@
 """Gift cards and the momento de vales (vales-2.html). The child's chest has no parent
-code; opening a moment, marking a card used and undoing a pick have."""
+code; opening a moment, removing a card and undoing a pick have."""
 
 from fastapi import APIRouter, Depends
 
@@ -92,7 +92,7 @@ def undo_pick(pick_id: int, vouchers: VouchersService = Depends(get_vouchers_ser
     vouchers.undo(pick_id)
 
 
-@router.post("/children/{child_id}/vouchers/{card_id}/used", status_code=204, dependencies=parents)
-def mark_used(child_id: str, card_id: str, vouchers: VouchersService = Depends(get_vouchers_service)) -> None:
-    """A parent gave the prize without the tablet: the card leaves the chest."""
-    vouchers.mark_used(child_id, card_id)
+@router.delete("/children/{child_id}/vouchers/{card_id}", status_code=204, dependencies=parents)
+def remove(child_id: str, card_id: str, vouchers: VouchersService = Depends(get_vouchers_service)) -> None:
+    """A parent removes a card: it leaves the chest and Zona de padres."""
+    vouchers.remove(child_id, card_id)

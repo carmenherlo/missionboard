@@ -68,16 +68,21 @@ function ordersCard(first, status) {
   return boardCard(t.overview.ordersTitle, { count }, body);
 }
 
-// Esta semana: each child's tanks, and whether their rocket is ready.
+// Esta semana: each child's tanks, and whether their rocket is ready; it opens Padres · Niño,
+// where a day of the week can be fixed (day-fix.js), as the head of their card above.
 function weekRow(day) {
   const week = day.week;
   const notes = [t.overview.weekFull(week.full, week.counted)];
   if (week.tanks.some((tank) => tank.state === "now")) notes.push(t.overview.weekToday);
   if (rocketReady(week)) notes.push(t.overview.weekReady);
-  return h("li", { class: "row row--compact", style: `--child-color: ${day.colors.color}` },
+  return h("li", {}, h("a", {
+    class: "row row--compact row--link", href: `#/parents/kids/${day.child.id}`,
+    style: `--child-color: ${day.colors.color}`, "aria-label": t.overview.fixWeek(day.child.name),
+  },
     avatar(day.child, { size: "sm" }),
     h("span", { class: "row__text" }, day.child.name, h("span", { class: "row__detail" }, notes.join(" · ")),
-      h("span", { class: "week-row__tanks" }, weekMini(week))));
+      h("span", { class: "week-row__tanks" }, weekMini(week))),
+    h("span", { class: "row__icon" }, icon("next"))));
 }
 
 // Primeros pasos: what is left to get the app ready, each line to its screen; gone once
