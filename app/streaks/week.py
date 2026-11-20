@@ -29,7 +29,6 @@ WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 LETTERS = {"mon": "L", "tue": "M", "wed": "X", "thu": "J", "fri": "V", "sat": "S", "sun": "D"}
 
 FULL, FREE, MISSED, NOW, LATER = "full", "free", "missed", "now", "later"
-RANK = {"none": 0, "second": 1, "full": 2}
 
 
 @dataclass

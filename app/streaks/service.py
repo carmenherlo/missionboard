@@ -17,7 +17,7 @@ from app.missions.repository import MissionsRepository
 from app.settings import SettingsRepository
 from app.streaks.count import streak
 from app.streaks.repository import StreaksRepository
-from app.streaks.week import FULL, RANK, WEEKDAYS, Week, build_week, next_start, shown_end, week_end
+from app.streaks.week import FULL, WEEKDAYS, Week, build_week, next_start, shown_end, week_end
 from app.today.plan import missions_by_day, whole_days_off
 from app.today.repository import DayRepository
 
@@ -72,13 +72,14 @@ class StreaksService:
         row = self._streaks.weeks(child.id).get(end.isoformat()) or {}
         tier = week.tier(rules) if week.closed else None
         launched = row.get("launched_tier")
-        # New for the child: not seen yet, or better than what they launched with (a day fixed).
-        new = tier is not None and (launched is None or RANK[tier] > RANK[launched])
+        # New for the child: not seen yet, or different from what they saw (a parent changed a
+        # day, 20/11): the workshop always shows the week as it is now.
+        new = tier is not None and launched != tier
         loads = self._streaks.fuel_loads(child.id)
         return {
             "week": week,
             "result": self._result(week, tier) if new else None,
-            "took_off": launched in ("full", "second") and not new,
+            "took_off": launched in ("full", "second") and launched == tier,
             "loaded": {t.day.isoformat() for t in week.tanks if t.state == FULL and t.day.isoformat() in loads},
             "today": today,
             "next_day": _next_day(today, rules.days),

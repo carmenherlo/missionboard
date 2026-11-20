@@ -217,7 +217,7 @@ def test_a_week_not_launched_before_the_next_starts_has_no_rocket_but_its_prize_
     assert prize["week_end"] == "2026-11-06" and prize["tier"] == "full"
 
 
-def test_a_day_fixed_changes_the_week_and_a_better_prize_takes_off_again(client, bea, clock):
+def test_a_day_fixed_changes_the_week_and_the_workshop_shows_it_as_it_is_now(client, bea, clock):
     set_week(client, second_on=True, second_percent=60, prize="Parque", second="Cuento")
     item = mission(client, bea, "Despegue", steps=("Uno",))
     for n in (0, 1, 2, 3):
@@ -232,9 +232,16 @@ def test_a_day_fixed_changes_the_week_and_a_better_prize_takes_off_again(client,
     client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
     assert client.put(fix, json={"choice": "missed"}, headers=PARENT).status_code == 204
     view = week(client, bea)
-    assert view["result"] is None and view["took_off"] is True  # worse: it stays where it landed
+    assert view["result"]["tier"] == "second" and view["took_off"] is False  # worse: shown again, as it is now
     [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
     assert prize["tier"] == "second" and prize["prize_text"] == "Cuento"
+    client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
+    assert week(client, bea)["took_off"] is True
+    for day in ("2026-11-04", "2026-11-05"):  # two more days were a mistake: no prize at all
+        client.put(f"/api/children/{bea['id']}/days/{day}", json={"choice": "missed"}, headers=PARENT)
+    view = week(client, bea)
+    assert view["result"]["tier"] == "none" and view["took_off"] is False  # the rocket is back, and coughs
+    assert client.get("/api/overview/today", headers=PARENT).json()["week_prizes"] == []
 
 
 def test_days_let_off_leave_fewer_tanks_and_the_prize_counts_on_the_rest(client, bea, clock):
