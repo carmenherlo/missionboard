@@ -3,10 +3,14 @@
 If config.yaml is older than that, a whole copy of what there was goes to backups/,
 and then the configuration and the history are removed. The song library stays (its
 list and its files): songs are not easy to get again. Each family then has the
-examples of a new installation.
+start of a new installation.
 
-With no config.yaml at all, a new installation: the examples, with their songs (`with_samples`, only
-for the real app: tests start empty).
+With no config.yaml at all, a new installation. What it starts with (`first_run`):
+- FAMILY, a family's installation (the real app, primer-arranque.html): no children nor
+  missions, and the extras (routines, daily prize, shop, streaks) switched off, to switch
+  on once the missions work;
+- SAMPLES, the examples with their songs (development and screenshots);
+- PLAIN, nothing written: everything as `initial()` has it (tests).
 """
 
 import shutil
@@ -27,8 +31,20 @@ NOT_COPIED = {BACKUPS_DIRNAME, "voices", "voice-cache"}  # made or downloaded ag
 REMOVED_FOLDERS = ("photos", "backgrounds")  # the backgrounds are the app's now
 
 
-def run(data_dir: Path, now: datetime, with_samples: bool = False) -> bool:
+PLAIN, FAMILY, SAMPLES = "plain", "family", "samples"
+EXTRAS = ("routines", "daily_prize", "shop", "streaks")  # the app works without them
+
+
+def family() -> dict:
+    """config.yaml of a family's new installation."""
+    doc = initial()
+    doc["features"] = {**doc["features"], **dict.fromkeys(EXTRAS, False)}
+    return doc
+
+
+def run(data_dir: Path, now: datetime, first_run: str = PLAIN) -> bool:
     """Returns whether the examples were put in place (their children then get their first stars)."""
+    with_samples = first_run == SAMPLES
     config = data_dir / CONFIG_FILENAME
     songs = []
     if config.exists():
@@ -38,9 +54,9 @@ def run(data_dir: Path, now: datetime, with_samples: bool = False) -> bool:
         keep_a_copy(data_dir, now)
         songs = old.get("songs") or []
         _remove_old(data_dir)
-    elif not with_samples:
+    elif first_run == PLAIN:
         return False
-    doc = samples.document() if with_samples else initial()
+    doc = {SAMPLES: samples.document, FAMILY: family}.get(first_run, initial)()
     if with_samples:
         _copy_sample_songs(data_dir)
     kept = {song["id"] for song in songs}

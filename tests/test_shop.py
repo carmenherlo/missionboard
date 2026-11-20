@@ -10,7 +10,7 @@ from tests.test_missions import create_child, saved
 from tests.test_settings import FixedClock
 from tests.test_today import MONDAY, check, descriptions, mission, today
 
-SAMPLES = ["Elegir el postre", "Un globo", "Un peluche"]
+SAMPLES = ["Unas pegatinas", "Un globo", "Un peluche"]
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ def test_the_child_sees_their_stars_and_what_they_can_buy(client, bea):
     view = shop(client, bea)
     assert view["stars"] == 4
     assert [(i["text"], i["affordable"]) for i in view["items"]] == [
-        ("Elegir el postre", True),
+        ("Unas pegatinas", True),
         ("Un globo", False),
         ("Un peluche", False),
     ]
@@ -91,14 +91,14 @@ def test_the_child_sees_their_stars_and_what_they_can_buy(client, bea):
 
 def test_buying_takes_the_stars(client, bea):
     earn(client, bea, 4)
-    response = buy(client, bea, "elegir-postre")
+    response = buy(client, bea, "pegatinas")
     assert response.status_code == 200
     view = response.json()
     assert view["stars"] == 1
     order = view["orders"][0]
-    assert order["item_text"] == "Elegir el postre" and order["state"] == "on_way" and order["id"] == view["order_id"]
+    assert order["item_text"] == "Unas pegatinas" and order["state"] == "on_way" and order["id"] == view["order_id"]
     assert today(client, bea)["stars"] == 1
-    assert descriptions(client, limit=1) == ["Bea compró «Elegir el postre» · -3 estrellas"]
+    assert descriptions(client, limit=1) == ["Bea compró «Unas pegatinas» · -3 estrellas"]
 
 
 def test_not_enough_stars(client, bea):

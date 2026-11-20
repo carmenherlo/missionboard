@@ -12,8 +12,7 @@ from tests.test_today import MONDAY, check, descriptions, mission, note, today, 
 
 SAMPLES = [
     "Guerra de cojines o de cosquillas",
-    "10 minutos de juego con mamá, tú eliges",
-    "10 minutos de juego con papá, tú eliges",
+    "10 minutos de juego con mamá o papá, tú eliges",
     "Elige una canción y bailamos todos",
     "Eliges el cuento de esta noche",
     "Paseo en dinosaurio por toda la casa",
@@ -54,7 +53,7 @@ def finish(client, child, item):
 # ---------- the list, in Configurar ----------
 
 
-def test_a_new_install_has_eight_sample_prizes(client):
+def test_a_new_install_has_seven_sample_prizes(client):
     prizes = client.get("/api/prizes").json()
     assert texts(prizes) == SAMPLES
     assert prizes[1]["image_url"].endswith("/game-die.svg")
@@ -81,7 +80,7 @@ def test_a_new_prize_gets_a_suggested_image(client):
 
 
 def test_a_photo_replaces_the_old_one(client, data_dir):
-    url = "/api/prizes/juego-mama"
+    url = "/api/prizes/juego"
     upload(client, f"{url}/photo", PNG, "image/png")
     upload(client, f"{url}/photo", PNG, "image/png")
     assert len(photo_files(data_dir)) == 1

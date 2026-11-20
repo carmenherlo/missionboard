@@ -144,15 +144,9 @@ def initial() -> dict:
                 "image_suggested": False,
             },
             {
-                "id": "juego-mama",
-                "text": "10 minutos de juego con mamá, tú eliges",
+                "id": "juego",
+                "text": "10 minutos de juego con mamá o papá, tú eliges",
                 "image": "fluent/game-die",
-                "image_suggested": False,
-            },
-            {
-                "id": "juego-papa",
-                "text": "10 minutos de juego con papá, tú eliges",
-                "image": "fluent/joker",
                 "image_suggested": False,
             },
             {
@@ -183,9 +177,9 @@ def initial() -> dict:
         ],
         "shop": [
             {
-                "id": "elegir-postre",
-                "text": "Elegir el postre",
-                "image": "fluent/ice-cream",
+                "id": "pegatinas",
+                "text": "Unas pegatinas",
+                "image": "fluent/sparkles",
                 "image_suggested": False,
                 "price": 3,
             },

@@ -60,7 +60,7 @@ def bea(client):
     return create_child(client)
 
 
-def ordered(client, child, item="elegir-postre", stars=3):
+def ordered(client, child, item="pegatinas", stars=3):
     earn(client, child, stars)
     return buy(client, child, item).json()["order_id"]
 
@@ -90,7 +90,7 @@ def test_an_order_is_on_its_way_until_a_parent_hands_it_over(client, bea):
     assert client.get("/api/orders/summary").json() == {
         bea["id"]: {"on_way": 0, "arrived": 1, "today": [], "arrived_ids": [order_id]}
     }
-    assert descriptions(client, limit=1) == ["Entregaste «Elegir el postre» a Bea"]
+    assert descriptions(client, limit=1) == ["Entregaste «Unas pegatinas» a Bea"]
 
     assert client.post(f"/api/children/{bea['id']}/orders/{order_id}/seen").status_code == 204
     assert mine(client, bea)[0]["state"] == "done"
@@ -103,7 +103,7 @@ def test_the_day_it_arrives_moves_the_truck(client, bea, clock):
     due = (MONDAY + timedelta(days=2)).date().isoformat()
     changed = client.patch(f"/api/orders/{order_id}", json={"due_day": due}, headers=PARENT).json()
     assert (changed["nights"], changed["progress"]) == (2, 0.1)
-    assert descriptions(client, limit=1) == ["Dijiste cuándo le llega «Elegir el postre» a Bea · llega el 4/11"]
+    assert descriptions(client, limit=1) == ["Dijiste cuándo le llega «Unas pegatinas» a Bea · llega el 4/11"]
     clock.moment = MONDAY + timedelta(days=1)
     assert (mine(client, bea)[0]["nights"], mine(client, bea)[0]["progress"]) == (1, 0.475)
     clock.moment = MONDAY + timedelta(days=5)  # late: it stays almost home
@@ -123,7 +123,7 @@ def test_buying_tells_the_chosen_phones(client, bea, ha):
     order_id = ordered(client, bea)
     [message] = ha.sent
     assert message["phones"] == ["mobile_app_mum"]
-    assert message["title"] == "🛒 Bea ha pedido «Elegir el postre»"
+    assert message["title"] == "🛒 Bea ha pedido «Unas pegatinas»"
     assert message["actions"] == [f"MISSIONBOARD_ORDER_{order_id}_{a}" for a in ("TODAY", "TOMORROW", "GIVEN")]
 
 
@@ -168,7 +168,7 @@ def test_a_reminder_on_the_day_it_was_due_once(client, app, bea, ha, clock):
     clock.moment = MONDAY.replace(hour=18, minute=0)
     _orders(app).remind()
     _orders(app).remind()
-    assert [m["title"] for m in ha.sent] == ["🚚 Hoy llega «Elegir el postre» de Bea"]
+    assert [m["title"] for m in ha.sent] == ["🚚 Hoy llega «Unas pegatinas» de Bea"]
     clock.moment = MONDAY + timedelta(days=1, hours=2)  # still not handed over: again the next day
     _orders(app).remind()
     assert len(ha.sent) == 2

@@ -106,7 +106,7 @@ def child_tasks(mission: Mission, child_id: str, weekday: str | None = None) -> 
     return found
 
 
-def _from_doc(entry: dict) -> Mission:
+def from_doc(entry: dict) -> Mission:
     schedule = entry.get("schedule")
     return Mission(
         id=entry["id"],
@@ -150,7 +150,7 @@ class MissionsRepository:
         return self._store.edit()
 
     def list(self) -> list[Mission]:
-        return [_from_doc(entry) for entry in self._store.load()["missions"]]
+        return [from_doc(entry) for entry in self._store.load()["missions"]]
 
     def get(self, mission_id: str) -> Mission | None:
         return next((m for m in self.list() if m.id == mission_id), None)

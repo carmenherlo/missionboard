@@ -6,7 +6,7 @@ import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from app.storage import db
+from app.storage import db, fresh_start
 from app.storage.config_migrations import CURRENT_VERSION, ConfigVersionError
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
@@ -42,8 +42,8 @@ def clock():
     return FixedClock(MONDAY)
 
 
-def start(data_dir, clock, samples=True):
-    return TestClient(create_app(data_dir, clock=clock, samples=samples))
+def start(data_dir, clock, first_run=fresh_start.SAMPLES):
+    return TestClient(create_app(data_dir, clock=clock, first_run=first_run))
 
 
 # ---------- from before family missions ----------
@@ -104,7 +104,7 @@ def test_a_newer_file_stops_the_app_and_touches_nothing(data_dir, clock):
 
 
 def test_tests_start_empty_and_nothing_is_written(data_dir, clock):
-    with start(data_dir, clock, samples=False) as client:
+    with start(data_dir, clock, first_run=fresh_start.PLAIN) as client:
         assert client.get("/api/children").json() == [] and client.get("/api/missions").json() == []
     assert not config_path(data_dir).exists()
 
@@ -200,3 +200,22 @@ def test_the_night_of_the_examples(examples, clock):
     assert client.get("/api/routines/current").json() is None
     bea = client.get("/api/children").json()[0]
     assert client.get(f"/api/children/{bea['id']}/today").json()["missions"] == []
+
+
+# ---------- a family's new installation (primer-arranque.html) ----------
+
+
+def test_a_family_starts_with_no_children_nor_missions_and_the_extras_off(data_dir, clock):
+    with start(data_dir, clock, first_run=fresh_start.FAMILY) as client:
+        assert client.get("/api/children").json() == [] and client.get("/api/missions").json() == []
+        assert client.get("/api/routines", headers=PARENT).json() == []
+        features = client.get("/api/settings", headers=PARENT).json()["features"]
+        assert not any(features[extra] for extra in ("routines", "daily_prize", "shop", "streaks"))
+    assert config_path(data_dir).exists()
+
+
+def test_a_family_installation_is_left_as_it_is_afterwards(data_dir, clock):
+    with start(data_dir, clock, first_run=fresh_start.FAMILY) as client:
+        client.patch("/api/settings/features", json={"shop": True}, headers=PARENT)
+    with start(data_dir, clock, first_run=fresh_start.FAMILY) as client:
+        assert client.get("/api/settings", headers=PARENT).json()["features"]["shop"] is True

@@ -25,6 +25,7 @@ from app.events.repository import EventsRepository
 from app.events.service import EventLog
 from app.images import api as images_api
 from app.images.libraries import LIBRARIES, ImageLibraries, Library
+from app.mission_templates import api as mission_templates_api
 from app.missions import api as missions_api
 from app.notify import HomeAssistant
 from app.notify import api as notify_api
@@ -107,16 +108,17 @@ def create_app(
     data_dir: Path | None = None,
     clock: Clock | None = None,
     libraries: list[Library] | None = None,
-    samples: bool = False,
+    first_run: str = fresh_start.PLAIN,
 ) -> FastAPI:
-    """`samples`: a new installation brings the examples (only the real app, below)."""
+    """`first_run`: what a new installation starts with (see fresh_start; the real app, below,
+    is a family's)."""
     data_dir = data_dir or Path(os.environ.get("MISSIONBOARD_DATA_DIR", DEFAULT_DATA_DIR))
     config_store = ConfigStore(data_dir)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         now = app.state.clock.now()
-        with_examples = fresh_start.run(data_dir, now, with_samples=samples)
+        with_examples = fresh_start.run(data_dir, now, first_run)
         config_store.migrate()
         SettingsRepository(config_store).complete()  # every setting in the file, to see and change
         db.migrate(data_dir)
@@ -176,6 +178,7 @@ def create_app(
     app.include_router(avatars_api.router)
     app.include_router(children_api.router)
     app.include_router(missions_api.router)
+    app.include_router(mission_templates_api.router)
     app.include_router(prizes_api.router)
     app.include_router(images_api.router)
     app.include_router(events_api.router)
@@ -205,4 +208,4 @@ def create_app(
     return app
 
 
-app = create_app(samples=True)
+app = create_app(first_run=fresh_start.FAMILY)

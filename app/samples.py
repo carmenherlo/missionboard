@@ -1,16 +1,16 @@
-"""What a new installation starts with: three children and three missions, for each
-family to change. Fixed ids, so what they refer to is easy to follow in config.yaml;
-the children's are drawn on each installation, like a child added by hand: they are in
-the address of their screens, and a family renames the examples to their own children."""
+"""The examples: three children with three missions, their routines and songs. Not for
+a family's installation (that one starts empty, primer-arranque.html): for development,
+screenshots and trying things out (`create_app(first_run=SAMPLES)`). Fixed ids, so what
+they refer to is easy to follow in config.yaml; the children's are drawn each time, like a
+child added by hand."""
 
 import secrets
 from pathlib import Path
 
+from app.mission_templates import catalog
+from app.mission_templates.catalog import NOT_SATURDAY, WEEKDAYS
 from app.storage.config_migrations import initial
 
-WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"]
-NOT_SATURDAY = [*WEEKDAYS, "sun"]
-NOT_SATURDAY_NOR_FRIDAY = ["mon", "tue", "wed", "thu", "sun"]  # the night before a day without school
 STARTING_STARS = 5
 
 # Example songs, in the repository: on a new installation they are copied to the
@@ -33,116 +33,11 @@ CHILDREN = [
 ]
 
 
-def _step(task_id: str, n: int, text: str, image: str) -> dict:
-    return {"id": f"{task_id}-{n}", "text": text, "image": f"fluent/{image}", "image_suggested": False}
-
-
-def _tasks(mission_id: str, tasks: list[tuple]) -> list[dict]:
-    """(text, image[, steps as (text, image)[, days]])"""
-    found = []
-    for n, (text, image, *rest) in enumerate(tasks, start=1):
-        task_id = f"{mission_id}-{n}"
-        steps = rest[0] if rest else []
-        found.append(
-            {
-                "id": task_id,
-                "text": text,
-                "image": image if "/" in image else f"fluent/{image}",
-                "image_suggested": False,
-                "days": rest[1] if len(rest) > 1 else None,
-                "steps": [_step(task_id, i, *step) for i, step in enumerate(steps, start=1)],
-            }
-        )
-    return found
-
-
-def _mission(
-    mission_id: str, name: str, image: str, color: str, days: list[str], start: str, end: str, tasks: list[tuple]
-) -> dict:
-    return {
-        "id": mission_id,
-        "name": name,
-        "image": f"fluent/{image}",
-        "image_suggested": False,
-        "color": color,
-        "days": days,
-        "schedule": {"start": start, "end": end},
-        "tasks": _tasks(mission_id, tasks),
-        "off": {},
-    }
-
-
+# The examples' missions: the app's templates, with the times the examples' routines expect.
+SCHEDULES = {"despegue": ("06:00", "09:00"), "aterrizaje": ("12:00", "18:00"), "alunizaje": ("18:00", "20:00")}
 MISSIONS = [
-    _mission(
-        "despegue",
-        "Despegue",
-        "rocket",
-        "#2193d6",
-        WEEKDAYS,
-        "06:00",
-        "09:00",
-        [
-            ("Despertarse", "sleeping-face"),
-            ("Desayunar", "bowl-with-spoon"),
-            ("Recoger el desayuno", "fork-and-knife-with-plate"),
-            ("Aseo", "soap", [("Dientes", "toothbrush"), ("Cara", "droplet")]),
-            ("Vestirse", "womans-clothes", [("Ropa", "t-shirt"), ("Reloj", "watch")]),
-            ("Acicalarse", "woman-getting-haircut", [("Peinarse", "hair-pick"), ("Colonia", "lotion-bottle")]),
-            (
-                "Prepararse para salir",
-                "door",
-                [
-                    ("Gorro", "billed-cap"),
-                    ("Bufanda", "scarf"),
-                    ("Abrigo", "coat"),
-                    ("Guantes", "gloves"),
-                    ("Mochila", "backpack"),
-                ],
-            ),
-        ],
-    ),
-    _mission(
-        "aterrizaje",
-        "Aterrizaje",
-        "airplane-arrival",
-        "#e77300",
-        WEEKDAYS,
-        "12:00",
-        "18:00",
-        [
-            (
-                "Guardar abrigo y mochila",
-                "basket",
-                [
-                    ("Abrigo", "coat"),
-                    ("Bufanda", "scarf"),
-                    ("Gorro", "billed-cap"),
-                    ("Guantes", "gloves"),
-                    ("Mochila", "backpack"),
-                ],
-            ),
-            ("Quitarse los zapatos", "running-shoe"),
-            ("Lavarse las manos", "hand-with-fingers-splayed"),
-            ("Ponerse el pijama", "own/pajamas"),
-            ("Guardar la ropa", "basket"),
-        ],
-    ),
-    _mission(
-        "alunizaje",
-        "Alunizaje",
-        "crescent-moon",
-        "#9471e7",
-        NOT_SATURDAY,
-        "18:00",
-        "20:00",
-        [
-            ("Recoger la cena", "fork-and-knife-with-plate"),
-            ("Recoger la habitación", "teddy-bear"),
-            ("Preparar la ropa de mañana", "t-shirt", [], NOT_SATURDAY_NOR_FRIDAY),
-            ("Preparar la mochila", "backpack", [], NOT_SATURDAY_NOR_FRIDAY),
-            ("Lavarse los dientes", "toothbrush"),
-        ],
-    ),
+    {**template, "schedule": {"start": SCHEDULES[template["id"]][0], "end": SCHEDULES[template["id"]][1]}}
+    for template in catalog.TEMPLATES
 ]
 
 
