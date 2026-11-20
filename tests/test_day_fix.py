@@ -143,3 +143,18 @@ def test_once_the_rocket_took_off_the_week_says_so(client, bea, clock):
     assert view["took_off"] is False and view["result"]["tier"] == "full"
     client.post(f"/api/children/{bea['id']}/week/{view['result']['end']}/seen")
     assert week(client, bea)["took_off"] is True
+
+
+def test_the_parents_last_word_is_the_days_state(client, bea, clock):
+    """Done and then let off: free (it does not count). Let off and then done: full."""
+    mission(client, bea, "Despegue", steps=("Uno",))
+    clock.moment = MONDAY + timedelta(days=2)  # Wednesday
+    assert fix(client, bea, MON, "done").status_code == 204
+    assert fix(client, bea, MON, "free").status_code == 204
+    assert monday_tank(client, bea) == "free"
+    assert fix(client, bea, MON, "done").status_code == 204
+    assert monday_tank(client, bea) == "full"
+    assert fix(client, bea, MON, "missed").status_code == 204
+    assert monday_tank(client, bea) == "missed"
+    assert fix(client, bea, "2026-11-05", "done").status_code == 409  # Thursday has not happened
+    assert fix(client, bea, "2026-11-05", "free").status_code == 204  # but it can be let off

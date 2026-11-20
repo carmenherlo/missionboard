@@ -3,14 +3,15 @@ what it was: «Lo hizo» (they forgot to sign: its missions done, with their sta
 tank full), «No lo hizo» (its missions undone, as UndoService does one) or «Libre» (the
 whole day off). A day gone by, until the next week starts (its first day that counts,
 20/11), even if its rocket took off; a day ahead can only be let off. No gift card is won here:
-the wheel is the child's."""
+the wheel is the child's. The parent decides (20/11): their last choice is the day's state
+in the week, whatever was done before."""
 
 from datetime import date
 
 from app.children.repository import ChildrenRepository
 from app.clock import Clock
 from app.day_off.repository import WHOLE_DAY, DayOffsRepository
-from app.errors import ConflictError, InvalidError
+from app.errors import InvalidError
 from app.events.service import EventLog
 from app.missions.repository import MissionsRepository
 from app.settings import SettingsRepository
@@ -55,9 +56,7 @@ class DayFix:
         self._streaks.undo_check(child.id, day)  # up to today, till the next week starts
         had = missions_by_day(self._missions.list(), child.id, self._offs.by_day(child.id))(day)
         done = self._days.completions(child.id).get(day.isoformat(), set())
-        if choice == "free":
-            if had and done >= had:  # a day done stays full (streaks/week.py)
-                raise ConflictError("A day done: undo it first («No lo hizo»)")
+        if choice == "free":  # the parent decides (20/11): it does not count, done or not
             self._streaks.set_free_day(child.id, day, True)
             return
         if WHOLE_DAY in self._offs.on(child.id, day):

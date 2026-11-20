@@ -7,8 +7,8 @@ starts the day after the previous one. A tank is a day that counts (one of strea
 on which the child has missions, from the day their racha started; its state:
 
 - "full": all their missions done that day;
-- "free": a parent let it off (ill, away): it is not counted, nor drawn in the workshop
-  (a day done stays "full", even if let off);
+- "free": a parent let it off (ill, away, or it should not count): it is not counted, nor
+  drawn in the workshop, even if its missions were done (the parent decides, 20/11);
 - "missed": over, and not done;
 - "now": today, not done yet;
 - "later": still to come.
@@ -100,10 +100,10 @@ def build_week(
         missions = had(day)
         if WEEKDAYS[day.weekday()] not in rules.days or not missions or (since and day < since):
             continue
-        if done.get(day.isoformat(), set()) >= missions:
-            state = FULL  # done wins over let off: what the child did is never lost
-        elif day.isoformat() in free:
-            state = FREE
+        if day.isoformat() in free:
+            state = FREE  # the parent's word: the day does not count, whatever was done
+        elif done.get(day.isoformat(), set()) >= missions:
+            state = FULL
         elif day < today:
             state = MISSED
         else:
