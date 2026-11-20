@@ -790,9 +790,8 @@ export const t = {
     image: "Imagen (opcional)",
     submit: "Crear y añadir tareas",
     missingName: "Escribe el nombre de la misión.",
-    fromTemplate: "Desde una plantilla",
+    fromTemplate: "O empieza con una plantilla",
     templateHint: "Una copia para ti: luego cambias lo que quieras.",
-    fromScratch: "Desde cero",
     use: "Usar",
     tasks: (texts, shown) => texts.length > shown
       ? `${texts.slice(0, shown).join(", ")}… · ${texts.length} tareas`

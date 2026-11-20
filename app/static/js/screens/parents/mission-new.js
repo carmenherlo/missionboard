@@ -12,7 +12,7 @@ const SHOWN_TASKS = 3;
 
 const openMission = (mission) => { location.hash = `${LIST_HREF}/${mission.id}`; };
 
-// A new mission: from one of the app's templates (a copy, the family's to change) or from scratch.
+// A new mission: from scratch (the form, first) or from one of the app's templates below (a copy, the family's to change).
 export async function viewMissionNew() {
   const [templates, form] = await Promise.all([
     api("GET", "api/mission-templates"),
@@ -51,7 +51,7 @@ export async function viewMissionNew() {
   render(
     parentsHeader(t.missionNew.title, { href: LIST_HREF, label: t.missions.title }),
     h("main", { class: "page stack" },
-      templates.length ? panel(t.missionNew.fromTemplate, h("p", { class: "hint" }, t.missionNew.templateHint), rows, error) : null,
-      h("h2", { class: "section-title" }, t.missionNew.fromScratch),
-      form.element));
+      form.element,
+      templates.length ? panel(t.missionNew.fromTemplate, h("p", { class: "hint" }, t.missionNew.templateHint), rows, error) : null));
+  form.focus();
 }
