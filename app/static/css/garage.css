@@ -141,11 +141,6 @@ span.week-mini { cursor: default; }
 
 .garage-layer__line:empty { display: none; }
 
-.garage-layer__picture {
-  width: 56px;
-  height: 56px;
-}
-
 /* The drawing's colours (tokens.css, --garage-*). */
 .garage__sky-1 { stop-color: var(--garage-sky-1); }
 

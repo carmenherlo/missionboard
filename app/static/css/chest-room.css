@@ -79,19 +79,6 @@
 .chest-room__card:nth-child(4n + 3) { rotate: -2deg; }
 .chest-room__card:nth-child(4n + 4) { rotate: 5deg; }
 
-.chest-room__week {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 2px var(--space-2);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 800;
-}
-
-.chest-room__week img { width: 24px; }
-
 .chest-room__empty {
   grid-column: 1 / -1;
   margin-top: var(--space-6);

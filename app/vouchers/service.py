@@ -1,9 +1,10 @@
 """Gift cards and the momento de vales (vales-2.html).
 
-Every prize won (on the wheel, or a week's prize once the child has seen it from the
-rocket) is a gift card in the child's chest until it is used: no data of its own, it is
-the prize not delivered yet. A parent opens a momento de vales whenever they like; while
-it lasts, each child picks one card from their chest, and that hands its prize over."""
+Every prize won on the wheel is a gift card in the child's chest until it is used: no
+data of its own, it is the prize not delivered yet. A week's prize is not a card (20/11:
+it is weekly, the cards are daily): it waits in the parents' «Premios de la semana».
+A parent opens a momento de vales whenever they like; while it lasts, each child picks
+one card from their chest, and that hands its prize over."""
 
 from datetime import timedelta
 from types import SimpleNamespace
@@ -18,7 +19,6 @@ from app.vouchers.repository import MomentsRepository
 
 MOMENT_MINUTES = 30  # a moment closes by itself after this, so it is not left open
 PICKS_PER_MOMENT = 1  # each child picks this many cards in a moment
-SURPRISE = "Premio sorpresa"  # a week's prize without a text
 
 
 class VouchersService:
@@ -38,10 +38,9 @@ class VouchersService:
         self._clock = clock
         self._events = events
 
-    def cards(self, child_id: str, unseen_weeks: bool = False) -> list[dict]:
-        """The child's gift cards not used yet, oldest first. A week's prize the child
-        has not seen yet (the rocket still waiting) only for the parents."""
-        wheel = [
+    def cards(self, child_id: str) -> list[dict]:
+        """The child's gift cards not used yet, oldest first."""
+        return [
             {
                 "id": f"spin-{row['id']}",
                 "source": "wheel",
@@ -52,18 +51,6 @@ class VouchersService:
             for row in self._spins.to_give()
             if row["child_id"] == child_id
         ]
-        week = [
-            {
-                "id": f"week-{row['week_end']}",
-                "source": "week",
-                "text": row["prize_text"] or SURPRISE,
-                "image": row["prize_image"],
-                "day": row["week_end"],
-            }
-            for row in self._streaks.week_prizes_to_give()
-            if row["child_id"] == child_id and (unseen_weeks or row["shown_at"])
-        ]
-        return sorted(wheel + week, key=lambda card: card["day"])
 
     def moment(self) -> dict | None:
         """The momento de vales open now: until when, and who picked what."""
@@ -84,9 +71,7 @@ class VouchersService:
 
     def for_parents(self) -> dict:
         return {
-            "children": [
-                {"child": child, "cards": self.cards(child.id, unseen_weeks=True)} for child in self._children.list()
-            ],
+            "children": [{"child": child, "cards": self.cards(child.id)} for child in self._children.list()],
             "moment": self.moment(),
         }
 
@@ -108,17 +93,16 @@ class VouchersService:
         if sum(p["child_id"] == child.id for p in moment["picks"]) >= PICKS_PER_MOMENT:
             raise ConflictError("Already picked in this moment")
         card = self._card(child.id, card_id)
-        self._deliver(child.id, card_id)
+        self._deliver(card_id)
         self._moments.add_pick(moment["id"], child, card, self._clock.now())
         self._events.child_did("voucher_used", child, prize=card["text"])
 
     def remove(self, child_id: str, card_id: str) -> None:
         """A parent takes a card out of the chest (given without the tablet, or not to be
-        given). Its prize is kept as handed over: the history stays, and a week's prize is
-        not settled again."""
+        given). Its prize is kept as handed over, so the history stays."""
         child = self._children.require(child_id)
-        card = self._card(child.id, card_id, unseen_weeks=True)
-        self._deliver(child.id, card_id)
+        card = self._card(child.id, card_id)
+        self._deliver(card_id)
         self._events.config_changed("voucher", "removed", child=child, mission=_named(card_id, card["text"]))
 
     def undo(self, pick_id: int) -> None:
@@ -129,7 +113,7 @@ class VouchersService:
         kind, ref = _split(pick["voucher_id"])
         if kind == "spin":
             self._spins.undeliver(int(ref))
-        else:
+        else:  # a week's prize picked before 20/11, when it was a card
             self._streaks.undeliver_week_prize(pick["child_id"], ref)
         self._moments.remove_pick(pick_id)
         self._events.config_changed(
@@ -139,18 +123,14 @@ class VouchersService:
             mission=_named(pick["voucher_id"], pick["prize_text"]),
         )
 
-    def _card(self, child_id: str, card_id: str, unseen_weeks: bool = False) -> dict:
-        card = next((c for c in self.cards(child_id, unseen_weeks) if c["id"] == card_id), None)
+    def _card(self, child_id: str, card_id: str) -> dict:
+        card = next((c for c in self.cards(child_id) if c["id"] == card_id), None)
         if card is None:
             raise NotFoundError("Gift card not found")
         return card
 
-    def _deliver(self, child_id: str, card_id: str) -> None:
-        kind, ref = _split(card_id)
-        if kind == "spin":
-            self._spins.deliver(int(ref), self._clock.now())
-        else:
-            self._streaks.deliver_week_prize(child_id, ref, self._clock.now())
+    def _deliver(self, card_id: str) -> None:
+        self._spins.deliver(int(_split(card_id)[1]), self._clock.now())
 
 
 def _split(card_id: str) -> tuple[str, str]:

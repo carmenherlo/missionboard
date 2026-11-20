@@ -1,5 +1,5 @@
 // Zona de padres · Hoy, the card «Tarjetas regalo» (vales-2.html): every child's gift cards
-// not used yet (the prizes of the wheel and of the week), grouped by child, each one can be
+// not used yet (the prizes of the wheel), grouped by child, each one can be
 // removed (it leaves their chest too), and the momento de vales: a parent opens it whenever
 // they like, for 30 minutes; meanwhile each child picks a card in their chest, and here, who
 // picked what. It asks the server again every few seconds: the chests change on the tablet.
@@ -50,7 +50,7 @@ export function vouchersCard(first, status, boardCard) {
   const cardChip = (row, card) => h("li", { class: "voucher-chip" },
     imageThumb(card.image_url, { size: "sm", label: card.text }),
     h("span", { class: "voucher-chip__text" }, card.text, h("span", { class: "row__detail" },
-      (card.source === "week" ? t.overview.voucherWeek : t.overview.voucherWheel)(dayMonth(card.day)))),
+      t.overview.voucherWheel(dayMonth(card.day)))),
     h("button", {
       type: "button", class: "voucher-chip__remove", "aria-label": t.overview.removeVoucher(card.text),
       title: t.overview.removeVoucher(card.text), onclick: () => remove(row, card),

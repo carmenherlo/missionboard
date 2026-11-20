@@ -70,11 +70,12 @@
 
 .trip__crater--3 { left: 42%; top: 26%; width: 8%; height: 5%; }
 
-/* The rocket, standing on the moon at the end. */
+/* The rocket, standing on the moon at the end: its body ends at 540 of the drawing's 640
+   (below, the flame), and that is what stands on the moon, a little into it. */
 .trip__rocket {
   position: absolute;
   left: 50%;
-  top: calc(60vh - 34vh + 1vh);
+  top: calc(60vh - 34vh * 540 / 640 + 1vh);
   width: 13.8vh;
   height: 34vh;
   translate: -50% 0;
@@ -93,7 +94,7 @@
 .trip__dust {
   position: absolute;
   left: 50%;
-  bottom: -2vh;
+  bottom: calc(34vh * 100 / 640 - 2vh); /* at the foot of the body, not of the flame */
   width: 40vh;
   height: 10vh;
   translate: -50% 0;

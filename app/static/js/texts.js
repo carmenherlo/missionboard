@@ -56,10 +56,8 @@ export const t = {
       free: "Ese día era libre: no cuenta.",
     },
     notReady: "Al cohete le falta combustible. ¡Llena todos los depósitos de la semana!",
-    readyTitle: "¡Enhorabuena! Tu cohete está listo para despegar",
     readySay: (name) => `¡Enhorabuena, ${name}! Tu cohete está listo para despegar. ¡Ve al taller!`,
     goToGarage: "Ir al taller",
-    dayTitle: "¡Depósito lleno!",
     daySay: (name, full, counted) => full >= counted
       ? `¡Muy bien, ${name}! ¡Todos los depósitos llenos!`
       : `¡Muy bien, ${name}! ¡Otro depósito lleno! Ya llevas ${full} de ${counted}.`,
@@ -68,7 +66,7 @@ export const t = {
       : `¡Has llenado ${full} depósitos, ${name}! Tres, dos, uno… ¡despegue!`,
     // The rocket lands on a moon, and the prize comes out (space-trip.js).
     wonTitle: (text) => (text ? `¡Has ganado ${lower(text)}!` : "¡Has ganado un premio sorpresa!"),
-    wonHint: "Te espera en tu baúl, en tu casa.",
+    wonHint: "Papá o mamá te lo darán.",
     wonSay: (text) => `¡Aterrizaje perfecto! Has ganado ${text ? lower(text) : "un premio sorpresa"}.`,
     great: "¡Bien!",
   },
@@ -100,7 +98,6 @@ export const t = {
     chestTitle: (name) => `El baúl de ${name}`,
     backHome: "Mi casa",
     homeSay: "Tu casa está en obras, ¡pero tu baúl ya está aquí!",
-    week: "Premio de la semana",
     empty: "Tu baúl está vacío. ¡Gira la ruleta para ganar tarjetas regalo!",
     notYet: "¡Todavía no es momento de vales! Te espera aquí hasta entonces.",
     picked: "¡Ya has elegido! Las demás te esperan para otro momento de vales.",
@@ -1023,7 +1020,6 @@ export const t = {
     vouchersTitle: "Tarjetas regalo",
     noVouchers: "✓ No queda ninguna tarjeta regalo por usar.",
     voucherWheel: (day) => `Ruleta del ${day}`,
-    voucherWeek: (day) => `Semana hasta el ${day}`,
     removeVoucher: (text) => `Eliminar «${text}»`,
     voucherRemoved: (text, name) => `Eliminada «${text}» de ${name}`,
     startMoment: "Empezar momento de vales",
@@ -1071,6 +1067,10 @@ export const t = {
     weekFull: (full, counted) => `${full} de ${counted} depósitos llenos`,
     weekToday: "le falta hoy",
     weekReady: "¡cohete listo!",
+    weekPrizesTitle: "Premios de la semana",
+    weekPrizeSurprise: "Premio sorpresa (lo eliges tú)",
+    weekPrizeDetail: (name, tier, day) =>
+      `${name} · ${tier === "second" ? "premio pequeño" : "semana completa"} · hasta el ${day}`,
     fixWeek: (name) => `La semana de ${name}: ver y arreglar sus días`,
     childTitle: (name) => name,
     chartTitle: "Estrellas ganadas (2 semanas)",

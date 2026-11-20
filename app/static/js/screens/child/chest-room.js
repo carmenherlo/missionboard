@@ -48,9 +48,7 @@ export async function openChest(container, child, { onClose }) {
     wood.replaceChildren(...(view.cards.length
       ? view.cards.map((card) => {
           const item = h("button", { type: "button", class: "chest-room__card", onclick: () => tap(card, item) },
-            giftCard(card),
-            card.source === "week" && h("span", { class: "chest-room__week" },
-              h("img", { src: `${FLUENT}/rocket.svg`, alt: "" }), t.gift.week));
+            giftCard(card));
           return item;
         })
       : [h("p", { class: "chest-room__empty" }, t.gift.empty)]));

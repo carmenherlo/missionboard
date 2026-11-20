@@ -11,7 +11,7 @@ import { t } from "../../texts.js";
 import { rocketReady, weekMini } from "../child/week-bar.js";
 import { parentsHeader } from "./common.js";
 import { askDayOff } from "./day-off.js";
-import { orderRow } from "./orders-panel.js";
+import { dayMonth, orderRow } from "./orders-panel.js";
 import { askUndo } from "./undo-mission.js";
 import { vouchersCard } from "./vouchers-card.js";
 
@@ -34,6 +34,7 @@ export async function viewParentsToday() {
             ? h("div", { class: "day-cards" }, view.children.map((day) => dayCard(day, viewParentsToday)))
             : h("p", { class: "hint" }, t.overview.noChildren)),
         vouchersCard(vouchers, status, boardCard),
+        weekPrizesCard(view, status),
         ordersCard(orders, status),
         weeks.length > 0 && boardCard(t.overview.weekTitle, {},
           h("ul", { class: "rows" }, weeks.map(weekRow))))));
@@ -66,6 +67,29 @@ function ordersCard(first, status) {
   }
   draw();
   return boardCard(t.overview.ordersTitle, { count }, body);
+}
+
+// Premios de la semana: a week's prize waits here until a parent gives it (not in the chest,
+// 20/11: the gift cards are the daily prizes). Only while there is one.
+function weekPrizesCard(view, status) {
+  if (!view.week_prizes.length) return null;
+  const kids = Object.fromEntries(view.children.map((day) => [day.child.id, day]));
+  const row = (prize) => {
+    const kid = kids[prize.child_id];
+    return h("li", { class: "row row--compact", style: kid ? `--child-color: ${kid.colors.color}` : null },
+      kid && avatar(kid.child, { size: "sm" }),
+      h("span", { class: "row__text" }, prize.prize_text || t.overview.weekPrizeSurprise,
+        h("span", { class: "row__detail" }, t.overview.weekPrizeDetail(prize.child_name, prize.tier, dayMonth(prize.week_end)))),
+      h("button", {
+        type: "button", class: "btn",
+        onclick: async () => {
+          await status.track(api("POST", `api/overview/week-prizes/${prize.child_id}/${prize.week_end}/deliver`)).catch(() => {});
+          viewParentsToday();
+        },
+      }, t.shop.given));
+  };
+  const count = h("span", { class: "count" }, String(view.week_prizes.length));
+  return boardCard(t.overview.weekPrizesTitle, { count }, h("ul", { class: "rows" }, view.week_prizes.map(row)));
 }
 
 // Esta semana: each child's tanks, and whether their rocket is ready; it opens Padres · Niño,

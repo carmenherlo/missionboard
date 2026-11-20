@@ -131,16 +131,15 @@ def test_the_parents_routes_need_the_code(client):
     assert client.post("/api/vouchers/moment").status_code == 401
 
 
-def test_a_weeks_prize_is_a_card_once_the_child_has_seen_it(client, bea, data_dir, clock):
+def test_a_weeks_prize_is_not_a_card_it_waits_for_the_parents(client, bea, data_dir):
     streaks = StreaksRepository(data_dir)
     child = SimpleNamespace(id=bea["id"], name="Bea")
     streaks.settle_week(child, date(2026, 10, 30), "full", "", 5, 5, MONDAY)
-    assert chest(client, bea)["cards"] == []  # the rocket has not taken off yet
-    parents = client.get("/api/vouchers", headers=PARENT).json()
-    assert [c["text"] for c in parents["children"][0]["cards"]] == ["Premio sorpresa"]
-    streaks.week_seen(bea["id"], "2026-10-30", MONDAY)
-    [card] = chest(client, bea)["cards"]
-    assert (card["id"], card["source"]) == ("week-2026-10-30", "week")
-    start(client)
-    assert pick(client, bea, card).status_code == 204
+    streaks.week_seen(bea["id"], "2026-10-30", MONDAY)  # the rocket took off
+    assert chest(client, bea)["cards"] == []
+    assert client.get("/api/vouchers", headers=PARENT).json()["children"][0]["cards"] == []
+    [waiting] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
+    assert waiting["week_end"] == "2026-10-30"
+    url = f"/api/overview/week-prizes/{bea['id']}/2026-10-30/deliver"
+    assert client.post(url, headers=PARENT).status_code == 204
     assert client.get("/api/overview/today", headers=PARENT).json()["week_prizes"] == []

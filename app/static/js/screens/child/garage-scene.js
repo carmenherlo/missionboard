@@ -151,8 +151,9 @@ function rocket(n, tanks) {
     <rect class="garage__beam" x="${cx - 18}" y="${ry - 20}" width="36" height="22" rx="4"/>`);
   // The holes fill from the bottom up, like a level: as many full as tanks loaded,
   // and each one fills with fuel from its bottom (19/11).
-  const step = n > 1 ? 210 / (n - 1) : 0;
-  const r = n > 5 ? 15 : 18;
+  // From top + 500 up to top + 310: the top one well apart from the window (20/11).
+  const step = n > 1 ? 190 / (n - 1) : 0;
+  const r = n > 5 ? 14 : 18;
   const loaded = tanks.filter((tank) => tank.loaded).length;
   tanks.forEach((_, i) => {
     const cy = top + 500 - i * step;

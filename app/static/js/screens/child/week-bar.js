@@ -36,12 +36,13 @@ export const rocketReady = (week) => !!(week?.on && week.result && week.result.t
 // A day let off is not in the workshop: neither its tank nor its hole on the rocket (19/11).
 const inWorkshop = (tanks) => tanks.filter((tank) => tank.state !== "free");
 
-// The workshop's scene in a layer over everything, with a caption.
+// The workshop's scene in a layer over everything. No captions over the drawing (20/11: they
+// covered it; the voice says it all): only a button, at the end of a day the week is won.
 // fillDay: the day whose tank is drawn empty, to fill it now (playDay).
-function workshop(all, { fillDay = null, line = "" } = {}) {
+function workshop(all, { fillDay = null } = {}) {
   const tanks = inWorkshop(all);
   const scene = garageScene(tanks.map((tank) => (tank.day === fillDay ? { ...tank, state: "now", loaded: false } : tank)));
-  const caption = h("p", { class: "garage-layer__line" }, line);
+  const caption = h("p", { class: "garage-layer__line" });
   const layer = h("div", { class: "garage-layer", role: "status" }, scene.root, caption);
   return { ...scene, layer, caption, index: tanks.findIndex((tank) => tank.day === fillDay) };
 }
@@ -66,13 +67,12 @@ function skippable(scene, film) {
 
 // Today's tank fills: the hose runs, the tank fills (the rocket waits for the child).
 export function playDay(host, week, { day, name, onGarage }) {
-  const scene = workshop(week.tanks, { fillDay: day, line: t.week.dayTitle });
+  const scene = workshop(week.tanks, { fillDay: day });
   const ready = rocketReady(week);
   const sentence = t.week.daySay(name, week.full, week.counted);
   const readyNow = () => {
     // The week is won: off to the workshop, where the rocket waits for them.
     scene.caption.replaceChildren(
-      h("span", {}, t.week.readyTitle),
       h("button", {
         type: "button", class: "btn btn--primary btn--big",
         onclick: (e) => { e.stopPropagation(); scene.layer.remove(); onGarage(); },
@@ -137,7 +137,6 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
   const close = () => { scene.layer.remove(); onClose?.(); };
   scene.layer.prepend(h("button", { type: "button", class: "btn btn--primary btn--big garage-layer__back", onclick: close },
     h("img", { src: `${FLUENT}/rocket.svg`, alt: "", class: "place-back__picture" }), backLabel));
-  const line = (text) => { scene.caption.textContent = text; };
   const toLoad = () => shown().filter((tank) => tank.state === "full" && !tank.loaded).length;
   const status = () => {
     if (rocketReady(week)) return toLoad() ? t.week.loadFirst : t.week.pullLever;
@@ -147,7 +146,6 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
   };
   const greet = () => {
     if (rocketReady(week)) scene.hangar.classList.add("garage--ready");
-    line(status());
     say(status());
   };
 
@@ -173,7 +171,6 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
     scene.hoses[i].classList.remove("garage__hose--flow");
     sounds.ding();
     busy = false;
-    line(status());
     say(toLoad() ? t.week.loadedSay : rocketReady(week) ? t.week.allLoadedReady : t.week.allLoadedSay);
   }));
 
@@ -187,14 +184,12 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
     if (rocketReady(week) && !toLoad()) await launch();
     else if (rocketReady(week)) {
       say(t.week.loadFirst);
-      line(t.week.loadFirst);
     } else {
       scene.hangar.classList.remove("garage--sputter");
       void scene.hangar.getBoundingClientRect(); // to play it again
       scene.hangar.classList.add("garage--sputter");
       sounds.sputter();
       say(t.week.notReady);
-      line(t.week.notReady);
     }
     busy = false;
   });
@@ -214,10 +209,6 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
       await wait(tokenMs("--week-liftoff", 2200));
     }
     await spaceTrip(scene.layer, result);
-    scene.caption.replaceChildren(
-      h("img", { class: "garage-layer__picture", src: result.prize_image_url || `${FLUENT}/wrapped-gift.svg`, alt: "" }),
-      h("span", {}, t.week.wonTitle(result.prize_text)));
-    scene.caption.classList.add("garage-layer__line--ended");
     week = { ...week, result: null, launch_tanks: null };
   }
 
