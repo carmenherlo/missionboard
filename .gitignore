@@ -20,3 +20,6 @@ __pycache__/
 .coverage
 coverage.json
 htmlcov/
+
+# A brand-new installation to try (bash dev.sh --fresh)
+data-fresh/

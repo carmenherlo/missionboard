@@ -2,15 +2,27 @@
 # Development server: the app run from your files on this computer, in the
 # project's .venv (made with uv). Code changes (CSS, JS, Python) show up on reload.
 #
-# Usage: bash dev.sh   → http://localhost:8002/ (and from the tablet, on the home network)
-#   the family's data from data/
+# Usage: bash dev.sh           → http://localhost:8002/ (and from the tablet, on the home network)
+#          the family's data from data/
+#        bash dev.sh --fresh   → http://localhost:8003/, a brand-new installation
+#          an empty data-fresh/, emptied again on every start (the voice still from data/voices/)
 set -euo pipefail
 cd "$(dirname "$0")"
 
+port=8002
+export MISSIONBOARD_DATA_DIR=data
+
 case "${1:-}" in
   "") ;;
+  --fresh)
+    port=8003
+    export MISSIONBOARD_DATA_DIR=data-fresh
+    export MISSIONBOARD_VOICE_MODEL="$PWD/data/voices/es_ES-sharvard-medium.onnx"
+    rm -rf data-fresh
+    mkdir data-fresh
+    ;;
   -h | --help)
-    sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
     exit 0
     ;;
   *)
@@ -18,9 +30,6 @@ case "${1:-}" in
     exit 1
     ;;
 esac
-
-port=8002
-export MISSIONBOARD_DATA_DIR=data
 
 # The project's environment, so it works without activating it first.
 if [[ ! -x .venv/bin/uvicorn ]]; then
