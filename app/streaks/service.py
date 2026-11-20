@@ -95,8 +95,11 @@ class StreaksService:
                 if result_end == end
                 else build_week(today, result_end, rules, settings.streak_rule, had, done, free)
             )
+        row = settled.get(end.isoformat())
         return {
             "week": current,
+            # This week's rocket took off already (20/11): the workshop has no rocket till the next.
+            "took_off": bool(row and row["tier"] != "none" and row["shown_at"]),
             "result": result,
             "launch": launch,
             "loaded": self._streaks.fuel_loads(child.id),
@@ -140,6 +143,7 @@ class StreaksService:
             self._offs.replace(child.id, day, {*off, WHOLE_DAY}, next(iter(off.values()), ""), self._clock.now())
         else:
             self._offs.remove(child.id, day, WHOLE_DAY)
+        self.after_change(child.id, day)  # 20/11: with fewer (or more) days, the week is settled again
         self._events.config_changed(
             "free_day",
             "on" if free else "off",
@@ -160,9 +164,10 @@ class StreaksService:
         if row and row["tier"] != "none" and (row["shown_at"] or row["delivered_at"]):
             raise ConflictError("That week is over: its rocket took off")
 
-    def after_undo(self, child_id: str, day: date) -> None:
-        """A mission done that day was undone: if the week had closed with it, it opens
-        again; if that day's tank is no longer full, its fuel goes back out of the rocket."""
+    def after_change(self, child_id: str, day: date) -> None:
+        """A day changed (a mission undone or marked done, the day let off or back): if the
+        week had closed without a prize, or with one not seen yet, it is settled again; if
+        that day's tank is no longer full, its fuel goes back out of the rocket."""
         settings = self._settings.settings()
         today = app_day(self._clock.now(), settings.day_starts_at)
         self._streaks.unsettle_week(child_id, week_end(today, settings.streak_week.prize_day).isoformat())

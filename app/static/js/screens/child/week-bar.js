@@ -138,7 +138,11 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
   scene.layer.prepend(h("button", { type: "button", class: "btn btn--primary btn--big garage-layer__back", onclick: close },
     h("img", { src: `${FLUENT}/rocket.svg`, alt: "", class: "place-back__picture" }), backLabel));
   const toLoad = () => shown().filter((tank) => tank.state === "full" && !tank.loaded).length;
+  // This week's rocket took off already (20/11): no rocket on the platform till the next week.
+  const gone = () => week.took_off && !rocketReady(week);
+  if (gone()) scene.hangar.classList.add("garage--gone");
   const status = () => {
+    if (gone()) return t.week.tookOff;
     if (rocketReady(week)) return toLoad() ? t.week.loadFirst : t.week.pullLever;
     if (!week.shown) return restLine(week.tanks);
     if (!tanks.length) return t.week.noDays;
@@ -200,6 +204,8 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
     if (rocketReady(week) && !toLoad()) await launch();
     else if (rocketReady(week)) {
       say(t.week.loadFirst);
+    } else if (gone()) {
+      say(t.week.tookOff);
     } else {
       sputter();
       say(t.week.notReady);
@@ -222,7 +228,7 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
       await wait(tokenMs("--week-liftoff", 2200));
     }
     await spaceTrip(scene.layer, result);
-    week = { ...week, result: null, launch_tanks: null };
+    week = { ...week, result: null, launch_tanks: null, took_off: week.took_off || result.end === week.end };
   }
 
   host.append(scene.layer);

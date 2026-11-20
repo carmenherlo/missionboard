@@ -102,3 +102,27 @@ def test_a_week_whose_rocket_took_off_with_its_prize_cannot_be_changed(client, b
     end = week(client, bea)["result"]["end"]
     client.post(f"/api/children/{bea['id']}/week/{end}/seen")
     assert fix(client, bea, MON, "missed").status_code == 409
+
+
+def test_days_let_off_after_the_week_closed_settle_it_again(client, bea, clock):
+    """Noa, 20/11: only Friday done, the week closed without a prize; then Monday to
+    Thursday are let off (ill): one tank of one, the big prize."""
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    clock.moment = MONDAY + timedelta(days=4)
+    check(client, bea, item, 0)
+    end = week(client, bea)["result"]["end"]
+    client.post(f"/api/children/{bea['id']}/week/{end}/seen")
+    for day in ("2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"):
+        assert fix(client, bea, day, "free").status_code == 204
+    view = week(client, bea)
+    assert (view["result"]["tier"], view["full"], view["counted"]) == ("full", 1, 1)
+
+
+def test_once_the_rocket_took_off_the_week_says_so(client, bea, clock):
+    item = mission(client, bea, "Despegue", steps=("Uno",))
+    for offset in range(5):
+        do_day(client, bea, item, clock, offset)
+    view = week(client, bea)
+    assert view["took_off"] is False and view["result"]["tier"] == "full"
+    client.post(f"/api/children/{bea['id']}/week/{view['result']['end']}/seen")
+    assert week(client, bea)["took_off"] is True

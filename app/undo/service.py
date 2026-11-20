@@ -92,7 +92,7 @@ class UndoService:
                 if not card["used"]:
                     self._spins.remove(card["id"])
                     taken.append(card["text"])
-        self._streaks.after_undo(child.id, day)
+        self._streaks.after_change(child.id, day)
         changes = {"gift": -before["stars"]} if before["stars"] else {}
         if taken:
             changes["card"] = ", ".join(taken)

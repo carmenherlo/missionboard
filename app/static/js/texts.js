@@ -56,6 +56,7 @@ export const t = {
       free: "Ese día era libre: no cuenta.",
     },
     notReady: "Al cohete le falta combustible. ¡Llena todos los depósitos de la semana!",
+    tookOff: "¡Tu cohete ya ha despegado esta semana! La semana que viene prepararemos otro.",
     noneSay: (name, full, counted) => `Esta semana el cohete no ha podido despegar: llenaste ${full} de ${counted} depósitos. `
       + `¡Pero seguiremos intentándolo, ${name}, y la próxima vez lo conseguirás! ¡Ánimo!`,
     readySay: (name) => `¡Enhorabuena, ${name}! Tu cohete está listo para despegar. ¡Ve al taller!`,

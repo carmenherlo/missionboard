@@ -70,4 +70,4 @@ class DayFix:
             if self._days.complete(day, child, mission, stars, now):
                 changes = {"gift": stars, "day": f"{day.day}/{day.month}"}
                 self._events.config_changed("mission", "marked_done", child=child, mission=mission, changes=changes)
-        self._streaks.after_undo(child.id, day)  # a week closed without this day opens again
+        self._streaks.after_change(child.id, day)  # a week closed without this day opens again

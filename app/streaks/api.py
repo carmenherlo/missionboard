@@ -69,6 +69,7 @@ def present_week(view: dict | None, libraries: ImageLibraries | None = None) -> 
         # waits to take off: on the days off (the weekend) the week stays out of sight.
         "shown": won or any(t.day == today for t in week.tanks),
         "end": week.end.isoformat(),
+        "took_off": view.get("took_off", False),
         "tanks": tanks(week),
         # The week whose rocket is ready to take off (or not), with a result not seen yet.
         "launch_tanks": tanks(launch) if launch else None,

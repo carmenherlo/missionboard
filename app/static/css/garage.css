@@ -316,3 +316,6 @@ span.week-mini { cursor: default; }
     font-size: var(--text-md);
   }
 }
+
+/* This week's rocket took off already (20/11): the platform waits empty for the next one. */
+.garage--gone .garage__rocket { visibility: hidden; }
