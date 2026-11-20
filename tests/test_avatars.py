@@ -122,7 +122,7 @@ def test_migration_17_to_18():
 def test_migration_18_to_19_switches_the_home_reflection_off():
     doc = upgrade({"version": 18, "settings": {"home": {"shine": True, "veil": 0}}})
     assert doc["settings"]["home"] == {"shine": False, "veil": 0}
-    assert upgrade({"version": 18})["version"] == 20
+    assert upgrade({"version": 18})["version"] == 21
 
 
 def test_tones_of_any_colour():

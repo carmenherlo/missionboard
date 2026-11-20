@@ -1,9 +1,11 @@
 // The rocket's trip (13/11): after taking off from the workshop, it flies through space
-// (the stars streak past) to a moon that grows as it comes, slows down, straightens
-// and lands on it. The moon shakes, and out of it comes the prize: its picture in a
-// bubble with rays of light, "¡Has ganado …!", the fanfare and confetti. Each week's
-// moon has its own colour (from the week's date). The moves are in effects.css and
-// their lengths in tokens.css (--trip-*); here only the scene, the sounds and the waits.
+// (the stars streak past) to a planet that grows as it comes, slows down, straightens
+// and lands on it. The planet shakes, and out of it comes the prize: its picture in a
+// bubble with rays of light, "¡Has ganado …!", the fanfare and confetti. The smaller
+// prize lands on a small planet of its own colour (from the week's date); the big one
+// (20/11) flies past that one, further on, to a silver planet with a halo. The moves
+// are in trip-effects.css and their lengths in tokens-effects.css (--trip-*); here only
+// the scene, the sounds and the waits.
 import { say } from "../../components/speech.js";
 import { sounds } from "../../components/sound.js";
 import { h } from "../../dom.js";
@@ -23,6 +25,7 @@ const STREAKS = Array.from({ length: 34 }, () => [rand() * 140 - 20, rand() * 14
 
 // result: the week's result ({ end, prize_text, prize_image_url }). Ends when they tap "¡Bien!".
 export function spaceTrip(host, result) {
+  const far = result.tier === "full";
   const moon = 1 + ([...result.end].reduce((sum, c) => sum + c.charCodeAt(0), 0) % MOONS);
   const picture = h("img", {
     class: "trip__prize-picture", alt: "",
@@ -30,9 +33,10 @@ export function spaceTrip(host, result) {
     onerror: (e) => { e.target.src = `${FLUENT}/wrapped-gift.svg`; }, // a photo removed since
   });
   const done = h("button", { type: "button", class: "btn btn--primary btn--big trip__done" }, t.week.great);
-  const trip = h("div", { class: "trip", role: "dialog", "aria-label": t.week.wonTitle(result.prize_text) },
+  const trip = h("div", { class: `trip${far ? " trip--far" : ""}`, role: "dialog", "aria-label": t.week.wonTitle(result.prize_text) },
     sky(),
-    h("div", { class: `trip__moon trip__moon--${moon}` },
+    far && h("div", { class: `trip__waypoint trip__moon--${moon}` }),
+    h("div", { class: `trip__moon trip__moon--${far ? "silver" : moon}` },
       h("span", { class: "trip__crater trip__crater--1" }),
       h("span", { class: "trip__crater trip__crater--2" }),
       h("span", { class: "trip__crater trip__crater--3" })),
@@ -55,7 +59,7 @@ export function spaceTrip(host, result) {
   (async () => {
     trip.classList.add("trip--flying");
     sounds.whoosh();
-    await wait(tokenMs("--trip-flight", 3800));
+    await wait(far ? tokenMs("--trip-flight-far", 6400) : tokenMs("--trip-flight", 3800));
     trip.classList.replace("trip--flying", "trip--landed");
     sounds.thud();
     await wait(tokenMs("--trip-land", 900));

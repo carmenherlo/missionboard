@@ -203,4 +203,4 @@ def test_migration_19_to_20_moves_the_phones_out_of_the_shop():
     doc = upgrade({"version": 19, "settings": {"shop_notify": {"phones": ["mobile_app_mum"], "remind_at": "18:00"}}})
     assert doc["settings"]["notify"] == {"phones": ["mobile_app_mum"]}
     assert doc["settings"]["shop_notify"] == {"on": True, "remind_at": "18:00"}
-    assert upgrade({"version": 19})["version"] == 20
+    assert upgrade({"version": 19})["version"] == 21

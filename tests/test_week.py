@@ -83,9 +83,28 @@ def test_a_closed_week_has_a_tier():
     sw = StreakWeek()
     w = build_week(fri + timedelta(days=1), fri, sw, "all", had, done, set())
     assert w.closed and w.tier(sw) == "none"
-    assert w.tier(StreakWeek(second_on=True, second_min=3)) == "second"
+    assert w.tier(StreakWeek(second_on=True, second_percent=60)) == "second"
     done |= {(MON + timedelta(days=n)).isoformat(): {"a"} for n in (3, 4)}
     assert build_week(fri, fri, sw, "all", had, done, set()).tier(sw) == "full"
+
+
+def test_the_smaller_prize_is_a_share_of_the_days_that_count():
+    """Two days off (ill): three tanks. Three full is the big prize; two of three (67 %)
+    the smaller one at 60 %; one (33 %), none."""
+    had = lambda d: {"a"}  # noqa: E731
+    fri = MON + timedelta(days=4)
+    free = {(MON + timedelta(days=n)).isoformat() for n in (3, 4)}
+    rules = StreakWeek(second_on=True, second_percent=60)
+    tier = lambda days: build_week(  # noqa: E731
+        fri + timedelta(days=1),
+        fri,
+        rules,
+        "all",
+        had,
+        {(MON + timedelta(days=n)).isoformat(): {"a"} for n in days},
+        free,
+    ).tier(rules)
+    assert (tier((0, 1, 2)), tier((0, 1)), tier((0,))) == ("full", "second", "none")
 
 
 # ---------- the child's week ----------
@@ -121,7 +140,7 @@ def test_a_full_week_wins_the_prize_for_the_parents_to_give(client, bea, clock):
 
 
 def test_a_week_short_of_fuel_has_no_prize_but_the_smaller_one_can_be_won(client, bea, clock):
-    set_week(client, second_on=True, second_min=3, second="Un cuento más")
+    set_week(client, second_on=True, second_percent=60, second="Un cuento más")
     item = mission(client, bea, "Despegue", steps=("Uno",))
     week(client, bea)  # Monday: the child comes in for the first time
     for n in (0, 1, 2):
@@ -233,3 +252,12 @@ def test_a_won_week_is_shown_on_the_weekend_until_its_rocket_takes_off(client, b
     assert week(client, bea)["shown"] is True
     client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
     assert week(client, bea)["shown"] is False
+
+
+def test_the_smaller_prize_in_days_becomes_a_share_of_the_week():
+    from app.storage.config_migrations import upgrade
+
+    week = lambda doc: upgrade({"version": 20, "settings": {"streak_week": doc}})["settings"]["streak_week"]  # noqa: E731
+    assert week({"days": ["mon", "tue", "wed", "thu", "fri"], "second_min": 3})["second_percent"] == 60
+    assert week({"days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"], "second_min": 3})["second_percent"] == 40
+    assert "second_min" not in week({"second_min": 5}) and week({"second_min": 5})["second_percent"] == 90

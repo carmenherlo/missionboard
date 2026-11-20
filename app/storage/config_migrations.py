@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 20
+CURRENT_VERSION = 21
 
 
 class ConfigVersionError(Exception):
@@ -101,6 +101,22 @@ def _v19_to_v20(doc: dict) -> dict:
 
 
 _MIGRATIONS[19] = _v19_to_v20
+
+
+def _v20_to_v21(doc: dict) -> dict:
+    """The week's smaller prize (20/11): from "at least N days" to a share of the days that
+    count, so that days let off do not change what it asks: N of the week's days, to the
+    nearest 10 % (3 of 5: 60 %)."""
+    week = doc.get("settings", {}).get("streak_week")
+    if isinstance(week, dict) and "second_min" in week:
+        days = len(week.get("days") or ["mon", "tue", "wed", "thu", "fri"])
+        share = round(week.pop("second_min") / days * 10) * 10
+        week["second_percent"] = min(90, max(10, share))
+    doc["version"] = 21
+    return doc
+
+
+_MIGRATIONS[20] = _v20_to_v21
 
 
 def upgrade(doc: dict) -> dict:

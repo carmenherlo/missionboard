@@ -144,7 +144,23 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
     if (!tanks.length) return t.week.noDays;
     return toLoad() ? t.week.tapToLoad : t.week.miniLabel(week.full, week.counted);
   };
+  const sputter = () => {
+    scene.hangar.classList.remove("garage--sputter");
+    void scene.hangar.getBoundingClientRect(); // to play it again
+    scene.hangar.classList.add("garage--sputter");
+    sounds.sputter();
+  };
   const greet = () => {
+    if (week.result?.tier === "none") {
+      // A week closed without a prize (20/11): the first time in, the rocket coughs and
+      // the voice cheers them up, once; then it is this week's workshop again.
+      const { end, full, counted } = week.result;
+      api("POST", `api/children/${childId}/week/${end}/seen`).catch(() => {});
+      week = { ...week, result: null };
+      sputter();
+      say(t.week.noneSay(name, full, counted));
+      return;
+    }
     if (rocketReady(week)) scene.hangar.classList.add("garage--ready");
     say(status());
   };
@@ -185,10 +201,7 @@ export function openWorkshop(host, first, { childId, name, backLabel, onClose })
     else if (rocketReady(week)) {
       say(t.week.loadFirst);
     } else {
-      scene.hangar.classList.remove("garage--sputter");
-      void scene.hangar.getBoundingClientRect(); // to play it again
-      scene.hangar.classList.add("garage--sputter");
-      sounds.sputter();
+      sputter();
       say(t.week.notReady);
     }
     busy = false;

@@ -1,5 +1,3 @@
-/* The trip to the moon of the prize (space-trip.js). */
-
 /* ---------- The trip to the moon of the prize (space-trip.js) ---------- */
 
 .trip {
@@ -56,6 +54,27 @@
 .trip__moon--5 { --moon: var(--trip-moon-5); --moon-dark: var(--trip-moon-5-dark); }
 
 .trip__moon--6 { --moon: var(--trip-moon-6); --moon-dark: var(--trip-moon-6-dark); }
+
+/* The big prize's planet (20/11): silver, with a wide halo and a thin ring of light. */
+.trip__moon--silver {
+  --moon: var(--trip-silver);
+  --moon-dark: var(--trip-silver-dark);
+  box-shadow: 0 0 0 6px var(--trip-silver-halo), 0 0 140px 60px var(--trip-silver-halo);
+}
+
+/* The small planet the big prize flies past: a moon of its colours, never landed on. */
+.trip__waypoint {
+  position: absolute;
+  left: 50%;
+  top: 40vh;
+  width: 26vh;
+  height: 26vh;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, var(--moon) 55%, var(--moon-dark));
+  box-shadow: 0 0 40px 10px var(--trip-moon-glow);
+  opacity: 0;
+}
 
 .trip__crater {
   position: absolute;

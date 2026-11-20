@@ -109,3 +109,47 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Configurar → Rachas: the smaller prize's settings, greyed out while it is off */
+.setting-group {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.setting-group:disabled { opacity: 0.45; }
+
+/* What the child sees when the rocket lands: the prize in its bubble, on the night */
+.prize-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: fit-content;
+  max-width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(var(--garage-sky-1), var(--garage-sky-3));
+  color: var(--on-inverse-surface);
+}
+
+.prize-preview__bubble {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--trip-bubble);
+  box-shadow: 0 0 0 6px var(--trip-ray);
+}
+
+.prize-preview__bubble img {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+}
+
+.prize-preview__title { font-size: var(--text-lg); }

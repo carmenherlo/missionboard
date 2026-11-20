@@ -73,11 +73,15 @@
   --trip-moon-6: #fff1a8; /* yellow */
   --trip-moon-6-dark: #ecd46a;
   --trip-moon-glow: rgb(255 255 255 / 0.35);
+  --trip-silver: #f4f6fb; /* the big prize's planet: silver, with a halo */
+  --trip-silver-dark: #9aa3b8;
+  --trip-silver-halo: rgb(214 226 255 / 0.55);
   --trip-streak: rgb(255 255 255 / 0.7);
   --trip-dust: #f4f1ff;
   --trip-bubble: #ffffff;
   --trip-ray: rgb(255 226 120 / 0.55);
-  --trip-flight: 3800ms; /* from the workshop to the moon */
+  --trip-flight: 3800ms; /* from the workshop to the small planet (the smaller prize) */
+  --trip-flight-far: 6400ms; /* past the small planet, on to the silver one (the big prize) */
   --trip-land: 900ms; /* touching down: dust */
   --trip-shake: 900ms; /* the moon shakes, then the prize comes out */
   --week-ready: 9000ms; /* "your rocket is ready: go to the workshop", on screen */

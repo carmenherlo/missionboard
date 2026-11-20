@@ -11,8 +11,8 @@ and starts the day after the previous one. A tank is a day that counts for the w
 - "later": still to come.
 
 Once no tank is "now" or "later", the week is closed and its result is a tier:
-"full" (every tank that counts), "second" (at least streak_week.second_min, when that
-prize is on) or "none". Which missions a day had is read from today's configuration.
+"full" (every tank that counts), "second" (at least streak_week.second_percent % of
+them, when that prize is on) or "none". Which missions a day had is read from today's configuration.
 """
 
 from collections.abc import Callable
@@ -59,7 +59,7 @@ class Week:
     def tier(self, rules: StreakWeek) -> str:
         if self.counted and self.full == self.counted:
             return "full"
-        if rules.second_on and self.full >= rules.second_min:
+        if rules.second_on and self.counted and self.full * 100 >= rules.second_percent * self.counted:
             return "second"
         return "none"
 

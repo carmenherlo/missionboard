@@ -123,8 +123,9 @@ Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 class StreakWeek(BaseModel):
     """Rachas (rachas.html, 13/11): the week of fuel tanks. The days that count, the day
     the parents give the prize (it closes the week: a Friday prize, a Saturday-to-Friday
-    week) and the prizes: the big one for every day; optionally a smaller one for at
-    least `second_min` days. An empty text: a surprise, chosen when it is given."""
+    week) and the prizes: the big one for every day that counts; optionally a smaller one
+    for at least `second_percent` % of them (20/11: a share, so days let off do not change
+    it). An empty text: a surprise, chosen when it is given."""
 
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -132,7 +133,7 @@ class StreakWeek(BaseModel):
     prize_day: Weekday = "fri"
     prize: str = Field(default="", max_length=40)
     second_on: bool = False
-    second_min: int = Field(default=3, ge=1, le=7)
+    second_percent: int = Field(default=60, ge=10, le=90)
     second: str = Field(default="", max_length=40)
     # Their pictures (13/11): a library image or an uploaded photo, as a prize's. Changed only
     # through their own routes (settings/week_prizes.py), which check them.

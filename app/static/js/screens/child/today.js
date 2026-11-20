@@ -137,13 +137,10 @@ export async function viewChildToday(childId) {
 
   // Rachas: today's tank, the first time it is full (once per day in this tablet). A week
   // won waits in the workshop (taller.html): "your rocket is ready", once, and the sign
-  // on their avatar until it takes off. A week without a prize ends quietly.
+  // on their avatar until it takes off. A week without a prize is told in the workshop.
   async function weekNews() {
     if (!week.on) return;
     overlay = true;
-    if (week.result?.tier === "none") {
-      api("POST", `api/children/${childId}/week/${week.result.end}/seen`).catch(() => {});
-    }
     const toGarage = () => { location.hash = `#/child/${childId}/place/garage`; };
     const today = week.tanks.find((tank) => tank.day === day.day);
     const readyKey = rocketReady(week) && `ready-${childId}-${week.result.end}`;
