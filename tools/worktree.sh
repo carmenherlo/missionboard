@@ -48,7 +48,7 @@ new() {
 list() {
   git -C "$main" worktree list
   for f in "$main"/../"$name"-*/.agent-port; do
-    [[ -f "$f" ]] && echo "$(basename "$(dirname "$f")"): port $(cat "$f")"
+    if [[ -f "$f" ]]; then echo "$(basename "$(dirname "$f")"): port $(cat "$f")"; fi
   done
 }
 
