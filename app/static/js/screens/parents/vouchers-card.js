@@ -15,8 +15,8 @@ import { dayMonth } from "./orders-panel.js";
 
 const REFRESH_MS = 15000; // cards used in a chest, and who picked what, come in by itself
 
-// boardCard: the board's card (parents-today.js).
-export function vouchersCard(first, status, boardCard) {
+// todoBlock: a block of «Te toca» (parents-today.js).
+export function vouchersCard(first, status, todoBlock) {
   let view = first;
   const count = h("span", { class: "count" });
   const body = h("div", { class: "stack stack--tight" });
@@ -77,6 +77,7 @@ export function vouchersCard(first, status, boardCard) {
         t.overview.endMoment));
   }
 
+  let block = null;
   function draw() {
     const rows = view.children
       .map((row) => ({ ...row, cards: row.cards.filter((card) => !removing.has(card.id)) }))
@@ -84,6 +85,7 @@ export function vouchersCard(first, status, boardCard) {
     const total = rows.reduce((n, row) => n + row.cards.length, 0);
     count.textContent = String(total);
     count.hidden = !total;
+    if (block) block.hidden = !total && !view.moment; // nothing to do: out of «Te toca»
     body.replaceChildren(...[
       view.moment && momentBox(view.moment),
       total
@@ -96,7 +98,8 @@ export function vouchersCard(first, status, boardCard) {
       }, t.overview.startMoment),
     ].filter(Boolean));
   }
+  block = todoBlock(t.overview.vouchersTitle, { count }, body);
   draw();
   timer = setInterval(reload, REFRESH_MS);
-  return boardCard(t.overview.vouchersTitle, { count }, body);
+  return block;
 }

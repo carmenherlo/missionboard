@@ -52,6 +52,7 @@
 
 .icon-button .icon--back { stroke-width: 2.75; }
 
+.thumb--xs { --size: 22px; }
 .thumb--sm { --size: 48px; }
 
 .thumb--md { --size: 72px; }

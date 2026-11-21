@@ -28,7 +28,7 @@ const GROUPS = [
   ]],
   [t.config.groupDevice, [
     ["display", "eye", t.config.display],
-  ]],
+  ], { notOnPhone: true }], // rest and front page: for the screen the children use
   [t.config.groupSafety, [
     ["code", "parentCode", t.config.parentCode],
     ["backup", "download", t.config.backup],
@@ -49,8 +49,8 @@ function sectionNow() {
 
 export function parentsMenu() {
   const on = sectionNow();
-  const item = (href, iconName, label, id) => h("a", {
-    class: `nav-item${id === on ? " nav-item--on" : ""}`, href,
+  const item = (href, iconName, label, id, extra = "") => h("a", {
+    class: `nav-item${id === on ? " nav-item--on" : ""}${extra}`, href,
     ...(id === on ? { "aria-current": "page" } : {}),
   }, icon(iconName), h("span", {}, label));
 
@@ -62,11 +62,14 @@ export function parentsMenu() {
     h("p", { class: "drawer__brand" }, t.menu.brand),
     item("#/parents", "today", t.menu.today, "today"),
     item("#/parents/config/children", "children", t.config.children, "children"),
-    GROUPS.flatMap(([title, sections]) => [
-      h("p", { class: "drawer__group" }, title),
-      ...sections.map(([path, iconName, label]) =>
-        path === "notify" ? notifyItem : item(`#/parents/config/${path}`, iconName, label, path)),
-    ]),
+    GROUPS.flatMap(([title, sections, { notOnPhone = false } = {}]) => {
+      const extra = notOnPhone ? " not-on-phone" : "";
+      return [
+        h("p", { class: `drawer__group${extra}` }, title),
+        ...sections.map(([path, iconName, label]) =>
+          path === "notify" ? notifyItem : item(`#/parents/config/${path}`, iconName, label, path, extra)),
+      ];
+    }),
     h("hr", { class: "drawer__line" }),
     item("#/", "home", t.menu.kids, "kids"));
 
@@ -82,5 +85,16 @@ export function parentsMenu() {
     type: "button", class: "icon-button icon-button--ghost menu-button",
     "aria-label": t.menu.open, title: t.menu.open, onclick: open,
   }, icon("menu"));
-  return { drawer, scrim, button };
+
+  // On a phone, a bar at the bottom for the thumb (zona-padres.html, section 3): Hoy,
+  // Niños and «Más», which opens the menu. Hidden on wider screens (parents-menu.css).
+  const tab = (href, iconName, label, id) => h("a", {
+    class: `bottom-nav__item${id === on ? " bottom-nav__item--on" : ""}`, href,
+    ...(id === on ? { "aria-current": "page" } : {}),
+  }, icon(iconName), h("span", {}, label));
+  const bottom = h("nav", { class: "bottom-nav", "aria-label": t.menu.bottom },
+    tab("#/parents", "today", t.menu.today, "today"),
+    tab("#/parents/config/children", "children", t.config.children, "children"),
+    h("button", { type: "button", class: "bottom-nav__item", onclick: open }, icon("menu"), h("span", {}, t.menu.more)));
+  return { drawer, scrim, button, bottom };
 }

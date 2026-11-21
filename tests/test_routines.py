@@ -319,7 +319,7 @@ def test_hidden_on_one_device_only_goes_on_everywhere_else(client, morning):
     note(client, morning, "closed", phase="part-2")
     assert current(client) is not None
     assert "closed_phase" not in current(client)
-    assert descriptions(client, limit=1) == ["Escondieron la rutina «Despegue» en un aparato"]
+    assert descriptions(client, limit=1) == ["Escondieron la rutina «Despegue» en un dispositivo"]
 
 
 def test_finished_for_the_day_by_a_parent(client, morning, clock):

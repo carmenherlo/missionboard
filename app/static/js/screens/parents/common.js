@@ -14,6 +14,7 @@ export function parentsHeader(title, back = null) {
   fragment.append(
     menu.drawer,
     menu.scrim,
+    menu.bottom,
     h("header", { class: "top-bar" },
       menu.button,
       below && h("a", {

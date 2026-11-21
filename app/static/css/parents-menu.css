@@ -135,3 +135,59 @@
     background: var(--scrim);
   }
 }
+
+/* On a phone: the bar at the bottom (Hoy · Niños · Más) for the thumb (zona-padres.html,
+   section 3), and «Este dispositivo» out of the menu (it is about the children's screen). */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 599.98px) {
+  .bottom-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 20;
+    display: flex;
+    min-height: 64px;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .bottom-nav__item {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    padding: var(--space-1) 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .bottom-nav__item .icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bottom-nav__item--on {
+    color: var(--primary);
+  }
+
+  #app:has(> .bottom-nav) {
+    padding-bottom: 64px; /* the bar's height: nothing hides under it */
+  }
+
+  .in-parents .routine-banner {
+    bottom: calc(64px + var(--space-3));
+  }
+
+  .not-on-phone {
+    display: none;
+  }
+}

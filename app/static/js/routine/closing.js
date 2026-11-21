@@ -1,4 +1,4 @@
-// Closing it (16/11): ✕ asks what to do. "Esconder en este aparato" hides it here only,
+// Closing it (16/11): ✕ asks what to do. "Esconder en este dispositivo" hides it here only,
 // silent, with a clock beating at the bottom to bring it back (the other tablets go on);
 // "Finalizar rutina para todos" ends it for today everywhere, with the parents' code.
 import { api } from "../api.js";
