@@ -6,24 +6,30 @@ import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 
-// [path under #/parents/config, icon, label]; the groups of Configurar (ajustes.html).
+// [path under #/parents/config, icon, label]; the groups by rhythm (zona-padres.html, M2):
+// what happens each day, each week, and what the stars are for; then the app itself.
 const GROUPS = [
-  [t.config.groupDay, [
-    ["children", "children", t.config.children],
+  [t.config.groupDaily, [
     ["missions", "missions", t.config.missions],
     ["routines", "clock", t.config.routines],
-  ]],
-  [t.config.groupRewards, [
-    ["stars", "star", t.config.stars],
-    ["streaks", "rocket", t.config.streaks],
     ["prizes", "prize", t.config.prizes],
+  ]],
+  [t.config.groupWeekly, [
+    ["streaks", "rocket", t.config.streaksMenu],
+  ]],
+  [t.config.groupStars, [
+    ["stars", "star", t.config.stars],
     ["shop", "shop", t.config.shop],
   ]],
   [t.config.groupApp, [
     ["appearance", "palette", t.config.appearance],
     ["avatars", "smile", t.config.avatars],
-    ["display", "eye", t.config.display],
     ["notify", "phone", t.config.notify], // only with Home Assistant
+  ]],
+  [t.config.groupDevice, [
+    ["display", "eye", t.config.display],
+  ]],
+  [t.config.groupSafety, [
     ["code", "parentCode", t.config.parentCode],
     ["backup", "download", t.config.backup],
     ["log", "history", t.config.eventLog],
@@ -55,6 +61,7 @@ export function parentsMenu() {
   const drawer = h("nav", { class: "drawer", "aria-label": t.menu.label },
     h("p", { class: "drawer__brand" }, t.menu.brand),
     item("#/parents", "today", t.menu.today, "today"),
+    item("#/parents/config/children", "children", t.config.children, "children"),
     GROUPS.flatMap(([title, sections]) => [
       h("p", { class: "drawer__group" }, title),
       ...sections.map(([path, iconName, label]) =>

@@ -126,7 +126,7 @@ SCREENS = {
     "appearance_missions": ("Apariencia · Camino de misiones", None),
     "appearance_seasons": ("Apariencia · Fondos y estaciones", None),
     "stars_settings": ("Estrellas", None),
-    "streak_settings": ("Rachas", None),
+    "streak_settings": ("Racha y premio de la semana", None),
     "parents_today": ("Padres · Hoy", None),
     "parents_child": ("Padres · Niño", "Cómo va {child}"),
     "day_settings": ("El día", None),
