@@ -73,6 +73,8 @@ function svg(tanks) {
   o.push(STARS.map(([x, y, r], i) =>
     `<circle class="garage__star${i % 5 ? "" : " garage__star--twinkle"}" cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}"/>`).join(""));
   o.push(`<circle cx="860" cy="250" r="190" fill="url(#garage-moonglow)"/><circle class="garage__moon-edge" cx="860" cy="250" r="64"/><circle class="garage__moon" cx="860" cy="250" r="52"/>`);
+  // This week's rocket, landed on the moon once it flew (21/11): seen only with garage--gone.
+  o.push(`<g class="garage__landed" transform="translate(860 190) scale(0.13)">${rocketBody(0, -560, 0)}</g>`);
   o.push(`<path class="garage__hill" d="M300 610 C 450 540, 600 570, 720 600 S 950 540, 1080 580 V700 H300Z"/>`);
   o.push(`<path class="garage__hill-near" d="M300 660 C 500 620, 700 650, 880 660 S 1020 630, 1080 640 V700 H300Z"/></g>`);
   o.push(`<path class="garage__frame garage__frame--arch" d="${ARCH}"/>`);
@@ -131,6 +133,16 @@ function tanksAndHoses(tanks) {
   return o.join("");
 }
 
+// The rocket's shape: fins, body, nose and window, from its nose (top) to its base (ry).
+function rocketBody(cx, top, ry) {
+  return `<polygon class="garage__fin" points="${cx - 64},${ry - 150} ${cx - 130},${ry - 10} ${cx - 64},${ry - 30}"/>
+    <polygon class="garage__fin" points="${cx + 64},${ry - 150} ${cx + 130},${ry - 10} ${cx + 64},${ry - 30}"/>
+    <path d="M${cx} ${top} C ${cx + 120} ${top + 160}, ${cx + 82} ${ry - 120}, ${cx + 66} ${ry - 20} H${cx - 66} C ${cx - 82} ${ry - 120}, ${cx - 120} ${top + 160}, ${cx} ${top}Z" fill="url(#garage-body)"/>
+    <path class="garage__fin" d="M${cx} ${top} C ${cx + 52} ${top + 62}, ${cx + 72} ${top + 110}, ${cx + 79} ${top + 140} H${cx - 79} C ${cx - 72} ${top + 110}, ${cx - 52} ${top + 62}, ${cx} ${top}Z"/>
+    <circle class="garage__window" cx="${cx}" cy="${top + 225}" r="40"/>
+    <circle class="garage__sheen" cx="${cx - 12}" cy="${top + 212}" r="12"/>`;
+}
+
 // The rocket on its platform, with a scaffold; a light per day on its body.
 function rocket(n, tanks) {
   const cx = ROCKET_X;
@@ -142,12 +154,7 @@ function rocket(n, tanks) {
   for (let y = 290; y < ry; y += 96) o.push(`<rect class="garage__scaffold" x="${cx - 175}" y="${y}" width="100" height="8"/>`);
   o.push(`<g class="garage__rocket">
     <path class="garage__flame" d="M${cx - 40} ${ry - 16} Q${cx} ${ry + 170} ${cx + 40} ${ry - 16}Z"/>
-    <polygon class="garage__fin" points="${cx - 64},${ry - 150} ${cx - 130},${ry - 10} ${cx - 64},${ry - 30}"/>
-    <polygon class="garage__fin" points="${cx + 64},${ry - 150} ${cx + 130},${ry - 10} ${cx + 64},${ry - 30}"/>
-    <path d="M${cx} ${top} C ${cx + 120} ${top + 160}, ${cx + 82} ${ry - 120}, ${cx + 66} ${ry - 20} H${cx - 66} C ${cx - 82} ${ry - 120}, ${cx - 120} ${top + 160}, ${cx} ${top}Z" fill="url(#garage-body)"/>
-    <path class="garage__fin" d="M${cx} ${top} C ${cx + 52} ${top + 62}, ${cx + 72} ${top + 110}, ${cx + 79} ${top + 140} H${cx - 79} C ${cx - 72} ${top + 110}, ${cx - 52} ${top + 62}, ${cx} ${top}Z"/>
-    <circle class="garage__window" cx="${cx}" cy="${top + 225}" r="40"/>
-    <circle class="garage__sheen" cx="${cx - 12}" cy="${top + 212}" r="12"/>
+    ${rocketBody(cx, top, ry)}
     <rect class="garage__beam" x="${cx - 18}" y="${ry - 20}" width="36" height="22" rx="4"/>`);
   // The holes fill from the bottom up, like a level: as many full as tanks loaded,
   // and each one fills with fuel from its bottom (19/11).

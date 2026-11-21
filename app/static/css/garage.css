@@ -319,3 +319,8 @@ span.week-mini { cursor: default; }
 
 /* This week's rocket took off already (20/11): the platform waits empty for the next one. */
 .garage--gone .garage__rocket { visibility: hidden; }
+
+/* ...and it is seen landed on the moon, through the window (21/11). */
+.garage__landed { visibility: hidden; }
+
+.garage--gone .garage__landed { visibility: visible; }
