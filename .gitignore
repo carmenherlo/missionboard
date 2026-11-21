@@ -7,6 +7,8 @@ CLAUDE.local.md
 
 # The test port of an agent's worktree (tools/worktree.sh)
 .agent-port
+# Its copy of the data (tools/worktree.sh serve)
+data-copy/
 
 # Python
 .venv/

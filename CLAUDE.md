@@ -87,7 +87,9 @@ MVP que cambiará: el código debe ser **fácil de cambiar**, no estar preparado
 
 - **Una tarea = una rama = un worktree = un agente.** Se crea con `bash tools/worktree.sh new <tarea>` (carpeta `../missionboard2-<tarea>`, su `.venv`, su puerto, y `docs/` y `CLAUDE.local.md` enlazados a los de la carpeta principal). `list` los enseña y `remove <tarea>` los borra.
 - La carpeta principal (`main`) es la del agente que coordina con el usuario. **En un worktree no se toca `main`:** ni commits, ni merge, ni push.
-- **En un worktree no se edita `docs/plan.md`** (es el mismo archivo para todos). Al acabar, el agente da su resumen para «Estado»; lo escribe la sesión de `main` al unir la rama.
+- **La tarea está en `docs/tareas/<tarea>.md`** (plantilla: `docs/tareas/_plantilla.md`). Se hace lo que dice, ni más ni menos; lo que falte o no se entienda, se pregunta.
+- **En un worktree no se edita `docs/plan.md`** (es el mismo archivo para todos). Al acabar, el agente rellena «Notas del agente» en su archivo de tarea; la sesión de `main` lo pasa a «Estado» al unir la rama.
+- **Para que el usuario lo pruebe:** `bash tools/worktree.sh serve` en la carpeta del agente (en segundo plano). Arranca la app en su puerto, abierta a la tablet, con una copia de los datos en `data-copy/` (se hace la primera vez; borrarla para copiar de nuevo). Se le dice la dirección que escribe. Al acabar, se para el `uvicorn` de verdad.
 - Commits en su rama, como siempre. Antes de pedir la unión: `git rebase main`, tests y ruff en verde.
 - **Unir** lo decide el usuario: desde la carpeta principal, `git merge --ff-only <tarea>`, tests otra vez y `tools/worktree.sh remove <tarea>`. De una en una.
 - **Choques previsibles:** solo una tarea a la vez cambia la forma de los datos (`CURRENT_VERSION`, versión de SQLite). Si dos lo necesitan, la segunda en unirse renumera su migración. `texts.js`, `tokens.css`, `index.html` y `TOO_BIG` los tocan todos: al hacer rebase, conservar lo de las dos ramas.
