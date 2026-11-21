@@ -2,9 +2,8 @@
 
 App familiar para tablet: los niños completan misiones (tareas con pistas, voz), ganan estrellas, las gastan en una tienda, desbloquean un premio del día con una ruleta y llenan una racha semanal. Rutinas con reloj y voz. Zona de padres protegida con código.
 
-- **El plan y el estado** (dónde lo dejamos, siguiente paso, decisiones tomadas): [docs/plan.md](docs/plan.md). Leerlo al empezar y seguir desde «Estado».
-- **El alcance:** [docs/propuesta-mapa.md](docs/propuesta-mapa.md). Si algo no está ahí, se pregunta antes de hacerlo.
-- **Los bocetos:** `docs/wireframes/`. `docs/` no va a git.
+- **El plan, el estado y el alcance** (dónde lo dejamos, siguiente paso, decisiones vigentes): [docs/plan.md](docs/plan.md). Leerlo al empezar y seguir desde «Estado». Si algo no está ahí, se pregunta antes de hacerlo.
+- **En `docs/`** (no va a git): `wireframes/` (bocetos), `tareas/` (una por agente), `diseno/` (dibujos y referencias), `archivo/` (lo viejo: el historial completo del plan, la propuesta original). El archivo solo se lee si hace falta el detalle de una decisión.
 - Este archivo solo tiene reglas. El estado y las decisiones van a `docs/plan.md`, y lo privado a `CLAUDE.local.md`.
 
 ## Idioma
