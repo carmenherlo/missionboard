@@ -21,8 +21,10 @@ export async function viewChildrenList() {
       children.length
         ? h("ul", { class: "rows" }, children.map(row))
         : h("p", { class: "empty" }, t.children.empty),
-      h("a", { class: "btn btn--primary btn--block", href: "#/parents/config/children/new" },
-        t.children.add),
+      // The big button only for the first child; afterwards, a quiet one under the family.
+      children.length
+        ? h("a", { class: "btn children-add", href: "#/parents/config/children/new" }, icon("plus"), t.children.addMore)
+        : h("a", { class: "btn btn--primary btn--block", href: "#/parents/config/children/new" }, t.children.add),
       // The first child, and no missions yet: what comes next (Primeros pasos).
       children.length > 0 && !missions.length && h("a", { class: "row row--link", href: "#/parents/config/missions" },
         h("span", { class: "row__icon" }, icon("missions")),

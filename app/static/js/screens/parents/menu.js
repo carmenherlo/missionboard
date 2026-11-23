@@ -8,28 +8,29 @@ import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 
-// [path under #/parents/config, icon, label, options]: Ajustes by groups.
+// [title, [path under #/parents/config, icon, label, options], key]: Ajustes by groups
+// (the key gives each group its colour on the Ajustes page).
 export const SETTINGS = [
   [t.config.groupDo, [
     ["missions", "missions", t.config.missions],
     ["routines", "clock", t.config.routines],
-  ]],
+  ], "do"],
   [t.config.groupEarn, [
     ["stars", "star", t.config.stars],
     ["prizes", "wheel", t.config.prizes],
     ["streaks", "rocket", t.config.streaksMenu],
     ["shop", "shop", t.config.shop],
-  ]],
+  ], "earn"],
   [t.config.groupApp, [
     ["appearance", "palette", t.config.appearance],
     ["notify", "phone", t.config.notify], // only with Home Assistant
     ["display", "eye", t.config.display, { notOnPhone: true }], // the screen the children use
-  ]],
+  ], "app"],
   [t.config.groupSafety, [
     ["code", "parentCode", t.config.parentCode],
     ["backup", "download", t.config.backup],
     ["log", "history", t.config.eventLog],
-  ]],
+  ], "safety"],
 ];
 
 // Avisos al móvil only inside Home Assistant (nobody to tell elsewhere): asked once.

@@ -23,8 +23,9 @@ export function orderRow(order, change) {
   const tab = (on, label, onclick) => h("button", {
     type: "button", class: `tab${on ? " tab--on" : ""}`, "aria-pressed": String(on), onclick,
   }, on && icon("check"), label);
+  // Only while choosing a day: once chosen, the tab says it («El 20/11»), not twice.
   const date = h("input", {
-    type: "date", class: "order-date", value: other ? due : "", min: now, hidden: !other,
+    type: "date", class: "order-date", value: other ? due : "", min: now, hidden: true,
     "aria-label": t.shop.dueOther, onchange: (e) => e.target.value && setDue(e.target.value),
   });
   return h("li", { class: "row row--order" },

@@ -20,12 +20,12 @@ export async function viewChildPage(childId) {
   const again = () => viewChildPage(childId);
 
   render(
-    parentsHeader(h("span", { class: "title-with-avatar" }, avatar(view.child, { size: "sm" }), view.child.name),
+    parentsHeader(h("span", { class: "title-with-avatar" }, avatar(view.child, { size: "md" }), view.child.name),
       { href: "#/parents/config/children", label: t.children.back }),
     h("main", { class: "page" },
       h("div", { class: "card-head" },
-        h("p", { class: "card-head__stars", "aria-label": t.childStars.has(view.stars) },
-          h("img", { src: STAR, alt: "" }), String(view.stars)),
+        h("p", { class: "card-head__stars" },
+          h("img", { src: STAR, alt: "" }), t.childStars.has(view.stars)),
         h("a", { class: "btn", href: `${here}/settings` }, icon("settings"), t.childCard.settings(view.child.name))),
       h("div", { class: "card-blocks" },
         weekBlock(view, done, again),

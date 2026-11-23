@@ -762,6 +762,7 @@ export const t = {
     back: "Niños",
     empty: "Todavía no hay niños. Añade el primero.",
     add: "+ Añadir niño",
+    addMore: "Añadir otro niño",
     historyNote: "Borrar un niño no borra su historial de estrellas.",
     confirmDelete: (name) => `¿Borrar a ${name}?`,
     confirmYes: "Sí, borrar",

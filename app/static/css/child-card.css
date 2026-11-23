@@ -14,11 +14,11 @@
   align-items: center;
   gap: var(--space-1);
   margin: 0;
-  font-size: var(--text-xl);
-  font-weight: 800;
+  font-size: var(--text-lg); /* under their name, smaller than it */
+  font-weight: 700;
 }
 
-.card-head__stars img { width: 36px; height: 36px; }
+.card-head__stars img { width: 28px; height: 28px; }
 
 .card-blocks {
   display: grid;

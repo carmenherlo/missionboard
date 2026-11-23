@@ -19,7 +19,7 @@ export function parentsHeader(title, back = null) {
     h("header", { class: "top-bar" },
       menu.button,
       back && h("a", {
-        class: `icon-button${toSettings ? " only-on-phone" : ""}`, href: back.href,
+        class: `icon-button icon-button--ghost${toSettings ? " only-on-phone" : ""}`, href: back.href,
         "aria-label": t.common.backTo(back.label), title: t.common.backTo(back.label),
       }, icon("back")),
       fullscreenButton()),

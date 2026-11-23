@@ -105,28 +105,82 @@
   display: none;
 }
 
-/* Ajustes as a page: the menu's lines, a little taller for the finger, with › */
+/* Ajustes as a page: a card per group, lines split by thin rules, each group's icons in
+   its own colour (what they do, what they earn, the app, safety). */
 .settings-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.settings-list .drawer__group {
-  margin-top: var(--space-3);
-}
-
-.settings-list .nav-item {
-  min-height: 48px;
-}
-
-.settings-list .drawer__line {
-  margin: var(--space-3) 0;
-}
-
-.settings-list__chevron {
   display: grid;
-  margin-left: auto;
+  gap: var(--space-4);
+}
+
+.settings-group {
+  --group: var(--primary);
+  --group-soft: var(--primary-soft);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.settings-group--earn { --group: var(--on-accent-soft); --group-soft: var(--accent-soft); }
+
+.settings-group--app { --group: var(--on-secondary-soft); --group-soft: var(--secondary-soft); }
+
+.settings-group--safety { --group: var(--success); --group-soft: var(--success-soft); }
+
+.settings-group__title {
+  margin: 0;
+  padding: 0 var(--space-2);
   color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-group__card {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.settings-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-1) var(--space-3);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.settings-line[hidden] { display: none; }
+
+.settings-line + .settings-line { border-top: 1px solid var(--line); }
+
+.settings-line__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--group-soft, var(--primary-soft));
+  color: var(--group, var(--primary));
+}
+
+.settings-line__icon .icon { width: 22px; height: 22px; }
+
+.settings-line__name { flex: 1; min-width: 0; }
+
+.settings-line__chevron { display: grid; color: var(--muted); }
+
+@media (hover: hover) {
+  .settings-line:hover { background: color-mix(in srgb, var(--text) var(--state-hover), transparent); }
+}
+
+.settings-line:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: -3px;
 }
 
 .top-bar .fullscreen-button { margin-left: auto; }
@@ -239,6 +293,21 @@
 
   .menu-button {
     display: none;
+  }
+
+  /* No ☰ here either: full screen in the corner, so the title is not pushed a line down */
+  .top-bar:not(:has(> :not(.menu-button, .fullscreen-button))) {
+    min-height: var(--space-4);
+  }
+
+  .top-bar .fullscreen-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .top-bar:not(:has(> :not(.menu-button, .fullscreen-button))) + .page-title {
+    padding-right: calc(48px + 1rem + var(--space-2)); /* the title never under the corner button */
   }
 
   .bottom-nav__item--on {
