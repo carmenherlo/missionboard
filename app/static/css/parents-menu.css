@@ -105,6 +105,30 @@
   display: none;
 }
 
+/* Ajustes as a page: the menu's lines, a little taller for the finger, with › */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-list .drawer__group {
+  margin-top: var(--space-3);
+}
+
+.settings-list .nav-item {
+  min-height: 48px;
+}
+
+.settings-list .drawer__line {
+  margin: var(--space-3) 0;
+}
+
+.settings-list__chevron {
+  display: grid;
+  margin-left: auto;
+  color: var(--muted);
+}
+
 .top-bar .fullscreen-button { margin-left: auto; }
 
 /* Wide: the menu at the side, the screen beside it, no ☰. */
