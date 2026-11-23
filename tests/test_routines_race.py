@@ -156,7 +156,7 @@ def test_a_race_lost_closes_its_mission_even_if_starting_it_opened_it(client, ra
     bea = kids[0]
     patch(client, race["mission"]["id"], schedule={"start": "18:00", "end": "21:00"})  # it is 17:00: upcoming
     start(client, race, [k["id"] for k in kids])  # starting it by hand opens the mission today
-    clock.moment = MONDAY + timedelta(minutes=20)
+    clock.moment = MONDAY + timedelta(minutes=21)
     client.get("/api/routines/current")  # the flag: lost
     day = client.get(f"/api/children/{bea['id']}/today").json()
     assert day["missions"][0]["state"] == "closed"

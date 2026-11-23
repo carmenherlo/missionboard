@@ -109,7 +109,7 @@ def end_race(routine_id: str, races: RaceService = Depends(get_race_service)):
 
 @router.get("/races/to-review", dependencies=parent_only)
 def races_to_review(races: RaceService = Depends(get_race_service)):
-    """Today's races whose extra stars wait for a parent (Padres · Hoy · Te toca)."""
+    """Today's races whose extra stars wait for a parent (Padres · Por dar)."""
     return races.to_review()
 
 

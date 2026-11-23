@@ -274,7 +274,7 @@ export const t = {
     slowOn: "🐢 Sin prisa: no es carrera",
     slowHintOn: "Su «¡Hecho!» no sale hasta pasado este tiempo, y su música es la lenta.",
     slowMinimum: "Mínimo",
-    // Padres · Hoy · Te toca
+    // Padres · Por dar
     toReviewTitle: "Carreras por revisar",
     toReviewDetail: (took, planned, stars, kids) => `${took} (previsto ${planned}) · ⭐ +${stars} a ${kids}`,
     giveShort: "Dar",
