@@ -10,6 +10,7 @@ import { api } from "../api.js";
 import { sounds } from "../components/sound.js";
 import { say } from "../components/speech.js";
 import { t } from "../texts.js";
+import { raceMusic } from "./race-music.js";
 import * as script from "./script.js";
 import { list } from "./words.js";
 
@@ -60,6 +61,7 @@ export function race(r) {
     r.showing.race = {
       index, from: Math.min(Math.max(0, elapsed()), planned), nextAt: null, said: new Set(), doneSeen: doneKeys(all),
       ahead: null, counted: elapsed() >= 0 ? 0 : null, ended: false, // opened once started: no "¡YA!"
+      music: raceMusic(),
     };
     r.buildRace();
   }
@@ -80,8 +82,26 @@ export function race(r) {
       }
       moveOn(time, quiet);
     }
+    playMusic(time, quiet);
     r.place();
     r.renderRace(time);
+  }
+
+  // Game music while they run, faster in a part's last minute (and while late); calm in
+  // a "sin prisa" part; nothing before the "¡YA!", paused, hidden here or once it ended.
+  function playMusic(time, quiet) {
+    const state = r.showing.race;
+    const leg = legs()[state.index];
+    if (quiet || time < 0 || !leg) {
+      state.music.stop();
+      return;
+    }
+    if (leg.part.slow_minutes && state.nextAt == null) {
+      state.music.update("calm");
+      return;
+    }
+    const left = leg.part.minutes - (time - state.from);
+    state.music.update("game", left >= WARN_MIN ? 1 : 1 + 0.3 * Math.min(1, 1 - left / WARN_MIN));
   }
 
   // "3, 2, 1, ¡YA!": a pip each second; the first part at the "¡YA!".
@@ -163,6 +183,7 @@ export function race(r) {
     const ahead = r.lead(time) >= EVEN_MIN ? true : r.lead(time) <= -EVEN_MIN ? false : state.ahead;
     if (state.ahead !== null && ahead !== state.ahead) {
       say(ahead ? "¡Adelantamos al fantasma!" : "¡El fantasma nos adelanta!");
+      if (ahead) r.flashPassed();
     }
     state.ahead = ahead;
     if (time >= data().race.ghost) once("ghost", "¡El fantasma ha llegado a la meta! Aún podéis terminar.");

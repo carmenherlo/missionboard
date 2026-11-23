@@ -1,0 +1,32 @@
+/* =====================================================================
+   Modo carrera: what moves or shines (race.css has the race, still).
+   Without this file everything works the same; "Reduce motion" turns
+   it off (end of the file). Times: tokens-effects.css.
+   ===================================================================== */
+
+/* "3, 2, 1, ¡YA!": each number jumps in (two names, so a new one starts again). */
+.race__count[data-beat="0"] { animation: race-count-a var(--race-count-pop) cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.race__count[data-beat="1"] { animation: race-count-b var(--race-count-pop) cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes race-count-a { from { scale: 0.3; opacity: 0; } to { scale: 1; opacity: 1; } }
+@keyframes race-count-b { from { scale: 0.3; opacity: 0; } to { scale: 1; opacity: 1; } }
+
+/* Winning: the big words beat gently. */
+.race__big[data-side="ahead"] { animation: race-beat var(--race-beat) ease-in-out infinite; }
+@keyframes race-beat { 50% { scale: 1.06; } }
+
+/* They overtook the ghost: the race shines a moment. */
+.race__space--passed { animation: race-passed var(--race-passed) ease-out; }
+@keyframes race-passed {
+  0% { box-shadow: 0 0 0 0 var(--race-ahead); }
+  30% { box-shadow: 0 0 0 14px var(--race-ahead); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* The result comes in with a jump. */
+.race__result:not([hidden]) .race__result-title { animation: race-count-a var(--race-count-pop) cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .race__count, .race__big, .race__space--passed, .race__result-title {
+    animation: none !important;
+  }
+}

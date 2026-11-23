@@ -5,7 +5,7 @@
 // the stars wait in Padres · Hoy · Te toca.
 import { api } from "../api.js";
 import { avatar } from "../components/avatar.js";
-import { sounds } from "../components/sound.js";
+import { isOff, sounds } from "../components/sound.js";
 import { say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { confetti } from "../effects/confetti.js";
@@ -58,16 +58,18 @@ export function raceEnd(r) {
       h("ul", { class: "race__champions" }, data.people.map((p) => h("li", { class: "routine__champion", style: `--child-color: ${p.colors.color}` },
         avatar(p.child, { size: "lg", fx: won ? "shine" : null }), h("span", {}, p.child.name)))),
       result.took_seconds != null && h("p", { class: "race__took" }, t.race.took(countdownText(result.took_seconds), planned)),
-      result.stars ? h("p", { class: "race__stars" }, t.race.stars(result.stars)) : "",
+      result.stars ? h("p", { class: "race__stars" }, t.race.stars(result.stars, data.people.length)) : "",
       result.given === null && result.stars && !data.trial ? h("p", { class: "hint" }, t.race.waiting) : "",
       action);
     box.hidden = false;
     view.raceParts.start.hidden = true;
     if (r.closed()) return; // hidden here: the others celebrate
+    r.showing.race.music.stop();
     if (won) {
-      sounds.win();
+      if (isOff("music")) sounds.win();
+      else r.showing.race.music.fanfare(); // the end's melody (race-music.js)
       confetti(view.layer);
-      say([data.goal?.say, title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.stars(result.stars).replace("⭐ ", "") : null]
+      say([data.goal?.say, title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null]
         .filter(Boolean));
     } else if (result.outcome === "slow") {
       say("¡Terminado! Esta vez ganó el fantasma.");

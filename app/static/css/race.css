@@ -240,6 +240,8 @@
   font-weight: 900;
 }
 
+.race__count--go:not(:empty) { font-size: calc(var(--race-start-count-size) * 0.3); }
+
 .race__took { margin: 0; font-size: var(--text-xl); font-weight: 700; }
 .race__stars { margin: 0; font-size: 2rem; font-weight: 900; }
 

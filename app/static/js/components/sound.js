@@ -335,6 +335,11 @@ export const sounds = {
 // ---------- building blocks ----------
 
 // full: as loud as it goes, whatever its level (still silent if its channel is off).
+// A melody made here (race-music.js): `draw(note, now)` books its notes on the music channel.
+export function playNotes(draw) {
+  play((ctx, out, now) => draw((n) => blip(ctx, out, n), now), "music");
+}
+
 function play(draw, channel = "effects", { full = false } = {}) {
   if (isOff(channel)) return;
   const ctx = context();

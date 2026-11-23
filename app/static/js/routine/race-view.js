@@ -14,6 +14,8 @@ import { countdownText, list } from "./words.js";
 const FLUENT = "static/libraries/fluent";
 const img = (name, cls) => h("img", { class: cls, src: `${FLUENT}/${name}.svg`, alt: "" });
 const EVEN_MIN = 0.5;
+const GO_SHOWN_S = 1.2; // "¡YA!" stays on screen this long
+const PASSED_MS = 1600; // the race shines this long when they overtake the ghost
 const SVG_NS = "http://www.w3.org/2000/svg";
 // The road, drawn like the clock (positions as SVG attributes, not styles): from x 70 to
 // 930, a planet per part and the moon at the end; the rocket and the ghost below it.
@@ -87,10 +89,16 @@ export function raceView(r) {
     const parts = view.raceParts;
     const all = r.legs();
     const starting = time < 0;
-    parts.start.hidden = !starting || race.ended;
-    if (starting) {
+    const go = time >= 0 && time < GO_SHOWN_S / 60 && race.counted === 0 && race.from === 0; // "¡YA!" a moment
+    parts.start.hidden = !(starting || go) || race.ended;
+    if (starting || go) {
       const count = Math.ceil(-time * 60);
-      parts.start.lastChild.textContent = count <= 3 ? String(count) : "";
+      const shown = go ? t.race.go : count <= 3 ? String(count) : "";
+      if (parts.start.lastChild.textContent !== shown) {
+        parts.start.lastChild.textContent = shown;
+        parts.start.lastChild.dataset.beat = String(count % 2); // a new number: its jump again (race-effects.css)
+        parts.start.lastChild.classList.toggle("race__count--go", go);
+      }
     }
     view.time.textContent = data.paused ? t.routine.paused
       : t.race.leftInTotal(countdownText((data.race.minutes - Math.max(0, time)) * 60));
@@ -169,5 +177,12 @@ export function raceView(r) {
     }));
   }
 
-  return { buildRace, renderRace, renderRacers };
+  // They overtook the ghost: the race shines a moment (race-effects.css).
+  function flashPassed() {
+    const space = r.showing.view.race.querySelector(".race__space");
+    space.classList.add("race__space--passed");
+    setTimeout(() => space.classList.remove("race__space--passed"), PASSED_MS);
+  }
+
+  return { buildRace, renderRace, renderRacers, flashPassed };
 }
