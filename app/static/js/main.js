@@ -30,7 +30,7 @@ import { viewRoutinesList } from "./screens/parents/routines-list.js";
 import { viewSongsList } from "./screens/parents/songs-list.js";
 import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
-import { viewParentsChild } from "./screens/parents/parents-child.js";
+import { viewChildPage } from "./screens/parents/child-page.js";
 import { viewParentsToday } from "./screens/parents/parents-today.js";
 import { viewSettingsHome } from "./screens/parents/settings-home.js";
 import { viewToGive } from "./screens/parents/to-give.js";
@@ -63,7 +63,7 @@ const routes = [
   [/^#\/child\/(?<child>[\w-]+)\/place\/garage$/, (ids) => viewChildPlace(ids.child, { garage: true }), "child", "child_garage"],
   [/^#\/parents\/?$/, () => viewParentsToday(), "parents", "parents_today"],
   [/^#\/parents\/give$/, () => viewToGive(), "parents", "parents_to_give"],
-  [/^#\/parents\/kids\/(?<child>[\w-]+)$/, (ids) => viewParentsChild(ids.child), "parents", "parents_child"],
+  [/^#\/parents\/kids\/(?<child>[\w-]+)$/, (ids) => { location.hash = `#/parents/config/children/${ids.child}`; }, "parents"], // moved there (menu-padres-2.html)
   [parentsPath(""), () => viewSettingsHome(), "parents", "settings_home"], // Ajustes (menu-padres-2.html)
   [parentsPath("/code"), () => viewChangeCode(), "parents", "change_code"],
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],
@@ -83,7 +83,8 @@ const routes = [
   [parentsPath("/avatars/:avatar"), (ids) => viewAvatarEdit(ids.avatar), "parents", "avatar_edit"],
   [parentsPath("/children"), () => viewChildrenList(), "parents", "children"],
   [parentsPath("/children/new"), () => viewChildForm(null), "parents", "child_new"],
-  [parentsPath("/children/:child"), (ids) => viewChildForm(ids.child), "parents", "child_edit"],
+  [parentsPath("/children/:child"), (ids) => viewChildPage(ids.child), "parents", "parents_child"],
+  [parentsPath("/children/:child/edit"), (ids) => viewChildForm(ids.child), "parents", "child_edit"],
   [parentsPath("/children/:child/missions"), (ids) => viewChildMissions(ids.child), "parents", "child_missions"],
   [parentsPath("/children/:child/missions/:mission"),
     (ids) => viewMissionChild(ids.mission, ids.child, true), "parents", "mission_child"],

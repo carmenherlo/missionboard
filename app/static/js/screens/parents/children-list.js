@@ -1,6 +1,7 @@
-import { api, errorMessage } from "../../api.js";
+// Niños (menu-padres-2.html): one row per child, opening their card (child-page.js), and
+// «Añadir niño». Deleting a child is at the bottom of their card, far from a slip of the finger.
+import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
-import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
@@ -8,45 +9,14 @@ import { parentsHeader } from "./common.js";
 
 export async function viewChildrenList() {
   const [children, missions] = await Promise.all([api("GET", "api/children"), api("GET", "api/missions"), loadAvatars()]);
-  const status = saveStatus();
-
-  function row(child) {
-    const actions = h("div", { class: "row__actions" });
-
-    function showDefault() {
-      actions.replaceChildren(
-        h("button", { class: "btn btn--danger", type: "button", onclick: showConfirm }, t.children.delete));
-    }
-
-    function showConfirm() {
-      actions.replaceChildren(
-        h("span", { class: "row__confirm" }, t.children.confirmDelete(child.name)),
-        h("button", { class: "btn btn--danger", type: "button", onclick: remove }, t.children.confirmYes),
-        h("button", { class: "btn", type: "button", onclick: showDefault }, t.children.cancel));
-    }
-
-    async function remove() {
-      try {
-        await api("DELETE", `api/children/${child.id}`);
-        viewChildrenList();
-      } catch (err) {
-        actions.prepend(h("span", { class: "form-error" }, errorMessage(err)));
-      }
-    }
-
-    showDefault();
-    // The whole card opens the child (rutinas-7, as every list of the parents' zone).
-    return h("li", { class: "row row--covered" },
+  const row = (child) => h("li", {},
+    h("a", { class: "row row--link", href: `#/parents/config/children/${child.id}` },
       avatar(child),
-      h("a", {
-        class: "row__name row__cover", href: `#/parents/config/children/${child.id}`,
-        "aria-label": t.children.editNamed(child.name),
-      }, child.name),
-      actions);
-  }
+      h("span", { class: "row__name" }, child.name),
+      h("span", { class: "row__chevron" }, icon("next"))));
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.children.title, status.element)), // Niños is a door of the menu: no back
+    parentsHeader(t.children.title), // Niños is a door of the menu: no back
     h("main", { class: "page" },
       children.length
         ? h("ul", { class: "rows" }, children.map(row))
@@ -57,6 +27,5 @@ export async function viewChildrenList() {
       children.length > 0 && !missions.length && h("a", { class: "row row--link", href: "#/parents/config/missions" },
         h("span", { class: "row__icon" }, icon("missions")),
         h("span", { class: "row__name" }, t.overview.nextMissions),
-        h("span", { class: "row__chevron" }, icon("next"))),
-      h("p", { class: "note" }, t.children.historyNote)));
+        h("span", { class: "row__chevron" }, icon("next")))));
 }

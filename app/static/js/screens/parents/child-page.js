@@ -1,7 +1,10 @@
-// Padres · Niño (step 7): one child: their stars (give or take some), the stars won
-// each day of the last two weeks, and the latest stars in and out.
+// Niños → Bea (menu-padres-2.html, 3c): everything about one child, in one card. First
+// what is used (their stars, this week, what they did), then how it went (stars won each
+// day, the latest stars in and out), then what is touched once (their missions, name and
+// avatar) and, at the very bottom, deleting them.
 import { api } from "../../api.js";
-import { loadAvatars } from "../../components/avatar.js";
+import { avatar, loadAvatars } from "../../components/avatar.js";
+import { confirmBar } from "../../components/confirm-bar.js";
 import { panel } from "../../components/panel.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { h, render } from "../../dom.js";
@@ -46,19 +49,42 @@ function doneThisWeek(child, done, onChange) {
     done.length > 0 && h("p", { class: "hint" }, t.dayOff.weekDoneHint));
 }
 
-export async function viewParentsChild(childId) {
+// A row that opens a screen of theirs: an icon (or their avatar), what it is, ›.
+const link = (href, lead, name) => h("a", { class: "row row--link", href },
+  lead, h("span", { class: "row__name" }, name), h("span", { class: "row__chevron" }, icon("next")));
+
+// Borrar a Bea: a quiet button that asks first, saying the history stays.
+function deletePanel(child) {
+  const box = h("div", {});
+  const ask = () => box.replaceChildren(confirmBar({
+    message: t.children.confirmDelete(child.name), detail: t.children.historyNote, confirmLabel: t.children.confirmYes,
+    onCancel: draw,
+    onConfirm: async () => {
+      await api("DELETE", `api/children/${child.id}`);
+      location.hash = "#/parents/config/children";
+    },
+  }));
+  const draw = () => box.replaceChildren(
+    h("button", { type: "button", class: "btn btn--danger", onclick: ask }, icon("trash"), t.children.deleteNamed(child.name)));
+  draw();
+  return box;
+}
+
+export async function viewChildPage(childId) {
   const [view, done] = await Promise.all([api("GET", `api/overview/children/${childId}`),
     api("GET", `api/children/${childId}/undoable`), loadAvatars()]);
   const stars = await childStarsPanel(view.child, { take: true });
   const top = Math.max(1, ...view.chart.map((d) => d.stars));
+  const here = `#/parents/config/children/${childId}`;
 
   render(
-    parentsHeader(t.overview.childTitle(view.child.name), { href: "#/parents", label: t.overview.back }),
+    parentsHeader(h("span", { class: "title-with-avatar" }, avatar(view.child, { size: "sm" }), view.child.name),
+      { href: "#/parents/config/children", label: t.children.back }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
         stars,
-        weekPanel(view, () => viewParentsChild(childId)),
-        doneThisWeek(view.child, done, () => viewParentsChild(childId)),
+        weekPanel(view, () => viewChildPage(childId)),
+        doneThisWeek(view.child, done, () => viewChildPage(childId)),
         panel(t.overview.chartTitle,
           // A bar per day; its height, the stars won (the only number passed to the styles).
           h("div", { class: "star-chart", role: "img", "aria-label": t.overview.chartLabel(view.chart.reduce((n, d) => n + d.stars, 0)) },
@@ -73,5 +99,10 @@ export async function viewParentsChild(childId) {
                   h("span", { class: "row__detail" }, `${dayMonth(m.day)} · ${m.at.slice(11, 16)}`)),
                 h("b", { class: `star-amount${m.amount < 0 ? " star-amount--out" : ""}` },
                   `${m.amount > 0 ? "+" : ""}${m.amount}`))))
-            : h("p", { class: "hint" }, t.overview.noHistory)))));
+            : h("p", { class: "hint" }, t.overview.noHistory)),
+        h("ul", { class: "rows" },
+          h("li", {}, link(`${here}/missions`, h("span", { class: "row__icon" }, icon("missions")),
+            t.missionChild.childMissions(view.child.name))),
+          h("li", {}, link(`${here}/edit`, avatar(view.child, { size: "sm" }), t.children.identity))),
+        deletePanel(view.child))));
 }

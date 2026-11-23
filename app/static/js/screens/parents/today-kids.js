@@ -65,7 +65,7 @@ const canNot = (day, redraw, extra = "btn") => h("button", {
 }, t.dayOff.canNot);
 
 const childLink = (day) => h("a", {
-  class: "kids-table__child", href: `#/parents/kids/${day.child.id}`, "aria-label": t.overview.openChild(day.child.name),
+  class: "kids-table__child", href: `#/parents/config/children/${day.child.id}`, "aria-label": t.overview.openChild(day.child.name),
 }, avatar(day.child, { size: "sm" }), h("b", {}, day.child.name));
 
 function kidsTable(view, redraw) {
@@ -117,6 +117,6 @@ function kidsCards(view, redraw) {
       day.prize && h("p", { class: "day-card__prize" }, icon("prize"), `${t.overview.colPrize}: ${prizeText(day.prize)}`),
       h("p", { class: "kid-card__actions" },
         !day.day_off && canNot(day, redraw),
-        h("a", { class: "btn", href: `#/parents/kids/${day.child.id}` }, t.overview.seeChild(day.child.name)))));
+        h("a", { class: "btn", href: `#/parents/config/children/${day.child.id}` }, t.overview.seeChild(day.child.name)))));
   return h("div", { class: "kid-cards" }, view.children.map(card));
 }

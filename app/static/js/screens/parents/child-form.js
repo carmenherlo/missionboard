@@ -11,11 +11,13 @@ import { parentsHeader } from "./common.js";
 const NAME_SAVE_DELAY_MS = 600;
 
 // New child: short form with an "Añadir niño" button.
-// Existing child: every change is saved on the spot, like missions and steps.
+// Existing child (Niños → Bea → Nombre y avatar): every change is saved on the spot,
+// like missions and steps; back to their card (child-page.js).
 
 export async function viewChildForm(childId) {
   const [children, catalog] = await Promise.all([api("GET", "api/children"), loadAvatars()]);
   const existing = childId ? children.find((c) => c.id === childId) : null;
+  const card = `#/parents/config/children/${childId}`;
   if (childId && !existing) {
     location.hash = "#/parents/config/children";
     return;
@@ -84,7 +86,7 @@ export async function viewChildForm(childId) {
          h("span", { class: "choice__label" }, preset.label));
     };
     // "Subir avatar" comes back here with the new one chosen (and, for a new child, the name kept).
-    const here = existing ? `#/parents/config/children/${existing.id}` : "#/parents/config/children/new";
+    const here = existing ? `${card}/edit` : "#/parents/config/children/new";
     const upload = uploadButton("choice choice--add", here, [h("span", { class: "add-circle" }, icon("plus")), t.avatars.upload]);
     upload.addEventListener("click", () => { handoff.draft = existing ? null : form.name; });
 
@@ -143,11 +145,6 @@ export async function viewChildForm(childId) {
   }
 
   const title = h("span", {}, existing ? existing.name : "");
-  // Their stars live in Padres · Niño (13/11): from here, a link to them.
-  const starsPanel = existing ? h("a", { class: "row row--link", href: `#/parents/kids/${existing.id}` },
-    h("span", { class: "row__icon" }, icon("star")),
-    h("span", { class: "row__name" }, t.childStars.seeThem(existing.name)),
-    h("span", { class: "row__chevron" }, icon("next"))) : null;
 
   refreshAll();
   if (added && !usedPresets.has(added.id)) {
@@ -157,17 +154,15 @@ export async function viewChildForm(childId) {
   render(
     parentsHeader(
       existing ? h("span", { class: "title-line" }, title, status.element) : t.childForm.titleNew,
-      { href: "#/parents/config/children", label: t.children.back }),
+      existing ? { href: card, label: existing.name } : { href: "#/parents/config/children", label: t.children.back }),
     h("main", { class: "page" },
       h("form", { class: "child-form", onsubmit },
         panel(null, preview, h("label", {}, t.childForm.name, nameInput)),
         panel(null, picker),
-        starsPanel,
         error,
         existing
           ? h("div", { class: "form-actions" },
-              h("a", { class: "btn", href: `#/parents/config/children/${existing.id}/missions` }, icon("missions"), t.missionChild.openChild),
-              h("a", { class: "btn btn--primary", href: "#/parents/config/children" }, t.common.done))
+              h("a", { class: "btn btn--primary", href: card }, t.common.done))
           : h("div", { class: "form-actions" },
               h("a", { class: "btn", href: "#/parents/config/children" }, t.childForm.cancel),
               h("button", { class: "btn btn--primary", type: "submit" }, t.childForm.add)))));
