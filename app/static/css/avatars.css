@@ -167,10 +167,21 @@
 
 /* Editar niño: the family's avatars, then the app's */
 .picker__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
   margin: var(--space-2) 0 0;
   color: var(--muted);
   font-size: var(--text-sm);
   font-weight: 800;
+}
+
+/* the family's uploaded ones, to rename or delete (Avatares is not in the menu) */
+.picker__manage {
+  margin-left: auto;
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .choice__who {

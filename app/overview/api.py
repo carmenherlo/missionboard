@@ -92,6 +92,12 @@ def overview_today(overview: OverviewService = Depends(get_overview_service), pr
     }
 
 
+@router.get("/to-give")
+def to_give(overview: OverviewService = Depends(get_overview_service)):
+    """The number on «Por dar» in the parents' menu."""
+    return {"count": overview.to_give()}
+
+
 @router.get("/setup")
 def setup(overview: OverviewService = Depends(get_overview_service), store: ConfigStore = Depends(get_config_store)):
     """Primeros pasos (Zona de padres): children, missions, switched on for someone, the code changed."""

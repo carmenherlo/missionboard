@@ -46,7 +46,7 @@ export async function viewChildrenList() {
   }
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.children.title, status.element), { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.children.title, status.element)), // Niños is a door of the menu: no back
     h("main", { class: "page" },
       children.length
         ? h("ul", { class: "rows" }, children.map(row))

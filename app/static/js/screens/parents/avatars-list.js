@@ -1,4 +1,4 @@
-// Configurar → Avatares (avatares.html): the family's, to edit, and the app's animals, to look at.
+// Niños → Avatares (avatares.html; reached from a child's avatar picker, menu-padres-2.html): the family's, to edit, and the app's animals, to look at.
 import { forgetAvatars, loadAvatars } from "../../components/avatar.js";
 import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
@@ -19,7 +19,7 @@ export async function viewAvatarsList() {
     avatar.worn_by.length > 0 && h("span", { class: "choice__who" }, avatar.worn_by.join(", ")));
 
   render(
-    parentsHeader(t.avatars.title, { href: "#/parents/config", label: t.config.title }),
+    parentsHeader(t.avatars.title, { href: "#/parents/config/children", label: t.children.back }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
         h("p", { class: "hint" }, t.avatars.hint),

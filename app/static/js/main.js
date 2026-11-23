@@ -32,6 +32,8 @@ import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
 import { viewParentsChild } from "./screens/parents/parents-child.js";
 import { viewParentsToday } from "./screens/parents/parents-today.js";
+import { viewSettingsHome } from "./screens/parents/settings-home.js";
+import { viewToGive } from "./screens/parents/to-give.js";
 import { viewPrizesList } from "./screens/parents/prizes-list.js";
 import { viewMissionEdit } from "./screens/parents/mission-edit.js";
 import { viewMissionNew } from "./screens/parents/mission-new.js";
@@ -60,8 +62,9 @@ const routes = [
   [/^#\/child\/(?<child>[\w-]+)\/place$/, (ids) => viewChildPlace(ids.child), "child", "child_place"],
   [/^#\/child\/(?<child>[\w-]+)\/place\/garage$/, (ids) => viewChildPlace(ids.child, { garage: true }), "child", "child_garage"],
   [/^#\/parents\/?$/, () => viewParentsToday(), "parents", "parents_today"],
+  [/^#\/parents\/give$/, () => viewToGive(), "parents", "parents_to_give"],
   [/^#\/parents\/kids\/(?<child>[\w-]+)$/, (ids) => viewParentsChild(ids.child), "parents", "parents_child"],
-  [parentsPath(""), () => { location.hash = "#/parents"; }, "parents"], // Configurar is the menu now (padres-menu.html)
+  [parentsPath(""), () => viewSettingsHome(), "parents", "settings_home"], // Ajustes (menu-padres-2.html)
   [parentsPath("/code"), () => viewChangeCode(), "parents", "change_code"],
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],
   [parentsPath("/backup"), () => viewBackup(), "parents", "backup"],

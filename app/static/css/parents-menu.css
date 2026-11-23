@@ -1,6 +1,6 @@
-/* The parents' menu (padres-menu.html), Material 3's navigation drawer: always open
-   at the side on a wide screen (tablet in landscape, computer); on a narrow one
-   (vertical tablet, phone) behind ☰, over the screen with a scrim. */
+/* The parents' menu (menu-padres-2.html), Material 3's navigation drawer: always open
+   at the side on a wide screen (tablet in landscape, computer); on a vertical tablet
+   behind ☰, over the screen with a scrim; on a phone, the bar at the bottom instead. */
 
 .drawer {
   position: fixed;
@@ -81,6 +81,26 @@
   outline-offset: -3px;
 }
 
+/* How many things wait in «Por dar», as the children's count of news */
+.nav-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--news-count-bg);
+  color: var(--news-count-text);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.nav-badge[hidden] {
+  display: none;
+}
+
 .drawer-scrim {
   display: none;
 }
@@ -136,10 +156,17 @@
   }
 }
 
-/* On a phone: the bar at the bottom (Hoy · Niños · Más) for the thumb (zona-padres.html,
-   section 3), and «Este dispositivo» out of the menu (it is about the children's screen). */
+/* On a phone: the bar at the bottom (Hoy · Por dar · Niños · Ajustes) for the thumb, no ☰,
+   and «Esta pantalla» out of Ajustes (it is about the children's screen). Back to Ajustes
+   only there: elsewhere Ajustes is in the menu at the side. */
 .bottom-nav {
   display: none;
+}
+
+@media (min-width: 600px) {
+  .only-on-phone {
+    display: none;
+  }
 }
 
 @media (max-width: 599.98px) {
@@ -170,9 +197,24 @@
     cursor: pointer;
   }
 
+  .bottom-nav__icon {
+    position: relative;
+    display: grid;
+  }
+
   .bottom-nav__item .icon {
     width: 24px;
     height: 24px;
+  }
+
+  .bottom-nav__icon .nav-badge {
+    position: absolute;
+    top: -6px;
+    left: 16px;
+  }
+
+  .menu-button {
+    display: none;
   }
 
   .bottom-nav__item--on {

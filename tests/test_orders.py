@@ -110,6 +110,19 @@ def test_the_day_it_arrives_moves_the_truck(client, bea, clock):
     assert (mine(client, bea)[0]["nights"], mine(client, bea)[0]["progress"]) == (0, 0.85)
 
 
+def to_give(client):
+    return client.get("/api/overview/to-give", headers=PARENT).json()["count"]
+
+
+def test_orders_waiting_count_on_por_dar(client, bea):
+    assert to_give(client) == 0
+    first, _ = ordered(client, bea), ordered(client, bea)
+    assert to_give(client) == 2
+    client.post(f"/api/orders/{first}/deliver", headers=PARENT)
+    assert to_give(client) == 1
+    assert client.get("/api/overview/to-give").status_code == 401
+
+
 def test_orders_need_the_code_and_children_see_only_their_own(client, bea):
     order_id = ordered(client, bea)
     assert client.get("/api/orders").status_code == 401

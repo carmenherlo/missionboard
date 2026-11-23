@@ -131,8 +131,10 @@ def test_a_full_week_wins_the_prize_for_the_parents_to_give(client, bea, clock):
     }
     [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
     assert prize["prize_text"] == "Ir al parque"
+    assert client.get("/api/overview/to-give", headers=PARENT).json() == {"count": 1}
     url = f"/api/overview/week-prizes/{bea['id']}/2026-11-06/deliver"
     assert client.post(url, headers=PARENT).status_code == 204
+    assert client.get("/api/overview/to-give", headers=PARENT).json() == {"count": 0}
     assert client.get("/api/overview/today", headers=PARENT).json()["week_prizes"] == []
 
     assert client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen").status_code == 204

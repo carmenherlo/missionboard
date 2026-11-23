@@ -15,7 +15,7 @@ import { dayMonth } from "./orders-panel.js";
 
 const REFRESH_MS = 15000; // cards used in a chest, and who picked what, come in by itself
 
-// todoBlock: a block of «Te toca» (parents-today.js).
+// todoBlock: a block of «Por dar» (to-give.js).
 export function vouchersCard(first, status, todoBlock) {
   let view = first;
   const count = h("span", { class: "count" });

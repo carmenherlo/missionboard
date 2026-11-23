@@ -91,7 +91,8 @@ export async function viewChildForm(childId) {
     // The family's first (avatares.html, question 4); the app's animals below.
     picker.replaceChildren(
       h("h2", {}, t.childForm.chooseAvatar),
-      h("h3", { class: "picker__group" }, t.childForm.groupFamily),
+      h("h3", { class: "picker__group" }, t.childForm.groupFamily, catalog.family.length > 0 &&
+        h("a", { class: "picker__manage", href: "#/parents/config/avatars" }, t.childForm.manageAvatars)),
       h("div", { class: "choices" }, catalog.family.map(card), upload),
       h("h3", { class: "picker__group" }, t.childForm.groupApp),
       h("div", { class: "choices" }, catalog.presets.map(card)));

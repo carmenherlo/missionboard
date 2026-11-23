@@ -45,6 +45,12 @@ class OverviewService:
             "week_prizes": self._streaks.prizes_to_give(),
         }
 
+    def to_give(self) -> int:
+        """How many things wait for a parent to hand over (Por dar): orders and week prizes."""
+        for child in self._children.list():
+            self._streaks.week(child.id)  # settles the weeks just closed
+        return len(self._orders.for_parents()["waiting"]) + len(self._streaks.prizes_to_give())
+
     def setup(self, missions: list, code_is_default: bool, prizes: int, shop: int, routines: int) -> dict:
         """Primeros pasos: what is ready of the app (it goes away once the first four are)."""
         children = self._children.list()
