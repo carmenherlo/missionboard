@@ -200,8 +200,27 @@ export async function viewRoutineEdit(routineId) {
   }
   function renderCards() {
     alarmCard.hidden = routine.manual;
-    goalCard.hidden = routine.manual || !routine.goal;
-    if (routine.manual) return;
+    goalCard.hidden = !routine.goal; // started by hand too (songs can go there), with no times
+    const clock = (time) => !routine.manual && h("span", { class: "routine-card__time" }, shortTime(time));
+    if (!routine.manual) renderAlarmCard();
+    if (!routine.goal) return;
+    // The goal, and before it checking the missions (rutinas-6), which has the time: the goal comes as
+    // soon as everyone has their mission, at the latest when the margin is over (05/11).
+    const checking = routine.goal.check_minutes > 0;
+    const ending = routine.anchor === "end";
+    goalCard.className = `routine-card routine-card--goal${checking ? " routine-card--checking" : ""}`;
+    goalCard.replaceChildren(...[
+      checking && h("span", { class: "routine-card__check" }, icon("check"), t.routine.checkTitle,
+        ending ? pinnedStepper(partsEnd(), "ends") : clock(partsEnd())),
+      h("span", { class: "routine-card__row" }, icon("flag"),
+        h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
+          h("span", { class: "routine-card__detail" }, checking
+            ? t.routineEdit.goalWhenDone(routine.goal.check_minutes, routine.goal.at && shortTime(routine.goal.at))
+            : `"${routine.goal.say}"`)),
+        checking ? "" : ending ? pinnedStepper(routine.goal.at, "ends") : clock(routine.goal.at)),
+    ].filter(Boolean));
+  }
+  function renderAlarmCard() {
     alarmCard.className = `routine-card routine-card--alarm${routine.alarm ? "" : " routine-card--off"}`;
     alarmCard.replaceChildren(icon("alarm"),
       h("span", { class: "routine-card__text" }, routine.alarm ? t.routineEdit.alarmCard : t.routineEdit.noAlarmCard,
@@ -209,25 +228,6 @@ export async function viewRoutineEdit(routineId) {
       routine.anchor === "start"
         ? pinnedStepper(routine.alarm ? routine.wake : routine.starts, "starts")
         : h("span", { class: "routine-card__time" }, shortTime(routine.alarm ? routine.wake : routine.starts)));
-    if (!routine.goal) return;
-    // The goal, and before it checking the missions (rutinas-6). Checking has the time (the
-    // pinned one, ending at a time); the goal comes as soon as everyone has their mission,
-    // at the latest when the margin is over (05/11: "Meta 7:35" read as ringing at 7:35).
-    const checking = routine.goal.check_minutes > 0;
-    const ending = routine.anchor === "end";
-    goalCard.className = `routine-card routine-card--goal${checking ? " routine-card--checking" : ""}`;
-    goalCard.replaceChildren(...[
-      checking && h("span", { class: "routine-card__check" }, icon("check"), t.routine.checkTitle,
-        ending ? pinnedStepper(partsEnd(), "ends") : h("span", { class: "routine-card__time" }, shortTime(partsEnd()))),
-      h("span", { class: "routine-card__row" }, icon("flag"),
-        h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
-          h("span", { class: "routine-card__detail" }, checking
-            ? t.routineEdit.goalWhenDone(routine.goal.check_minutes, shortTime(routine.goal.at))
-            : `"${routine.goal.say}"`)),
-        checking ? ""
-          : ending ? pinnedStepper(routine.goal.at, "ends")
-          : h("span", { class: "routine-card__time" }, shortTime(routine.goal.at))),
-    ].filter(Boolean));
   }
   const partsList = h("ul", { class: "rows" });
   const someDaysDiffer = h("p", { class: "hint" }, t.routineEdit.someDaysDiffer);

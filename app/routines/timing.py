@@ -9,7 +9,7 @@ def card_positions(doc: dict) -> dict[str, int]:
     cards = {part["id"]: index for index, part in enumerate(parts)}
     if timed and doc.get("alarm", True):
         cards["alarm"] = -1
-    if timed and doc.get("goal"):
+    if doc.get("goal"):  # started by hand too: its goal comes after the parts
         cards["goal"] = len(parts)
     return cards
 

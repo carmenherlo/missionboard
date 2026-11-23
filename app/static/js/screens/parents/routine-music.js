@@ -31,7 +31,7 @@ export function cardsOf(routine) {
   return [
     ...(timed && routine.alarm ? [{ id: "alarm", name: t.routineMusic.alarmCard, from: routine.wake, to: routine.wake }] : []),
     ...routine.parts.map((p) => ({ id: p.id, name: p.name, from: p.start, to: p.end })),
-    ...(timed && routine.goal ? [{ id: "goal", name: t.routineMusic.goalCard, from: routine.goal.at, to: routine.goal.at }] : []),
+    ...(routine.goal ? [{ id: "goal", name: t.routineMusic.goalCard, from: routine.goal.at, to: routine.goal.at }] : []),
   ].map((card) => ({ ...card, label: capital(card.name) }));
 }
 
