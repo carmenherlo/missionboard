@@ -27,7 +27,7 @@ const MAX_PART_MINUTES = 180;
 // What a refused change means: the times do not add up, or it overlaps another routine.
 export function routineError(err) {
   if (err?.status === 422) return t.routines.badTimes;
-  if (err?.status === 409) return t.routines.overlaps;
+  if (err?.status === 409) return err.message?.includes("mission's hours") ? t.routines.outsideMission : t.routines.overlaps;
   return errorMessage(err);
 }
 

@@ -536,6 +536,7 @@ export const t = {
     newStartsHint: "Trae todas las tareas de la misión, con 5 minutos cada una, desde esa hora. Luego se ajustan los minutos.",
     badTimes: "Las horas no cuadran: la rutina se saldría del día, o la meta llegaría antes del final.",
     overlaps: "Se pisa con otra rutina: dos no pueden sonar a la vez.",
+    outsideMission: "No cabe en el horario de la misión: del despertador a la meta, la rutina tiene que quedar dentro. Cambia las horas de una de las dos.",
   },
   routineEdit: {
     title: (mission) => `Rutina de ${mission}`,
@@ -844,7 +845,7 @@ export const t = {
     createRoutine: "Crear rutina",
     routineHint: "Le pone tiempo a la misión: alarma, minutos de cada tarea, voz, música y meta. Se elige para qué niños.",
     editRoutine: "Editar",
-    forWhoElse: "Para quien no esté en la rutina, y los días en que no toca.",
+    routineInside: "Manda para todos: la rutina tiene que caber dentro. Si se lanza a mano, al lanzarla se abre la misión ese día.",
     routineTime: (anchor, start, end) => (anchor === "end" ? `Termina a las ${end}` : `Empieza a las ${start}`),
     routineByHand: "Se lanza a mano",
     routineDetail: (names, start, end, days) => [names, start && `de ${start} a ${end}`, days].filter(Boolean).join(" · "),

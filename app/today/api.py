@@ -24,7 +24,6 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import ChildTask, MissionsRepository
 from app.prizes.repository import PrizesRepository
-from app.routines.repository import RoutinesRepository
 from app.settings import SettingsRepository
 from app.stars.api import get_stars_service
 from app.stars.service import StarsService
@@ -73,7 +72,6 @@ def get_day_service(
         settings,
         clock,
         events,
-        RoutinesRepository(store),
         PrizeBoard(PrizesRepository(store), spins, settings),
         stars,
         streaks,

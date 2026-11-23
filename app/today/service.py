@@ -10,8 +10,8 @@ States of a mission today (paso-4.html, "Las reglas del día"):
 - off: a parent let it off today, or the whole day (dias-libres.html): neither done nor
   missed. No star, but the prize does not wait for it. What is done wins: a mission done
   (or opened by a parent) is not off.
-Which hours count: for a child who follows the mission's routine, on the routine's
-days, the routine's; for everyone else, and on other days, the mission's.
+Which hours count: always the mission's (its routine fits inside them, or was started
+by hand, which opens the mission for the day: see routines/links.py).
 The focus (the big one on the route) is the first open mission in route
 order ("¡Ahora!"); if none is open, the next upcoming one, with its time.
 
@@ -29,8 +29,6 @@ from app.day_off.repository import WHOLE_DAY, DayOffsRepository
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, ChildTask, Mission, MissionsRepository, Schedule, child_tasks
-from app.routines import links
-from app.routines.repository import RoutinesRepository
 from app.settings import Season, SettingsRepository
 from app.stars.service import StarsService
 from app.streaks.service import StreaksService
@@ -111,7 +109,6 @@ class DayService:
         settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
-        routines: RoutinesRepository,
         prize: PrizeBoard,
         stars: StarsService,
         streaks: StreaksService,
@@ -124,7 +121,6 @@ class DayService:
         self._settings = settings
         self._clock = clock
         self._events = events
-        self._routines = routines
         self._prize = prize
         self._stars = stars
         self._streaks = streaks
@@ -141,13 +137,12 @@ class DayService:
         completed = self._days.completed_missions(day, child.id)
         opened = self._days.opened_missions(day, child.id)
         off = self._offs.on(child.id, day)
-        routines = links.routine_by_mission(self._routines.list())
         missions = []
         for mission in self._missions.list():
             tasks = child_tasks(mission, child.id, weekday)
             if not tasks:  # not today, nothing of theirs today, or still being written
                 continue
-            schedule = links.schedule_on(mission, routines.get(mission.id), child.id, weekday)
+            schedule = mission.schedule
             item = MissionToday(
                 mission,
                 self._state(
@@ -225,6 +220,14 @@ class DayService:
             self._days.open_mission(today.day, today.child.id, mission_id, self._clock.now())
             self._events.config_changed("mission", "opened_today", child=today.child, mission=item.mission)
         return self.today(child_id)
+
+    def open_for_routine(self, child_id: str, mission_id: str) -> None:
+        """Its routine started by hand opens the mission for this child, only today, if it
+        was not open yet (one let off stays off). Not logged: the routine starting is."""
+        today = self.today(child_id)
+        item = next((m for m in today.missions if m.mission.id == mission_id), None)
+        if item and item.state in (UPCOMING, CLOSED):
+            self._days.open_mission(today.day, child_id, mission_id, self._clock.now())
 
     def note(self, child_id: str, kind: str, mission_id: str | None = None, step_id: str | None = None) -> None:
         """Something only worth logging: a mission opened, a task listened to,

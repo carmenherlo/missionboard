@@ -205,24 +205,22 @@ def test_a_task_off_for_everyone_still_counts_for_the_time_and_the_voice(client)
     assert first["text"] not in [t["text"] for t in day["missions"][0]["tasks"]]
 
 
-def test_two_schedules_the_routines_for_its_children_and_the_missions_for_the_rest(client, clock):
-    bea, noa = create_child(client), create_child(client, name="Noa", preset="fox")
-    morning = make_morning(client, kids=[bea["id"]])
-    patch(client, morning["mission_id"], schedule={"start": "07:00", "end": "09:00"})
-    client.patch(f"/api/routines/{morning['id']}", json={"days": ["mon", "tue"]}, headers=PARENT)
-
-    def state(child, moment):
-        clock.moment = moment
-        return client.get(f"/api/children/{child['id']}/today").json()["missions"][0]["state"]
-
-    monday = MONDAY
-    assert state(bea, monday.replace(hour=6, minute=40)) == "open"  # the routine's: 6:35 to 7:30
-    assert state(noa, monday.replace(hour=6, minute=40)) == "upcoming"  # the mission's: 7:00 to 9:00
-    assert state(bea, monday.replace(hour=8)) == "closed"
-    assert state(noa, monday.replace(hour=8)) == "open"
-    wednesday = monday.replace(day=4)  # not one of the routine's days: the mission's for everyone
-    assert state(bea, wednesday.replace(hour=6, minute=40)) == "upcoming"
-    assert state(bea, wednesday.replace(hour=8)) == "open"
+def test_the_missions_hours_rule_and_its_routine_fits_inside_them(client, clock):
+    bea = create_child(client)
+    morning = make_morning(client, kids=[bea["id"]])  # rings at 6:30, its goal at 7:30
+    mission_id, url = morning["mission_id"], f"/api/routines/{morning['id']}"
+    # The mission cannot open after it rings, nor close before its goal
+    for start, end in [("07:00", "09:00"), ("06:00", "07:15")]:
+        refused = patch(client, mission_id, schedule={"start": start, "end": end})
+        assert refused.status_code == 409 and refused.json()["detail"] == "It does not fit in its mission's hours"
+    assert patch(client, mission_id, schedule={"start": "06:30", "end": "07:30"}).status_code == 200
+    # Nor the routine move out of them
+    assert client.patch(url, json={"starts": "06:45"}, headers=PARENT).status_code == 409
+    assert client.get(url).json()["wake"] == "06:30"
+    patch(client, mission_id, schedule={"start": "06:00", "end": "09:00"})
+    clock.moment = MONDAY.replace(hour=6, minute=15)  # before it rings: the mission's hours, for its children too
+    day = client.get(f"/api/children/{bea['id']}/today").json()["missions"][0]
+    assert day["state"] == "open" and day["schedule"] == {"start": "06:00", "end": "09:00"}
 
 
 def test_the_routines_days_are_within_the_missions(client, morning):

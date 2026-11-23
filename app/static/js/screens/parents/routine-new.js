@@ -1,10 +1,11 @@
-import { api, errorMessage } from "../../api.js";
+import { api } from "../../api.js";
 import { panel } from "../../components/panel.js";
 import { timeInput } from "../../components/time-input.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { routineError } from "./routine-edit.js";
 
 // A mission's routine: a short form with a button that says what it does. It is
 // thought of by its end ("a las 7:30 en la puerta"): "Termina a las" comes first.
@@ -45,7 +46,7 @@ export async function viewRoutineNew(missionId) {
       const routine = await api("POST", "api/routines", { json });
       location.hash = `#/parents/config/routines/${routine.id}`;
     } catch (err) {
-      error.textContent = err.status === 409 ? t.routines.overlaps : err.status === 422 ? t.routines.badTimes : errorMessage(err);
+      error.textContent = routineError(err);
     }
   }
 

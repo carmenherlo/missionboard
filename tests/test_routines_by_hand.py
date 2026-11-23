@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from tests.conftest import PARENT
-from tests.test_missions import add_task, create_child, create_mission
+from tests.test_missions import add_task, create_child, create_mission, patch
 from tests.test_settings import FixedClock
 from tests.test_today import descriptions, mark
 
@@ -92,12 +92,18 @@ def test_finished_for_everyone_it_does_not_come_back(client, landing):
     assert client.get("/api/routines/current").json()["manual"] is True
 
 
-def test_each_child_with_their_mission_and_it_is_open_all_day(client, landing):
-    bea = create_child(client)
+def test_the_missions_hours_rule_until_it_is_started_by_hand(client, landing):
+    bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
+    patch(client, landing["mission_id"], schedule={"start": "18:00", "end": "21:00"})  # it is 17:00
     mission = client.get(f"/api/missions/{landing['mission_id']}").json()
-    day = client.get(f"/api/children/{bea['id']}/today").json()
-    assert day["missions"][0]["state"] == "open" and day["missions"][0]["schedule"] is None
+
+    def today(child):
+        return client.get(f"/api/children/{child['id']}/today").json()["missions"][0]
+
+    assert today(bea)["state"] == "upcoming" and today(bea)["schedule"] == {"start": "18:00", "end": "21:00"}
     start(client, landing, [bea["id"]])
+    assert today(bea)["state"] == "open"  # started, it opens for who has come home, only today
+    assert today(alex)["state"] == "upcoming"
     for task in mission["tasks"]:
         mark(client, bea, mission, task["id"])
     assert client.get("/api/routines/current").json()["people"][0]["mission"]["completed"] is True

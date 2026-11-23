@@ -16,6 +16,7 @@ from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
 from app.images.rules import ImageRules
 from app.missions.repository import WEEKDAYS, Mission, MissionsRepository, Schedule, Step, Task
+from app.routines import links
 from app.routines.repository import RoutinesRepository
 from app.storage.photo_store import PhotoStore
 
@@ -118,11 +119,8 @@ class MissionsService:
             self._missions.update(mission)
             self._check_routines()
         self._images.drop_replaced_photo(old.image, mission.image)
-        changes = {
-            field: getattr(mission, field)
-            for field in ("name", "image", "days", "schedule", "color")
-            if getattr(mission, field) != getattr(old, field)
-        }
+        fields = ("name", "image", "days", "schedule", "color")
+        changes = {f: getattr(mission, f) for f in fields if getattr(mission, f) != getattr(old, f)}
         if changes:
             self._log("mission", "changed", mission, changes=changes)
         return mission
@@ -344,12 +342,13 @@ class MissionsService:
 
     def _check_routines(self) -> None:
         """A routine's parts are its mission's tasks: a change that would break its times,
-        or make it ring with another routine, is refused (nothing is saved)."""
+        take it out of the mission's hours or make it ring with another, is refused."""
         try:
             routines = self._routines.list()
         except ValidationError as err:
             raise InvalidError("It no longer fits in its routine") from err
         for i, routine in enumerate(routines):
+            links.check_fits(routine, self._missions.get(routine.mission_id))
             if any(routine.overlaps(other) for other in routines[i + 1 :]):
                 raise ConflictError("Its routine would overlap with another one")
 

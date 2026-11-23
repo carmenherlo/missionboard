@@ -14,6 +14,7 @@ from app.children.repository import ChildrenRepository
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository
+from app.routines.links import check_fits
 from app.routines.model import Part, Routine
 from app.routines.repository import NEW_PART_MINUTES, RoutinesRepository
 from app.routines.timing import card_positions, hhmm, minute_of, music_kept, settled
@@ -127,7 +128,7 @@ class RoutinesEditor:
             changes["days"] = [d for d in WEEKDAYS if d in changes["days"]]
         if "wake" in changes:
             current = self.get(routine_id)
-            parts = [_dump(p) for p in current.parts]
+            parts = [p.model_dump(mode="json") for p in current.parts]
             if changes["wake"] is None:  # started by hand: parts one after the other; the goal after them
                 for part in parts:
                     part["at"] = None
@@ -144,7 +145,7 @@ class RoutinesEditor:
         the goal's) and the alarm (on or off, and how many minutes before the first part)."""
         if routine.manual:
             raise InvalidError("Started by hand: it has no times")
-        parts = [_dump(p) for p in routine.parts]
+        parts = [p.model_dump(mode="json") for p in routine.parts]
         goal = routine.goal and routine.goal.model_dump(mode="json")
         start, lead = routine.starts, routine.alarm_before if routine.alarm else 0
         changes = {}
@@ -198,7 +199,7 @@ class RoutinesEditor:
     def update_part(self, routine_id: str, part_id: str, **fields) -> Routine:
         routine = self.get(routine_id)
         self._find_part(routine, part_id)
-        parts = [_dump(p) | fields if p.id == part_id else _dump(p) for p in routine.parts]
+        parts = [p.model_dump(mode="json") | (fields if p.id == part_id else {}) for p in routine.parts]
         routine = self._change(routine_id, {"parts": parts})
         self._log("changed", routine, part=self._find_part(routine, part_id).text)
         return routine
@@ -290,6 +291,7 @@ class RoutinesEditor:
             routine = Routine.model_validate(music_kept(settled(doc)))
         except ValidationError as err:
             raise InvalidError("The times do not add up") from err
+        check_fits(routine, self._missions.get(routine.mission_id))
         if check_others:
             for other in self._routines.list():
                 if other.id != routine.id and routine.overlaps(other):
@@ -322,10 +324,6 @@ class RoutinesEditor:
 def _rings_at_first_part(routine: Routine) -> bool:
     """The alarm rings right as the first part starts: a song there would sound with it."""
     return not routine.manual and routine.alarm and routine.alarm_before == 0
-
-
-def _dump(part: Part) -> dict:
-    return part.model_dump(mode="json")
 
 
 def _named(routine: Routine) -> SimpleNamespace:

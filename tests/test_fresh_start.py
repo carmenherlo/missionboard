@@ -170,7 +170,8 @@ def test_the_morning_of_the_examples(examples, clock):
         c["name"]: client.get(f"/api/children/{c['id']}/today").json()["missions"][0]
         for c in client.get("/api/children").json()
     }
-    assert states["Bea"]["state"] == "open" and states["Bea"]["schedule"] == {"start": "06:40", "end": "07:35"}
+    # The mission's hours rule, for whoever follows its routine too.
+    assert states["Bea"]["state"] == "open" and states["Bea"]["schedule"] == {"start": "06:00", "end": "09:00"}
     assert states["Noa"]["state"] == "open" and states["Noa"]["schedule"] == {"start": "06:00", "end": "09:00"}
 
 

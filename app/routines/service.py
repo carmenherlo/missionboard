@@ -181,6 +181,8 @@ class RoutinesService:
         day = app_day(now, self._settings.settings().day_starts_at)
         self._runs.clear(day, routine_id)
         self._runs.set(day, routine_id, started_at=now, kids=json.dumps(kids))
+        for kid in kids:  # the mission's hours rule, but starting it by hand opens it (links.py)
+            self._days.open_for_routine(kid, routine.mission_id)
         self._events.routine_did("routine_started", routine.name)
 
     def note(  # noqa: C901 (to split)

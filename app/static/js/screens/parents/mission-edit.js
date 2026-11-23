@@ -180,7 +180,7 @@ export async function viewMissionEdit(missionId) {
         h("label", { class: "time" }, t.missionEdit.from, start),
         h("label", { class: "time" }, t.missionEdit.to, end)),
       h("p", { class: "hint" }, t.missionEdit.endOptional),
-      mission.routine && h("p", { class: "hint" }, t.missionEdit.forWhoElse));
+      mission.routine && h("p", { class: "hint" }, t.missionEdit.routineInside));
   }
 
   // ---------- its routine ----------
