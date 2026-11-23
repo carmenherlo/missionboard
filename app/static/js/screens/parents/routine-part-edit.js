@@ -95,9 +95,26 @@ export async function viewRoutinePartEdit(routineId, partId) {
     }));
   }
 
+  // ---------- "Sin prisa" (modo-carrera.html): in a race, a part that must not be rushed ----------
+  const slow = h("div", { class: "field" });
+  function renderSlow() {
+    slow.hidden = !routine.race;
+    if (!routine.race) return;
+    const minutes = part().slow_minutes;
+    const put = (value) => save(api("PUT", `${partUrl}/slow`, { json: { minutes: value } })).catch(() => {});
+    slow.replaceChildren(
+      h("label", { class: "toggle" },
+        h("input", { type: "checkbox", checked: Boolean(minutes), onchange: (e) => put(e.target.checked ? part().minutes : null) }),
+        t.race.slowOn),
+      minutes ? h("div", { class: "part-length" }, h("span", { class: "field__label" }, t.race.slowMinimum),
+        stepper({ value: minutes, min: 1, max: part().minutes, format: t.routine.minutes, label: t.race.slowMinimum, onChange: put })) : "",
+      h("span", { class: "hint" }, t.race.slowHintOn));
+  }
+
   function refresh() {
     if (!part()) return;
     renderWhen();
+    renderSlow();
     renderSays();
     renderWarnings();
   }
@@ -114,7 +131,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
               h("label", {}, t.routinePart.spoken, spoken)),
             h("span", { class: "hint" }, t.routinePart.spokenHint),
             h("a", { class: "btn", href: `#/parents/config/missions/${routine.mission_id}/tasks/${partId}` }, t.routinePart.changeInMission),
-            when)),
+            when, slow)),
         h("div", { class: "stack" },
           panel(t.routinePart.panelSay,
             says,

@@ -7,6 +7,7 @@ import { h } from "../dom.js";
 import { icon } from "../icons.js";
 import { t } from "../texts.js";
 import { clockFace, timerFace } from "./clock-face.js";
+import * as script from "./script.js";
 import { capital, countdownText, hourWords, itIs, shortTime } from "./words.js";
 
 // In the parents' zone the routine does not cover the screen: a banner says it is on.
@@ -24,9 +25,14 @@ export function view(r) {
       icon("music"), t.routine.stopMusic);
     // Started by hand, a parent can pause it (pause.js): ⏸ Pausar, or ▶ Seguir.
     const pauseButton = h("button", { type: "button", class: "btn routine__pause", hidden: true, onclick: () => r.askPause() });
+    // «± Tiempo» (extra-time.js): started by hand, a parent adds or takes minutes, only today.
+    const extraButton = h("button", { type: "button", class: "btn routine__extra", hidden: true, onclick: () => r.askExtra() },
+      t.routine.extraTime);
     const stopButton = h("button", { type: "button", class: "btn btn--primary routine__stop", onclick: r.stop },
       t.routine.stop);
-    const what = h("h2", { class: "routine__what" });
+    // A tap on the part's name says it (some children do not read yet).
+    const what = h("h2", { class: "routine__what", onclick: () => r.sayWhat?.() });
+    const race = h("div", { class: "race" }); // a race (race-view.js), instead of the clock
     const until = h("p", { class: "routine__until" });
     const clock = h("div", { class: "routine__clock" });
     const count = h("span", { class: "routine__count", "aria-live": "off", hidden: true }); // only in a countdown
@@ -43,14 +49,14 @@ export function view(r) {
     const layer = h("div", { class: "routine-layer", role: "dialog", "aria-modal": "true", "aria-label": t.routine.label },
       h("section", { class: "routine" },
         h("header", { class: "routine__top" }, fullscreenButton(), time, h("span", { class: "child-bar__spacer" }),
-          pauseButton, musicButton, soundButton(), close),
+          extraButton, pauseButton, musicButton, soundButton(), close),
         trialTools,
-        what, until, champions, dial, stopButton, tasks, next, transcript),
+        what, until, champions, dial, stopButton, tasks, next, transcript, race),
       h("aside", { class: "routine__side" }, people),
       over, finish);
     // In the parents' zone, or hidden here: a button to go back to it.
     const banner = h("button", { type: "button", class: "routine-banner", onclick: () => r.reopen() });
-    return { layer, banner, time, close, pauseButton, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
+    return { layer, banner, time, close, pauseButton, extraButton, race, musicButton, stopButton, what, until, champions, clock, count, tasks, next, finish, people, over,
       trialTools, transcript };
   }
 
@@ -88,6 +94,7 @@ export function view(r) {
     } else if (phase.kind === "part") {
       image = phase.part.image_url;
       what = capital(phase.part.name);
+      r.sayWhat = () => say(script.partOpening(phase.part));
       until = data.manual ? t.routine.endsIn(toGo) : t.routine.endsAt(hourWords(phase.to), toGo);
     } else if (r.showing.finished === "goal") {
       image = data.goal.image_url;
@@ -103,7 +110,10 @@ export function view(r) {
       what = r.showing.finished === "done" ? t.routine.done : t.routine.timeUp;
     }
     if (data.paused && phase.kind !== "done") until = t.routine.pausedLeft(toGo);
-    view.what.replaceChildren(...[image && h("img", { src: image, alt: "" }), what].filter(Boolean));
+    if (phase.kind !== "part") r.sayWhat = null;
+    view.what.classList.toggle("routine__what--speaks", Boolean(r.sayWhat));
+    view.what.replaceChildren(...[image && h("img", { src: image, alt: "" }), what].filter(Boolean),
+      r.sayWhat ? h("span", { class: "routine__speak", "aria-hidden": "true" }, "🔊") : "");
     view.until.textContent = until;
     view.clock.replaceChildren(data.manual
       ? timerFace(phase, time)
@@ -142,11 +152,12 @@ export function view(r) {
     const { view, data } = r.showing;
     const paused = Boolean(data.paused);
     view.pauseButton.hidden = !data.manual || Boolean(data.trial) || phase.kind === "done" || Boolean(r.showing.finishing);
+    view.extraButton.hidden = view.pauseButton.hidden;
     if (view.pauseButton.dataset.paused === String(paused)) return;
     view.pauseButton.dataset.paused = String(paused);
     view.pauseButton.replaceChildren(icon(paused ? "play" : "pause"), paused ? t.routine.resume : t.routine.pause);
     view.layer.classList.toggle("routine-layer--paused", paused);
   }
 
-  return { buildView, place, render };
+  return { buildView, place, render, renderPause };
 }

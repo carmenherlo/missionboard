@@ -268,6 +268,22 @@
   --timer-case: #11141b;
   --timer-text: white;
   --routine-side-width: 200px;
+  /* Modo carrera (modo-carrera.html, B): the race through space, big, on top; the gap
+     between the rocket and the ghost green (winning) or orange (not red: it can be won yet). */
+  --race-space-top: var(--sky-1-top);
+  --race-space-bottom: var(--sky-1-bottom);
+  --race-text: white;
+  --race-road: rgb(255 255 255 / 0.55);
+  --race-ahead: #2fd69b;
+  --race-behind: #ffb020;
+  --race-even: #cfd8ff;
+  --race-on-gap: #11141b;
+  --race-planet: #ffffff;
+  --race-planet-coming: rgb(255 255 255 / 0.35);
+  --race-big-size: clamp(2rem, 5.5vh, 3.25rem);
+  --race-hint-size: 96px; /* each hint's card */
+  --race-timer-size: min(26vh, 200px);
+  --race-start-count-size: 160px;
   /* Songs (rutinas-4, screen 4 bis): pink-lilac, like Scratch's sound blocks; only in the parents' editor */
   --song-bar: #f7def7;
   --song-edge: #c55ec5;

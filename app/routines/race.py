@@ -8,7 +8,7 @@ from app.children.repository import ChildrenRepository
 from app.clock import Clock
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
-from app.routines.race_rules import outcome, stars_for
+from app.routines.race_rules import outcome, planned_minutes, stars_for
 from app.routines.races_repository import RacesRepository
 from app.routines.service import RoutinesService
 from app.stars.repository import StarsRepository
@@ -41,7 +41,8 @@ class RaceService:
             raise ConflictError("Somebody still has tasks left")
         routine, race = current.routine, current.routine.race
         took = current.minute - current.started
-        result = outcome(took, routine.parts_minutes)
+        planned = planned_minutes(routine, current.people)
+        result = outcome(took, planned)
         stars = stars_for(race, result)
         kids = [p.child for p in current.people]
         waits = bool(stars) and race.review
@@ -50,7 +51,7 @@ class RaceService:
             current.day,
             routine,
             kids,
-            planned_seconds=routine.parts_minutes * 60,
+            planned_seconds=planned * 60,
             took_seconds=round(took * 60),
             outcome=result,
             stars=stars,
@@ -60,11 +61,11 @@ class RaceService:
         if stars and not waits:
             self._give(self._races.get(race_id))
         self._routines.note(routine_id, "ended", early=True)
-        self._events.routine_did(f"race_{result}", routine.name, part=_detail(took, routine.parts_minutes, stars))
+        self._events.routine_did(f"race_{result}", routine.name, part=_detail(took, planned, stars))
         return self._races.get(race_id)
 
     def to_review(self) -> list[dict]:
-        """Today's races whose extra stars wait for a parent (Padres · Hoy · Te toca)."""
+        """Today's races whose extra stars wait for a parent (Padres · Por dar)."""
         day = self._routines.current_day()
         return [r for r in self._races.of_day(day) if r["given"] is None and r["stars"]]
 

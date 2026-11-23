@@ -18,6 +18,7 @@ from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.routines.links import kids_of
 from app.routines.model import Part, Routine
 from app.routines.people import People, Person
+from app.routines.race_rules import START_SECONDS, planned_minutes
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.timing import minute_of
@@ -90,7 +91,7 @@ class RoutinesService:
             routine = stored.on(weekday).lengthened(json.loads(run["extra"] or "{}"))  # ± minutes today
             kids = json.loads(run["kids"] or "[]")
             people = [p for p in self.people(stored) if p.child.id in kids]
-            if routine.racing and at >= start + routine.parts_minutes:  # the flag: the race is lost
+            if routine.racing and at >= start + planned_minutes(routine, people):  # the flag: the race is lost
                 self._race_lost(routine, day, run, start, people)
                 continue
             if at < start + routine.length:
@@ -189,7 +190,8 @@ class RoutinesService:
         now = self._clock.now()
         day = app_day(now, self._settings.settings().day_starts_at)
         self._runs.clear(day, routine_id)
-        self._runs.set(day, routine_id, started_at=now, kids=json.dumps(kids))
+        started = now + timedelta(seconds=START_SECONDS) if routine.racing else now  # after "3, 2, 1, ¡YA!"
+        self._runs.set(day, routine_id, started_at=started, kids=json.dumps(kids))
         for kid in kids:  # the mission's hours rule, but starting it by hand opens it (links.py)
             self._days.open_for_routine(kid, routine.mission_id)
         self._events.routine_did("routine_started", routine.name)
@@ -276,9 +278,9 @@ class RoutinesService:
     def _race_lost(self, routine: Routine, day: date, run: dict, start: float, people: list[Person]) -> None:
         """Its time is up and not everyone finished: it ends, and its mission closes for its
         children at that moment (once: the run is finished)."""
-        flag = datetime.fromisoformat(run["started_at"]) + timedelta(minutes=routine.parts_minutes)
+        planned = planned_minutes(routine, people) * 60
+        flag = datetime.fromisoformat(run["started_at"]) + timedelta(seconds=planned)
         self._runs.set(day, routine.id, finished_at=flag)
-        planned = routine.parts_minutes * 60
         kids = [p.child for p in people]
         self._races.add(
             day, routine, kids, planned_seconds=planned, took_seconds=None, outcome="lost", stars=0, at=flag, given=None

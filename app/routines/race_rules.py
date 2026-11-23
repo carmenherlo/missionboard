@@ -30,3 +30,12 @@ def outcome(took_minutes: float, planned_minutes: float) -> str:
 
 def stars_for(race: Race, result: str) -> int:
     return {"fast": max(race.fast, race.on_time), "won": race.on_time}.get(result, 0)
+
+
+START_SECONDS = 6  # "3, 2, 1, ¡YA!" before its first part: it does not count
+
+
+def planned_minutes(routine, people) -> int:
+    """Its time, the flag: the parts that some child running it has (the others are skipped)."""
+    having = [p for p in routine.parts if any(p.id in person.mission["tasks"] for person in people)]
+    return sum(p.minutes for p in having) if people else routine.parts_minutes

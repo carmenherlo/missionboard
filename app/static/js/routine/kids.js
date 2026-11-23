@@ -9,6 +9,10 @@ import { t } from "../texts.js";
 export function kids(r) {
   // The kids on a side: their avatar in a ring that closes as their mission goes, and 3/7.
   function renderPeople() {
+    if (r.showing.data.race) { // a race: «¡Hecho!» on each child (race-view.js)
+      if (r.showing.race) r.renderRacers();
+      return;
+    }
     const { view, data } = r.showing;
     const signing = r.showing.phaseKey === "check";
     view.people.replaceChildren(...data.people.map((person) => {

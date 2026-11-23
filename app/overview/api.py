@@ -13,6 +13,8 @@ from app.missions.repository import MissionsRepository
 from app.overview.service import OverviewService
 from app.parents.repository import DEFAULT_PARENT_CODE, ParentsRepository
 from app.prizes.repository import PrizesRepository
+from app.routines.race import RaceService
+from app.routines.race_api import get_race_service
 from app.routines.repository import RoutinesRepository
 from app.shop.api import Presenter as ShopPresenter
 from app.shop.api import get_orders_service
@@ -93,9 +95,9 @@ def overview_today(overview: OverviewService = Depends(get_overview_service), pr
 
 
 @router.get("/to-give")
-def to_give(overview: OverviewService = Depends(get_overview_service)):
-    """The number on «Por dar» in the parents' menu."""
-    return {"count": overview.to_give()}
+def to_give(overview: OverviewService = Depends(get_overview_service), races: RaceService = Depends(get_race_service)):
+    """The number on «Por dar» in the parents' menu: what to hand over and the races to check."""
+    return {"count": overview.to_give() + len(races.to_review())}
 
 
 @router.get("/setup")

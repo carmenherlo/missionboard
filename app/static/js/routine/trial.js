@@ -147,8 +147,9 @@ export function trial(r) {
           type: "button", class: `tab${speed === r.showing.speed ? " tab--on" : ""}`,
           "aria-pressed": String(speed === r.showing.speed), onclick: () => r.setSpeed(speed),
         }, `×${speed}`))),
-      h("button", { type: "button", class: "btn", onclick: r.back }, t.routine.previousPart),
-      h("button", { type: "button", class: "btn", onclick: r.jump }, t.routine.nextPart),
+      // A race moves on as the children do their tasks, not by the clock: no jumping.
+      data.race ? "" : h("button", { type: "button", class: "btn", onclick: r.back }, t.routine.previousPart),
+      data.race ? "" : h("button", { type: "button", class: "btn", onclick: r.jump }, t.routine.nextPart),
       h("button", {
         type: "button", class: "btn routine__trial-toggle",
         "aria-pressed": String(r.showing.transcriptOpen),

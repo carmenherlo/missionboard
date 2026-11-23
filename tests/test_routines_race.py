@@ -96,7 +96,12 @@ def test_the_screen_gets_its_rules_and_who_has_each_task(client, race, kids):
 
 def test_beating_the_ghost_waits_for_a_parent(client, race, kids, clock):
     ended = run(client, race, kids, clock, 17).json()
-    assert (ended["outcome"], ended["stars"], ended["given"], ended["took_seconds"]) == ("won", 1, None, 17 * 60)
+    assert (ended["outcome"], ended["stars"], ended["given"], ended["took_seconds"]) == (
+        "won",
+        1,
+        None,
+        17 * 60 - 6,
+    )  # "3, 2, 1, ¡YA!" does not count
     assert client.get("/api/routines/current").json() is None
     stars_before = balance(client, kids[0])
     waiting = client.get("/api/routines/races/to-review", headers=PARENT).json()
@@ -134,7 +139,9 @@ def test_at_the_flag_it_is_lost_and_the_mission_closes(client, race, kids, clock
     bea = kids[0]
     start(client, race, [k["id"] for k in kids])
     mark(client, bea, race["mission"], race["tasks"][0]["id"])
-    clock.moment = MONDAY + timedelta(minutes=20)
+    clock.moment = MONDAY + timedelta(minutes=20)  # 6 seconds left: it started after "3, 2, 1, ¡YA!"
+    assert client.get("/api/routines/current").json() is not None
+    clock.moment = MONDAY + timedelta(minutes=20, seconds=6)
     assert client.get("/api/routines/current").json() is None
     assert descriptions(client, limit=1) == ["Carrera «Tarde»: se acabó el tiempo"]
     day = client.get(f"/api/children/{bea['id']}/today").json()
@@ -181,3 +188,9 @@ def test_by_the_clock_the_part_going_on_cannot_end_before_now(client, race, kids
     clock.moment = MONDAY + timedelta(minutes=8)
     assert client.post(url, json={"part_id": homework, "minutes": 1}, headers=PARENT).status_code == 409  # over
     assert client.post(url, json={"part_id": shower, "minutes": 2}, headers=PARENT).json() == {"minutes": 12}
+
+
+def test_the_parts_nobody_running_it_has_do_not_count(client, race, kids):
+    start(client, race, [kids[1]["id"]])  # only Alex, who has no homework
+    current = client.get("/api/routines/current").json()
+    assert current["race"]["minutes"] == 10 and current["race"]["ghost"] == 9

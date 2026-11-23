@@ -1,5 +1,6 @@
 // Zona de padres · Por dar (menu-padres-2.html): what waits for a parent to hand over:
-// the week prizes, the shop's orders and the gift cards (with the momento de vales).
+// the week prizes, the shop's orders, the gift cards (with the momento de vales) and the
+// races whose extra stars wait for a parent's check (races-card.js).
 // Each block hides while empty; «✓ No tienes nada por dar» shows when all of them are.
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
@@ -9,11 +10,12 @@ import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { refreshToGive } from "./menu.js";
 import { dayMonth, orderRow } from "./orders-panel.js";
+import { racesCard } from "./races-card.js";
 import { vouchersCard } from "./vouchers-card.js";
 
 export async function viewToGive() {
-  const [view, orders, vouchers] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/orders"),
-    api("GET", "api/vouchers"), loadAvatars()]);
+  const [view, orders, vouchers, races] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/orders"),
+    api("GET", "api/vouchers"), api("GET", "api/routines/races/to-review"), loadAvatars()]);
   const status = saveStatus();
   render(
     parentsHeader(h("span", { class: "title-line" }, t.overview.toGiveTitle, status.element)),
@@ -21,7 +23,8 @@ export async function viewToGive() {
       h("div", { class: "todo-list" },
         weekPrizes(view, status),
         ordersBlock(orders, status),
-        vouchersCard(vouchers, status, todoBlock)),
+        vouchersCard(vouchers, status, todoBlock),
+        racesCard(races, status, todoBlock, viewToGive)),
       h("p", { class: "todo-empty" }, t.overview.nothingToGive)));
 }
 

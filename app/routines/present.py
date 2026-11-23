@@ -7,7 +7,7 @@ from app.children import avatars
 from app.children.api import public_child
 from app.images.libraries import ImageLibraries
 from app.routines.model import Routine
-from app.routines.race_rules import FAST_SHARE, GHOST_SHARE
+from app.routines.race_rules import FAST_SHARE, GHOST_SHARE, planned_minutes
 from app.routines.service import Current
 from app.routines.timing import hhmm
 from app.songs.repository import SongsRepository
@@ -59,7 +59,9 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
         "stopped": bool(current.run["stopped_at"]),
         "paused": bool(current.run["paused_at"]),  # started by hand: its time stands still
         "extra": json.loads(current.run["extra"] or "{}"),  # minutes a parent added to each part today
-        "race": current.started is not None and routine.racing and race_of(routine),  # only started by hand
+        "race": current.started is not None
+        and routine.racing
+        and race_of(routine, current.people),  # only started by hand
         "people": [
             {"child": public_child(p.child), "colors": avatars.tones(p.child.color), "mission": p.mission}
             for p in current.people
@@ -91,10 +93,10 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
     return played
 
 
-def race_of(routine: Routine) -> dict:
+def race_of(routine: Routine, people: list) -> dict:
     """A race's rules for its screen, in minutes from its start: the ghost gets to the
     flag at `ghost`, "muy rápido" is up to `fast_minutes`, and the time is up at `minutes`."""
-    minutes = routine.parts_minutes
+    minutes = planned_minutes(routine, people)
     return {
         "on_time": routine.race.on_time,
         "fast": routine.race.fast,

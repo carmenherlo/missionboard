@@ -32,7 +32,8 @@
 //   phases.js where it is · heard.js what is heard · goal.js how it ends ·
 //   soundtrack.js its songs · view.js what is seen · kids.js the kids on a side ·
 //   trial.js "Probar ahora" · closing.js "Cerrar", "Volver" and "Finalizar" ·
-//   notices.js the notices before it rings.
+//   notices.js the notices before it rings · extra-time.js «± Tiempo» ·
+//   race.js, race-view.js and race-end.js a routine by hand as a race (modo-carrera.html).
 import { api } from "../api.js";
 import { loadAvatars } from "../components/avatar.js";
 import { onSay, quiet } from "../components/speech.js";
@@ -42,8 +43,12 @@ import { heard } from "./heard.js";
 import { kids } from "./kids.js";
 import { musicPlayer } from "./music.js";
 import { startNotices } from "./notices.js";
+import { extraTime } from "./extra-time.js";
 import { pause } from "./pause.js";
 import { phases } from "./phases.js";
+import { race } from "./race.js";
+import { raceEnd } from "./race-end.js";
+import { raceView } from "./race-view.js";
 import { soundtrack } from "./soundtrack.js";
 import { trial } from "./trial.js";
 import { view } from "./view.js";
@@ -69,7 +74,8 @@ export function startRoutines() {
   // now (null: nothing), and every piece adds its functions to it, so they call each other.
   const r = { showing: null };
   Object.assign(r, { check, begin, sync, end, note, now, tick },
-    phases(r), heard(r), goal(r), soundtrack(r), trial(r), view(r), kids(r), closing(r), pause(r));
+    phases(r), heard(r), goal(r), soundtrack(r), trial(r), view(r), kids(r), closing(r), pause(r),
+    race(r), raceView(r), raceEnd(r), extraTime(r));
 
   async function check() {
     if (r.showing?.data.trial) return; // a trial goes on until it is closed
@@ -126,6 +132,7 @@ export function startRoutines() {
     r.showing.hidden = r.wasHidden();
     document.body.append(view.layer, view.banner);
     if (data.trial) r.startPretending();
+    if (data.race) r.startRace(); // modo carrera (race.js): its own phases and screen
     r.renderTrialTools();
     r.note("started");
     r.renderPeople();
@@ -164,6 +171,10 @@ export function startRoutines() {
 
   function tick() {
     if (!r.showing) return;
+    if (r.showing.data.race) {
+      r.raceTick();
+      return;
+    }
     const time = r.now();
     if (r.showing.earlyGoal == null && r.allDoneEarly(time)) r.showing.earlyGoal = time;
     const { data } = r.showing;
