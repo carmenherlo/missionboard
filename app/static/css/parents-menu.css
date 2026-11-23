@@ -178,6 +178,18 @@
   .settings-line:hover { background: color-mix(in srgb, var(--text) var(--state-hover), transparent); }
 }
 
+/* «A los niños»: not one more setting but the way to the children's screen, in blue */
+.settings-line--kids {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.settings-line--kids .settings-line__icon,
+.settings-line--kids .settings-line__chevron {
+  background: none;
+  color: inherit;
+}
+
 .settings-line:focus-visible {
   outline: 3px solid var(--primary);
   outline-offset: -3px;
