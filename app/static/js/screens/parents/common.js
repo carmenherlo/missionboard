@@ -22,7 +22,11 @@ export function parentsHeader(title, back = null) {
         class: `icon-button icon-button--ghost${toSettings ? " only-on-phone" : ""}`, href: back.href,
         "aria-label": t.common.backTo(back.label), title: t.common.backTo(back.label),
       }, icon("back")),
-      fullscreenButton()),
+      // The way back to the children, where they have «Zona de padres»: the top corner.
+      h("div", { class: "top-bar__end" },
+        h("a", { class: "icon-button icon-button--ghost icon-button--label kids-button", href: "#/", title: t.menu.kids, "aria-label": t.menu.kids },
+          icon("home"), h("span", { class: "kids-button__label" }, t.menu.kids)),
+        fullscreenButton())),
     h("div", { class: "page-title" }, h("h1", { class: "page-title__text" }, title)));
   return fragment;
 }

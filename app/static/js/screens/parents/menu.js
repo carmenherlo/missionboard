@@ -100,8 +100,7 @@ export function parentsMenu() {
         return path === "notify" ? notifyOnlyWithHA(link, on) : link;
       }),
     ]),
-    h("hr", { class: "drawer__line" }),
-    item("kids", "#/", "home", t.menu.kids));
+  ); // «A los niños»: in the top bar's corner (common.js)
 
   const scrim = h("div", { class: "drawer-scrim", onclick: () => close() });
   const close = () => drawer.classList.remove("drawer--open");

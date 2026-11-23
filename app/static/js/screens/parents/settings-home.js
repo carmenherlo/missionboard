@@ -28,6 +28,5 @@ export function viewSettingsHome() {
     parentsHeader(t.config.title),
     h("main", { class: "page" },
       h("nav", { class: "settings-list", "aria-label": t.config.title },
-        SETTINGS.map(group),
-        h("div", { class: "settings-group__card" }, line("#/", "home", t.menu.kids)))));
+        SETTINGS.map(group))));
 }

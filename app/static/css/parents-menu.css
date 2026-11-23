@@ -32,13 +32,6 @@
   font-weight: 700;
 }
 
-.drawer__line {
-  width: 100%;
-  margin: auto 0 var(--space-1); /* «A los niños» at the bottom */
-  padding-top: var(--space-2);
-  border: 0;
-  border-bottom: 1px solid var(--line);
-}
 
 .nav-item {
   display: flex;
@@ -183,7 +176,7 @@
   outline-offset: -3px;
 }
 
-.top-bar .fullscreen-button { margin-left: auto; }
+.top-bar__end { display: flex; gap: var(--space-2); margin-left: auto; }
 
 /* Wide: the menu at the side, the screen beside it, no ☰. */
 @media (min-width: 1000px) {
@@ -195,12 +188,12 @@
     display: none;
   }
 
-  .top-bar:not(:has(> :not(.menu-button, .fullscreen-button))) {
+  .top-bar:not(:has(> :not(.menu-button, .top-bar__end))) {
     min-height: var(--space-4); /* nothing in the bar: only some room above the title */
   }
 
-  /* full screen in the corner, so the bar can stay that low */
-  .top-bar .fullscreen-button {
+  /* «A los niños» and full screen in the corner, so the bar can stay that low */
+  .top-bar__end {
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -296,19 +289,23 @@
   }
 
   /* No ☰ here either: full screen in the corner, so the title is not pushed a line down */
-  .top-bar:not(:has(> :not(.menu-button, .fullscreen-button))) {
+  .top-bar:not(:has(> :not(.menu-button, .top-bar__end))) {
     min-height: var(--space-4);
   }
 
-  .top-bar .fullscreen-button {
+  .top-bar__end {
     position: absolute;
     top: 1rem;
     right: 1rem;
   }
 
-  .top-bar:not(:has(> :not(.menu-button, .fullscreen-button))) + .page-title {
-    padding-right: calc(48px + 1rem + var(--space-2)); /* the title never under the corner button */
+  .top-bar:not(:has(> :not(.menu-button, .top-bar__end))) + .page-title {
+    padding-right: calc(2 * 48px + 1rem + 2 * var(--space-2)); /* the title never under the corner buttons */
   }
+
+  .kids-button { width: var(--icon-button); padding: 0; justify-content: center; }
+
+  .kids-button__label { display: none; } /* only the house: little room (title="A los niños") */
 
   .bottom-nav__item--on {
     color: var(--primary);
