@@ -76,6 +76,25 @@ def test_upgrade_does_not_share_state():
 # ---------- config store editing ----------
 
 
+def test_a_change_by_hand_is_seen_on_the_next_load(tmp_path):
+    write_yaml(tmp_path, CURRENT)
+    store = ConfigStore(tmp_path)
+    assert store.load()["parents"]["code"] == "1111"
+    write_yaml(tmp_path, {**CURRENT, "parents": {"code": "2222"}})
+    assert store.load()["parents"]["code"] == "2222"
+
+
+def test_a_loaded_document_changed_by_its_caller_does_not_change_the_next(tmp_path):
+    write_yaml(tmp_path, CURRENT)
+    store = ConfigStore(tmp_path)
+    store.load()["children"].clear()
+    with store.edit() as doc:
+        doc["parents"]["code"] = "3333"
+    assert store.load()["children"][0]["name"] == "Noa"
+    doc["parents"]["code"] = "4444"  # after the edit: saved already, not kept
+    assert store.load()["parents"]["code"] == "3333"
+
+
 def test_failed_edit_saves_nothing(tmp_path):
     store = ConfigStore(tmp_path)
     with pytest.raises(RuntimeError), store.edit() as doc:

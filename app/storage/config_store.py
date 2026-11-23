@@ -4,6 +4,7 @@ Only this module knows the file format. Repositories on top of it expose
 each section (children, parents, settings...) as plain Python objects.
 """
 
+import copy
 import os
 import shutil
 import tempfile
@@ -16,6 +17,8 @@ import yaml
 from app.storage import config_migrations
 
 CONFIG_FILENAME = "config.yaml"
+# libyaml's safe loader when PyYAML was built with it (about ten times faster), else Python's.
+FAST_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
 
 def config_path(data_dir: Path) -> Path:
@@ -27,6 +30,9 @@ class ConfigStore:
         self.path = config_path(data_dir)
         self._lock = threading.RLock()
         self._local = threading.local()
+        # The last document read and the file it came from: parsed again only when the file
+        # changes (another device saved, or someone edited it by hand). Callers get a copy.
+        self._cached: tuple[tuple, dict] | None = None
 
     def migrate(self) -> None:
         """Bring the file to the current version, keeping a copy of the old one."""
@@ -82,11 +88,19 @@ class ConfigStore:
     def _read_current(self) -> dict:
         if not self.path.exists():
             return config_migrations.initial()
-        return config_migrations.upgrade(self._read())
+        stamp = self._stamp()
+        if self._cached is None or self._cached[0] != stamp:
+            self._cached = (stamp, config_migrations.upgrade(self._read()))
+        return copy.deepcopy(self._cached[1])
+
+    def _stamp(self) -> tuple:
+        """What changes whenever the file does: every save replaces it (a new inode)."""
+        info = self.path.stat()
+        return (info.st_ino, info.st_mtime_ns, info.st_size)
 
     def _read(self) -> dict:
         with self.path.open(encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
+            return yaml.load(f, Loader=FAST_LOADER) or {}
 
     def _write(self, doc: dict) -> None:
         """Write atomically so a crash never leaves a half-written file."""
@@ -96,6 +110,7 @@ class ConfigStore:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
                 yaml.safe_dump(doc, f, allow_unicode=True, sort_keys=False)
             os.replace(tmp, self.path)
+            self._cached = (self._stamp(), copy.deepcopy(doc))
         except BaseException:
             Path(tmp).unlink(missing_ok=True)
             raise
