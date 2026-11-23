@@ -1,6 +1,6 @@
-"""Padres · Hoy and Padres · Niño (step 7): how each child is doing today, what is
+"""Padres · Hoy, Por dar and a child's card: how each child is doing today, what is
 waiting to be handed over (orders and prizes of the wheel), and a child's stars
-over the last days with their history."""
+over the last days (won and spent) with their history."""
 
 from datetime import timedelta
 
@@ -12,8 +12,9 @@ from app.stars.service import StarsService
 from app.streaks.service import StreaksService
 from app.today.service import DayService, Today
 
-CHART_DAYS = 14  # Padres · Niño: stars won each day, these many days back
-HISTORY = 30  # and their latest movements
+CHART_DAYS = 14  # a child's card: stars won and spent each day, these many days back
+LATEST = 5  # their latest movements on the card
+HISTORY = 500  # and on «Ver todos»
 
 
 class OverviewService:
@@ -67,13 +68,20 @@ class OverviewService:
     def child(self, child_id: str) -> dict:
         today: Today = self._days.today(child_id)
         since = today.day - timedelta(days=CHART_DAYS - 1)
-        earned = self._stars.earned_by_day(child_id, since)
+        earned = self._stars.by_day(child_id, "mission_completed", since)
+        spent = self._stars.by_day(child_id, "purchase", since)  # negative amounts
         return {
             "today": today,
             "week": self._streaks.week(child_id),
             "chart": [
-                {"day": (d := since + timedelta(days=n)).isoformat(), "stars": earned.get(d.isoformat(), 0)}
+                {"day": (d := since + timedelta(days=n)).isoformat(), "earned": earned.get(d.isoformat(), 0)}
+                | {"spent": -spent.get(d.isoformat(), 0)}
                 for n in range(CHART_DAYS)
             ],
-            "movements": self._stars.movements(child_id, HISTORY),
+            "movements": self._stars.movements(child_id, LATEST),
         }
+
+    def movements(self, child_id: str) -> list[dict]:
+        """All their stars in and out (as far as «Ver todos» goes), newest first."""
+        self._children.require(child_id)
+        return self._stars.movements(child_id, HISTORY)

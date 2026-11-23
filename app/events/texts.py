@@ -138,6 +138,8 @@ SCREENS = {
     "children": ("Niños", None),
     "child_new": ("Añadir niño", None),
     "child_edit": ("Nombre y avatar de un niño", "Nombre y avatar de {child}"),
+    "child_settings": ("Ajustes de un niño", "Ajustes de {child}"),
+    "child_movements": ("Movimientos de un niño", "Movimientos de {child}"),
     "missions": ("Misiones", None),
     "child_missions": ("Misiones de un niño", "Misiones de {child}"),
     "mission_new": ("Nueva misión", None),

@@ -123,6 +123,12 @@ def overview_child(
     }
 
 
+@router.get("/children/{child_id}/movements")
+def child_movements(child_id: str, overview: OverviewService = Depends(get_overview_service)):
+    """A child's stars in and out, all of them (the card shows only the latest)."""
+    return overview.movements(child_id)
+
+
 @router.post("/prizes/{spin_id}/deliver", status_code=204)
 def deliver_prize(spin_id: int, prizes: DailyPrizeService = Depends(get_daily_prize_service)) -> None:
     prizes.deliver(spin_id)

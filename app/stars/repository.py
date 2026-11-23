@@ -49,12 +49,12 @@ class StarsRepository:
             ).fetchall()
         return [dict(row) for row in rows]
 
-    def earned_by_day(self, child_id: str, since: date) -> dict[str, int]:
-        """Stars won with missions, by day, from `since`."""
+    def by_day(self, child_id: str, reason: str, since: date) -> dict[str, int]:
+        """Stars of one kind (won with missions, spent in the shop…), summed by day, from `since`."""
         with db.connect(self._data_dir) as conn:
             rows = conn.execute(
                 "SELECT day, SUM(amount) AS stars FROM star_movements"
-                " WHERE child_id = ? AND reason = 'mission_completed' AND day >= ? GROUP BY day",
-                (child_id, since.isoformat()),
+                " WHERE child_id = ? AND reason = ? AND day >= ? GROUP BY day",
+                (child_id, reason, since.isoformat()),
             ).fetchall()
         return {row["day"]: row["stars"] for row in rows}

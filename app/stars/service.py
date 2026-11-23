@@ -48,5 +48,5 @@ class StarsService:
     def movements(self, child_id: str, limit: int) -> list[dict]:
         return self._stars.movements(child_id, limit)
 
-    def earned_by_day(self, child_id: str, since) -> dict[str, int]:
-        return self._stars.earned_by_day(child_id, since)
+    def by_day(self, child_id: str, reason: str, since) -> dict[str, int]:
+        return self._stars.by_day(child_id, reason, since)

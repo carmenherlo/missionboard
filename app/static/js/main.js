@@ -30,7 +30,9 @@ import { viewRoutinesList } from "./screens/parents/routines-list.js";
 import { viewSongsList } from "./screens/parents/songs-list.js";
 import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
+import { viewChildMovements } from "./screens/parents/child-movements.js";
 import { viewChildPage } from "./screens/parents/child-page.js";
+import { viewChildSettings } from "./screens/parents/child-settings.js";
 import { viewParentsToday } from "./screens/parents/parents-today.js";
 import { viewSettingsHome } from "./screens/parents/settings-home.js";
 import { viewToGive } from "./screens/parents/to-give.js";
@@ -84,6 +86,8 @@ const routes = [
   [parentsPath("/children"), () => viewChildrenList(), "parents", "children"],
   [parentsPath("/children/new"), () => viewChildForm(null), "parents", "child_new"],
   [parentsPath("/children/:child"), (ids) => viewChildPage(ids.child), "parents", "parents_child"],
+  [parentsPath("/children/:child/settings"), (ids) => viewChildSettings(ids.child), "parents", "child_settings"],
+  [parentsPath("/children/:child/stars"), (ids) => viewChildMovements(ids.child), "parents", "child_movements"],
   [parentsPath("/children/:child/edit"), (ids) => viewChildForm(ids.child), "parents", "child_edit"],
   [parentsPath("/children/:child/missions"), (ids) => viewChildMissions(ids.child), "parents", "child_missions"],
   [parentsPath("/children/:child/missions/:mission"),

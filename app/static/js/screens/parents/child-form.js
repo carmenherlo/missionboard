@@ -11,13 +11,14 @@ import { parentsHeader } from "./common.js";
 const NAME_SAVE_DELAY_MS = 600;
 
 // New child: short form with an "Añadir niño" button.
-// Existing child (Niños → Bea → Nombre y avatar): every change is saved on the spot,
-// like missions and steps; back to their card (child-page.js).
+// Existing child (Niños → Bea → Ajustes de Bea → Nombre y avatar): every change is saved
+// on the spot, like missions and steps; back to their settings (child-settings.js).
 
 export async function viewChildForm(childId) {
   const [children, catalog] = await Promise.all([api("GET", "api/children"), loadAvatars()]);
   const existing = childId ? children.find((c) => c.id === childId) : null;
   const card = `#/parents/config/children/${childId}`;
+  const settings = `${card}/settings`;
   if (childId && !existing) {
     location.hash = "#/parents/config/children";
     return;
@@ -154,7 +155,7 @@ export async function viewChildForm(childId) {
   render(
     parentsHeader(
       existing ? h("span", { class: "title-line" }, title, status.element) : t.childForm.titleNew,
-      existing ? { href: card, label: existing.name } : { href: "#/parents/config/children", label: t.children.back }),
+      existing ? { href: settings, label: t.childCard.settings(existing.name) } : { href: "#/parents/config/children", label: t.children.back }),
     h("main", { class: "page" },
       h("form", { class: "child-form", onsubmit },
         panel(null, preview, h("label", {}, t.childForm.name, nameInput)),
@@ -162,7 +163,7 @@ export async function viewChildForm(childId) {
         error,
         existing
           ? h("div", { class: "form-actions" },
-              h("a", { class: "btn btn--primary", href: card }, t.common.done))
+              h("a", { class: "btn btn--primary", href: settings }, t.common.done))
           : h("div", { class: "form-actions" },
               h("a", { class: "btn", href: "#/parents/config/children" }, t.childForm.cancel),
               h("button", { class: "btn btn--primary", type: "submit" }, t.childForm.add)))));

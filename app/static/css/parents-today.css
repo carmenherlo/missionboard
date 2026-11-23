@@ -1,56 +1,5 @@
-/* Zona de padres · Hoy and Padres · Niño (step 7): each child's day, their
-   stars and the steps to start. */
-
-/* Editar niño → Estrellas */
-.child-stars { display: grid; gap: var(--space-3); }
-
-.child-stars__now { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--text-lg); }
-
-.child-stars__now img { width: 32px; height: 32px; }
-
-.child-stars__gift { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
-
-.child-stars .hint { margin: 0; }
-
-/* Stars won each day: a bar per day, its height from --share (0 to 1). */
-.star-chart {
-  display: grid;
-  grid-template-columns: repeat(14, 1fr);
-  align-items: end;
-  gap: 4px;
-  height: 180px;
-}
-
-.star-chart__day {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  justify-items: center;
-  align-items: end;
-  height: 100%;
-  gap: 4px;
-}
-
-.star-chart__bar {
-  width: 100%;
-  height: calc(var(--share) * 100%);
-  min-height: 2px;
-  border-radius: 6px 6px 0 0;
-  background: var(--accent-vivid);
-}
-
-.star-chart__value, .star-chart__label {
-  color: var(--muted);
-  font-size: var(--text-sm);
-  font-weight: 700;
-}
-
-.star-amount {
-  color: var(--success);
-}
-
-.star-amount--out {
-  color: var(--danger);
-}
+/* Zona de padres · Hoy and Por dar: each child's day, the steps to start and what
+   waits to be handed over. A child's card is in child-card.css. */
 
 /* A bigger main button: the one first step on an empty home */
 .btn--big {

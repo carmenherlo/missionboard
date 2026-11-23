@@ -1,0 +1,138 @@
+/* A child's card (ficha-nino.html): their stars on top with «Ajustes de Bea», and two
+   blocks, Esta semana and Estrellas, side by side when there is room. */
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.card-head__stars {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.card-head__stars img { width: 36px; height: 36px; }
+
+.card-blocks {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+@media (min-width: 860px) {
+  .card-blocks { grid-template-columns: 1fr 1fr; }
+}
+
+.card-blocks .panel { min-width: 0; }
+
+.card-block__sub {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.card-block__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.card-block__more .icon { width: 18px; height: 18px; }
+
+/* Regalar / Quitar */
+.child-stars__gift { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.child-stars__gift .form-error:empty { display: none; }
+
+/* Thin lines: what was done this week, the stars in and out */
+.thin-rows { display: grid; margin: 0; padding: 0; list-style: none; }
+
+.thin-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 36px;
+  padding: 2px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.thin-rows > li:first-child > .thin-row,
+.thin-rows > .thin-row:first-child { border-top: 0; }
+
+button.thin-row { cursor: pointer; }
+
+.thin-row .icon { flex: none; width: 18px; height: 18px; color: var(--muted); }
+
+.thin-row__text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.thin-row__detail { color: var(--muted); font-size: var(--text-sm); }
+
+.star-amount { min-width: 2.5em; color: var(--success); text-align: right; }
+
+.star-amount--out { color: var(--danger); }
+
+/* Won upwards from the middle line, spent downwards; heights from --won and --spent (0 to 1). */
+.star-chart {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 3px;
+}
+
+.star-chart__day {
+  display: grid;
+  grid-template-rows: 70px 40px auto;
+  justify-items: center;
+}
+
+.star-chart__won,
+.star-chart__spent { width: 100%; }
+
+.star-chart__won {
+  align-self: end;
+  height: calc(var(--won) * 100%);
+  border-radius: 4px 4px 0 0;
+  background: var(--accent-vivid);
+}
+
+.star-chart__spent {
+  align-self: start;
+  height: calc(var(--spent) * 100%);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 4px 4px;
+  background: var(--danger);
+}
+
+.star-chart__label { color: var(--muted); font-size: var(--text-sm); font-weight: 700; }
+
+.star-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.star-chart__key { width: 12px; height: 12px; border-radius: 3px; }
+
+.star-chart__key--won { background: var(--accent-vivid); }
+
+.star-chart__key--spent { background: var(--danger); }

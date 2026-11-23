@@ -101,6 +101,13 @@ def test_buying_takes_the_stars(client, bea):
     assert descriptions(client, limit=1) == ["Bea compró «Unas pegatinas» · -3 estrellas"]
 
 
+def test_the_childs_card_shows_the_stars_spent_each_day(client, bea):
+    earn(client, bea, 4)
+    buy(client, bea, "pegatinas")
+    [day] = client.get(f"/api/overview/children/{bea['id']}", headers=PARENT).json()["chart"][-1:]
+    assert (day["earned"], day["spent"]) == (4, 3)
+
+
 def test_not_enough_stars(client, bea):
     earn(client, bea, 2)
     assert buy(client, bea, "globo").status_code == 422

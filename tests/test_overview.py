@@ -92,8 +92,18 @@ def test_a_child_with_their_chart_and_history(client, bea):
     item = mission(client, bea, "Despegue", steps=("Uno",))
     check(client, bea, item, 0)
     view = client.get(f"/api/overview/children/{bea['id']}", headers=PARENT).json()
-    assert len(view["chart"]) == 14 and view["chart"][-1] == {"day": MONDAY.date().isoformat(), "stars": 1}
+    assert len(view["chart"]) == 14
+    assert view["chart"][-1] == {"day": MONDAY.date().isoformat(), "earned": 1, "spent": 0}
     assert view["movements"][0]["reason"] == "mission_completed"
+
+
+def test_the_card_shows_the_latest_movements_and_all_of_them_apart(client, bea):
+    for _ in range(7):
+        client.post(f"/api/children/{bea['id']}/stars/gift", json={"stars": 1}, headers=PARENT)
+    card = client.get(f"/api/overview/children/{bea['id']}", headers=PARENT).json()
+    everything = client.get(f"/api/overview/children/{bea['id']}/movements", headers=PARENT).json()
+    assert len(card["movements"]) == 5 and len(everything) == 7
+    assert client.get("/api/overview/children/nobody/movements", headers=PARENT).status_code == 404
 
 
 def test_stars_can_be_taken_away_but_not_more_than_they_have(client, bea):

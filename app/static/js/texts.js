@@ -950,14 +950,25 @@ export const t = {
     deleteYes: "Borrar",
   },
   // Editar niño → Estrellas: stars given as a present
+  // A child's card (ficha-nino.html): Esta semana, Estrellas, and their settings apart.
+  childCard: {
+    settings: (name) => `Ajustes de ${name}`,
+    weekHint: "Toca un día para cambiarlo.",
+    doneTitle: (n) => `Hechas esta semana (${n})`,
+    chartTitle: "Últimas 2 semanas",
+    chartLabel: (won, spent) => `En dos semanas: ${won} estrellas ganadas con misiones y ${spent} gastadas en la tienda`,
+    won: (n) => `ganadas ${n}`,
+    spent: (n) => `gastadas ${n}`,
+    seeAll: "Ver todos",
+    movementsTitle: (name) => `Movimientos de ${name}`,
+    missionsOn: (on, all) => `${on} de ${all} con tareas encendidas`,
+  },
   childStars: {
     title: "Estrellas",
     has: (n) => `Tiene ${n} ${n === 1 ? "estrella" : "estrellas"}`,
     howMany: "Cuántas regalar",
     give: (n) => `Regalar ${n} ${n === 1 ? "estrella" : "estrellas"}`,
-    given: (n, name) => `✓ Regalaste ${n} ${n === 1 ? "estrella" : "estrellas"} a ${name}.`,
     take: (n) => `Quitar ${n} ${n === 1 ? "estrella" : "estrellas"}`,
-    taken: (n, name) => `✓ Quitaste ${n} ${n === 1 ? "estrella" : "estrellas"} a ${name}.`,
   },
   // Padres · Hoy and Padres · Niño (step 7)
   // Días libres and undoing a mission (dias-libres.html, 19/11).
@@ -1022,7 +1033,6 @@ export const t = {
     undoCardUsed: (text) => `La tarjeta «${text}» ya la usó: se queda así`,
     undoTank: "El depósito de ese día se vacía",
     undoDo: "Deshacer",
-    weekDoneTitle: "Hechas esta semana",
     weekDoneHint: "Si se marcó una misión sin hacerla, tócala para deshacerla.",
     noneDone: "Esta semana aún no ha completado ninguna misión.",
   },
@@ -1043,7 +1053,6 @@ export const t = {
     ordersTitle: "Pedidos",
     noOrders: "✓ No hay pedidos por entregar.",
     weekTitle: "Esta semana",
-    weekHint: "Toca un día para cambiarlo: lo hizo, no lo hizo o libre. Uno que aún no ha llegado solo se puede dejar libre.",
     weekLegend: { full: "Lleno", missed: "No lo hizo", now: "Hoy", later: "Por venir", free: "Libre" },
     weekOff: "Las rachas están apagadas (menú → Rachas).",
     freeDay: "libre",
@@ -1092,8 +1101,6 @@ export const t = {
     weekPrizeDetail: (name, tier, day) =>
       `${name} · ${tier === "second" ? "premio pequeño" : "semana completa"} · hasta el ${day}`,
     fixWeek: (name) => `La semana de ${name}: ver y arreglar sus días`,
-    chartTitle: "Estrellas ganadas (2 semanas)",
-    chartLabel: (n) => `${n} estrellas ganadas con misiones en dos semanas`,
     historyTitle: "Últimos movimientos",
     noHistory: "Todavía no hay movimientos de estrellas.",
     movement: (m) => ({

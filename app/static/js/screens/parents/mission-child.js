@@ -62,7 +62,7 @@ export async function viewChildMissions(childId) {
 
   render(
     parentsHeader(h("span", { class: "title-with-avatar" }, avatar(child, { size: "sm" }), t.missionChild.childMissions(child.name)),
-      { href: `#/parents/config/children/${childId}`, label: child.name }),
+      { href: `#/parents/config/children/${childId}/settings`, label: t.childCard.settings(child.name) }),
     h("main", { class: "page" },
       h("p", { class: "hint" }, missions.length ? t.missionChild.childHint(child.name) : t.missions.empty),
       h("ul", { class: "rows" }, missions.map((mission) =>
