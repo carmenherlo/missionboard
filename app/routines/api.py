@@ -6,15 +6,24 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from app.children import avatars
 from app.children.api import public_child
 from app.children.repository import ChildrenRepository
-from app.deps import get_clock, get_config_store, get_event_log, get_image_libraries, require_parent
+from app.deps import (
+    get_clock,
+    get_config_store,
+    get_event_log,
+    get_image_libraries,
+    get_races_repository,
+    require_parent,
+)
 from app.errors import InvalidError
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
 from app.routines.editor import TIMING, RoutinesEditor
 from app.routines.model import Routine
+from app.routines.present import present_current
+from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
-from app.routines.service import NOTES, Current, RoutinesService, kids_of
+from app.routines.service import NOTES, RoutinesService, kids_of
 from app.routines.timing import hhmm
 from app.settings import TIME, SettingsRepository
 from app.songs.repository import SongsRepository
@@ -131,6 +140,7 @@ def get_routines_service(
     days: DayService = Depends(get_day_service),
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
+    races: RacesRepository = Depends(get_races_repository),
 ) -> RoutinesService:
     return RoutinesService(
         RoutinesRepository(store),
@@ -141,6 +151,7 @@ def get_routines_service(
         clock,
         events,
         MissionsRepository(store),
+        races,
     )
 
 
@@ -149,80 +160,6 @@ def get_routines_editor(
     events: EventLog = Depends(get_event_log),
 ) -> RoutinesEditor:
     return RoutinesEditor(RoutinesRepository(store), ChildrenRepository(store), MissionsRepository(store), events)
-
-
-def _present(current: Current, libraries: ImageLibraries, songs: SongsRepository) -> dict:
-    routine = current.routine
-    return {
-        "id": routine.id,
-        "name": routine.name,
-        "mission_id": routine.mission_id,
-        "day": current.day.isoformat(),
-        "now": current.minute,  # minute of the day by the household's clock, with seconds
-        "manual": current.started is not None,  # started by hand: a timer instead of the clock
-        "started": current.started,
-        "wake": routine.wake,
-        "remind_every": routine.remind_every,
-        "alarm": routine.alarm,
-        "parts": [
-            {
-                "id": part.id,
-                "name": part.name,
-                "text": part.text,
-                "image_url": libraries.url(part.image),
-                "say": part.say,
-                "steps": [{"text": step.text, "image_url": libraries.url(step.image)} for step in part.steps],
-                "warnings": current.warnings(part),
-                "start": hhmm(start),
-                "end": hhmm(end),
-            }
-            for part, start, end in routine.timeline()
-        ],
-        "goal": routine.goal
-        and {
-            "image_url": libraries.url(routine.goal.image),
-            "at": routine.goal.at,
-            "say": routine.goal.say,
-            "check_minutes": routine.goal.check_minutes,
-            "check_say": routine.goal.check_say,
-        },
-        "greeting": routine.greeting,
-        "last_countdown": routine.last_countdown,
-        "early_goal": routine.early_goal,
-        "warn_about": routine.warn_about,
-        "music": _music(routine, songs),
-        "ends": hhmm(routine.ends),
-        "stopped": bool(current.run["stopped_at"]),
-        "paused": bool(current.run["paused_at"]),  # started by hand: its time stands still
-        "people": [
-            {"child": public_child(p.child), "colors": avatars.tones(p.child.color), "mission": p.mission}
-            for p in current.people
-        ],
-    }
-
-
-def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
-    """The songs for the screen: its parts have no ids, so where each one starts and ends
-    goes as "alarm", a part's index or "goal" (until null: once, until it ends)."""
-    index = {part.id: i for i, part in enumerate(routine.parts)}
-    played = []
-    for music in routine.music:
-        found = [song for song in map(songs.get, music.songs) if song is not None]
-        if found:  # one after the other
-            played.append(
-                {
-                    "id": music.id,
-                    "songs": [
-                        {"name": song.name, "url": f"api/songs/{song.id}/file", "seconds": song.seconds}
-                        for song in found
-                    ],
-                    "start": index.get(music.start, music.start),
-                    "until": index.get(music.until, music.until),
-                    "after_voice": music.after_voice,
-                    "loud": music.loud,
-                }
-            )
-    return played
 
 
 @router.get("/notices")
@@ -286,7 +223,7 @@ def current_routine(
 ):
     """The routine going on now (null if none): the screen asks every little while."""
     current = routines.current()
-    return _present(current, libraries, SongsRepository(store)) if current else None
+    return present_current(current, libraries, SongsRepository(store)) if current else None
 
 
 # The routine's screen is for everyone in the house: no parent code (finishing and pausing: control_api.py).
@@ -465,4 +402,4 @@ def trial(
         now = now.replace(hour=seconds // 3600, minute=seconds // 60 % 60, second=seconds % 60, microsecond=0)
     current = routines.current_for(routine, now)
     editor.tested(routine_id)
-    return {**_present(current, libraries, SongsRepository(store)), "trial": True}
+    return {**present_current(current, libraries, SongsRepository(store)), "trial": True}

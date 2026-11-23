@@ -1110,6 +1110,7 @@ export const t = {
       taken: "Se las quitaste",
       undone: `No había hecho «${m.mission_name}»`,
       starting_stars: "Estrellas de inicio",
+      race: "Ganó una carrera",
     })[m.reason] || m.reason,
   },
 };

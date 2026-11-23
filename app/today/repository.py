@@ -32,19 +32,20 @@ class DayRepository:
             ).fetchall()
         return {row["mission_id"] for row in rows}
 
-    def opened_missions(self, day: date, child_id: str) -> set[str]:
-        """Missions a parent has opened for this child, only today."""
+    def opened_missions(self, day: date, child_id: str) -> dict[str, str]:
+        """Missions opened for this child only today (by a parent or a routine): id → last time ("HH:MM")."""
         with db.connect(self._data_dir) as conn:
             rows = conn.execute(
-                "SELECT mission_id FROM mission_openings WHERE day = ? AND child_id = ?",
+                "SELECT mission_id, at FROM mission_openings WHERE day = ? AND child_id = ?",
                 (day.isoformat(), child_id),
             ).fetchall()
-        return {row["mission_id"] for row in rows}
+        return {row["mission_id"]: row["at"][11:16] for row in rows}
 
     def open_mission(self, day: date, child_id: str, mission_id: str, at: datetime) -> None:
         with db.connect(self._data_dir) as conn:
             conn.execute(
-                "INSERT OR IGNORE INTO mission_openings (day, child_id, mission_id, at) VALUES (?, ?, ?, ?)",
+                "INSERT INTO mission_openings (day, child_id, mission_id, at) VALUES (?, ?, ?, ?)"
+                " ON CONFLICT (day, child_id, mission_id) DO UPDATE SET at = excluded.at",
                 (day.isoformat(), child_id, mission_id, at.isoformat(timespec="seconds")),
             )
 

@@ -15,7 +15,7 @@ from app.today.service import DONE, OFF, DayService
 @dataclass
 class Person:
     child: Child
-    mission: dict  # {"id", "name", "done", "total", "completed", "marks", "colors"}
+    mission: dict  # {"id", "name", "done", "total", "completed", "marks", "tasks", "colors"}
 
 
 class People:
@@ -35,10 +35,12 @@ class People:
             if item is not None:
                 done = len(item.marks) if item.state == DONE else len(item.checked)
                 mission, marks, completed = item.mission, item.marks, item.state == DONE
+                tasks = {t.task.id: completed or t.task.id in item.checked for t in item.tasks}
             elif trial:
                 mission = self._missions.get(routine.mission_id)
                 marks = [mark for task in child_tasks(mission, child.id) for mark in task.marks]
                 done, completed = 0, False
+                tasks = {t.task.id: False for t in child_tasks(mission, child.id)}
             else:
                 continue
             if marks:
@@ -52,6 +54,7 @@ class People:
                             "total": len(marks),
                             "completed": completed,
                             "marks": marks,
+                            "tasks": tasks,  # their tasks of it today: task id → done (a race's "¡Hecho!")
                             "colors": avatars.tones(mission.color),
                         },
                     )

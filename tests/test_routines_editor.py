@@ -73,7 +73,7 @@ def test_a_new_routine_brings_every_task_with_five_minutes(client):
 def test_stored_only_what_is_its_own(client, data_dir):
     entry = saved(data_dir)["routines"][0]
     assert "name" not in entry and "image" not in entry
-    assert set(entry["parts"][0]) == {"id", "at", "minutes", "say", "spoken", "warnings"}
+    assert set(entry["parts"][0]) == {"id", "at", "minutes", "say", "spoken", "warnings", "slow_minutes"}
 
 
 def test_two_routines_cannot_ring_at_the_same_time(client):

@@ -34,6 +34,8 @@ from app.parents import api as parents_api
 from app.prizes import api as prizes_api
 from app.routines import api as routines_api
 from app.routines import control_api as routine_control_api
+from app.routines import race_api
+from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
 from app.settings import api as settings_api
@@ -156,6 +158,7 @@ def create_app(
     app.state.day_offs_repository = DayOffsRepository(data_dir)
     app.state.moments_repository = MomentsRepository(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
+    app.state.races_repository = RacesRepository(data_dir)
     app.state.purchases_repository = PurchasesRepository(data_dir)
     app.state.home_assistant = HomeAssistant()  # only inside the add-on; elsewhere it sends nothing
     # The natural voice (app/voice/): its model in data/voices/ or where
@@ -189,6 +192,7 @@ def create_app(
     app.include_router(day_off_api.router)
     app.include_router(undo_api.router)
     app.include_router(vouchers_api.router)
+    app.include_router(race_api.router)  # before the routines' /{routine_id} routes
     app.include_router(routines_api.router)
     app.include_router(routine_control_api.router)
     app.include_router(voice_api.router)

@@ -18,6 +18,7 @@ from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.routines.links import kids_of
 from app.routines.model import Part, Routine
 from app.routines.people import People, Person
+from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.timing import minute_of
 from app.settings import SettingsRepository
@@ -55,7 +56,9 @@ class RoutinesService:
         clock: Clock,
         events: EventLog,
         missions: MissionsRepository,
+        races: RacesRepository,
     ):
+        self._races = races
         self._missions = missions
         self._people = People(children, days, missions)
         self._routines = routines
@@ -84,11 +87,15 @@ class RoutinesService:
                 continue
             start = _minute(datetime.fromisoformat(run["started_at"]))
             at = _minute(datetime.fromisoformat(run["paused_at"])) if run["paused_at"] else minute  # paused: still
-            if at < start + stored.length:
-                kids = json.loads(run["kids"] or "[]")
-                people = [p for p in self.people(stored) if p.child.id in kids]
+            routine = stored.on(weekday).lengthened(json.loads(run["extra"] or "{}"))  # ± minutes today
+            kids = json.loads(run["kids"] or "[]")
+            people = [p for p in self.people(stored) if p.child.id in kids]
+            if routine.racing and at >= start + routine.parts_minutes:  # the flag: the race is lost
+                self._race_lost(routine, day, run, start, people)
+                continue
+            if at < start + routine.length:
                 return Current(
-                    stored.on(weekday).started_at(int(start)),
+                    routine.started_at(int(start)),
                     day,
                     at,
                     run,
@@ -166,7 +173,9 @@ class RoutinesService:
         settings = self._settings.settings()
         weekday = WEEKDAYS[app_day(self._clock.now(), settings.day_starts_at).weekday()]
         children = self._children.list()
-        routines = [r for r in self._live() if r.manual and r.goes_on(weekday)]
+        day = app_day(self._clock.now(), settings.day_starts_at)
+        raced = {race["routine_id"] for race in self._races.of_day(day)}  # a race, once a day
+        routines = [r for r in self._live() if r.manual and r.goes_on(weekday) and not (r.racing and r.id in raced)]
         return [(r.on(weekday), kids_of(r, children)) for r in routines]
 
     def start(self, routine_id: str, kids: list[str]) -> None:
@@ -251,6 +260,10 @@ class RoutinesService:
             return
         self._events.routine_did("routine_paused" if paused else "routine_resumed", current.routine.name)
 
+    def current_day(self) -> date:
+        """Today, by the household's clock (a day may start after midnight)."""
+        return app_day(self._clock.now(), self._settings.settings().day_starts_at)
+
     def _current(self, routine_id: str) -> Current:
         current = self.current()
         if current is None or current.routine.id != routine_id:
@@ -259,6 +272,18 @@ class RoutinesService:
 
     def people(self, routine: Routine, trial: bool = False) -> list[Person]:
         return self._people.of(routine, trial)
+
+    def _race_lost(self, routine: Routine, day: date, run: dict, start: float, people: list[Person]) -> None:
+        """Its time is up and not everyone finished: it ends, and its mission closes for its
+        children at that moment (once: the run is finished)."""
+        flag = datetime.fromisoformat(run["started_at"]) + timedelta(minutes=routine.parts_minutes)
+        self._runs.set(day, routine.id, finished_at=flag)
+        planned = routine.parts_minutes * 60
+        kids = [p.child for p in people]
+        self._races.add(
+            day, routine, kids, planned_seconds=planned, took_seconds=None, outcome="lost", stars=0, at=flag, given=None
+        )
+        self._events.routine_did("race_lost", routine.name)
 
     def _everyone_off(self, routine: Routine) -> bool:
         return self._people.everyone_off(routine)

@@ -109,6 +109,12 @@ _ROUTINE = {
     "routine_paused": "Pausaron la rutina «{routine}»",
     "routine_resumed": "La rutina «{routine}» siguió tras la pausa",
     "routine_ended": "Acabó la rutina «{routine}»",
+    "routine_adjusted": "Rutina «{routine}»: {detail}",
+    "race_fast": "Carrera «{routine}»: ¡muy rápido!",
+    "race_won": "Carrera «{routine}»: ganaron al fantasma",
+    "race_slow": "Carrera «{routine}»: acabaron, pero ganó el fantasma",
+    "race_lost": "Carrera «{routine}»: se acabó el tiempo",
+    "race_reviewed": "Revisaron la carrera «{routine}»",
 }
 
 

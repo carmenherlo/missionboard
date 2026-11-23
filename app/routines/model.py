@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.missions.repository import WEEKDAYS
+from app.routines.race_rules import Race
 from app.routines.timing import card_positions, hhmm, minute_of, music_kept, settled
 from app.settings import TIME, time_from_yaml_number
 
@@ -32,6 +33,8 @@ class Part(BaseModel):
     say: str | None = None  # a sentence of its own instead of "Comienza el aseo. Contiene: …"
     spoken: str | None = Field(default=None, max_length=60)  # how the voice names it: "el aseo"
     warnings: tuple[int, ...] | None = None  # minutes before the end; None: the default
+    # In a race (modo-carrera.html), "sin prisa": "¡Hecho!" only after these minutes (at most, all of it).
+    slow_minutes: int | None = Field(default=None, ge=1, le=180)
     # From the mission, when it is read (see resolved):
     text: str = ""  # the task's text, as on screen
     name: str = "-"  # as the voice says it, inside sentences
@@ -43,7 +46,7 @@ class Part(BaseModel):
     _at = field_validator("at", mode="before")(time_from_yaml_number)
 
 
-STORED_PART = ("id", "at", "minutes", "say", "spoken", "warnings")
+STORED_PART = ("id", "at", "minutes", "say", "spoken", "warnings", "slow_minutes")
 
 
 class Goal(BaseModel):
@@ -116,6 +119,7 @@ class Routine(BaseModel):
     # empiece vestirse", the next one ("next", 04/11).
     warn_about: Literal["end", "next"] = "end"
     music: tuple[Music, ...] = ()
+    race: Race | None = None  # None: its parts go by the clock (only by hand it can be a race)
 
     _wake = field_validator("wake", mode="before")(time_from_yaml_number)
 
@@ -163,6 +167,25 @@ class Routine(BaseModel):
     def length(self) -> int:
         """How long a routine started by hand lasts, in minutes (its checking too)."""
         return sum(part.minutes for part in self.parts) + (self.goal.check_minutes if self.goal else 0)
+
+    @property
+    def racing(self) -> bool:
+        """A race: only started by hand (once started, it has times like any other)."""
+        return self.race is not None
+
+    @property
+    def parts_minutes(self) -> int:
+        """How long its parts last, one after the other (in a race, until the flag)."""
+        return sum(part.minutes for part in self.parts)
+
+    def lengthened(self, extra: dict[str, int]) -> "Routine":
+        """Started by hand, with the minutes a parent added to (or took from) some parts today."""
+        if not extra:
+            return self
+        doc = self.to_doc()
+        for part in doc["parts"]:
+            part["minutes"] = max(1, part["minutes"] + extra.get(part["id"], 0))
+        return Routine.model_validate(doc)
 
     def started_at(self, minute: int) -> "Routine":
         """A routine started by hand, as if it rang at `minute` with its first part right then."""

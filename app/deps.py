@@ -15,6 +15,7 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.parents.repository import ParentsRepository
 from app.parents.service import ParentsService
+from app.routines.races_repository import RacesRepository
 from app.settings import SettingsRepository
 from app.songs.repository import SoundFiles
 from app.stars.repository import StarsRepository
@@ -61,6 +62,11 @@ def get_streaks_repository(request: Request) -> StreaksRepository:
 def get_day_offs_repository(request: Request) -> DayOffsRepository:
     """Días libres: read by the day, the prize, the rachas and the routines."""
     return request.app.state.day_offs_repository
+
+
+def get_races_repository(request: Request) -> RacesRepository:
+    """Races (modo-carrera.html): read by the routines and the day (a lost race closes its mission)."""
+    return request.app.state.races_repository
 
 
 def get_moments_repository(request: Request) -> MomentsRepository:

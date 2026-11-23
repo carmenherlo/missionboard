@@ -19,7 +19,7 @@ SKIPPED = ("static/libraries/", "static/css/themes/")
 TOO_BIG = {
     "static/css/effects.css": 612,
     "static/css/routine.css": 432,
-    "routines/api.py": 468,  # finishing went to control_api.py (18/11)
+    "routines/api.py": 405,  # finishing went to control_api.py (18/11), what the screen gets to present.py (23/11)
     "static/js/screens/parents/routine-edit.js": 440,
     "missions/service.py": 377,
     "missions/api.py": 358,  # +1 import line when routines/repository.py was split (1d)
