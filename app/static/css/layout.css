@@ -18,6 +18,15 @@
   padding: 0 1rem;
 }
 
+/* With a button beside the title: at its right; below it when there is no room (phone). */
+.page-title--with-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
 .page-title__text {
   min-width: 0;
   overflow-wrap: anywhere; /* long names (a song's file name) wrap instead of running off */

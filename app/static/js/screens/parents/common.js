@@ -8,7 +8,8 @@ import { parentsMenu } from "./menu.js";
 // vertical tablet, the bar at the bottom on a phone), a bar with ☰, back and full screen,
 // and the title heading the page column. Back only one level below a section: the sections
 // themselves are in the menu. Back to Ajustes only on a phone (there it is a page).
-export function parentsHeader(title, back = null) {
+// action: a button beside the title, for what is used most on that screen (24/11: «Probar ahora»).
+export function parentsHeader(title, back = null, action = null) {
   const menu = parentsMenu();
   const toSettings = back?.href === "#/parents/config";
   const fragment = document.createDocumentFragment();
@@ -23,6 +24,6 @@ export function parentsHeader(title, back = null) {
         "aria-label": t.common.backTo(back.label), title: t.common.backTo(back.label),
       }, icon("back")),
       fullscreenButton()),
-    h("div", { class: "page-title" }, h("h1", { class: "page-title__text" }, title)));
+    h("div", { class: `page-title${action ? " page-title--with-action" : ""}` }, h("h1", { class: "page-title__text" }, title), action));
   return fragment;
 }

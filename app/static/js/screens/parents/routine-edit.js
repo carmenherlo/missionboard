@@ -254,8 +254,6 @@ export async function viewRoutineEdit(routineId) {
     footer.replaceChildren(
       h("button", { type: "button", class: "link-danger", onclick: showConfirm }, t.routineEdit.delete),
       h("div", { class: "form-actions" },
-        h("a", { class: "btn", href: `${LIST_HREF}/${routineId}/voice` }, icon("speaker"), t.routineEdit.voice),
-        h("button", { type: "button", class: "btn", onclick: () => tryRoutine(routineId) }, t.routines.tryNow),
         h("a", { class: "btn btn--primary", href: backHref }, t.common.done)));
   }
   function showConfirm() {
@@ -303,7 +301,8 @@ export async function viewRoutineEdit(routineId) {
   renderFooter();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.routineEdit.title(routine.name), status.element), { href: backHref, label: backHref === LIST_HREF ? t.routines.title : routine.name }),
+    parentsHeader(h("span", { class: "title-line" }, t.routineEdit.title(routine.name), status.element), { href: backHref, label: backHref === LIST_HREF ? t.routines.title : routine.name },
+      h("button", { type: "button", class: "btn", onclick: () => tryRoutine(routineId) }, icon("play"), t.routines.tryNow)),
     h("main", { class: "page" },
       h("div", { class: "columns columns--parts" },
         h("div", { class: "stack" },
@@ -314,7 +313,8 @@ export async function viewRoutineEdit(routineId) {
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(t.routineEdit.panelParts(routine.name), cardsBox, someDaysDiffer,
-            h("a", { class: "btn btn--start", href: missionHref }, t.routineEdit.changeInMission, icon("next"))),
+            h("a", { class: "btn btn--start", href: missionHref }, t.routineEdit.changeInMission, icon("next")),
+            h("a", { class: "btn btn--start", href: `${LIST_HREF}/${routineId}/voice` }, icon("speaker"), t.routineEdit.voice)),
           warnPanel,
           // Each thing in its own panel (04/11): the songs apart, like the goal.
           songsPanel)),
