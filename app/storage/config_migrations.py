@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 24
+CURRENT_VERSION = 25
 
 
 class ConfigVersionError(Exception):
@@ -174,6 +174,18 @@ def _v23_to_v24(doc: dict) -> dict:
 
 
 _MIGRATIONS[23] = _v23_to_v24
+
+
+def _v24_to_v25(doc: dict) -> dict:
+    """Each song of a routine, low, mid or high (24/11), instead of "muy alta" or not."""
+    for routine in doc.get("routines") or []:
+        for music in routine.get("music") or []:
+            music["volume"] = "high" if music.pop("loud", False) else "mid"
+    doc["version"] = 25
+    return doc
+
+
+_MIGRATIONS[24] = _v24_to_v25
 
 
 def upgrade(doc: dict) -> dict:

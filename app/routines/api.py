@@ -343,7 +343,7 @@ class MusicPatch(BaseModel):
     start: str | None = None
     until: str | None = None  # null: once, until the songs end
     after_voice: bool | None = None
-    loud: bool | None = None
+    volume: Literal["low", "mid", "high"] | None = None
 
 
 @router.post("/{routine_id}/music", dependencies=parent_only)
@@ -367,7 +367,7 @@ def update_music(
     present: Editing = Depends(),
 ):
     fields = {name: getattr(body, name) for name in body.model_fields_set}
-    for name in ("after_voice", "loud"):  # null: as it was
+    for name in ("after_voice", "volume"):  # null: as it was
         if fields.get(name, "") is None:
             fields.pop(name)
     if any(fields.get(name, "") is None for name in ("songs", "start")):

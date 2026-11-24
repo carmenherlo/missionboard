@@ -78,7 +78,8 @@ class Music(BaseModel):
     start: str
     until: str | None = None
     after_voice: bool = False  # it waits until the voice has finished speaking (04/11)
-    loud: bool = False  # at full volume, whatever the Música level: to wake up (04/11)
+    # low: half the Música level; mid: the Música level; high: the loudest, whatever that level (to wake up)
+    volume: Literal["low", "mid", "high"] = "mid"
 
 
 class Notice(BaseModel):

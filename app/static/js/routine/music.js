@@ -9,7 +9,8 @@ import { speaking } from "../components/speech.js";
 const UNDER_THE_VOICE = 0.3; // the song's level while the voice speaks
 const FADE_S = 2; // a song cut at the end of its card goes down this long
 const VOICE_STARTS_S = 6; // after the voice: wait this long first (it may begin a moment late: the ring, the zero)
-const LOUD = 1; // "muy alta": the loudest it goes, whatever the Música level
+const LOUD = 1; // "Alta": the loudest it goes, whatever the Música level
+const LOW = 0.5; // "Baja": half the Música level
 
 // Where each card's songs play, in minutes of the day: [{ id, songs, total, from, to, loop }]
 // (songs: [{ name, url, seconds }], one after the other; total: all of them, in seconds).
@@ -24,7 +25,7 @@ export function musicWindows(music, { wake, parts, goalAt, goalFrom = parts.at(-
     const total = m.songs.reduce((sum, song) => sum + song.seconds, 0);
     return {
       id: m.id, songs: m.songs, total, from, to: loop ? at(m.until, true) : from + total / 60, loop,
-      afterVoice: Boolean(m.after_voice), loud: Boolean(m.loud),
+      afterVoice: Boolean(m.after_voice), volume: m.volume,
     };
   }).filter((w) => w.to > w.from && w.total > 0);
 }
@@ -93,7 +94,7 @@ export function musicPlayer() {
     }
     const toEnd = window.loop ? (window.to - time) * 60 : Infinity;
     const fade = Math.min(1, toEnd / FADE_S);
-    const level = window.loud ? LOUD : volume("music");
+    const level = window.volume === "high" ? LOUD : volume("music") * (window.volume === "low" ? LOW : 1);
     current.audio.volume = Math.min(1, level * (speaking() ? UNDER_THE_VOICE : 1) * fade);
   }
 

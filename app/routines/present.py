@@ -86,7 +86,7 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
                     "start": index.get(music.start, music.start),
                     "until": index.get(music.until, music.until),
                     "after_voice": music.after_voice,
-                    "loud": music.loud,
+                    "volume": music.volume,
                 }
             )
     return played

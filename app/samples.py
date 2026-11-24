@@ -65,7 +65,7 @@ ROUTINES = [
                 "start": "despegue-1",
                 "until": None,
                 "after_voice": False,
-                "loud": False,
+                "volume": "mid",
             }
         ],
         "last_countdown": None,
@@ -100,7 +100,7 @@ ROUTINES = [
                 "start": "goal",
                 "until": None,
                 "after_voice": True,
-                "loud": False,
+                "volume": "mid",
             }
         ],
         "last_countdown": None,

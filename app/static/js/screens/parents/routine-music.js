@@ -75,7 +75,7 @@ export function songWraps(routineId) {
       const detail = [
         music.start === "alarm" && t.routineMusic.insteadOfAlarm,
         music.after_voice && t.routineMusic.afterVoiceTag,
-        music.loud && t.routineMusic.loudTag,
+        music.volume !== "mid" && t.routineMusic.volumeTag(music.volume),
         music.until ? t.routineMusic.until(cards[to].name) : t.routineMusic.once(length(song.seconds)),
       ].filter(Boolean).join(" · ");
       const first = wrapped[0];
@@ -217,9 +217,12 @@ export async function viewRoutineMusic(routineId, musicId) {
       h("label", { class: "toggle" },
         h("input", { type: "checkbox", checked: m.after_voice, onchange: (e) => change({ after_voice: e.target.checked }) }),
         t.routineMusic.afterVoice),
-      h("label", { class: "toggle" },
-        h("input", { type: "checkbox", checked: m.loud, onchange: (e) => change({ loud: e.target.checked }) }),
-        t.routineMusic.loud),
+      h("div", { class: "field" }, h("span", { class: "field__label" }, t.routineMusic.volume),
+        h("div", { class: "tabs", role: "group", "aria-label": t.routineMusic.volume }, ["low", "mid", "high"].map((level) =>
+          h("button", {
+            type: "button", class: `tab${m.volume === level ? " tab--on" : ""}`, "aria-pressed": String(m.volume === level),
+            onclick: () => m.volume !== level && change({ volume: level }),
+          }, t.routineMusic.volumes[level])))),
       h("p", { class: "hint" }, t.routineMusic.optionsHint),
     ].filter(Boolean));
   }

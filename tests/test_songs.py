@@ -85,7 +85,7 @@ def test_a_song_from_a_card_to_a_card(client):
         "start": parts[3],
         "until": None,
         "after_voice": False,
-        "loud": False,
+        "volume": "mid",
     }
     routine = edit(client, "PATCH", f"/music/{music['id']}", until=parts[5]).json()
     assert routine["music"][0]["until"] == parts[5]
@@ -138,7 +138,7 @@ def test_the_screen_gets_where_each_song_plays(client, clock):
             "start": 0,
             "until": 1,
             "after_voice": False,
-            "loud": False,
+            "volume": "mid",
         }
     ]
 
@@ -170,14 +170,23 @@ def test_no_song_where_the_alarm_rings(client):
     assert edit(client, "POST", "/music", song=song, start=first).status_code == 200
 
 
-def test_after_the_voice_and_loud(client):
+def test_after_the_voice_and_its_volume(client):
     song = upload(client).json()["id"]
     music = edit(client, "POST", "/music", song=song, start=part_ids(client)[1]).json()["music"][0]
-    music = edit(client, "PATCH", f"/music/{music['id']}", after_voice=True, loud=True).json()["music"][0]
-    assert music["after_voice"] is True and music["loud"] is True
-    assert (
-        edit(client, "PATCH", f"/music/{music['id']}", loud=None).json()["music"][0]["loud"] is True
-    )  # null: unchanged
+    assert music["volume"] == "mid"
+    music = edit(client, "PATCH", f"/music/{music['id']}", after_voice=True, volume="high").json()["music"][0]
+    assert music["after_voice"] is True and music["volume"] == "high"
+    url = f"/music/{music['id']}"
+    assert edit(client, "PATCH", url, volume=None).json()["music"][0]["volume"] == "high"  # null: unchanged
+    assert edit(client, "PATCH", url, volume="loud").status_code == 422
+
+
+def test_a_loud_song_becomes_high():
+    from app.storage.config_migrations import upgrade
+
+    music = [{"id": "a", "loud": True}, {"id": "b", "loud": False}, {"id": "c"}]
+    a, b, c = upgrade({"version": 24, "routines": [{"id": "r", "music": music}]})["routines"][0]["music"]
+    assert (a["volume"], b["volume"], c["volume"]) == ("high", "mid", "mid") and "loud" not in a
 
 
 def test_started_by_hand_a_song_at_its_goal(client):
