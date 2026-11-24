@@ -140,10 +140,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
     const wake = minuteOf(routine.wake);
     const lines = [
       sound(wake, t.routineVoice.ringing),
-      own(wake, routine.greeting ?? "", {
-        value: routine.greeting, usual: null, label: t.routineVoice.greetingLabel,
-        save: (greeting) => patchRoutine({ greeting }),
-      }),
+      auto(wake, script.startSay(routine)),
       auto(wake, `${capital(itIs(wake))}.`),
       auto(wake, script.untilFirst(first, lead)),
     ];
@@ -153,7 +150,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
       }
     }
     lines.push(auto(wake + lead - HERALD_S / 60, script.firstHerald(first)));
-    groups.push({ id: "wake", title: `${shortTime(wake)} · ${t.routineEdit.alarmCard}`, lines });
+    groups.push({ id: "wake", title: `${shortTime(wake)} · ${t.routineEdit.startCard}`, lines });
   }
 
   routine.parts.forEach((part, index) => {
@@ -211,11 +208,7 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
       ] : []),
       ...itsTime(reach),
       ...(at - reach >= 1 ? [auto(reach, script.untilGoal(at - reach))] : []),
-      // Always one of its own (no usual one to go back to): left empty, it stays as it was.
-      own(reach, routine.goal.say, {
-        value: null, usual: routine.goal.say, label: t.routineVoice.goalLabel,
-        save: (say) => patchRoutine({ goal: { ...routine.goal, say: say || routine.goal.say } }),
-      }),
+      auto(reach, script.goalSay(routine)),
       ...(check ? [auto(reach, `${script.someoneMissed("…", 2)} ${t.routineVoice.ifMissed}`)] : []),
       ...GOAL_REMINDERS.filter((m) => at - m > reach).map((m) => auto(at - m, script.untilGoal(m))),
     ];

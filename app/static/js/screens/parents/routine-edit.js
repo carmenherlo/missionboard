@@ -15,15 +15,11 @@ import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { raceChoices } from "./routine-race-edit.js";
 import { hhmm, lengthText, minuteOf, movedTime, shortTime } from "./routine-times.js";
-import { addSongForm, ringsAtFirstPart, songWraps } from "./routine-music.js";
+import { addSongForm, songWraps } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const LIST_HREF = "#/parents/config/routines";
-const GOAL_AFTER_MINUTES = 10; // a new goal: this long after the last part
 const DEFAULT_WAKE = "07:00"; // back to a time with none put away (server) and a mission with no hours
-const CHECK_CHOICES = [3, 5, 10]; // minutes to check the missions before the goal
-const USUAL_CHECK_MINUTES = 5;
-const ALARM_BEFORE_CHOICES = [0, 5, 10, 15, 20, 30]; // the API takes 0–60
 const PINNED_STEP = 5; // the time that stays put, − / + on its card: 5 minutes at a time
 const MAX_PART_MINUTES = 180;
 
@@ -68,18 +64,6 @@ export async function viewRoutineEdit(routineId) {
     // "Termina a las": when the parts end and the missions are checked (05/11), not the goal's latest
   });
   const whenHint = h("p", { class: "hint" });
-  // The alarm: on or off (a bedtime routine), and how long before the first part.
-  const alarmOn = h("input", { type: "checkbox", onchange: (e) => patch({ alarm: e.target.checked }) });
-  // In words, not a bare number: "0 minutos antes" read as nothing at all.
-  const alarmBefore = h("select", { onchange: (e) => patch({ alarm_before: Number(e.target.value) }) });
-  const alarmBeforeRow = h("div", { class: "times" });
-  const alarmHint = h("p", { class: "hint" }); // only what the fields above do not say
-  // A song in the first part and the alarm right as it starts: the song instead of the ring.
-  const alarmClash = h("p", { class: "notice" });
-  const remind = h("input", {
-    type: "number", min: 0, max: 30, value: routine.remind_every,
-    onchange: (e) => patch({ remind_every: Number(e.target.value) }),
-  });
   const daysBox = h("div", { class: "chips chips--days" });
   const daysSummary = h("p", { class: "hint" });
   // Some days everything moves: "+15" rings and goes a quarter of an hour later.
@@ -105,7 +89,6 @@ export async function viewRoutineEdit(routineId) {
   const modeBox = h("div", {});
   const timed = h("div", { class: "stack stack--tight" }); // in the box of "Suena a una hora"
   const timedPanels = h("div", { class: "stack" }); // the panels a routine started by hand does not have
-  const goalPanel = h("div", {});
   function renderMode() {
     const manual = routine.manual;
     modeBox.replaceChildren(folderTabs([[false, t.routineEdit.timed], [true, t.routineEdit.byHand]].map(([value, label]) =>
@@ -128,27 +111,11 @@ export async function viewRoutineEdit(routineId) {
     when.value = ending ? partsEnd() : routine.starts;
     const length = lengthText(minuteOf(partsEnd()) - minuteOf(routine.starts));
     whenHint.textContent = t.routineEdit.whenHint(shortTime(routine.starts), shortTime(partsEnd()), length);
-    alarmOn.checked = routine.alarm;
-    const choices = [...new Set([...ALARM_BEFORE_CHOICES, routine.alarm_before])].sort((a, b) => a - b);
-    alarmBefore.replaceChildren(...choices.map((n) =>
-      h("option", { value: n }, t.routineEdit.alarmBeforeChoice(n))));
-    alarmBefore.value = routine.alarm_before;
-    const before = routine.alarm && routine.alarm_before > 0; // a while ringing before: reminders too
-    alarmBeforeRow.replaceChildren(...[
-      routine.alarm && h("label", { class: "time" }, t.routineEdit.alarmBefore, alarmBefore),
-      before && h("label", { class: "time" }, t.routineEdit.remindEvery, remind)].filter(Boolean));
-    const clash = ringsAtFirstPart(routine) && routine.music.some((m) => m.start === routine.parts[0].id);
-    alarmClash.hidden = !clash;
-    alarmClash.textContent = clash ? t.routineEdit.alarmAndSong(capital(routine.parts[0].name)) : "";
-    alarmHint.hidden = routine.alarm && !before;
-    alarmHint.textContent = !routine.alarm ? t.routineEdit.noAlarmHint
-      : before ? t.routineEdit.alarmHint(shortTime(routine.wake), routine.remind_every) : "";
   }
   function renderRoutine() {
     renderMode();
     renderOffsets();
     if (!routine.manual) renderWhen();
-    remind.value = routine.remind_every;
     daysSummary.textContent = daysLongText(routine.days);
     daysBox.replaceChildren(...WEEKDAYS.map((day) => {
       const on = routine.days.includes(day);
@@ -179,9 +146,9 @@ export async function viewRoutineEdit(routineId) {
   }
 
   // ---------- its tasks: they are the mission's, here only their minutes ----------
-  // Between two cards that do not move, like Scratch's blocks: the alarm opens the
+  // Between two cards that do not move, like Scratch's blocks: Inicio opens the
   // routine and the goal closes it. The pin marks the time that stays put.
-  const alarmCard = h("div", { "data-card": "alarm" });
+  const startCard = h("div", { "data-card": "alarm" });
   const goalCard = h("div", { "data-card": "goal" });
   // When the parts end: "Termina a las" (05/11: the missions are checked then, and the
   // goal comes as soon as everyone has theirs, at the latest its margin later).
@@ -198,36 +165,32 @@ export async function viewRoutineEdit(routineId) {
         onChange: (m) => patch({ [field]: changed(m) }),
       }));
   }
+  // Inicio and Meta (rutina-modos.html): always there, each opens its own screen.
+  const endCard = (kind, iconName, title, detail, time) => [
+    h("span", { "aria-hidden": "true" }, icon(iconName)),
+    h("a", { class: "routine-card__text row__cover", href: `${LIST_HREF}/${routineId}/${kind}` }, title,
+      h("span", { class: "routine-card__detail" }, detail)),
+    time, h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))];
+  const clock = (time) => !routine.manual && h("span", { class: "routine-card__time" }, shortTime(time));
   function renderCards() {
-    alarmCard.hidden = routine.manual;
-    goalCard.hidden = !routine.goal; // started by hand too (songs can go there), with no times
-    const clock = (time) => !routine.manual && h("span", { class: "routine-card__time" }, shortTime(time));
-    if (!routine.manual) renderAlarmCard();
-    if (!routine.goal) return;
+    const ending = routine.anchor === "end";
+    const ringsAt = routine.alarm ? routine.wake : routine.starts;
+    startCard.className = `routine-card routine-card--alarm row--covered${routine.manual || routine.alarm ? "" : " routine-card--off"}`;
+    startCard.replaceChildren(...endCard("start", "alarm", t.routineEdit.startCard,
+      routine.manual ? (routine.race ? t.race.go3 : t.routineEdit.startWhenLaunched) : t.routineEdit.warnChoice(routine.alarm ? routine.alarm_before : null),
+      !routine.manual && (ending ? clock(ringsAt) : pinnedStepper(ringsAt, "starts"))).filter(Boolean));
     // The goal, and before it checking the missions (rutinas-6), which has the time: the goal comes as
     // soon as everyone has their mission, at the latest when the margin is over (05/11).
     const checking = routine.goal.check_minutes > 0;
-    const ending = routine.anchor === "end";
-    goalCard.className = `routine-card routine-card--goal${checking ? " routine-card--checking" : ""}`;
+    goalCard.className = `routine-card routine-card--goal row--covered${checking ? " routine-card--checking" : ""}`;
     goalCard.replaceChildren(...[
       checking && h("span", { class: "routine-card__check" }, icon("check"), t.routine.checkTitle,
         ending ? pinnedStepper(partsEnd(), "ends") : clock(partsEnd())),
-      h("span", { class: "routine-card__row" }, icon("flag"),
-        h("span", { class: "routine-card__text" }, t.routineEdit.goalCard,
-          h("span", { class: "routine-card__detail" }, checking
-            ? t.routineEdit.goalWhenDone(routine.goal.check_minutes, routine.goal.at && shortTime(routine.goal.at))
-            : `"${routine.goal.say}"`)),
-        checking ? "" : ending ? pinnedStepper(routine.goal.at, "ends") : clock(routine.goal.at)),
+      h("span", { class: "routine-card__row" }, ...endCard("goal", "flag", t.routineEdit.goalCard,
+        checking ? t.routineEdit.goalWhenDone(routine.goal.check_minutes, routine.goal.at && shortTime(routine.goal.at))
+          : `«${script.goalSay(routine)}»`,
+        checking ? "" : ending ? pinnedStepper(routine.goal.at, "ends") : clock(routine.goal.at))),
     ].filter(Boolean));
-  }
-  function renderAlarmCard() {
-    alarmCard.className = `routine-card routine-card--alarm${routine.alarm ? "" : " routine-card--off"}`;
-    alarmCard.replaceChildren(icon("alarm"),
-      h("span", { class: "routine-card__text" }, routine.alarm ? t.routineEdit.alarmCard : t.routineEdit.noAlarmCard,
-        routine.alarm && h("span", { class: "routine-card__detail" }, t.routineEdit.alarmCardBefore(routine.alarm_before))),
-      routine.anchor === "start"
-        ? pinnedStepper(routine.alarm ? routine.wake : routine.starts, "starts")
-        : h("span", { class: "routine-card__time" }, shortTime(routine.alarm ? routine.wake : routine.starts)));
   }
   const partsList = h("ul", { class: "rows" });
   const someDaysDiffer = h("p", { class: "hint" }, t.routineEdit.someDaysDiffer);
@@ -276,57 +239,6 @@ export async function viewRoutineEdit(routineId) {
       h("p", { class: "hint" }, t.routineEdit.warnHint));
   }
 
-  // ---------- the goal ----------
-  const goalBox = h("div", { class: "stack stack--tight" });
-  function renderGoal() {
-    const withGoal = Boolean(routine.goal);
-    const tabs = h("div", { class: "tabs" },
-      [[true, t.routineEdit.withGoal], [false, t.routineEdit.noGoal]].map(([value, label]) =>
-        h("button", {
-          type: "button", class: `tab${withGoal === value ? " tab--on" : ""}`, "aria-pressed": String(withGoal === value),
-          onclick: () => {
-            if (withGoal === value) return;
-            patch({ goal: value ? newGoal() : null });
-          },
-        }, withGoal === value && icon("check"), label)));
-    if (!withGoal) {
-      goalBox.replaceChildren(tabs);
-      return;
-    }
-    const goal = routine.goal;
-    const ending = routine.anchor === "end"; // its time is "Termina a las", and it is a must
-    // No time of its own (05/11): it is "Termina a las", or it comes when the parts end.
-    // Checking the missions first (rutinas-6): on, with its minutes.
-    // Ending at a time, the parts keep ending then and the goal's latest moves with the margin.
-    const setCheck = (minutes) => patch({ goal: { ...goal, check_minutes: minutes,
-      ...(ending && { at: hhmm(minuteOf(partsEnd()) + minutes) }) } });
-    const checking = goal.check_minutes > 0;
-    const checkOn = h("input", {
-      type: "checkbox", checked: checking, onchange: (e) => setCheck(e.target.checked ? USUAL_CHECK_MINUTES : 0),
-    });
-    const during = h("select", { onchange: (e) => setCheck(Number(e.target.value)) },
-      [...new Set([...CHECK_CHOICES, goal.check_minutes])].filter(Boolean).sort((a, b) => a - b)
-        .map((n) => h("option", { value: n, selected: n === goal.check_minutes }, t.routine.minutes(n))));
-    goalBox.replaceChildren(...[!ending && tabs,
-      h("label", { class: "toggle" }, checkOn, t.routineEdit.checkFirst),
-      checking && h("div", { class: "times" }, h("label", { class: "time" }, t.routineEdit.checkDuring, during)),
-      h("p", { class: "hint" }, routine.manual ? t.routineEdit.goalByHand(goal.check_minutes) : checking
-        ? t.routineEdit.checkHint(shortTime(partsEnd()), shortTime(goal.at))
-        : ending ? t.routineEdit.goalIsTheEnd(shortTime(goal.at)) : t.routineEdit.goalAfterParts(shortTime(goal.at))),
-      h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.panelSay),
-        h("p", { class: "voice-preview" }, `«${goal.say}»`),
-        h("a", { class: "btn", href: `${LIST_HREF}/${routineId}/voice/goal` }, icon("speaker"), t.routinePart.changeSay)),
-    ].filter(Boolean));
-  }
-  function newGoal() {
-    const last = routine.parts.at(-1).end;
-    const [hh, mm] = last.split(":").map(Number);
-    const minute = (hh * 60 + mm + GOAL_AFTER_MINUTES) % (24 * 60);
-    const at = `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
-    return { at };
-  }
-
-
   // ---------- footer ----------
   const footer = h("div", { class: "page-footer" });
   function renderFooter() {
@@ -350,26 +262,19 @@ export async function viewRoutineEdit(routineId) {
     }));
   }
 
-  // One panel for each thing, so the alarm and the moved days do not mix.
+  // The moved days, in their own panel.
   timed.append(
     anchorBox,
     h("div", { class: "times" }, h("label", { class: "time" }, whenLabel, when)),
     whenHint);
   timedPanels.append(
-    panel(t.routineEdit.panelAlarm,
-      h("label", { class: "toggle" }, alarmOn, t.routineEdit.alarm),
-      alarmBeforeRow,
-      alarmHint,
-      alarmClash,
-      h("p", { class: "hint" }, t.routineEdit.wakeWithSong)),
     panel(t.routineEdit.offsets,
       h("p", { class: "hint" }, t.routineEdit.offsetsHint),
       offsetsBox,
       offsetsTimes));
-  goalPanel.append(panel(t.routineEdit.panelGoal, goalBox));
 
   // The songs: a lane beside the cards, and a form to add one (routine-music.js).
-  const cardsBox = h("div", { class: "song-cards" }, alarmCard, partsList, goalCard);
+  const cardsBox = h("div", { class: "song-cards" }, startCard, partsList, goalCard);
   const wrapSongs = songWraps(routineId);
   const addSong = addSongForm(routineId, { save, status });
   const race = raceChoices(url, save); // con el reloj or modo carrera: only started by hand
@@ -383,7 +288,6 @@ export async function viewRoutineEdit(routineId) {
     renderParts();
     addSong.draw(routine, songs);
     renderWarnAbout();
-    renderGoal();
     race.draw(routine);
   }
   refresh();
@@ -404,11 +308,6 @@ export async function viewRoutineEdit(routineId) {
             h("a", { class: "btn btn--start", href: missionHref }, t.routineEdit.changeInMission, icon("next"))),
           warnPanel,
           // Each thing in its own panel (04/11): the songs apart, like the goal.
-          songsPanel,
-          goalPanel)),
+          songsPanel)),
       footer));
-}
-
-export function capital(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }

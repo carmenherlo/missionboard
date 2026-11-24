@@ -20,10 +20,9 @@ TOO_BIG = {
     "static/css/effects.css": 612,
     "static/css/routine.css": 432,
     "routines/api.py": 405,  # finishing went to control_api.py (18/11), what the screen gets to present.py (23/11)
-    "static/js/screens/parents/routine-edit.js": 414,  # its times to routine-times.js (23/11)
     "missions/service.py": 377,
     "missions/api.py": 358,  # +1 import line when routines/repository.py was split (1d)
-    "routines/editor.py": 324,
+    "routines/editor.py": 323,
 }
 
 # Over the limit on purpose: every user-facing text in one place (decided 14/11).

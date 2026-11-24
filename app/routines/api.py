@@ -63,11 +63,9 @@ class RoutineCreate(BaseModel):
 class GoalIn(BaseModel):
     image: str | None = None
     at: str | None = Field(default=None, pattern=TIME)  # started by hand: none
-    say: str = Field(default="¡Rutina terminada!", max_length=200)
     check_minutes: int = Field(default=0, ge=0, le=30)  # checking the missions before it (rutinas-6)
     check_say: str | None = Field(default=None, max_length=200)
 
-    _say = field_validator("say")(_not_blank)
     _check_say = field_validator("check_say")(lambda v: (v or "").strip() or None)
 
 
@@ -95,12 +93,11 @@ class RoutinePatch(BaseModel):
     ends: str | None = Field(default=None, pattern=TIME)
     alarm: bool | None = None
     alarm_before: int | None = Field(default=None, ge=0, le=60)
-    greeting: str | None = Field(default=None, max_length=200)  # null or empty: the usual one
     last_countdown: str | None = Field(default=None, max_length=200)
     early_goal: str | None = Field(default=None, max_length=200)
     warn_about: Literal["end", "next"] | None = None
 
-    _sentences = field_validator("greeting", "last_countdown", "early_goal")(_blank_is_usual)
+    _sentences = field_validator("last_countdown", "early_goal")(_blank_is_usual)
 
 
 class KidsIn(BaseModel):
@@ -297,7 +294,8 @@ def update_routine(
     present: Editing = Depends(),
 ):
     changes = {name: getattr(body, name) for name in body.model_fields_set}
-    for required in ("days", "remind_every", "offsets", "notices", "warn_about", *TIMING):  # wake: null means "by hand"
+    # wake: null means "by hand"; the others cannot be taken away (a routine always has its goal)
+    for required in ("days", "remind_every", "offsets", "notices", "warn_about", "goal", *TIMING):
         if changes.get(required, "") is None:
             changes.pop(required)
     if changes.get("goal") is not None:

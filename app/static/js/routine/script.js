@@ -65,9 +65,13 @@ export const untilFirst = (first, n) => `${left(n)} para que comience ${first.na
 
 export const firstHerald = (first) => `Diez segundos para que comience ${first.name}.`;
 
+// What the start and the goal say, always the same (rutina-modos.html): the mission's name.
+export const startSay = (routine) => `Va a empezar la misión ${routine.name}.`;
+export const goalSay = (routine) => `¡Misión ${routine.name} completada!`;
+
 // The alarm, ringing a while before the first part.
 export function wakeUp(routine, first, time, n) {
-  return [routine.greeting, `${capital(itIs(time))}.`, untilFirst(first, n)].filter(Boolean);
+  return [startSay(routine), `${capital(itIs(time))}.`, untilFirst(first, n)];
 }
 
 export const untilGoal = (n) => `${left(n)} para terminar.`;
@@ -76,7 +80,7 @@ export const untilGoal = (n) => `${left(n)} para terminar.`;
 const timeSaid = (routine, time) => (routine.manual ? [] : [`${capital(itIs(time))}.`]);
 
 export function goalReached(routine, time, minutesLeft) {
-  return [...timeSaid(routine, time), ...(minutesLeft >= 1 ? [untilGoal(minutesLeft)] : []), routine.goal.say];
+  return [...timeSaid(routine, time), ...(minutesLeft >= 1 ? [untilGoal(minutesLeft)] : []), goalSay(routine)];
 }
 
 // "¡Enhorabuena! Habéis completado con éxito todas vuestras tareas de la misión Despegue."

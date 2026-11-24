@@ -4,7 +4,7 @@ import zipfile
 import yaml
 
 from app.children import avatars
-from app.storage.config_migrations import upgrade
+from app.storage.config_migrations import CURRENT_VERSION, upgrade
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 
@@ -122,7 +122,7 @@ def test_migration_17_to_18():
 def test_migration_18_to_19_switches_the_home_reflection_off():
     doc = upgrade({"version": 18, "settings": {"home": {"shine": True, "veil": 0}}})
     assert doc["settings"]["home"] == {"shine": False, "veil": 0}
-    assert upgrade({"version": 18})["version"] == 22
+    assert upgrade({"version": 18})["version"] == CURRENT_VERSION
 
 
 def test_tones_of_any_colour():

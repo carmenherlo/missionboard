@@ -211,9 +211,9 @@ def test_the_summary_says_which_orders_arrive_today(client, bea):
 
 
 def test_migration_19_to_20_moves_the_phones_out_of_the_shop():
-    from app.storage.config_migrations import upgrade
+    from app.storage.config_migrations import CURRENT_VERSION, upgrade
 
     doc = upgrade({"version": 19, "settings": {"shop_notify": {"phones": ["mobile_app_mum"], "remind_at": "18:00"}}})
     assert doc["settings"]["notify"] == {"phones": ["mobile_app_mum"]}
     assert doc["settings"]["shop_notify"] == {"on": True, "remind_at": "18:00"}
-    assert upgrade({"version": 19})["version"] == 22
+    assert upgrade({"version": 19})["version"] == CURRENT_VERSION

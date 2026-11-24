@@ -45,7 +45,7 @@ def start(client, routine, kids):
 
 
 def test_a_routine_by_hand_has_no_times_of_its_own(client, landing):
-    assert landing["manual"] is True and landing["wake"] is None and landing["goal"] is None
+    assert landing["manual"] is True and landing["wake"] is None and landing["goal"]["at"] is None
     assert [(p["at"], p["start"], p["end"]) for p in landing["parts"]] == [
         (None, "00:00", "00:03"),
         (None, "00:03", "00:07"),

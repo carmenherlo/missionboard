@@ -11,6 +11,7 @@ import { h } from "../dom.js";
 import { confetti } from "../effects/confetti.js";
 import { t } from "../texts.js";
 import { askParentCode } from "./code-dialog.js";
+import * as script from "./script.js";
 import { countdownText } from "./words.js";
 
 const SHOWN_MS = 30_000; // the result stays this long
@@ -69,7 +70,7 @@ export function raceEnd(r) {
       if (isOff("music")) sounds.win();
       else r.showing.race.music.fanfare(); // the end's melody (race-music.js)
       confetti(view.layer);
-      say([data.goal?.say, title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null]
+      say([script.goalSay(data), title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null]
         .filter(Boolean));
     } else if (result.outcome === "slow") {
       say("¡Terminado! Esta vez ganó el fantasma.");

@@ -97,15 +97,14 @@ def test_days_wake_and_goal(client):
     routine = edit(client, "PATCH", days=["fri", "mon"], wake="06:20", remind_every=10).json()
     assert routine["days"] == ["mon", "fri"] and routine["wake"] == "06:20"
     # Starting at a time, the goal comes when the parts end (05/11): its own time does not count
-    goal = {"at": "07:50", "say": "¡Al autobús!"}
+    goal = {"at": "07:50"}
     assert edit(client, "PATCH", goal=goal).json()["goal"] == {
         "at": "07:25",
-        "say": "¡Al autobús!",
         "image": None,
         "check_minutes": 0,
         "check_say": None,
     }
-    assert edit(client, "PATCH", goal=None).json()["ends"] == "07:25"
+    assert edit(client, "PATCH", goal=None).json()["goal"] is not None  # a routine always has its goal
 
 
 @pytest.mark.parametrize("body", [{"wake": "06:40"}, {"days": []}])
@@ -250,7 +249,6 @@ def test_a_new_routine_that_ends_at_a_time(client):
     assert routine["anchor"] == "end" and routine["goal"] == {
         "image": None,
         "at": "20:30",
-        "say": "¡Rutina terminada!",
         "check_minutes": 0,
         "check_say": None,
     }
@@ -282,20 +280,6 @@ def test_ending_at_its_goal_keeps_that_time(client):
     routine = edit(client, "PATCH", ends="08:00").json()
     assert routine["parts"][-1]["end"] == "08:00" and routine["goal"]["at"] == "08:05"
     assert routine["starts"] == "07:05"
-    # The goal is a must
-    assert edit(client, "PATCH", goal=None).status_code == 422
-
-
-def test_ending_at_a_time_without_a_goal_gets_one(client):
-    edit(client, "PATCH", goal=None)
-    routine = edit(client, "PATCH", anchor="end").json()
-    assert routine["goal"] == {
-        "image": None,
-        "at": "07:25",
-        "say": "¡Rutina terminada!",
-        "check_minutes": 0,
-        "check_say": None,
-    }
 
 
 def test_starts_at_and_the_alarm(client):
@@ -334,13 +318,12 @@ def test_by_hand_it_neither_starts_nor_ends_at_a_time(client):
 
 
 def test_the_routines_own_sentences(client, clock):
-    routine = edit(client, "PATCH", greeting="¡Arriba!", last_countdown="  ", early_goal="¡Bien!").json()
-    assert routine["greeting"] == "¡Arriba!" and routine["early_goal"] == "¡Bien!"
+    routine = edit(client, "PATCH", last_countdown="  ", early_goal="¡Bien!").json()
+    assert routine["early_goal"] == "¡Bien!"
     assert routine["last_countdown"] is None  # empty: the usual one
     clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
     on = client.get("/api/routines/current").json()
-    assert on["greeting"] == "¡Arriba!" and on["early_goal"] == "¡Bien!" and "name" not in on["goal"]
-    assert edit(client, "PATCH", greeting=None).json()["greeting"] is None
+    assert on["early_goal"] == "¡Bien!" and "name" not in on["goal"] and "greeting" not in on
 
 
 # ---------- checking the missions, part of the goal (rutinas-6) ----------
@@ -361,3 +344,22 @@ def test_warnings_about_the_next_part(client, clock):
     assert edit(client, "PATCH", warn_about="later").status_code == 422
     clock.moment = datetime(2026, 11, 2, 6, 40, tzinfo=MADRID)
     assert client.get("/api/routines/current").json()["warn_about"] == "next"
+
+
+def test_every_routine_gets_its_goal_and_loses_its_own_sentences():
+    from app.storage.config_migrations import upgrade
+
+    routines = [
+        {"id": "a", "wake": "06:30", "greeting": "¡Arriba!", "parts": [{"id": "p", "at": "06:35", "minutes": 10}]},
+        {"id": "b", "wake": None, "parts": [{"id": "p", "minutes": 4}]},
+        {
+            "id": "c",
+            "wake": "19:00",
+            "goal": {"at": "19:30", "say": "¡A dormir!"},
+            "parts": [{"id": "p", "minutes": 5}],
+        },
+    ]
+    a, b, c = upgrade({"version": 22, "routines": routines})["routines"]
+    assert "greeting" not in a and a["goal"]["at"] == "06:45" and a["goal"]["check_minutes"] == 0
+    assert b["goal"]["at"] is None  # started by hand: no time
+    assert c["goal"] == {"at": "19:30"}

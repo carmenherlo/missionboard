@@ -67,6 +67,7 @@ class RoutinesEditor:
             raise ConflictError("That mission already has its routine")
         parts = [{"id": task.id, "minutes": NEW_PART_MINUTES} for task in mission.tasks]
         doc = {"id": _new_id(), "mission_id": mission_id, "days": list(mission.days), "parts": parts}
+        doc["goal"] = {"check_minutes": 0}  # always one (rutina-modos.html)
         if ends:
             parts[0]["at"] = ends
             doc |= {"anchor": "end", "wake": ends, "goal": {"at": ends}}
@@ -92,14 +93,13 @@ class RoutinesEditor:
         goal=UNSET,
         offsets=UNSET,
         notices=UNSET,
-        greeting=UNSET,
         last_countdown=UNSET,
         early_goal=UNSET,
         warn_about=UNSET,
         **timing,
     ) -> Routine:
         """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`. The
-        sentences (greeting, last_countdown, early_goal): None goes back to the usual one."""
+        sentences (last_countdown, early_goal): None goes back to the usual one."""
         changes = {
             k: v
             for k, v in {
@@ -109,7 +109,6 @@ class RoutinesEditor:
                 "goal": goal,
                 "offsets": offsets,
                 "notices": notices,
-                "greeting": greeting,
                 "last_countdown": last_countdown,
                 "early_goal": early_goal,
                 "warn_about": warn_about,

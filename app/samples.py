@@ -68,11 +68,10 @@ ROUTINES = [
                 "loud": False,
             }
         ],
-        "greeting": "¡Buenos días!",
         "last_countdown": None,
         "early_goal": None,
         "warn_about": "end",
-        "goal": {"at": "07:35", "image": None, "say": "¡Es hora de salir!", "check_minutes": 5, "check_say": None},
+        "goal": {"at": "07:35", "image": None, "check_minutes": 5, "check_say": None},
         "parts": [
             _part("despegue-1", 10, say="Ahora toca despertarse.", at="06:40"),
             _part("despegue-2", 15, say="Ahora toca desayunar."),
@@ -104,14 +103,12 @@ ROUTINES = [
                 "loud": False,
             }
         ],
-        "greeting": None,
         "last_countdown": None,
         "early_goal": None,
         "warn_about": "end",
         "goal": {
             "at": "19:35",
             "image": None,
-            "say": "¡A dormir! Buenas noches.",
             "check_minutes": 5,
             "check_say": None,
         },

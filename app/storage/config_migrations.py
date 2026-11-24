@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 22
+CURRENT_VERSION = 23
 
 
 class ConfigVersionError(Exception):
@@ -128,6 +128,29 @@ def _v21_to_v22(doc: dict) -> dict:
 
 
 _MIGRATIONS[21] = _v21_to_v22
+
+
+def _v22_to_v23(doc: dict) -> dict:
+    """Rutinas (rutina-modos.html, 24/11): every routine has its goal, and what the alarm
+    and the goal say is fixed ("Va a empezar la misión…", "¡Misión … completada!"): their
+    own sentences go. A routine without a goal gets one with no checking, when its parts end."""
+    for routine in doc.get("routines") or []:
+        routine.pop("greeting", None)
+        goal = routine.get("goal")
+        if goal:
+            goal.pop("say", None)
+            continue
+        parts = routine.get("parts") or []
+        first = parts and (parts[0].get("at") or routine.get("wake"))
+        at = None
+        if routine.get("wake") is not None and first:
+            at = _hhmm(_minutes(first) + sum(part.get("minutes", 0) for part in parts))
+        routine["goal"] = {"at": at, "image": None, "check_minutes": 0, "check_say": None}
+    doc["version"] = 23
+    return doc
+
+
+_MIGRATIONS[22] = _v22_to_v23
 
 
 def upgrade(doc: dict) -> dict:

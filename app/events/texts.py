@@ -160,6 +160,8 @@ SCREENS = {
     "routine_new": ("Nueva rutina", None),
     "routine_edit": ("Editar rutina", None),
     "routine_part_edit": ("Editar parte de rutina", None),
+    "routine_start_edit": ("Editar inicio de rutina", None),
+    "routine_goal_edit": ("Editar meta de rutina", None),
     "routine_voice": ("Lo que dice la voz", None),
     "songs": ("Canciones", None),
     "routine_music": ("Canción de una rutina", None),

@@ -89,7 +89,7 @@ export function view(r) {
     let what = "";
     let until = "";
     if (phase.kind === "wake") {
-      what = data.greeting || t.routine.soon;
+      what = script.startSay(data);
       until = t.routine.startsAt(capital(r.parts()[0].name), hourWords(phase.to), toGo);
     } else if (phase.kind === "part") {
       image = phase.part.image_url;
@@ -98,13 +98,13 @@ export function view(r) {
       until = data.manual ? t.routine.endsIn(toGo) : t.routine.endsAt(hourWords(phase.to), toGo);
     } else if (r.showing.finished === "goal") {
       image = data.goal.image_url;
-      what = data.goal.say;
+      what = script.goalSay(data);
     } else if (phase.kind === "check") {
       what = t.routine.checkTitle;
       until = data.manual ? t.routine.endsIn(toGo) : t.routine.goalAt(hourWords(r.goalAt()), toGo);
     } else if (phase.kind === "goal") {
       image = data.goal.image_url;
-      what = data.goal.say;
+      what = script.goalSay(data);
       until = data.manual ? t.routine.endsIn(toGo) : t.routine.goalAt(hourWords(phase.to), toGo);
     } else if (r.showing.finished) {
       what = r.showing.finished === "done" ? t.routine.done : t.routine.timeUp;

@@ -46,11 +46,9 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
         and {
             "image_url": libraries.url(routine.goal.image),
             "at": routine.goal.at,
-            "say": routine.goal.say,
             "check_minutes": routine.goal.check_minutes,
             "check_say": routine.goal.check_say,
         },
-        "greeting": routine.greeting,
         "last_countdown": routine.last_countdown,
         "early_goal": routine.early_goal,
         "warn_about": routine.warn_about,
