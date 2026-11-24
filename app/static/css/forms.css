@@ -74,6 +74,85 @@
   color: var(--on-secondary-soft);
 }
 
+/* Folder tabs (rutina-modos.html): two ways of doing something; the chosen one opens its
+   box below, joined to its tab, with its own choices inside (components/choices.js). */
+.folder__tabs {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.folder__tab {
+  flex: 1;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--outline);
+  border-bottom: 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--container);
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.folder__tab--on {
+  position: relative;
+  top: 1px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.folder__box {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--outline);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--surface);
+}
+
+/* Options with a line each: a radio dot, the name and what it does. */
+.option-list {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.option {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-2);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.option--on {
+  border-color: var(--primary);
+  background: var(--secondary-soft);
+  color: var(--on-secondary-soft);
+}
+
+.option__dot {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border: 2px solid var(--outline);
+  border-radius: 50%;
+}
+
+.option--on .option__dot {
+  border: 6px solid var(--primary);
+}
+
+.option__text {
+  display: grid;
+  gap: 2px;
+}
+
 /* ---------- fields ---------- */
 
 .field {

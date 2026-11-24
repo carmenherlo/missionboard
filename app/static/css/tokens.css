@@ -127,6 +127,7 @@
   --sheet-backdrop: rgb(20 20 40 / 0.35);
   --sheet-opacity: 90%;
   --sheet-blur: 18px; /* if it stutters on the tablet: 0 (and --sheet-opacity: 100%) */
+  --unused-opacity: 0.45; /* a panel that does not apply in this mode (rutina-modos.html) */
   --shadow-sheet: 0 24px 60px rgb(0 0 0 / 0.3);
   --step-tile-size: 120px;
   --task-card-width: 300px;

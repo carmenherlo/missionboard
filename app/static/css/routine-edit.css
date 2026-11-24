@@ -303,3 +303,8 @@ select.pick {
 }
 
 .btn--start { justify-self: start; }
+
+/* What a race does not use (rutina-modos.html): greyed and untouchable, saying why. */
+.panel--unused {
+  opacity: var(--unused-opacity);
+}

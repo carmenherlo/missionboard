@@ -1,5 +1,6 @@
 import { api, errorMessage } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
+import { choiceList, folderTabs } from "../../components/choices.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
@@ -12,7 +13,7 @@ import { tryRoutine } from "../../routine/routine.js";
 import * as script from "../../routine/script.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { racePanel } from "./routine-race-edit.js";
+import { raceChoices } from "./routine-race-edit.js";
 import { hhmm, lengthText, minuteOf, movedTime, shortTime } from "./routine-times.js";
 import { addSongForm, ringsAtFirstPart, songWraps } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
@@ -102,30 +103,27 @@ export async function viewRoutineEdit(routineId) {
 
   // Rings at a time, or started by hand (⏰ on the home screen).
   const modeBox = h("div", {});
-  const timed = h("div", { class: "stack stack--tight" }); // in the Horario panel
+  const timed = h("div", { class: "stack stack--tight" }); // in the box of "Suena a una hora"
   const timedPanels = h("div", { class: "stack" }); // the panels a routine started by hand does not have
   const goalPanel = h("div", {});
   function renderMode() {
     const manual = routine.manual;
-    modeBox.replaceChildren(...[h("div", { class: "tabs tabs--wrap" },
-      [[false, t.routineEdit.timed], [true, t.routineEdit.byHand]].map(([value, label]) =>
-        h("button", {
-          type: "button", class: `tab${manual === value ? " tab--on" : ""}`, "aria-pressed": String(manual === value),
-          onclick: () => manual !== value && patch({ wake: value ? null : mission.schedule?.start ?? DEFAULT_WAKE }),
-        }, manual === value && icon("check"), label))),
-    manual && h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes))].filter(Boolean));
-    timed.hidden = manual;
+    modeBox.replaceChildren(folderTabs([[false, t.routineEdit.timed], [true, t.routineEdit.byHand]].map(([value, label]) =>
+      ({ label, on: manual === value, onSelect: () => patch({ wake: value ? null : mission.schedule?.start ?? DEFAULT_WAKE }) })),
+    manual ? race.element : timed));
     timedPanels.hidden = manual;
+    const racing = manual && Boolean(routine.race); // what a race does not use: greyed, with why
+    for (const unused of [warnPanel, songsPanel]) {
+      unused.classList.toggle("panel--unused", racing);
+      unused.inert = racing;
+      unused.querySelector(".panel__why").hidden = !racing;
+    }
   }
   function renderWhen() {
     const ending = routine.anchor === "end";
-    anchorBox.replaceChildren(h("div", { class: "tabs tabs--wrap" },
-      [["start", t.routineEdit.anchorStart], ["end", t.routineEdit.anchorEnd]].map(([value, label]) =>
-        h("button", {
-          type: "button", class: `tab${routine.anchor === value ? " tab--on" : ""}`,
-          "aria-pressed": String(routine.anchor === value),
-          onclick: () => routine.anchor !== value && patch({ anchor: value }),
-        }, routine.anchor === value && icon("check"), label))));
+    anchorBox.replaceChildren(choiceList([
+      ["start", t.routineEdit.anchorStart, t.routineEdit.anchorStartHint], ["end", t.routineEdit.anchorEnd, t.routineEdit.anchorEndHint],
+    ].map(([value, label, hint]) => ({ label, hint, on: routine.anchor === value, onSelect: () => patch({ anchor: value }) }))));
     whenLabel.textContent = ending ? t.routineEdit.anchorEnd : t.routineEdit.anchorStart;
     when.value = ending ? partsEnd() : routine.starts;
     const length = lengthText(minuteOf(partsEnd()) - minuteOf(routine.starts));
@@ -264,6 +262,7 @@ export async function viewRoutineEdit(routineId) {
 
   // ---------- what the warnings before a part ends say (out of the script, 06/11) ----------
   const warnBox = h("div", { class: "stack stack--tight" });
+  const warnPanel = panel(t.routineEdit.warnTitle, h("p", { class: "hint panel__why" }, t.race.noWarnings), warnBox);
   function renderWarnAbout() {
     const [first, second] = routine.parts;
     warnBox.replaceChildren(
@@ -373,8 +372,8 @@ export async function viewRoutineEdit(routineId) {
   const cardsBox = h("div", { class: "song-cards" }, alarmCard, partsList, goalCard);
   const wrapSongs = songWraps(routineId);
   const addSong = addSongForm(routineId, { save, status });
-  const race = racePanel(url, save); // modo carrera: only started by hand
-  const songsPanel = panel(t.routineMusic.panel,
+  const race = raceChoices(url, save); // con el reloj or modo carrera: only started by hand
+  const songsPanel = panel(t.routineMusic.panel, h("p", { class: "hint panel__why" }, t.race.noSongs),
     h("p", { class: "hint" }, t.routineMusic.panelHint),
     addSong.element);
 
@@ -397,13 +396,13 @@ export async function viewRoutineEdit(routineId) {
         h("div", { class: "stack" },
           panel(t.routineEdit.panelRoutine,
             h("div", { class: "field" }, daysBox, daysSummary, h("p", { class: "hint" }, t.routineEdit.onlyMissionDays))),
-          panel(t.routineEdit.panelWhen, modeBox, timed), race.element,
+          panel(t.routineEdit.panelWhen, modeBox),
           timedPanels,
           panel(t.routineEdit.panelKids, kidsList, h("p", { class: "hint" }, t.routineEdit.kidsHint))),
         h("div", { class: "stack" },
           panel(t.routineEdit.panelParts(routine.name), cardsBox, someDaysDiffer,
             h("a", { class: "btn btn--start", href: missionHref }, t.routineEdit.changeInMission, icon("next"))),
-          panel(t.routineEdit.warnTitle, warnBox),
+          warnPanel,
           // Each thing in its own panel (04/11): the songs apart, like the goal.
           songsPanel,
           goalPanel)),
