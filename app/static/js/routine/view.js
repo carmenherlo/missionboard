@@ -115,8 +115,10 @@ export function view(r) {
     view.what.replaceChildren(...[image && h("img", { src: image, alt: "" }), what].filter(Boolean),
       r.sayWhat ? h("span", { class: "routine__speak", "aria-hidden": "true" }, "🔊") : "");
     view.until.textContent = until;
-    view.clock.replaceChildren(data.manual
-      ? timerFace(phase, time)
+    // The goal's celebration (everyone done, or its time): just the clock, telling the time (24/11).
+    const celebrating = Boolean(r.showing.finished) || phase.kind === "goal";
+    view.clock.replaceChildren(celebrating ? clockFace({ kind: "done" }, time, [])
+      : data.manual ? timerFace(phase, time)
       : clockFace(phase, time, [...r.parts().map((p) => ({ start: p.from, end: p.to })),
         ...(r.checkMinutes() ? [{ start: r.parts().at(-1).to, end: r.parts().at(-1).to + r.checkMinutes() }] : [])]));
     if (String(r.showing.count ?? "") !== view.count.textContent) {
