@@ -182,11 +182,11 @@ export function race(r) {
     if (left <= 0) once(`late-${state.index}`, "Vamos un poco tarde.");
     const ahead = r.lead(time) >= EVEN_MIN ? true : r.lead(time) <= -EVEN_MIN ? false : state.ahead;
     if (state.ahead !== null && ahead !== state.ahead) {
-      say(ahead ? "¡Adelantamos al fantasma!" : "¡El fantasma nos adelanta!");
+      say(ahead ? "¡Adelantamos al extraterrestre!" : "¡El extraterrestre nos adelanta!");
       if (ahead) r.flashPassed();
     }
     state.ahead = ahead;
-    if (time >= data().race.ghost) once("ghost", "¡El fantasma ha llegado a la meta! Aún podéis terminar.");
+    if (time >= data().race.ghost) once("ghost", "¡El extraterrestre ha llegado a la meta! Aún podéis terminar.");
   }
 
   // How far ahead of the ghost, in minutes (negative: behind).

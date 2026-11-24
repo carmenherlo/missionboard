@@ -73,7 +73,7 @@ export function raceEnd(r) {
       say([script.goalSay(data), title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null]
         .filter(Boolean));
     } else if (result.outcome === "slow") {
-      say("¡Terminado! Esta vez ganó el fantasma.");
+      say("¡Terminado! Esta vez ganó el extraterrestre.");
     } else {
       const missing = data.people.filter((p) => p.mission && !p.mission.completed).map((p) => p.child.name);
       say(["Se acabó el tiempo.", ...missing.map((name) => `A ${name} le faltan tareas.`)]);

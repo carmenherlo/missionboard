@@ -50,7 +50,7 @@ export function raceRoad(legs, index, rocketAt, ghostAt, side, gap) {
     svg.append(el("rect", { class: `race-road__gap race-road__gap--${side}`, x: left, y: 172, width, height: 46, rx: 23 }),
       el("text", { class: "race-road__gap-text", x: left + width / 2, y: 196 }, gap));
   }
-  svg.append(picture(`${FLUENT}/ghost.svg`, xOf(ghostAt), ROAD.y + 52, ROAD.ghost, "race-road__ghost"),
+  svg.append(picture(`${FLUENT}/alien.svg`, xOf(ghostAt), ROAD.y + 52, ROAD.ghost, "race-road__ghost"),
     picture(`${FLUENT}/rocket.svg`, xOf(rocketAt), ROAD.y + 48, ROAD.rocket, "race-road__rocket"));
   return svg;
 }
@@ -82,7 +82,7 @@ export function raceView(r) {
     view.raceParts = { big, road, what, hints, until, timer, start, result };
     // Who runs, said once at the start.
     // Before "3, 2, 1, ¡YA!": the Inicio's sentence (rutina-inicio.html), and who races.
-    if (r.elapsed() < 0 && !r.closed()) say([script.startSay(data), `¡${list(data.people.map((p) => p.child.name))} contra el fantasma!`]);
+    if (r.elapsed() < 0 && !r.closed()) say([script.startSay(data), `¡${list(data.people.map((p) => p.child.name))} contra el extraterrestre!`]);
   }
 
   function renderRace(time) {
