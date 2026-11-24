@@ -4,11 +4,22 @@
 // the box of the "Se lanza a mano" folder tab. "Sin prisa" is each part's own (routine-part-edit.js).
 import { api } from "../../api.js";
 import { choiceList } from "../../components/choices.js";
+import { layer } from "../../components/layer.js";
 import { stepper } from "../../components/stepper.js";
 import { h } from "../../dom.js";
+import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 
 const FIRST_GHOST = 0.9; // as the server: in the first race, the alien gets to the flag at 90 % of the time
+
+// (i): how the race works, in a small window (carrera-estrategia.html).
+function showInfo() {
+  const { close } = layer(h("div", { class: "open-today__form panel" },
+    h("h2", { class: "panel__title" }, t.race.infoTitle),
+    h("ul", { class: "stack stack--tight" }, t.race.info.map((line) => h("li", {}, line))),
+    h("div", { class: "form-actions" },
+      h("button", { type: "button", class: "btn btn--primary", onclick: () => close() }, t.common.done))));
+}
 
 export function raceChoices(url, save) {
   const element = h("div", { class: "stack stack--tight" });
@@ -33,7 +44,12 @@ export function raceChoices(url, save) {
         onChange: (n) => put({ ...race, [field]: n }),
       }));
     element.replaceChildren(choices,
-      h("p", { class: "hint" }, t.race.asRaceHint(minutes, Math.floor(minutes * FIRST_GHOST))),
+      h("div", { class: "row row--compact" },
+        h("p", { class: "row__text hint" }, t.race.asRaceHint(minutes, Math.floor(minutes * FIRST_GHOST))),
+        h("button", {
+          type: "button", class: "icon-button icon-button--ghost", "aria-label": t.race.infoLabel, title: t.race.infoLabel,
+          onclick: showInfo,
+        }, icon("info"))),
       row(t.race.onTime, t.race.recordToo, "on_time"),
       h("label", { class: "toggle" },
         h("input", { type: "checkbox", checked: race.review, onchange: (e) => put({ ...race, review: e.target.checked }) }),

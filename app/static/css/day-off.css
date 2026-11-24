@@ -114,4 +114,5 @@ button.row--link {
   z-index: 40;
   display: grid;
   place-items: center;
+  overflow-y: auto; /* a long window (how the race works) scrolls on a short screen */
 }

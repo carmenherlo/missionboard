@@ -78,6 +78,7 @@ const PATHS = {
   menu: ["M4 6h16", "M4 12h16", "M4 18h16"],
   today: ["M4 5h16v15H4z", "M4 10h16", "M9 3v4", "M15 3v4"],
   phone: ["M7 2h10v20H7z", "M11 18h2"],
+  info: ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 11v5", "M12 8h.01"],
 };
 
 // Decorative icon: its meaning must come from nearby text or an aria-label.
