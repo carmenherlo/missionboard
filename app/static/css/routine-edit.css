@@ -308,3 +308,14 @@ select.pick {
 .panel--unused {
   opacity: var(--unused-opacity);
 }
+
+/* «Sin prisa» in a race (carrera-estrategia.html): the turtle in the list of tasks; on, the task goes green */
+.slow-toggle { width: var(--space-5); height: var(--space-5); background: transparent; opacity: var(--unused-opacity); }
+.slow-toggle img { width: var(--space-4); height: var(--space-4); }
+.slow-icon { width: var(--space-3); height: var(--space-3); vertical-align: middle; }
+.slow-toggle[aria-pressed="true"] { background: var(--success-vivid); opacity: 1; }
+.panel .row--slow { background: var(--success-soft); }
+.row:has(.slow-toggle) { flex-wrap: nowrap; } /* the turtle fits: the chevron stays on the line */
+@media (max-width: 599.98px) {
+  .row:has(.slow-toggle) { flex-wrap: wrap; }
+}

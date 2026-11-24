@@ -122,7 +122,8 @@ export function race(r) {
   function announce() {
     const leg = legs()[r.showing.race.index];
     if (!leg) return;
-    say(script.partStart(leg.part, { manual: true, minutes: leg.part.minutes, kids: leg.having.length }));
+    const sentences = script.partStart(leg.part, { manual: true, minutes: leg.part.minutes, kids: leg.having.length });
+    say(leg.part.slow_minutes ? [...sentences, t.race.calmSaid] : sentences); // «sin prisa»: quality first
   }
 
   function moveOn(time, quiet) {

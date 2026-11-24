@@ -18,6 +18,8 @@ import { hhmm, lengthText, minuteOf, movedTime, shortTime } from "./routine-time
 import { addSongForm, songWraps } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
+const TURTLE = "static/libraries/fluent/turtle.svg";
+
 const LIST_HREF = "#/parents/config/routines";
 const DEFAULT_WAKE = "07:00"; // back to a time with none put away (server) and a mission with no hours
 const PINNED_STEP = 5; // the time that stays put, − / + on its card: 5 minutes at a time
@@ -202,11 +204,21 @@ export async function viewRoutineEdit(routineId) {
   }
   const partsList = h("ul", { class: "rows" });
   const someDaysDiffer = h("p", { class: "hint" }, t.routineEdit.someDaysDiffer);
+  // «Sin prisa» straight from the list (a race): the turtle; on, all its minutes (changed in the task).
+  function slowToggle(part) {
+    const on = Boolean(part.slow_minutes);
+    return h("button", {
+      type: "button", class: "icon-button slow-toggle", "aria-pressed": String(on),
+      "aria-label": t.race.slowToggle(part.text), title: t.race.slowTitle,
+      onclick: () => save(api("PUT", `${url}/parts/${part.id}/slow`, { json: { minutes: on ? null : part.minutes } })).catch(() => {}),
+    }, h("img", { src: TURTLE, alt: "" }));
+  }
   function renderParts() {
     renderCards();
     someDaysDiffer.hidden = !routine.parts.some((part) => routine.days.some((day) => !part.days.includes(day)));
+    const racing = routine.manual && Boolean(routine.race);
     partsList.replaceChildren(...routine.parts.map((part) =>
-      h("li", { class: "row row--compact row--covered", "data-id": part.id, "data-card": part.id },
+      h("li", { class: `row row--compact row--covered${racing && part.slow_minutes ? " row--slow" : ""}`, "data-id": part.id, "data-card": part.id },
         imageThumb(part.image_url, { size: "sm", label: part.text, suggested: part.image_suggested }),
         // The whole card opens it; − / + do not.
         h("a", {
@@ -220,8 +232,9 @@ export async function viewRoutineEdit(routineId) {
               : h("span", { class: "step-reminders__letter" }, step.text.charAt(0).toUpperCase()))),
           !routine.manual && h("span", { class: "row__detail" },
             h("span", { class: "pill pill--muted" }, t.routineEdit.partStarts(shortTime(part.start)))),
-          routine.race && part.slow_minutes && h("span", { class: "row__detail" },
+          racing && part.slow_minutes && h("span", { class: "row__detail" },
             h("span", { class: "pill pill--muted" }, t.race.slowPill(part.slow_minutes)))),
+        racing && slowToggle(part),
         stepper({
           value: part.minutes, min: 1, max: MAX_PART_MINUTES, format: t.routine.minutes,
           label: t.routineEdit.minutesOf(part.text),

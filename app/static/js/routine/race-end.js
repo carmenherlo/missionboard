@@ -77,8 +77,7 @@ export function raceEnd(r) {
     } else if (result.outcome === "slow") {
       say(t.race.slowSaid);
     } else {
-      const missing = data.people.filter((p) => p.mission && !p.mission.completed).map((p) => p.child.name);
-      say(["Se acabó el tiempo.", ...missing.map((name) => `A ${name} le faltan tareas.`)]);
+      say(t.race.lostSaid); // nobody named: nobody to blame
     }
   }
 
