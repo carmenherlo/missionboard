@@ -28,6 +28,7 @@ export const SETTINGS = [
   ], "app"],
   [t.config.groupSafety, [
     ["code", "parentCode", t.config.parentCode],
+    ["device", "phone", t.config.device], // a parent's phone, without the code
     ["backup", "download", t.config.backup],
     ["log", "history", t.config.eventLog],
   ], "safety"],

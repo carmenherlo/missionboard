@@ -1,6 +1,6 @@
 // Entry point: maps each URL hash to its screen.
 
-import { api, errorMessage, session } from "./api.js";
+import { ApiError, api, errorMessage, session } from "./api.js";
 import { h, render } from "./dom.js";
 import { viewChildPlace } from "./screens/child/place.js";
 import { viewChildToday } from "./screens/child/today.js";
@@ -13,6 +13,7 @@ import { viewAvatarEdit } from "./screens/parents/avatar-edit.js";
 import { viewAvatarNew } from "./screens/parents/avatar-new.js";
 import { viewAvatarsList } from "./screens/parents/avatars-list.js";
 import { viewBackup } from "./screens/parents/backup.js";
+import { viewDevice } from "./screens/parents/device.js";
 import { viewDisplaySettings } from "./screens/parents/display-settings.js";
 import { viewNotifySettings } from "./screens/parents/notify-settings.js";
 import { viewAppearance, viewAppearanceHome, viewAppearanceMissions, viewSeasons } from "./screens/parents/settings.js";
@@ -46,6 +47,7 @@ import { startKeepAwake } from "./components/keep-awake.js";
 import { startRest } from "./components/rest.js";
 import { startTurnPhone } from "./components/turn-phone.js";
 import { startRoutines } from "./routine/routine.js";
+import { rememberCode, rememberedCode } from "./remembered-device.js";
 import { t } from "./texts.js";
 
 // ?theme=<name> loads app/static/css/themes/<name>.css instead of the default one.
@@ -71,6 +73,7 @@ const routes = [
   [parentsPath("/code"), () => viewChangeCode(), "parents", "change_code"],
   [parentsPath("/log"), () => viewEventLog(), "parents", "event_log"],
   [parentsPath("/backup"), () => viewBackup(), "parents", "backup"],
+  [parentsPath("/device"), () => viewDevice(), "parents", "device"],
   [parentsPath("/display"), () => viewDisplaySettings(), "parents", "display"],
   [parentsPath("/notify"), () => viewNotifySettings(), "parents", "notify"],
   [parentsPath("/settings"), () => { location.hash = "#/parents/config/appearance"; }, "parents"], // the old Ajustes
@@ -151,8 +154,24 @@ async function route() {
   location.hash = "#/";
 }
 
-window.addEventListener("hashchange", route);
-route();
+// A parent's phone that remembers the code (Ajustes → Este aparato): straight to the
+// parents' zone, if the code still works (it may have changed on another device).
+async function start() {
+  const code = rememberedCode();
+  if (code) {
+    try {
+      await api("POST", "api/parents/unlock", { json: { code } });
+      session.parentCode = code;
+      if (/^#?\/?$/.test(location.hash)) location.hash = "#/parents";
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) rememberCode(null);
+    }
+  }
+  window.addEventListener("hashchange", route);
+  route();
+}
+
+start();
 startRoutines(); // the routine going on, over any screen (rutinas-1.html)
 startKeepAwake(); // sound allowed and the screen on, for the routines
 startTurnPhone(); // a phone: the children's screens sideways

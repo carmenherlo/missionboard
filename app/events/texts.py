@@ -141,6 +141,7 @@ SCREENS = {
     "config": ("Configurar", None),
     "notify": ("Avisos al móvil", None),
     "change_code": ("Código de padres", None),
+    "device": ("Este aparato", None),
     "children": ("Niños", None),
     "child_new": ("Añadir niño", None),
     "child_edit": ("Nombre y avatar de un niño", "Nombre y avatar de {child}"),

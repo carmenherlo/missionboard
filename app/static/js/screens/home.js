@@ -9,11 +9,12 @@ import { display, homeScreen, setDisplay } from "../display.js";
 import { h, render } from "../dom.js";
 import { icon } from "../icons.js";
 import { openChooser, routinesByHand } from "../routine/chooser.js";
+import { rememberedCode } from "../remembered-device.js";
 import { t } from "../texts.js";
 import { clockScreen } from "./clock.js";
 
 export async function viewHome() {
-  session.parentCode = null;
+  session.parentCode = rememberedCode(); // null but on a parent's phone (Este aparato)
   const [children, byHand, { look, background_url: picture }, orders] = await Promise.all(
     [api("GET", "api/children"), routinesByHand(), api("GET", "api/home"),
       api("GET", "api/orders/summary").catch(() => ({})), loadAvatars()]);

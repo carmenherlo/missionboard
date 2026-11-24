@@ -2,6 +2,7 @@ import { ApiError, api, errorMessage, session } from "../../api.js";
 import { codeField } from "../../components/code-input.js";
 import { panel } from "../../components/panel.js";
 import { h, render } from "../../dom.js";
+import { rememberCode, rememberedCode } from "../../remembered-device.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
@@ -36,6 +37,7 @@ export function viewChangeCode() {
         json: { current_code: currentCode.value, code: newCode.value },
       });
       session.parentCode = newCode.value;
+      if (rememberedCode()) rememberCode(newCode.value); // this phone keeps up
       // Drop the form entirely: only the message and the back link remain.
       form.replaceWith(h("p", { class: "form-success", role: "status" }, t.changeCode.done));
     } catch (err) {

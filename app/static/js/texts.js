@@ -343,6 +343,7 @@ export const t = {
     routines: "Rutinas",
     shop: "Tienda",
     notify: "Avisos al móvil",
+    device: "Este aparato",
   },
   // The parents' menu (menu-padres-2.html): at the side, behind ☰, or the bar at the bottom.
   menu: {
@@ -360,6 +361,13 @@ export const t = {
     toKids: "Niños",
     theme: "Modo claro / oscuro",
     rings: (inDays, at) => `${inDays === 0 ? "hoy" : inDays === 1 ? "mañana" : `en ${inDays} días`}, a las ${at.replace(/^0/, "")}`,
+  },
+  // Ajustes → Este aparato (padres-movil.html, the short way)
+  device: {
+    title: "Este aparato",
+    remember: "Recordar este aparato",
+    hint: "No volverá a pedir el código aquí, y la app se abrirá directamente en la zona de padres.",
+    notTablet: "Solo en el móvil de un padre: no lo enciendas en la tablet de los niños.",
   },
   display: {
     title: "Esta pantalla",
