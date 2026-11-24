@@ -29,7 +29,6 @@ from app.day_off.repository import WHOLE_DAY, DayOffsRepository
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, ChildTask, Mission, MissionsRepository, Schedule, child_tasks
-from app.routines.races_repository import RacesRepository
 from app.settings import Season, SettingsRepository
 from app.stars.service import StarsService
 from app.streaks.service import StreaksService
@@ -101,11 +100,6 @@ def _checked_tasks(tasks: list[ChildTask], checked: set[str]) -> set[str]:
     }
 
 
-def _opened(mission_id: str, opened: dict[str, str], lost: dict[str, str]) -> bool:
-    """Opened today, and not closed afterwards by a lost race: whatever happened last wins."""
-    return mission_id in opened and (mission_id not in lost or opened[mission_id] >= lost[mission_id])
-
-
 class DayService:
     def __init__(
         self,
@@ -119,9 +113,7 @@ class DayService:
         stars: StarsService,
         streaks: StreaksService,
         offs: DayOffsRepository,
-        races: RacesRepository,
     ):
-        self._races = races
         self._offs = offs
         self._children = children
         self._missions = missions
@@ -145,21 +137,18 @@ class DayService:
         completed = self._days.completed_missions(day, child.id)
         opened = self._days.opened_missions(day, child.id)
         off = self._offs.on(child.id, day)
-        lost = self._races.closed_missions(day, child.id)  # a race lost today closes its mission then
         missions = []
         for mission in self._missions.list():
             tasks = child_tasks(mission, child.id, weekday)
             if not tasks:  # not today, nothing of theirs today, or still being written
                 continue
             schedule = mission.schedule
-            if mission.id in lost:
-                schedule = Schedule(start="00:00", end=lost[mission.id])
             item = MissionToday(
                 mission,
                 self._state(
                     schedule,
                     mission.id in completed,
-                    _opened(mission.id, opened, lost),
+                    mission.id in opened,
                     WHOLE_DAY in off or mission.id in off,
                     time,
                 ),

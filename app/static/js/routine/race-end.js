@@ -1,8 +1,8 @@
 // How a race ends (modo-carrera.html, screen 4): everyone did their tasks (the server
-// says how it went and keeps it), or the time ran out at the flag (the server closes the
-// mission then). On screen a while: the time against the ghost, the extra stars and, if
-// a parent must check first, «Revisado: dar las estrellas» with the code. Otherwise
-// the stars wait in Padres · Hoy · Te toca.
+// says how it went and keeps it), or the time ran out at the flag (only the extra stars
+// are lost: the mission goes on, 24/11). On screen a while: the time against the alien,
+// the extra stars and, if a parent must check first, «Revisado: dar las estrellas» with
+// the code. Otherwise the stars wait in Padres · Por dar.
 import { api } from "../api.js";
 import { avatar } from "../components/avatar.js";
 import { isOff, sounds } from "../components/sound.js";

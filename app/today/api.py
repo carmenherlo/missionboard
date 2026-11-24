@@ -18,14 +18,12 @@ from app.deps import (
     get_event_log,
     get_image_libraries,
     get_prize_spins_repository,
-    get_races_repository,
     require_parent,
 )
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import ChildTask, MissionsRepository
 from app.prizes.repository import PrizesRepository
-from app.routines.races_repository import RacesRepository
 from app.settings import SettingsRepository
 from app.stars.api import get_stars_service
 from app.stars.service import StarsService
@@ -65,7 +63,6 @@ def get_day_service(
     streaks: StreaksService = Depends(get_streaks_service),
     spins: PrizeSpinsRepository = Depends(get_prize_spins_repository),
     offs: DayOffsRepository = Depends(get_day_offs_repository),
-    races: RacesRepository = Depends(get_races_repository),
 ) -> DayService:
     settings = SettingsRepository(store)
     return DayService(
@@ -79,7 +76,6 @@ def get_day_service(
         stars,
         streaks,
         offs,
-        races,
     )
 
 

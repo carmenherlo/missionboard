@@ -135,7 +135,7 @@ def test_it_cannot_end_while_someone_has_tasks_left(client, race, kids):
     assert client.post(f"/api/routines/{race['id']}/race/end").status_code == 409
 
 
-def test_at_the_flag_it_is_lost_and_the_mission_closes(client, race, kids, clock):
+def test_at_the_flag_it_is_lost_but_the_mission_goes_on(client, race, kids, clock):
     bea = kids[0]
     start(client, race, [k["id"] for k in kids])
     mark(client, bea, race["mission"], race["tasks"][0]["id"])
@@ -144,24 +144,18 @@ def test_at_the_flag_it_is_lost_and_the_mission_closes(client, race, kids, clock
     clock.moment = MONDAY + timedelta(minutes=20, seconds=6)
     assert client.get("/api/routines/current").json() is None
     assert descriptions(client, limit=1) == ["Carrera «Tarde»: se acabó el tiempo"]
-    day = client.get(f"/api/children/{bea['id']}/today").json()
-    assert day["missions"][0]["state"] == "closed"
-    assert mark(client, bea, race["mission"], race["tasks"][1]["id"]).status_code == 409
-    # A parent can still open it today
-    opened = client.post(f"/api/children/{bea['id']}/today/missions/{race['mission']['id']}/open", headers=PARENT)
-    assert opened.json()["missions"][0]["state"] == "open"
+    # Only the extra stars are lost (24/11): they finish their mission as any other day
+    assert client.get(f"/api/children/{bea['id']}/today").json()["missions"][0]["state"] == "open"
+    assert mark(client, bea, race["mission"], race["tasks"][1]["id"]).status_code == 200
 
 
-def test_a_race_lost_closes_its_mission_even_if_starting_it_opened_it(client, race, kids, clock):
+def test_a_race_lost_leaves_open_the_mission_its_start_opened(client, race, kids, clock):
     bea = kids[0]
     patch(client, race["mission"]["id"], schedule={"start": "18:00", "end": "21:00"})  # it is 17:00: upcoming
     start(client, race, [k["id"] for k in kids])  # starting it by hand opens the mission today
     clock.moment = MONDAY + timedelta(minutes=21)
     client.get("/api/routines/current")  # the flag: lost
-    day = client.get(f"/api/children/{bea['id']}/today").json()
-    assert day["missions"][0]["state"] == "closed"
-    opened = client.post(f"/api/children/{bea['id']}/today/missions/{race['mission']['id']}/open", headers=PARENT)
-    assert opened.json()["missions"][0]["state"] == "open"  # a parent opening it afterwards wins
+    assert client.get(f"/api/children/{bea['id']}/today").json()["missions"][0]["state"] == "open"
 
 
 def test_a_parent_adds_minutes_to_a_part_only_today(client, race, kids, clock):

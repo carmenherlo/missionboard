@@ -1,5 +1,5 @@
 """Races (SQLite `races`, modo-carrera.html): each race that ended, with how it went.
-A lost race closes its mission for its children from then on (read by the day)."""
+A lost race only loses its extra stars: its mission goes on as any other (24/11)."""
 
 import json
 from datetime import date, datetime
@@ -62,14 +62,6 @@ class RacesRepository:
                 "UPDATE races SET given = ?, reviewed_at = ? WHERE id = ?",
                 (int(given), at.isoformat(timespec="seconds"), race_id),
             )
-
-    def closed_missions(self, day: date, child_id: str) -> dict[str, str]:
-        """The child's missions closed today by a lost race: mission id → when ("HH:MM")."""
-        return {
-            race["mission_id"]: race["at"][11:16]
-            for race in self.of_day(day)
-            if race["outcome"] == "lost" and child_id in {k["id"] for k in race["kids"]}
-        }
 
 
 def _race(row) -> dict:
