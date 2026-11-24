@@ -61,7 +61,6 @@
 .race-road__planet--coming { fill: var(--race-planet-coming); stroke: none; }
 .race-road__planet--done { stroke: var(--race-ahead); }
 .race-road__planet--now { stroke: var(--race-behind); }
-.race-road__ghost { opacity: 0.8; }
 
 .race-road__gap--ahead { fill: var(--race-ahead); }
 .race-road__gap--behind { fill: var(--race-behind); }

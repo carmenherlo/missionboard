@@ -18,8 +18,10 @@ const GO_SHOWN_S = 1.2; // "¡YA!" stays on screen this long
 const PASSED_MS = 1600; // the race shines this long when they overtake the ghost
 const SVG_NS = "http://www.w3.org/2000/svg";
 // The road, drawn like the clock (positions as SVG attributes, not styles): from x 70 to
-// 930, a planet per part and the moon at the end; the rocket and the ghost below it.
-const ROAD = { from: 70, to: 930, y: 70, planet: 34, rocket: 96, ghost: 80 };
+// 930, a planet per part and the moon at the end; below it, two lanes so they never cover
+// each other when neck and neck (24/11): the rocket's and, under it, the alien's.
+const ROAD = { from: 70, to: 930, y: 52, planet: 34, rocket: 84, rocketY: 120, ghost: 66, ghostY: 190, gapY: 226 };
+const RIVAL = "alien-monster"; // the friendly little alien (24/11)
 
 function el(name, attrs, ...children) {
   const node = document.createElementNS(SVG_NS, name);
@@ -34,7 +36,7 @@ const picture = (href, x, y, size, cls = "") => el("image", { href, x: x - size 
 // The road at one moment: done planets in green, the one going on in yellow, the gap
 // between the rocket and the ghost as a band of colour with the minutes in it.
 export function raceRoad(legs, index, rocketAt, ghostAt, side, gap) {
-  const svg = el("svg", { viewBox: "0 0 1000 230", class: "race-road", "aria-hidden": "true" });
+  const svg = el("svg", { viewBox: "0 0 1000 266", class: "race-road", "aria-hidden": "true" });
   svg.append(el("line", { class: "race-road__line", x1: ROAD.from, y1: ROAD.y, x2: ROAD.to, y2: ROAD.y }));
   legs.forEach((leg, i) => {
     const x = xOf(i / legs.length);
@@ -47,11 +49,11 @@ export function raceRoad(legs, index, rocketAt, ghostAt, side, gap) {
     const [a, b] = [xOf(Math.min(rocketAt, ghostAt)), xOf(Math.max(rocketAt, ghostAt))];
     const width = Math.max(b - a, 110);
     const left = Math.min(Math.max((a + b) / 2 - width / 2, 0), 1000 - width);
-    svg.append(el("rect", { class: `race-road__gap race-road__gap--${side}`, x: left, y: 172, width, height: 46, rx: 23 }),
-      el("text", { class: "race-road__gap-text", x: left + width / 2, y: 196 }, gap));
+    svg.append(el("rect", { class: `race-road__gap race-road__gap--${side}`, x: left, y: ROAD.gapY, width, height: 38, rx: 19 }),
+      el("text", { class: "race-road__gap-text", x: left + width / 2, y: ROAD.gapY + 20 }, gap));
   }
-  svg.append(picture(`${FLUENT}/alien.svg`, xOf(ghostAt), ROAD.y + 52, ROAD.ghost, "race-road__ghost"),
-    picture(`${FLUENT}/rocket.svg`, xOf(rocketAt), ROAD.y + 48, ROAD.rocket, "race-road__rocket"));
+  svg.append(picture(`${FLUENT}/${RIVAL}.svg`, xOf(ghostAt), ROAD.ghostY, ROAD.ghost, "race-road__ghost"),
+    picture(`${FLUENT}/rocket.svg`, xOf(rocketAt), ROAD.rocketY, ROAD.rocket, "race-road__rocket"));
   return svg;
 }
 
@@ -72,7 +74,7 @@ export function raceView(r) {
         data.people.map((p) => h("div", { class: "race__racer", style: `--child-color: ${p.colors.color}` },
           avatar(p.child, { size: "lg" }), h("b", {}, p.child.name))),
         h("span", { class: "race__versus" }, t.race.versus),
-        h("div", { class: "race__racer race__racer--ghost" }, img("ghost"), h("b", {}, t.race.ghost))),
+        h("div", { class: "race__racer race__racer--ghost" }, img(RIVAL), h("b", {}, t.race.ghost))),
       record ? h("p", { class: "race__trained" }, t.race.trained(record)) : "",
       h("div", { class: "race__count" }));
     const result = h("div", { class: "race__result", hidden: true });
