@@ -46,12 +46,11 @@ export async function viewRoutinesList() {
         }),
         settingStepper({
           label: t.settings.warn, hint: t.settings.warnHint, value: settings.routine_warn_minutes, min: 0, max: 30,
-          format: t.routine.minutes, onChange: (n) => saveSettings(status, { routine_warn_minutes: n }),
+          format: (n) => (n ? t.routine.minutes(n) : t.settings.warnOff), onChange: (n) => saveSettings(status, { routine_warn_minutes: n }),
         })),
       h("div", { class: "page-header" },
         h("p", { class: "hint" }, routines.length ? t.routines.hint : t.routines.empty),
         h("div", { class: "form-actions" },
-          h("a", { class: "btn", href: "#/parents/config/routines/songs" }, icon("music"), t.songs.open),
-          h("a", { class: "btn", href: "#/parents/config/missions" }, t.routines.toMissions))),
+          h("a", { class: "btn", href: "#/parents/config/routines/songs" }, icon("music"), t.songs.open))),
       routines.length ? list : null));
 }
