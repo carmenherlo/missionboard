@@ -590,7 +590,6 @@ export const t = {
     when: (starts, ends, alarm) => `de ${starts} a ${ends}${alarm ? "" : " · sin alarma"}`,
     byHand: (minutes) => `a mano · ${minutes} min`,
     parts: (n, goal) => `${n} ${n === 1 ? "tarea" : "tareas"}${goal ? ` · meta ${goal}` : ""}`,
-    everyone: "Todos",
     newTitle: (mission) => `Rutina de ${mission}`,
     wake: "Suena a las",
     create: "Crear rutina",

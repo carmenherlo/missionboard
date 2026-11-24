@@ -4,6 +4,7 @@ import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { tryRoutine } from "../../routine/routine.js";
+import { list as namesList } from "../../routine/words.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { daysText } from "./mission-summary.js";
@@ -12,7 +13,9 @@ import { featurePanel, featureSwitch, loadSettings, saveFeatures } from "./setti
 
 // A quick way to the missions' routines: each one is created from its mission.
 export async function viewRoutinesList() {
-  const [routines, { features }] = await Promise.all([api("GET", "api/routines"), loadSettings()]);
+  const [routines, { features }, children] = await Promise.all([api("GET", "api/routines"), loadSettings(), api("GET", "api/children")]);
+  // Who follows it, by name (24/11): none listed means every child.
+  const whoFollows = (routine) => namesList(children.filter((c) => !routine.kids.length || routine.kids.includes(c.id)).map((c) => c.name));
   const status = saveStatus();
 
   const list = h("ul", { class: "rows" }, routines.map((routine) =>
@@ -28,7 +31,7 @@ export async function viewRoutinesList() {
           h("span", { class: "pill" }, routine.manual
             ? t.routines.byHand(routine.minutes) : t.routines.when(routine.starts, routine.ends, routine.alarm)),
           h("span", { class: "pill" }, t.routines.parts(routine.parts.length)),
-          routine.every_child && h("span", { class: "pill" }, t.routines.everyone))),
+          children.length > 0 && h("span", { class: "pill" }, whoFollows(routine)))),
       h("span", { class: "row__actions" },
         h("button", {
           type: "button", class: "btn", onclick: () => tryRoutine(routine.id),
