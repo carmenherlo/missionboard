@@ -120,6 +120,7 @@ class Routine(BaseModel):
     warn_about: Literal["end", "next"] = "end"
     music: tuple[Music, ...] = ()
     race: Race | None = None  # None: its parts go by the clock (only by hand it can be a race)
+    timed: dict | None = None  # started by hand: its times put away till it rings again (timed_memory.py)
 
     _wake = field_validator("wake", mode="before")(time_from_yaml_number)
 

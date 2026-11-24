@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import add_task, create_child, create_mission, patch
 from tests.test_settings import FixedClock
@@ -51,9 +53,9 @@ def test_a_routine_by_hand_has_no_times_of_its_own(client, landing):
     assert landing["minutes"] == 7
     url = f"/api/routines/{landing['id']}"
     assert client.patch(url, json={"anchor": "end"}, headers=PARENT).status_code == 422
-    # Back to a time: the first part five minutes after it rings
+    # Back to a time: at the times it had before (timed_memory.py)
     back = client.patch(url, json={"wake": "18:00"}, headers=PARENT).json()
-    assert back["manual"] is False and back["parts"][0]["start"] == "18:05"
+    assert back["manual"] is False and back["parts"][0]["start"] == "16:05"  # its times put away: 16:00
 
 
 def test_started_by_hand_with_who_has_come_home(client, landing, clock):
@@ -143,7 +145,7 @@ def test_by_hand_it_can_have_its_goal_after_checking(client, landing, clock):
     assert client.get("/api/routines/current").json() is None
     # With a time again, the goal gets its own; and by hand once more, it keeps its checking
     timed = client.patch(url, json={"wake": "18:00"}, headers=PARENT).json()
-    assert timed["goal"]["at"] == "18:17"  # its first part five minutes after it rings
+    assert timed["goal"]["at"] == "16:17"  # back at its times (16:00): parts and checking after them
     again = client.patch(url, json={"wake": None}, headers=PARENT).json()
     assert again["goal"] == {**timed["goal"], "at": None}
 
@@ -167,3 +169,42 @@ def test_a_parent_pauses_it_and_it_goes_on_where_it_was(client, landing, clock):
         "La rutina «Aterrizaje» siguió tras la pausa",
         "Pausaron la rutina «Aterrizaje»",
     ]
+
+
+def bedtime(client, **schedule):
+    """ "Alunizaje": two parts of 5 minutes, ending at 19:30 (its goal pinned), a ring 10 minutes before."""
+    mission = create_mission(client, name="Alunizaje").json()
+    if schedule:
+        patch(client, mission["id"], schedule=schedule)
+    add_task(client, mission["id"], "Cena")
+    add_task(client, mission["id"], "Dientes")
+    routine = client.post("/api/routines", json={"mission_id": mission["id"], "ends": "19:30"}, headers=PARENT).json()
+    url = f"/api/routines/{routine['id']}"
+    client.patch(url, json={"alarm_before": 10, "offsets": {"fri": 15}}, headers=PARENT)
+    return url
+
+
+def test_back_to_a_time_it_rings_at_its_times_again(client):
+    url = bedtime(client, start="18:00", end="21:00")
+    timed = client.get(url).json()
+    assert (timed["anchor"], timed["wake"], timed["goal"]["at"]) == ("end", "19:10", "19:30")
+    by_hand = client.patch(url, json={"wake": None}, headers=PARENT).json()
+    assert by_hand["manual"] and by_hand["goal"]["at"] is None and by_hand["offsets"] == {}
+    client.patch(f"{url}/parts/{timed['parts'][0]['id']}", json={"minutes": 15}, headers=PARENT)  # by hand, longer
+    back = client.patch(url, json={"wake": "07:00"}, headers=PARENT)  # what it sends: the saved times win
+    assert back.status_code == 200
+    back = back.json()
+    # Still ending at 19:30: it grew from its pinned time, the ring as long before as it was
+    assert (back["anchor"], back["goal"]["at"], back["wake"]) == ("end", "19:30", "19:00")
+    assert back["offsets"] == {"fri": 15} and back["timed"] is None
+
+
+def test_with_no_times_put_away_it_rings_at_what_it_is_given(client, data_dir):
+    url = bedtime(client)
+    client.patch(url, json={"wake": None}, headers=PARENT)
+    data = yaml.safe_load(config_path(data_dir).read_text())  # by hand from before its times were put away
+    for routine in data["routines"]:
+        routine.pop("timed", None)
+    config_path(data_dir).write_text(yaml.safe_dump(data, allow_unicode=True))
+    back = client.patch(url, json={"wake": "18:00"}, headers=PARENT).json()
+    assert back["wake"] == "18:00" and back["parts"][0]["start"] == "18:05"

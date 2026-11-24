@@ -19,7 +19,7 @@ import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const LIST_HREF = "#/parents/config/routines";
 const GOAL_AFTER_MINUTES = 10; // a new goal: this long after the last part
-const DEFAULT_WAKE = "07:00"; // back from "by hand" to ringing at a time
+const DEFAULT_WAKE = "07:00"; // back to a time with none put away (server) and a mission with no hours
 const CHECK_CHOICES = [3, 5, 10]; // minutes to check the missions before the goal
 const USUAL_CHECK_MINUTES = 5;
 const ALARM_BEFORE_CHOICES = [0, 5, 10, 15, 20, 30]; // the API takes 0–60
@@ -111,7 +111,7 @@ export async function viewRoutineEdit(routineId) {
       [[false, t.routineEdit.timed], [true, t.routineEdit.byHand]].map(([value, label]) =>
         h("button", {
           type: "button", class: `tab${manual === value ? " tab--on" : ""}`, "aria-pressed": String(manual === value),
-          onclick: () => manual !== value && patch({ wake: value ? null : DEFAULT_WAKE }),
+          onclick: () => manual !== value && patch({ wake: value ? null : mission.schedule?.start ?? DEFAULT_WAKE }),
         }, manual === value && icon("check"), label))),
     manual && h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes))].filter(Boolean));
     timed.hidden = manual;

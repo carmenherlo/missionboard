@@ -23,7 +23,7 @@ TOO_BIG = {
     "static/js/screens/parents/routine-edit.js": 415,  # its times to routine-times.js (23/11)
     "missions/service.py": 377,
     "missions/api.py": 358,  # +1 import line when routines/repository.py was split (1d)
-    "routines/editor.py": 333,
+    "routines/editor.py": 324,
 }
 
 # Over the limit on purpose: every user-facing text in one place (decided 14/11).

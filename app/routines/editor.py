@@ -14,6 +14,7 @@ from app.children.repository import ChildrenRepository
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository
+from app.routines import timed_memory
 from app.routines.links import check_fits
 from app.routines.model import Part, Routine
 from app.routines.repository import NEW_PART_MINUTES, RoutinesRepository
@@ -126,16 +127,8 @@ class RoutinesEditor:
             if not set(changes["days"]) <= set(mission.days):
                 raise InvalidError("Only days the mission has")
             changes["days"] = [d for d in WEEKDAYS if d in changes["days"]]
-        if "wake" in changes:
-            current = self.get(routine_id)
-            parts = [p.model_dump(mode="json") for p in current.parts]
-            if changes["wake"] is None:  # started by hand: parts one after the other; the goal after them
-                for part in parts:
-                    part["at"] = None
-                changes.update(parts=parts, offsets={}, notices=[], anchor="start")
-            elif current.manual:  # back to a time: the first part, five minutes after it rings
-                parts[0]["at"] = hhmm((minute_of(changes["wake"]) + NEW_PART_MINUTES) % (24 * 60))
-                changes["parts"] = parts
+        if "wake" in changes:  # by hand or back to a time: its times put away and brought back
+            changes.update(timed_memory.switched(self.get(routine_id).to_doc(), changes["wake"]))
         routine = self._change(routine_id, changes)
         self._log("changed", routine, {k: v for k, v in changes.items() if k == "days"})
         return routine
