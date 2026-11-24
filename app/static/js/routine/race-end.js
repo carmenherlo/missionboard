@@ -18,9 +18,11 @@ const SHOWN_MS = 30_000; // the result stays this long
 const WAITING_MS = 90_000; // longer while it waits for a parent
 
 // What the server says, worked out here for a trial (nothing is kept).
+const RECORD_STARS = 1; // as the server (race_rules.py)
+
 function pretendResult(race, took) {
-  const outcome = took <= race.fast_minutes ? "fast" : took <= race.ghost ? "won" : "slow";
-  const stars = { fast: Math.max(race.fast, race.on_time), won: race.on_time }[outcome] ?? 0;
+  const outcome = took > race.ghost ? "slow" : race.record != null && took < race.record ? "record" : "won";
+  const stars = race.on_time ? { record: race.on_time + RECORD_STARS, won: race.on_time }[outcome] ?? 0 : 0;
   return { outcome, stars, given: true, took_seconds: Math.round(took * 60), planned_seconds: race.minutes * 60 };
 }
 
@@ -45,8 +47,8 @@ export function raceEnd(r) {
   function showResult(result) {
     const { view, data } = r.showing;
     const box = view.raceParts.result;
-    const won = result.outcome === "fast" || result.outcome === "won";
-    const title = { fast: t.race.resultFast, won: t.race.resultWon, slow: t.race.resultSlow, lost: t.race.resultLost }[result.outcome];
+    const won = result.outcome === "record" || result.outcome === "won";
+    const title = { record: t.race.resultRecord, won: t.race.resultWon, slow: t.race.resultSlow, lost: t.race.resultLost }[result.outcome];
     const planned = countdownText(result.planned_seconds);
     const action = h("div", { class: "form-actions" });
     if (result.given === null && result.stars && !data.trial) {
@@ -70,10 +72,10 @@ export function raceEnd(r) {
       if (isOff("music")) sounds.win();
       else r.showing.race.music.fanfare(); // the end's melody (race-music.js)
       confetti(view.layer);
-      say([script.goalSay(data), title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null]
-        .filter(Boolean));
+      say([script.goalSay(data), title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null,
+        t.race.wonSaid].filter(Boolean));
     } else if (result.outcome === "slow") {
-      say("¡Terminado! Esta vez ganó el extraterrestre.");
+      say(t.race.slowSaid);
     } else {
       const missing = data.people.filter((p) => p.mission && !p.mission.completed).map((p) => p.child.name);
       say(["Se acabó el tiempo.", ...missing.map((name) => `A ${name} le faltan tareas.`)]);

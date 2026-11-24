@@ -24,12 +24,13 @@ class RacesRepository:
         stars: int,
         at: datetime,
         given: bool | None,
+        ghost_share: float | None = None,
     ) -> int:
         """`kids`: the children who ran it (a copy of their names); `given` None: waiting for a parent."""
         with db.connect(self._data_dir) as conn:
             cursor = conn.execute(
                 "INSERT INTO races (day, routine_id, routine_name, mission_id, kids, planned_seconds, took_seconds,"
-                " outcome, stars, at, given) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " outcome, stars, at, given, ghost_share) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     day.isoformat(),
                     routine.id,
@@ -42,6 +43,7 @@ class RacesRepository:
                     stars,
                     at.isoformat(timespec="seconds"),
                     None if given is None else int(given),
+                    ghost_share,
                 ),
             )
             return cursor.lastrowid
@@ -54,6 +56,14 @@ class RacesRepository:
     def of_day(self, day: date) -> list[dict]:
         with db.connect(self._data_dir) as conn:
             rows = conn.execute("SELECT * FROM races WHERE day = ? ORDER BY id", (day.isoformat(),)).fetchall()
+        return [_race(row) for row in rows]
+
+    def recent(self, routine_id: str, limit: int) -> list[dict]:
+        """This routine's last races, newest first (the alien learns from them)."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT * FROM races WHERE routine_id = ? ORDER BY id DESC LIMIT ?", (routine_id, limit)
+            ).fetchall()
         return [_race(row) for row in rows]
 
     def reviewed(self, race_id: int, given: bool, at: datetime) -> None:

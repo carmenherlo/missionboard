@@ -110,6 +110,7 @@ _ROUTINE = {
     "routine_ended": "Acabó la rutina «{routine}»",
     "routine_adjusted": "Rutina «{routine}»: {detail}",
     "race_fast": "Carrera «{routine}»: ¡muy rápido!",
+    "race_record": "Carrera «{routine}»: ¡récord!",
     "race_won": "Carrera «{routine}»: ganaron al extraterrestre",
     "race_slow": "Carrera «{routine}»: acabaron, pero ganó el extraterrestre",
     "race_lost": "Carrera «{routine}»: se acabó el tiempo",

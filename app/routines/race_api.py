@@ -35,7 +35,6 @@ parent_only = [Depends(require_parent)]
 
 class RaceIn(BaseModel):
     on_time: int = Field(default=1, ge=0, le=10)
-    fast: int = Field(default=2, ge=0, le=10)
     review: bool = True
 
 

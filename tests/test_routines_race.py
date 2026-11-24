@@ -32,8 +32,8 @@ def kids(client):
 
 @pytest.fixture
 def race(client, kids):
-    """ "Tarde", by hand, as a race: homework 10 minutes and shower 10 (the flag at 20, the
-    ghost at 18, "muy rápido" up to 16). Alex has no homework."""
+    """ "Tarde", by hand, as a race: homework 10 minutes and shower 10 (the flag at 20; with
+    no races yet, the alien at 18). Alex has no homework."""
     mission = create_mission(client, name="Tarde").json()
     add_task(client, mission["id"], "Deberes")
     tasks = add_task(client, mission["id"], "Ducha").json()["tasks"]
@@ -44,7 +44,7 @@ def race(client, kids):
     client.patch(url, json={"wake": None}, headers=PARENT)
     for task in tasks:
         client.patch(f"{url}/parts/{task['id']}", json={"minutes": 10}, headers=PARENT)
-    assert client.put(f"{url}/race", json={"on_time": 1, "fast": 2}, headers=PARENT).status_code == 200
+    assert client.put(f"{url}/race", json={"on_time": 1}, headers=PARENT).status_code == 200
     return {**client.get(url).json(), "mission": mission, "tasks": tasks}
 
 
@@ -63,7 +63,7 @@ def balance(client, kid):
 
 
 def test_a_race_is_set_in_the_editor_and_only_by_hand(client, race):
-    assert race["race"] == {"on_time": 1, "fast": 2, "review": True}
+    assert race["race"] == {"on_time": 1, "review": True}
     url = f"/api/routines/{race['id']}"
     slow = client.put(f"{url}/parts/{race['tasks'][1]['id']}/slow", json={"minutes": 4}, headers=PARENT)
     assert [p["slow_minutes"] for p in slow.json()["parts"]] == [None, 4]
@@ -78,11 +78,10 @@ def test_the_screen_gets_its_rules_and_who_has_each_task(client, race, kids):
     current = client.get("/api/routines/current").json()
     assert current["race"] == {
         "on_time": 1,
-        "fast": 2,
         "review": True,
         "minutes": 20,
         "ghost": 18,
-        "fast_minutes": 16,
+        "record": None,
     }
     homework, shower = (t["id"] for t in race["tasks"])
     assert [p["mission"]["tasks"] for p in current["people"]] == [
@@ -115,12 +114,12 @@ def test_beating_the_ghost_waits_for_a_parent(client, race, kids, clock):
     assert descriptions(client, limit=1) == ["Revisaron la carrera «Tarde» · +1 ★"]
 
 
-def test_very_fast_without_review_gives_them_at_once(client, race, kids, clock):
-    client.put(f"/api/routines/{race['id']}/race", json={"on_time": 1, "fast": 2, "review": False}, headers=PARENT)
+def test_without_review_the_stars_are_given_at_once(client, race, kids, clock):
+    client.put(f"/api/routines/{race['id']}/race", json={"on_time": 1, "review": False}, headers=PARENT)
     before = [balance(client, k) for k in kids]
     ended = run(client, race, kids, clock, 15).json()
-    assert (ended["outcome"], ended["stars"], ended["given"]) == ("fast", 2, True)
-    assert [balance(client, k) for k in kids] == [b + 1 + 2 for b in before]  # the mission's star and the race's
+    assert (ended["outcome"], ended["stars"], ended["given"]) == ("won", 1, True)  # no record in the first race
+    assert [balance(client, k) for k in kids] == [b + 1 + 1 for b in before]  # the mission's star and the race's
 
 
 def test_after_the_ghost_no_extra_stars(client, race, kids, clock):

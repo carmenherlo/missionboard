@@ -8,7 +8,7 @@ from app.children.api import public_child
 from app.images.libraries import ImageLibraries
 from app.routines.current import Current
 from app.routines.model import Routine
-from app.routines.race_rules import FAST_SHARE, GHOST_SHARE, planned_minutes
+from app.routines.race_rules import Pace, done_after, planned_minutes
 from app.routines.timing import hhmm
 from app.songs.repository import SongsRepository
 
@@ -37,6 +37,7 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
                 "warnings": current.warnings(part),
                 "minutes": part.minutes,
                 "slow_minutes": part.slow_minutes and min(part.slow_minutes, part.minutes),
+                "done_after": done_after(part),  # in a race, «¡Hecho!» shows after these minutes
                 "start": hhmm(start),
                 "end": hhmm(end),
             }
@@ -60,7 +61,7 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
         "extra": json.loads(current.run["extra"] or "{}"),  # minutes a parent added to each part today
         "race": current.started is not None
         and routine.racing
-        and race_of(routine, current.people),  # only started by hand
+        and race_of(routine, current.people, current.pace),  # only started by hand
         "people": [
             {"child": public_child(p.child), "colors": avatars.tones(p.child.color), "mission": p.mission}
             for p in current.people
@@ -92,15 +93,15 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
     return played
 
 
-def race_of(routine: Routine, people: list) -> dict:
-    """A race's rules for its screen, in minutes from its start: the ghost gets to the
-    flag at `ghost`, "muy rápido" is up to `fast_minutes`, and the time is up at `minutes`."""
+def race_of(routine: Routine, people: list, pace: Pace) -> dict:
+    """A race's rules for its screen, in minutes from its start: the alien gets to the
+    flag at `ghost`, the team's record is `record` (null: none yet) and the time is up at
+    `minutes`."""
     minutes = planned_minutes(routine, people)
     return {
         "on_time": routine.race.on_time,
-        "fast": routine.race.fast,
         "review": routine.race.review,
         "minutes": minutes,
-        "ghost": minutes * GHOST_SHARE,
-        "fast_minutes": minutes * FAST_SHARE,
+        "ghost": minutes * pace.ghost,
+        "record": pace.record and minutes * pace.record,
     }

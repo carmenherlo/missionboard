@@ -18,7 +18,7 @@ from app.routines.current import Current
 from app.routines.links import kids_of
 from app.routines.model import Routine
 from app.routines.people import People, Person
-from app.routines.race_rules import INICIO_SECONDS, START_SECONDS, planned_minutes
+from app.routines.race_rules import INICIO_SECONDS, RECORD_RACES, START_SECONDS, Pace, pace_of, planned_minutes
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.timing import minute_of
@@ -73,8 +73,9 @@ class RoutinesService:
             routine = stored.on(weekday).lengthened(json.loads(run["extra"] or "{}"))  # ± minutes today
             kids = json.loads(run["kids"] or "[]")
             people = [p for p in self.people(stored) if p.child.id in kids]
+            pace = self.pace(stored)
             if routine.racing and at >= start + planned_minutes(routine, people):  # the flag: the race is lost
-                self._race_lost(routine, day, run, start, people)
+                self._race_lost(routine, day, run, people, pace)
                 continue
             if at < start + routine.length:
                 return Current(
@@ -84,6 +85,7 @@ class RoutinesService:
                     run,
                     people,
                     started=start,
+                    pace=pace,
                 )
         for stored in self._live():
             if not stored.goes_on(weekday) or stored.manual:
@@ -114,6 +116,7 @@ class RoutinesService:
             run,
             self.people(routine, trial=True),
             started=started,
+            pace=self.pace(routine),
         )
 
     def notices(self) -> list[dict]:
@@ -257,7 +260,11 @@ class RoutinesService:
     def people(self, routine: Routine, trial: bool = False) -> list[Person]:
         return self._people.of(routine, trial)
 
-    def _race_lost(self, routine: Routine, day: date, run: dict, start: float, people: list[Person]) -> None:
+    def pace(self, routine: Routine) -> Pace | None:
+        """A race: the alien trains with this routine's last races."""
+        return pace_of(self._races.recent(routine.id, RECORD_RACES)) if routine.racing else None
+
+    def _race_lost(self, routine: Routine, day: date, run: dict, people: list[Person], pace: Pace) -> None:
         """Its time is up and not everyone finished: it ends, and its mission closes for its
         children at that moment (once: the run is finished)."""
         planned = planned_minutes(routine, people) * 60
@@ -265,7 +272,16 @@ class RoutinesService:
         self._runs.set(day, routine.id, finished_at=flag)
         kids = [p.child for p in people]
         self._races.add(
-            day, routine, kids, planned_seconds=planned, took_seconds=None, outcome="lost", stars=0, at=flag, given=None
+            day,
+            routine,
+            kids,
+            planned_seconds=planned,
+            took_seconds=None,
+            outcome="lost",
+            stars=0,
+            at=flag,
+            given=None,
+            ghost_share=pace.ghost,
         )
         self._events.routine_did("race_lost", routine.name)
 

@@ -1,6 +1,6 @@
 // Editar rutina · Se lanza a mano (rutina-modos.html): "Con el reloj" (as before) or as a
-// "Carrera" (modo-carrera.html), with the extra stars for beating the ghost and for finishing
-// very fast, and whether a parent checks before they are given. Saved at once. It goes in
+// "Carrera" (modo-carrera.html), with the extra stars for beating the alien (it trains with
+// their last races; the record gives one more), and whether a parent checks before they are given. Saved at once. It goes in
 // the box of the "Se lanza a mano" folder tab. "Sin prisa" is each part's own (routine-part-edit.js).
 import { api } from "../../api.js";
 import { choiceList } from "../../components/choices.js";
@@ -8,8 +8,7 @@ import { stepper } from "../../components/stepper.js";
 import { h } from "../../dom.js";
 import { t } from "../../texts.js";
 
-const GHOST = 0.9; // as the server: the ghost gets to the flag at 90 % of the time
-const FAST = 0.8;
+const FIRST_GHOST = 0.9; // as the server: in the first race, the alien gets to the flag at 90 % of the time
 
 export function raceChoices(url, save) {
   const element = h("div", { class: "stack stack--tight" });
@@ -21,7 +20,7 @@ export function raceChoices(url, save) {
     const minutes = routine.parts.reduce((sum, part) => sum + part.minutes, 0);
     const choices = choiceList([
       { label: t.race.byClock, hint: t.race.byClockHint, on: !race, onSelect: () => put(null) },
-      { label: t.race.asRace, hint: t.race.asRaceShort, on: Boolean(race), onSelect: () => put({ on_time: 1, fast: 2, review: true }) },
+      { label: t.race.asRace, hint: t.race.asRaceShort, on: Boolean(race), onSelect: () => put({ on_time: 1, review: true }) },
     ]);
     if (!race) {
       element.replaceChildren(choices, h("p", { class: "hint" }, t.routineEdit.byHandHint(routine.minutes)));
@@ -34,9 +33,8 @@ export function raceChoices(url, save) {
         onChange: (n) => put({ ...race, [field]: n }),
       }));
     element.replaceChildren(choices,
-      h("p", { class: "hint" }, t.race.asRaceHint(minutes, Math.floor(minutes * GHOST))),
-      row(t.race.onTime, t.race.inMinutes(Math.floor(minutes * GHOST)), "on_time"),
-      row(t.race.fastLabel, t.race.inMinutes(Math.floor(minutes * FAST)), "fast"),
+      h("p", { class: "hint" }, t.race.asRaceHint(minutes, Math.floor(minutes * FIRST_GHOST))),
+      row(t.race.onTime, t.race.recordToo, "on_time"),
       h("label", { class: "toggle" },
         h("input", { type: "checkbox", checked: race.review, onchange: (e) => put({ ...race, review: e.target.checked }) }),
         t.race.review),

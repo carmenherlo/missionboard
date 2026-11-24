@@ -59,6 +59,7 @@ export function raceView(r) {
   // The race's pieces, once; each tick only changes them.
   function buildRace() {
     const { view, data } = r.showing;
+    const record = data.race.record && countdownText(data.race.record * 60); // the alien trained with their races
     const big = h("p", { class: "race__big" });
     const road = h("div", { class: "race__road" });
     const what = h("button", { type: "button", class: "race__what" });
@@ -72,6 +73,7 @@ export function raceView(r) {
           avatar(p.child, { size: "lg" }), h("b", {}, p.child.name))),
         h("span", { class: "race__versus" }, t.race.versus),
         h("div", { class: "race__racer race__racer--ghost" }, img("ghost"), h("b", {}, t.race.ghost))),
+      record ? h("p", { class: "race__trained" }, t.race.trained(record)) : "",
       h("div", { class: "race__count" }));
     const result = h("div", { class: "race__result", hidden: true });
     view.race.replaceChildren(
@@ -82,7 +84,8 @@ export function raceView(r) {
     view.raceParts = { big, road, what, hints, until, timer, start, result };
     // Who runs, said once at the start.
     // Before "3, 2, 1, ¡YA!": the Inicio's sentence (rutina-inicio.html), and who races.
-    if (r.elapsed() < 0 && !r.closed()) say([script.startSay(data), `¡${list(data.people.map((p) => p.child.name))} contra el extraterrestre!`]);
+    if (r.elapsed() < 0 && !r.closed()) say([script.startSay(data), `¡${list(data.people.map((p) => p.child.name))} contra el extraterrestre!`,
+      record && t.race.trainedSaid(record)].filter(Boolean));
   }
 
   function renderRace(time) {
@@ -159,13 +162,16 @@ export function raceView(r) {
       const has = leg && person.mission && leg.part.id in person.mission.tasks;
       const done = has && r.taskDone(person, leg.part.id);
       const slow = leg?.part.slow_minutes;
-      const wait = has && !done && slow ? slow - (Math.max(0, r.elapsed()) - race.from) : 0;
+      const wait = has && !done ? leg.part.done_after - (Math.max(0, r.elapsed()) - race.from) : 0; // nobody marks it at once
       let action;
       if (!has) action = h("span", { class: "race-kid__off" }, t.race.notTheirs);
       else if (done) {
         action = h("button", { type: "button", class: "btn race-kid__done", onclick: () => r.markDone(person, leg.part.id, false) },
           t.race.doneAlready);
-      } else if (wait > 0) action = h("span", { class: "race-kid__slow" }, t.race.slowFor(countdownText(wait * 60)));
+      } else if (wait > 0) {
+        const left = countdownText(wait * 60);
+        action = h("span", { class: "race-kid__slow" }, slow ? t.race.slowFor(left) : t.race.doneIn(left));
+      }
       else {
         action = h("button", { type: "button", class: "btn btn--primary race-kid__go", onclick: () => r.markDone(person, leg.part.id) },
           t.race.done);

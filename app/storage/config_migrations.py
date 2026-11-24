@@ -11,7 +11,7 @@ from collections.abc import Callable
 from app.storage.config_initial import PRIZES, SHOP
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 26
+CURRENT_VERSION = 27
 
 
 class ConfigVersionError(Exception):
@@ -199,6 +199,19 @@ def _v25_to_v26(doc: dict) -> dict:
 
 
 _MIGRATIONS[25] = _v25_to_v26
+
+
+def _v26_to_v27(doc: dict) -> dict:
+    """The alien trains (carrera-estrategia.html, 24/11): "muy rápido" and its stars go
+    (the record gives one more instead)."""
+    for routine in doc.get("routines") or []:
+        if isinstance(routine.get("race"), dict):
+            routine["race"].pop("fast", None)
+    doc["version"] = 27
+    return doc
+
+
+_MIGRATIONS[26] = _v26_to_v27
 
 
 def upgrade(doc: dict) -> dict:

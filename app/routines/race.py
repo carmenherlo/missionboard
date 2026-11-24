@@ -42,7 +42,7 @@ class RaceService:
         routine, race = current.routine, current.routine.race
         took = current.minute - current.started
         planned = planned_minutes(routine, current.people)
-        result = outcome(took, planned)
+        result = outcome(took, planned, current.pace)
         stars = stars_for(race, result)
         kids = [p.child for p in current.people]
         waits = bool(stars) and race.review
@@ -57,6 +57,7 @@ class RaceService:
             stars=stars,
             at=now,
             given=None if waits else bool(stars),
+            ghost_share=current.pace.ghost,
         )
         if stars and not waits:
             self._give(self._races.get(race_id))

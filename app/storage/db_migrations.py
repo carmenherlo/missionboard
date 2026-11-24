@@ -269,4 +269,9 @@ MIGRATIONS: list[str] = [
         given INTEGER
     )
     """,
+    # 18 · The alien trains (carrera-estrategia.html, 24/11): the share of the race's time
+    # the alien took in each race (it runs like the team's last races).
+    """
+    ALTER TABLE races ADD COLUMN ghost_share REAL
+    """,
 ]
