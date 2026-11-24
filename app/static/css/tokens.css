@@ -283,7 +283,7 @@
   --race-planet-coming: rgb(255 255 255 / 0.35);
   --race-big-size: clamp(2rem, 5.5vh, 3.25rem);
   --race-hint-size: 96px; /* each hint's card */
-  --race-timer-size: min(26vh, 200px);
+  --race-road-max: 48vh; /* the S-shaped road (race-road.js) */
   --race-start-count-size: 160px;
   /* Songs (rutinas-4, screen 4 bis): pink-lilac, like Scratch's sound blocks; only in the parents' editor */
   --song-bar: #f7def7;

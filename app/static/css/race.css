@@ -48,9 +48,20 @@
   display: block;
   width: 100%;
   height: auto;
+  max-height: var(--race-road-max); /* four rows: it shrinks to fit */
 }
 
+.race-road__done {
+  fill: none;
+  stroke: var(--race-ahead);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.race-road__stop { cursor: pointer; }
+
 .race-road__line {
+  fill: none;
   stroke: var(--race-road);
   stroke-width: 5;
   stroke-dasharray: 2 12;
@@ -61,17 +72,6 @@
 .race-road__planet--coming { fill: var(--race-planet-coming); stroke: none; }
 .race-road__planet--done { stroke: var(--race-ahead); }
 .race-road__planet--now { stroke: var(--race-behind); }
-
-.race-road__gap--ahead { fill: var(--race-ahead); }
-.race-road__gap--behind { fill: var(--race-behind); }
-
-.race-road__gap-text {
-  fill: var(--race-on-gap);
-  font-size: 28px;
-  font-weight: 900;
-  text-anchor: middle;
-  dominant-baseline: central;
-}
 
 /* ---------- the part going on, below ---------- */
 
@@ -137,21 +137,11 @@
 
 .race__hint img { width: calc(var(--race-hint-size) * 0.5); height: calc(var(--race-hint-size) * 0.5); }
 
-.race__timer svg {
-  display: block;
-  width: var(--race-timer-size);
-  height: var(--race-timer-size);
-}
-
 .race__until {
-  margin: var(--space-1) 0 0;
-  max-width: var(--race-timer-size);
+  margin: 0;
   color: var(--muted);
   font-weight: 700;
-  text-align: center;
 }
-
-.timer-face--late .timer-face__case { fill: var(--timer-4); }
 
 /* ---------- the children on the side ---------- */
 

@@ -1,13 +1,14 @@
 // What a race looks like (modo-carrera.html, version B): on top, big, the race through
-// space (a planet per part, the moon as the flag, the team's rocket and the ghost, and
-// the gap between them in colour); below, the part with its hints as cards, its timer
-// and, on the side, each child with «¡Hecho!». Before it, the start: who runs, against
+// space (race-road.js: an "S" with a planet per part, the moon as the flag, the team's
+// rocket and the alien; a planet tapped says its task and hints) and how far ahead or
+// behind they are; below, the part with its hints as cards and how long is left (no
+// clock: the road says it, carrera-recorrido.html) and, on the side, each child with «¡Hecho!». Before it, the start: who runs, against
 // the ghost, and "3, 2, 1, ¡YA!". The layer, its top bar and its ✕ are the routine's.
 import { avatar } from "../components/avatar.js";
 import { say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { t } from "../texts.js";
-import { timerFace } from "./clock-face.js";
+import { RIVAL, raceRoad } from "./race-road.js";
 import * as script from "./script.js";
 import { countdownText, list } from "./words.js";
 
@@ -16,47 +17,6 @@ const img = (name, cls) => h("img", { class: cls, src: `${FLUENT}/${name}.svg`, 
 const EVEN_MIN = 0.5;
 const GO_SHOWN_S = 1.2; // "¡YA!" stays on screen this long
 const PASSED_MS = 1600; // the race shines this long when they overtake the ghost
-const SVG_NS = "http://www.w3.org/2000/svg";
-// The road, drawn like the clock (positions as SVG attributes, not styles): from x 70 to
-// 930, a planet per part and the moon at the end; below it, two lanes so they never cover
-// each other when neck and neck (24/11): the rocket's and, under it, the alien's.
-const ROAD = { from: 70, to: 930, y: 52, planet: 34, rocket: 84, rocketY: 120, ghost: 66, ghostY: 190, gapY: 226 };
-const RIVAL = "alien-monster"; // the friendly little alien (24/11)
-
-function el(name, attrs, ...children) {
-  const node = document.createElementNS(SVG_NS, name);
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
-  node.append(...children);
-  return node;
-}
-
-const xOf = (place) => ROAD.from + place * (ROAD.to - ROAD.from);
-const picture = (href, x, y, size, cls = "") => el("image", { href, x: x - size / 2, y: y - size / 2, width: size, height: size, class: cls });
-
-// The road at one moment: done planets in green, the one going on in yellow, the gap
-// between the rocket and the ghost as a band of colour with the minutes in it.
-export function raceRoad(legs, index, rocketAt, ghostAt, side, gap) {
-  const svg = el("svg", { viewBox: "0 0 1000 266", class: "race-road", "aria-hidden": "true" });
-  svg.append(el("line", { class: "race-road__line", x1: ROAD.from, y1: ROAD.y, x2: ROAD.to, y2: ROAD.y }));
-  legs.forEach((leg, i) => {
-    const x = xOf(i / legs.length);
-    const state = i < index ? "done" : i === index ? "now" : "coming";
-    svg.append(el("circle", { class: `race-road__planet race-road__planet--${state}`, cx: x, cy: ROAD.y, r: ROAD.planet }));
-    if (leg.part.image_url) svg.append(picture(leg.part.image_url, x, ROAD.y, ROAD.planet * 1.3));
-  });
-  svg.append(picture(`${FLUENT}/full-moon.svg`, ROAD.to, ROAD.y, ROAD.planet * 2.8));
-  if (gap) {
-    const [a, b] = [xOf(Math.min(rocketAt, ghostAt)), xOf(Math.max(rocketAt, ghostAt))];
-    const width = Math.max(b - a, 110);
-    const left = Math.min(Math.max((a + b) / 2 - width / 2, 0), 1000 - width);
-    svg.append(el("rect", { class: `race-road__gap race-road__gap--${side}`, x: left, y: ROAD.gapY, width, height: 38, rx: 19 }),
-      el("text", { class: "race-road__gap-text", x: left + width / 2, y: ROAD.gapY + 20 }, gap));
-  }
-  svg.append(picture(`${FLUENT}/${RIVAL}.svg`, xOf(ghostAt), ROAD.ghostY, ROAD.ghost, "race-road__ghost"),
-    picture(`${FLUENT}/rocket.svg`, xOf(rocketAt), ROAD.rocketY, ROAD.rocket, "race-road__rocket"));
-  return svg;
-}
-
 export function raceView(r) {
   // The race's pieces, once; each tick only changes them.
   function buildRace() {
@@ -67,7 +27,6 @@ export function raceView(r) {
     const what = h("button", { type: "button", class: "race__what" });
     const hints = h("ul", { class: "race__hints" });
     const until = h("p", { class: "race__until" });
-    const timer = h("div", { class: "race__timer" });
     const start = h("div", { class: "race__start", hidden: true },
       h("h2", { class: "race__start-title" }, t.race.title(data.name)),
       h("div", { class: "race__line" },
@@ -80,10 +39,16 @@ export function raceView(r) {
     const result = h("div", { class: "race__result", hidden: true });
     view.race.replaceChildren(
       h("div", { class: "race__space" }, big, road),
-      h("div", { class: "race__bottom" }, h("div", { class: "race__part" }, what, hints), h("div", {}, timer, until)),
+      h("div", { class: "race__bottom" }, h("div", { class: "race__part" }, what, until, hints)),
       start, result);
     view.layer.classList.add("routine-layer--race");
-    view.raceParts = { big, road, what, hints, until, timer, start, result };
+    view.raceParts = { big, road, what, hints, until, start, result };
+    // A planet tapped: what that task is and its hints (for whoever got lost). On
+    // pointerdown: the road is drawn again every tick, a click could miss it.
+    road.addEventListener("pointerdown", (event) => {
+      const leg = r.legs()[event.target.closest?.("[data-leg]")?.dataset.leg];
+      if (leg) say([script.partOpening(leg.part), ...leg.part.steps.map((step) => step.text)]);
+    });
     // Who runs, said once at the start.
     // Before "3, 2, 1, ¡YA!": the Inicio's sentence (rutina-inicio.html), and who races.
     if (r.elapsed() < 0 && !r.closed()) say([script.startSay(data), `¡${list(data.people.map((p) => p.child.name))} contra el extraterrestre!`,
@@ -119,8 +84,10 @@ export function raceView(r) {
     const seconds = Math.round(Math.abs(lead) * 60);
     const gap = side === "even" ? "" : (side === "ahead" ? t.race.lead : t.race.lag)(t.race.gap(seconds));
     parts.big.dataset.side = side;
-    parts.big.textContent = { ahead: t.race.winning, behind: t.race.behind, even: t.race.even }[side];
-    parts.road.replaceChildren(raceRoad(all, race.index, rocketAt, ghostAt, side, gap));
+    parts.big.textContent = [{ ahead: t.race.winning, behind: t.race.behind, even: t.race.even }[side], gap].filter(Boolean).join(" · ");
+    const total = r.ghostStarts(all).at(-1);
+    const starts = r.ghostStarts(all).map((at) => at / total);
+    parts.road.replaceChildren(raceRoad({ legs: all, starts, index: race.index, rocketAt, ghostAt, minutes: data.race.minutes }));
     renderPart(all[Math.min(race.index, all.length - 1)], at);
   }
 
@@ -145,10 +112,6 @@ export function raceView(r) {
     parts.until.textContent = race.nextAt != null
       ? (race.index + 1 < r.legs().length ? t.race.next(r.legs()[race.index + 1].part.text) : t.race.toFinish)
       : late ? t.race.late(countdownText(-left * 60)) : t.race.endsIn(countdownText(left * 60));
-    const face = timerFace({ kind: "part", from: 0, to: leg.part.minutes }, late ? leg.part.minutes : spent);
-    if (late) face.querySelector("text").textContent = `+${countdownText(-left * 60)}`;
-    face.classList.toggle("timer-face--late", late);
-    parts.timer.replaceChildren(face);
     if (parts.until.dataset.racers !== `${race.index}:${race.nextAt != null}:${Math.floor(spent * 6)}`) {
       parts.until.dataset.racers = `${race.index}:${race.nextAt != null}:${Math.floor(spent * 6)}`;
       r.renderRacers(); // "sin prisa" opens its «¡Hecho!» as time goes

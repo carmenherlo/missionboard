@@ -44,12 +44,10 @@ export function race(r) {
     return [...all.map((leg) => { const at = sum; sum += leg.part.minutes * share; return at; }), sum];
   }
 
-  // 0 at the start, 1 at the flag: where the ghost is after `ghostTime` of its run.
+  // 0 at the start, 1 at the flag: where the ghost is after `ghostTime` of its run (the
+  // road goes by time: a 10-minute part takes twice the road of a 5-minute one).
   function placeOf(ghostTime, all) {
-    const starts = ghostStarts(all);
-    const k = starts.findIndex((at, i) => i < all.length && ghostTime < starts[i + 1]);
-    if (k < 0) return 1;
-    return (k + (ghostTime - starts[k]) / (starts[k + 1] - starts[k])) / all.length;
+    return Math.min(1, Math.max(0, ghostTime / ghostStarts(all).at(-1)));
   }
 
   function startRace() {
