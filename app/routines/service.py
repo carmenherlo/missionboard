@@ -7,7 +7,6 @@ wake-up time until its goal, on its days, unless it was finished today.
 """
 
 import json
-from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
 from app.children.repository import Child, ChildrenRepository
@@ -15,8 +14,9 @@ from app.clock import Clock, app_day
 from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository
+from app.routines.current import Current
 from app.routines.links import kids_of
-from app.routines.model import Part, Routine
+from app.routines.model import Routine
 from app.routines.people import People, Person
 from app.routines.race_rules import INICIO_SECONDS, START_SECONDS, planned_minutes
 from app.routines.races_repository import RacesRepository
@@ -26,26 +26,6 @@ from app.settings import SettingsRepository
 from app.today.service import DayService
 
 NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
-
-
-WARN_MINUTES = 1  # a task with no warnings of its own: "Queda un minuto…" (24/11: always, not a setting)
-
-
-@dataclass
-class Current:
-    routine: Routine
-    day: date
-    minute: float  # minute of the day now, with seconds
-    run: dict  # see RunsRepository
-    people: list[Person]
-    started: float | None = None  # started by hand: the minute of the day it started, with seconds
-
-    def warnings(self, part: Part) -> list[int]:
-        """When the voice warns before the part ends: its own, or else the default
-        (only in parts longer than 2 minutes: the 10-second countdown is enough there)."""
-        if part.warnings is not None:
-            return list(part.warnings)
-        return [WARN_MINUTES] if part.minutes > 2 else []
 
 
 class RoutinesService:

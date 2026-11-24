@@ -6,9 +6,9 @@ import json
 from app.children import avatars
 from app.children.api import public_child
 from app.images.libraries import ImageLibraries
+from app.routines.current import Current
 from app.routines.model import Routine
 from app.routines.race_rules import FAST_SHARE, GHOST_SHARE, planned_minutes
-from app.routines.service import Current
 from app.routines.timing import hhmm
 from app.songs.repository import SongsRepository
 
