@@ -5,7 +5,7 @@ import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { routineError } from "./routine-edit.js";
+import { openedFrom, routineError } from "./routine-edit.js";
 
 // A mission's routine: a short form with a button that says what it does. It is
 // thought of by its end ("a las 7:30 en la puerta"): "Termina a las" comes first.
@@ -44,6 +44,7 @@ export async function viewRoutineNew(missionId) {
     const json = { mission_id: missionId, ...(ending ? { ends: time.value } : { starts: time.value }) };
     try {
       const routine = await api("POST", "api/routines", { json });
+      openedFrom(null); // made from its mission: back there
       location.hash = `#/parents/config/routines/${routine.id}`;
     } catch (err) {
       error.textContent = routineError(err);

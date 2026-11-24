@@ -16,7 +16,7 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { WEEKDAYS, daysLongText, daysText } from "./mission-summary.js";
-import { routineError } from "./routine-edit.js";
+import { openedFrom, routineError } from "./routine-edit.js";
 
 const NAME_SAVE_DELAY_MS = 600;
 const LIST_HREF = "#/parents/config/missions";
@@ -202,7 +202,8 @@ export async function viewMissionEdit(missionId) {
       h("span", { class: "routine-line__text" },
         h("b", {}, routine.manual ? t.missionEdit.routineByHand : t.missionEdit.routineTime(routine.anchor, short(routine.start), short(routine.goal))),
         h("span", { class: "hint" }, t.missionEdit.routineDetail(names, short(routine.start), short(routine.goal), daysText(routine.days)))),
-      h("a", { class: "btn", href: `#/parents/config/routines/${routine.id}` }, t.missionEdit.editRoutine, icon("next"))));
+      h("a", { class: "btn", href: `#/parents/config/routines/${routine.id}`, onclick: () => openedFrom(null) },
+        t.missionEdit.editRoutine, icon("next"))));
   }
 
   // ---------- children ----------

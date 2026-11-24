@@ -7,6 +7,7 @@ import { tryRoutine } from "../../routine/routine.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 import { daysText } from "./mission-summary.js";
+import { openedFrom } from "./routine-edit.js";
 import { featurePanel, featureSwitch, loadSettings, saveFeatures, saveSettings, settingStepper } from "./settings-parts.js";
 
 // A quick way to the missions' routines: each one is created from its mission.
@@ -19,7 +20,7 @@ export async function viewRoutinesList() {
     h("li", { class: "row row--covered" },
       imageThumb(routine.image_url, { size: "md", label: routine.name }),
       h("a", {
-        class: "row__name row__cover", href: `#/parents/config/routines/${routine.id}`,
+        class: "row__name row__cover", href: `#/parents/config/routines/${routine.id}`, onclick: () => openedFrom("#/parents/config/routines"),
         "aria-label": t.routines.editNamed(routine.name),
       }, routine.name,
         h("span", { class: "row__detail" },

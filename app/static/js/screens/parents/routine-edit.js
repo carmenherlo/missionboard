@@ -23,6 +23,11 @@ const DEFAULT_WAKE = "07:00"; // back to a time with none put away (server) and 
 const PINNED_STEP = 5; // the time that stays put, − / + on its card: 5 minutes at a time
 const MAX_PART_MINUTES = 180;
 
+// Where "←" and «Hecho» go (24/11): back to where the routine was opened from, the list of
+// routines or its mission (the default: also after creating it from there).
+const BACK_KEY = "routine-back";
+export const openedFrom = (href) => sessionStorage.setItem(BACK_KEY, href);
+
 // What a refused change means: the times do not add up, or it overlaps another routine.
 export function routineError(err) {
   if (err?.status === 422) return t.routines.badTimes;
@@ -38,6 +43,7 @@ export async function viewRoutineEdit(routineId) {
   let routine = first;
   const mission = await api("GET", `api/missions/${routine.mission_id}`);
   const missionHref = `#/parents/config/missions/${routine.mission_id}`;
+  const backHref = sessionStorage.getItem(BACK_KEY) === LIST_HREF ? LIST_HREF : missionHref;
 
   const status = saveStatus();
   // Every change comes back as the whole routine; a refused one says why.
@@ -249,7 +255,7 @@ export async function viewRoutineEdit(routineId) {
       h("div", { class: "form-actions" },
         h("a", { class: "btn", href: `${LIST_HREF}/${routineId}/voice` }, icon("speaker"), t.routineEdit.voice),
         h("button", { type: "button", class: "btn", onclick: () => tryRoutine(routineId) }, t.routines.tryNow),
-        h("a", { class: "btn btn--primary", href: missionHref }, t.common.done)));
+        h("a", { class: "btn btn--primary", href: backHref }, t.common.done)));
   }
   function showConfirm() {
     footer.replaceChildren(confirmBar({
@@ -259,7 +265,7 @@ export async function viewRoutineEdit(routineId) {
       onCancel: renderFooter,
       onConfirm: async () => {
         await api("DELETE", url);
-        location.hash = missionHref;
+        location.hash = backHref;
       },
     }));
   }
@@ -296,7 +302,7 @@ export async function viewRoutineEdit(routineId) {
   renderFooter();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.routineEdit.title(routine.name), status.element), { href: missionHref, label: routine.name }),
+    parentsHeader(h("span", { class: "title-line" }, t.routineEdit.title(routine.name), status.element), { href: backHref, label: backHref === LIST_HREF ? t.routines.title : routine.name }),
     h("main", { class: "page" },
       h("div", { class: "columns columns--parts" },
         h("div", { class: "stack" },
