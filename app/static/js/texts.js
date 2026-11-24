@@ -263,7 +263,7 @@ export const t = {
     asRace: "Carrera",
     byClockHint: "Cada parte dura sus minutos, una detrás de otra, como si sonara a una hora.",
     asRaceShort: "Cada parte acaba cuando todos pulsan «¡Hecho!», contra un fantasma, con estrellas extra.",
-    noSongs: "En carrera no suenan: la carrera tiene su propia música.",
+    noSongs: "En carrera no suenan ni se ven: la carrera tiene su propia música. Se guardan para «Con el reloj».",
     noWarnings: "En carrera no se usan: la carrera avisa sola cuando queda un minuto.",
     asRaceHint: (minutes, ghost) => `Tienen ${minutes} min; el fantasma llega en ${ghost}. Si le ganan, estrellas extra, las mismas para todos.`,
     onTime: "Ganar al fantasma",

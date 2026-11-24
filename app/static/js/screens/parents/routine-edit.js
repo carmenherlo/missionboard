@@ -228,7 +228,8 @@ export async function viewRoutineEdit(routineId) {
           onChange: (minutes) => save(api("PATCH", `${url}/parts/${part.id}`, { json: { minutes } })).catch(() => {}),
         }),
         h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
-    wrapSongs(routine, songs, cardsBox);
+    // In a race its songs do not play: not drawn either, but kept for "Con el reloj" (24/11).
+    wrapSongs(routine.race && routine.manual ? { ...routine, music: [] } : routine, songs, cardsBox);
   }
 
   // ---------- what the warnings before a part ends say (out of the script, 06/11) ----------
