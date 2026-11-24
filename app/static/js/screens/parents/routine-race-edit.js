@@ -10,7 +10,6 @@ import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 
-const FIRST_GHOST = 0.9; // as the server: in the first race, the alien gets to the flag at 90 % of the time
 
 // (i): how the race works, in a small window (carrera-estrategia.html).
 function showInfo() {
@@ -45,7 +44,7 @@ export function raceChoices(url, save) {
       }));
     element.replaceChildren(choices,
       h("div", { class: "row row--compact" },
-        h("p", { class: "row__text hint" }, t.race.asRaceHint(minutes, Math.floor(minutes * FIRST_GHOST))),
+        h("p", { class: "row__text hint" }, t.race.asRaceHint(minutes)),
         h("button", {
           type: "button", class: "icon-button icon-button--ghost", "aria-label": t.race.infoLabel, title: t.race.infoLabel,
           onclick: showInfo,
@@ -53,8 +52,7 @@ export function raceChoices(url, save) {
       row(t.race.onTime, t.race.recordToo, "on_time"),
       h("label", { class: "toggle" },
         h("input", { type: "checkbox", checked: race.review, onchange: (e) => put({ ...race, review: e.target.checked }) }),
-        t.race.review),
-      h("p", { class: "hint" }, t.race.slowHint));
+        t.race.review));
   }
 
   return { element, draw };

@@ -137,8 +137,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
             says,
             tooLong,
             h("a", { class: "btn", href: `${routineHref}/voice/${partId}` }, icon("speaker"), t.routinePart.changeSay),
-            h("div", { class: "field" }, h("span", { class: "field__label" }, t.routinePart.warnings), warnings,
-              h("span", { class: "hint" }, t.routinePart.warningsHint))))),
+            warningsField(routine, warnings)))),
       h("div", { class: "page-footer" },
         h("span", {}),
         h("div", { class: "form-actions" },
@@ -147,4 +146,15 @@ export async function viewRoutinePartEdit(routineId, partId) {
             onclick: () => tryRoutine(routineId, routine.parts.findIndex((p) => p.id === partId)),
           }, t.routinePart.tryFromHere),
           h("a", { class: "btn btn--primary", href: routineHref }, t.common.done)))));
+}
+
+// The warnings before it ends: in a race they are not used (it warns by itself), greyed with why.
+function warningsField(routine, warnings) {
+  const racing = routine.manual && Boolean(routine.race);
+  const field = h("div", { class: `field${racing ? " panel--unused" : ""}` },
+    racing && h("p", { class: "hint" }, t.race.noWarnings),
+    h("span", { class: "field__label" }, t.routinePart.warnings), warnings,
+    h("span", { class: "hint" }, t.routinePart.warningsHint));
+  field.inert = racing;
+  return field;
 }
