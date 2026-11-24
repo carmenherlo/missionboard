@@ -181,7 +181,7 @@ export async function viewRoutineEdit(routineId) {
   function renderCards() {
     const ending = routine.anchor === "end";
     // Inicio (rutina-inicio.html): its time is the first part's; the warning before, below.
-    const warning = routine.alarm && t.routineEdit.warnCard(routine.alarm_before, shortTime(routine.wake),
+    const warning = !routine.manual && routine.alarm && t.routineEdit.warnCard(routine.alarm_before, shortTime(routine.wake),
       routine.alarm_before > 5 && routine.remind_every > 0);
     startCard.className = "routine-card routine-card--alarm row--covered";
     startCard.replaceChildren(...endCard("start", "alarm", t.routineEdit.startCard,
