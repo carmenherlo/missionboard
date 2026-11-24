@@ -174,11 +174,13 @@ export async function viewRoutineEdit(routineId) {
   const clock = (time) => !routine.manual && h("span", { class: "routine-card__time" }, shortTime(time));
   function renderCards() {
     const ending = routine.anchor === "end";
-    const ringsAt = routine.alarm ? routine.wake : routine.starts;
-    startCard.className = `routine-card routine-card--alarm row--covered${routine.manual || routine.alarm ? "" : " routine-card--off"}`;
+    // Inicio (rutina-inicio.html): its time is the first part's; the warning before, below.
+    const warning = routine.alarm && t.routineEdit.warnCard(routine.alarm_before, shortTime(routine.wake),
+      routine.alarm_before > 5 && routine.remind_every > 0);
+    startCard.className = "routine-card routine-card--alarm row--covered";
     startCard.replaceChildren(...endCard("start", "alarm", t.routineEdit.startCard,
-      routine.manual ? (routine.race ? t.race.go3 : t.routineEdit.startWhenLaunched) : t.routineEdit.warnChoice(routine.alarm ? routine.alarm_before : null),
-      !routine.manual && (ending ? clock(ringsAt) : pinnedStepper(ringsAt, "starts"))).filter(Boolean));
+      routine.manual ? (routine.race ? t.race.go3 : t.routineEdit.startWhenLaunched) : warning || t.routineEdit.warnCard(0),
+      !routine.manual && (ending ? clock(routine.starts) : pinnedStepper(routine.starts, "starts"))).filter(Boolean));
     // The goal, and before it checking the missions (rutinas-6), which has the time: the goal comes as
     // soon as everyone has their mission, at the latest when the margin is over (05/11).
     const checking = routine.goal.check_minutes > 0;

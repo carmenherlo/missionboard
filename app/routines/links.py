@@ -1,5 +1,6 @@
 """A mission and its routine. The mission's hours rule, for every child and every day:
-a routine with a time has to fit inside them (from its alarm to its goal); one started
+a routine with a time has to fit inside them (from its first part to its goal: a warning
+before may ring earlier, rutina-inicio.html); one started
 by hand can start any time, and starting it opens its mission that day (see service.py).
 """
 
@@ -23,13 +24,13 @@ def routine_by_mission(routines: list[Routine]) -> dict[str, Routine]:
 
 
 def fits(routine: Routine, mission: Mission) -> bool:
-    """On every day it goes, from its alarm to its goal inside its mission's hours."""
+    """On every day it goes, from its first part to its goal inside its mission's hours."""
     if routine.manual or mission.schedule is None:
         return True
     opens = minute_of(mission.schedule.start)
     closes = minute_of(mission.schedule.end) if mission.schedule.end else DAY_END
     days = [routine.on(day) for day in routine.days if routine.goes_on(day)]
-    return all(opens <= minute_of(r.wake) and r.ends <= closes for r in days)
+    return all(opens <= r.starts and r.ends <= closes for r in days)
 
 
 def check_fits(routine: Routine, mission: Mission | None) -> None:

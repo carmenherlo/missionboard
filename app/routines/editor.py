@@ -68,12 +68,12 @@ class RoutinesEditor:
         parts = [{"id": task.id, "minutes": NEW_PART_MINUTES} for task in mission.tasks]
         doc = {"id": _new_id(), "mission_id": mission_id, "days": list(mission.days), "parts": parts}
         doc["goal"] = {"check_minutes": 0}  # always one (rutina-modos.html)
-        if ends:
+        if ends:  # no warning before: it opens a minute before its start, for "Va a empezar…"
             parts[0]["at"] = ends
-            doc |= {"anchor": "end", "wake": ends, "goal": {"at": ends}}
+            doc |= {"anchor": "end", "wake": hhmm(minute_of(ends) - 1), "alarm": False, "goal": {"at": ends}}
         elif starts:
             parts[0]["at"] = starts
-            doc |= {"wake": starts}
+            doc |= {"wake": hhmm(minute_of(starts) - 1), "alarm": False}
         else:
             parts[0]["at"] = hhmm((minute_of(wake) + NEW_PART_MINUTES) % (24 * 60))
             doc |= {"wake": wake}
@@ -94,6 +94,7 @@ class RoutinesEditor:
         offsets=UNSET,
         notices=UNSET,
         last_countdown=UNSET,
+        warn_say=UNSET,
         early_goal=UNSET,
         warn_about=UNSET,
         **timing,
@@ -110,6 +111,7 @@ class RoutinesEditor:
                 "offsets": offsets,
                 "notices": notices,
                 "last_countdown": last_countdown,
+                "warn_say": warn_say,
                 "early_goal": early_goal,
                 "warn_about": warn_about,
             }.items()
@@ -139,7 +141,7 @@ class RoutinesEditor:
             raise InvalidError("Started by hand: it has no times")
         parts = [p.model_dump(mode="json") for p in routine.parts]
         goal = routine.goal and routine.goal.model_dump(mode="json")
-        start, lead = routine.starts, routine.alarm_before if routine.alarm else 0
+        start, lead = routine.starts, routine.alarm_before
         changes = {}
         if anchor == "end" and routine.anchor != "end":
             # One part after the other up to the goal, whose time is kept (the parts move to it).
@@ -160,9 +162,7 @@ class RoutinesEditor:
             goal["at"] = hhmm((minute_of(ends) + goal.get("check_minutes", 0)) % (24 * 60))
             changes["goal"] = goal
         if alarm is not None:
-            changes["alarm"] = alarm
-            if not alarm:
-                lead = 0  # no ring: it opens when the first part starts
+            changes["alarm"] = alarm  # no ring: it opens a minute before, quietly (rutina-inicio.html)
         if alarm_before is not None:
             lead = alarm_before
         parts[0]["at"] = hhmm(start % (24 * 60))

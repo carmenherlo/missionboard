@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 23
+CURRENT_VERSION = 24
 
 
 class ConfigVersionError(Exception):
@@ -151,6 +151,29 @@ def _v22_to_v23(doc: dict) -> dict:
 
 
 _MIGRATIONS[22] = _v22_to_v23
+
+
+def _v23_to_v24(doc: dict) -> dict:
+    """El Inicio (rutina-inicio.html, 24/11): "Va a empezar la misión…" and 5, 4, 3, 2, 1
+    always come before the first part, so a routine with no warning before (no alarm, or
+    ringing as it starts) opens a minute before, quietly; and a warning repeats every 5
+    minutes or not at all."""
+    for routine in doc.get("routines") or []:
+        parts = routine.get("parts") or []
+        if routine.get("wake") is None or not parts:
+            continue
+        first = parts[0].get("at") or routine["wake"]
+        if not routine.get("alarm", True) or _minutes(first) == _minutes(routine["wake"]):
+            routine["alarm"] = False
+            routine["wake"] = _hhmm(_minutes(first) - 1)
+            parts[0]["at"] = first
+        if routine.get("remind_every", 5):
+            routine["remind_every"] = 5
+    doc["version"] = 24
+    return doc
+
+
+_MIGRATIONS[23] = _v23_to_v24
 
 
 def upgrade(doc: dict) -> dict:

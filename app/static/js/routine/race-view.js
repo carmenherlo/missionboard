@@ -81,7 +81,8 @@ export function raceView(r) {
     view.layer.classList.add("routine-layer--race");
     view.raceParts = { big, road, what, hints, until, timer, start, result };
     // Who runs, said once at the start.
-    if (r.elapsed() < 0 && !r.closed()) say(`¡${list(data.people.map((p) => p.child.name))} contra el fantasma!`);
+    // Before "3, 2, 1, ¡YA!": the Inicio's sentence (rutina-inicio.html), and who races.
+    if (r.elapsed() < 0 && !r.closed()) say([script.startSay(data), `¡${list(data.people.map((p) => p.child.name))} contra el fantasma!`]);
   }
 
   function renderRace(time) {

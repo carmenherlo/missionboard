@@ -10,6 +10,8 @@ const RING_AGAIN_MS = 14_000; // while nobody stops it: ring, speak, and again
 const VOICE_AFTER_RING_MS = 5200; // the voice after the "rrring"
 const GOAL_REMINDERS = [5, 1]; // minutes before the goal
 const COUNTDOWN_S = 10; // the last seconds before a part, big on the clock
+const START_HERALD_S = 10; // before the first part, always: "Va a empezar la misión…" (rutina-inicio.html)
+const START_COUNT_S = 5; // and then 5, 4, 3, 2, 1
 const HURRY_S = 60; // a part's last minute: the second hand ticks twice as fast
 const TICK_AHEAD_S = 0.5; // the tic-tac is booked this far ahead, so it keeps an even beat
 const HERALD_S = 16; // seconds before a part ends: "Acaba el aseo. Diez segundos…"
@@ -48,12 +50,9 @@ export function heard(r) {
   function announce(phase, time, counted) {
     const { data } = r.showing;
     if (phase.kind === "wake") {
-      if (!data.stopped && data.alarm) r.ring();
+      if (!data.stopped && data.alarm && !data.manual) r.ring(); // the warning before, if it has one
     } else if (phase.kind === "part") {
       const { part } = phase;
-      // It rings right as its first part starts (no while before): the "rrring" once, then the voice.
-      const ringFirst = phase.index === 0 && !data.manual && data.alarm && !data.stopped
-        && minuteOf(data.wake) === part.from && time - part.from < 1;
       // Started by hand, the time of day does not matter: only how long.
       // Landed in its last seconds ("Siguiente", "Probar desde aquí", opened late): its start is
       // over; "Diez segundos…" would cut it right away, in the transcript but barely heard (06/11).
@@ -61,14 +60,8 @@ export function heard(r) {
       const sentences = script.partStart(part, {
         time, minutes: Math.round(part.to - part.from), ends: part.to, manual: data.manual, kids: data.people.length,
       });
-      if (ringFirst) {
-        if (!r.alarmSong()) sounds.alarm();
-        const key = r.showing.phaseKey;
-        setTimeout(() => r.showing?.phaseKey === key && say(sentences), VOICE_AFTER_RING_MS);
-      } else {
-        say(sentences);
-        if (!counted) sounds.ding(); // after a countdown, its zero was the sign
-      }
+      say(sentences);
+      if (!counted) sounds.ding(); // after a countdown, its zero was the sign
     } else if (phase.kind === "check") {
       if (!counted) sounds.ding();
       say(script.checkStart(data, time, r.missing()));
@@ -97,7 +90,7 @@ export function heard(r) {
       setTimeout(() => {
         if (!r.showing?.ringing) return;
         const time = r.now();
-        say(script.wakeUp(r.showing.data, first, time, Math.round(first.from - time)));
+        say(script.wakeUp(r.showing.data, time, Math.round(first.from - time)));
       }, VOICE_AFTER_RING_MS);
       r.showing.ringTimer = setTimeout(once, RING_AGAIN_MS);
     };
@@ -122,13 +115,13 @@ export function heard(r) {
 
   function remind(phase, time) {
     const { data } = r.showing;
-    if (phase.kind === "wake" && !r.showing.ringing && data.remind_every) {
+    if (phase.kind === "wake" && !r.showing.ringing && data.alarm && data.remind_every) {
       const minutesLeft = Math.round(phase.to - time);
       const whole = Math.floor(time);
       if (minutesLeft > 0 && minutesLeft % data.remind_every === 0 && whole !== r.showing.remindedAt && time - whole < 0.05) {
         r.showing.remindedAt = whole;
         sounds.ding();
-        say(script.untilFirst(r.parts()[0], minutesLeft));
+        say(script.wakeUp(data, time, minutesLeft));
       }
     } else if (phase.kind === "part") {
       // Before it ends: "Queda un minuto para que acabe el aseo." Each one once, on its
@@ -174,11 +167,13 @@ export function heard(r) {
   // The last seconds before the next part or the goal: 10, 9, 8… 1, with a pip each.
   function countDown(phase, time, key) {
     const secondsLeft = (phase.to - time) * 60;
-    if (phase.kind !== "goal" && secondsLeft > COUNTDOWN_S && secondsLeft <= HERALD_S && r.showing.heralded !== key) {
+    const starting = phase.kind === "wake"; // the Inicio: its sentence, then 5, 4, 3, 2, 1
+    const [heraldFrom, countFrom] = starting ? [START_HERALD_S, START_COUNT_S] : [HERALD_S, COUNTDOWN_S];
+    if (phase.kind !== "goal" && secondsLeft > countFrom && secondsLeft <= heraldFrom && r.showing.heralded !== key) {
       r.showing.heralded = key;
       r.herald(phase);
     }
-    const count = secondsLeft > 0 && secondsLeft <= COUNTDOWN_S ? Math.ceil(secondsLeft) : null;
+    const count = secondsLeft > 0 && secondsLeft <= countFrom ? Math.ceil(secondsLeft) : null;
     if (count === r.showing.count) return;
     r.showing.count = count;
     if (count) sounds.countdown();
@@ -189,7 +184,7 @@ export function heard(r) {
     r.stopRinging(); // the ring would cover it
     const all = r.parts();
     if (phase.kind === "wake") {
-      say(script.firstHerald(all[0]));
+      say(script.startSay(r.showing.data));
     } else if (phase.kind === "check") {
       say(script.lastCountdown(r.showing.data)); // then the goal
     } else {

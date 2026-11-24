@@ -253,7 +253,7 @@ def test_a_new_routine_that_ends_at_a_time(client):
         "check_say": None,
     }
     assert parts(routine) == [("Pijama", "20:25", "20:30")]
-    assert routine["wake"] == "20:25" and routine["alarm_before"] == 0
+    assert routine["wake"] == "20:24" and routine["alarm"] is False  # no warning: it opens a minute before
     # Another task: the end stays, the start moves back
     add_task(client, mission["id"], "Dientes")
     routine = client.get(f"/api/routines/{routine['id']}").json()
@@ -285,12 +285,11 @@ def test_ending_at_its_goal_keeps_that_time(client):
 def test_starts_at_and_the_alarm(client):
     routine = edit(client, "PATCH", starts="06:30").json()
     assert routine["starts"] == "06:30" and routine["wake"] == "06:25"  # still 5 minutes before
-    routine = edit(client, "PATCH", alarm_before=0).json()
-    assert routine["wake"] == "06:30" and routine["alarm"] is True
     routine = edit(client, "PATCH", alarm_before=10).json()
-    assert routine["wake"] == "06:20"
-    routine = edit(client, "PATCH", alarm=False).json()
-    assert routine["alarm"] is False and routine["wake"] == "06:30"  # no ring: it opens at its first part
+    assert routine["wake"] == "06:20" and routine["alarm"] is True
+    # No warning before (rutina-inicio.html): it opens quietly a minute before, for "Va a empezar…"
+    routine = edit(client, "PATCH", alarm=False, alarm_before=1).json()
+    assert routine["alarm"] is False and routine["wake"] == "06:29"
 
 
 def test_a_new_start_moves_the_whole_routine(client):
@@ -363,3 +362,28 @@ def test_every_routine_gets_its_goal_and_loses_its_own_sentences():
     assert "greeting" not in a and a["goal"]["at"] == "06:45" and a["goal"]["check_minutes"] == 0
     assert b["goal"]["at"] is None  # started by hand: no time
     assert c["goal"] == {"at": "19:30"}
+
+
+def test_with_no_warning_before_a_routine_opens_a_minute_before():
+    from app.storage.config_migrations import upgrade
+
+    part = {"id": "p", "at": "19:20", "minutes": 5}
+    routines = [
+        {"id": "a", "wake": "19:20", "alarm": True, "parts": [dict(part)]},  # it rang as it started
+        {"id": "b", "wake": "19:20", "alarm": False, "parts": [dict(part)]},
+        {"id": "c", "wake": "19:10", "alarm": True, "remind_every": 3, "parts": [dict(part)]},
+        {"id": "d", "wake": None, "parts": [{"id": "p", "minutes": 5}]},
+    ]
+    a, b, c, d = upgrade({"version": 23, "routines": routines})["routines"]
+    assert (a["alarm"], a["wake"], a["parts"][0]["at"]) == (False, "19:19", "19:20")
+    assert (b["alarm"], b["wake"]) == (False, "19:19")
+    assert (c["alarm"], c["wake"], c["remind_every"]) == (True, "19:10", 5)  # repeats every 5 minutes
+    assert d["wake"] is None
+
+
+def test_a_warning_before_may_ring_before_its_mission_opens(client):
+    mission = another_mission(client, "Noche", ("Pijama",))
+    patch(client, mission["id"], schedule={"start": "20:00", "end": "21:00"})
+    routine = create(client, mission, starts="20:00").json()
+    url = f"/api/routines/{routine['id']}"
+    assert client.patch(url, json={"alarm": True, "alarm_before": 15}, headers=PARENT).json()["wake"] == "19:45"

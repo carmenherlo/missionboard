@@ -61,17 +61,16 @@ export function partHerald(part, isLast, routine, next = null) {
 
 export const lastCountdown = (routine) => routine.last_countdown ?? USUAL.lastCountdown;
 
-export const untilFirst = (first, n) => `${left(n)} para que comience ${first.name}.`;
-
-export const firstHerald = (first) => `Diez segundos para que comience ${first.name}.`;
 
 // What the start and the goal say, always the same (rutina-modos.html): the mission's name.
 export const startSay = (routine) => `Va a empezar la misión ${routine.name}.`;
 export const goalSay = (routine) => `¡Misión ${routine.name} completada!`;
 
-// The alarm, ringing a while before the first part.
-export function wakeUp(routine, first, time, n) {
-  return [startSay(routine), `${capital(itIs(time))}.`, untilFirst(first, n)];
+// The warning before (rutina-inicio.html): "Son las siete y diez. Quedan diez minutos para
+// empezar la misión Alunizaje." A sentence of its own replaces what comes after the minutes.
+export function wakeUp(routine, time, n) {
+  const until = routine.warn_say ? `${left(n)}. ${routine.warn_say}` : `${left(n)} para empezar la misión ${routine.name}.`;
+  return [`${capital(itIs(time))}.`, until];
 }
 
 export const untilGoal = (n) => `${left(n)} para terminar.`;

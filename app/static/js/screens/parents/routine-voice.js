@@ -11,6 +11,7 @@ import { routineError } from "./routine-edit.js";
 import { playlist } from "./routine-music.js";
 
 const HERALD_S = 16; // as in routine.js: "Acaba el aseo…" this long before a part ends
+const START_HERALD_S = 10; // as in heard.js: "Va a empezar la misión…" before the first part
 const GOAL_REMINDERS = [5, 1];
 const USUAL_WARNING = 1; // a part with no warnings of its own (settings.routine_warn_minutes)
 
@@ -135,32 +136,28 @@ function scriptOf(routine, songs, { patchRoutine, patchPart }) {
   const first = routine.parts[0];
   const lead = manual || !routine.alarm ? 0 : routine.alarm_before;
 
-  // The alarm, ringing a while before the first part.
+  // The Inicio (rutina-inicio.html): the warning before, if any, and always "Va a empezar
+  // la misión…" with 5, 4, 3, 2, 1 just before the first part.
+  const begins = manual ? 0 : minuteOf(first.start);
+  const lines = [];
   if (lead > 0) {
     const wake = minuteOf(routine.wake);
-    const lines = [
-      sound(wake, t.routineVoice.ringing),
-      auto(wake, script.startSay(routine)),
-      auto(wake, `${capital(itIs(wake))}.`),
-      auto(wake, script.untilFirst(first, lead)),
-    ];
+    lines.push(sound(wake, t.routineVoice.ringing), ...script.wakeUp(routine, wake, lead).map((text) => auto(wake, text)));
     if (routine.remind_every) {
       for (let left = lead - routine.remind_every; left > 0; left -= routine.remind_every) {
-        lines.push(auto(wake + lead - left, `${script.untilFirst(first, left)} ${t.routineVoice.onceStopped}`));
+        lines.push(auto(begins - left, `${script.wakeUp(routine, begins - left, left).join(" ")} ${t.routineVoice.onceStopped}`));
       }
     }
-    lines.push(auto(wake + lead - HERALD_S / 60, script.firstHerald(first)));
-    groups.push({ id: "wake", title: `${shortTime(wake)} · ${t.routineEdit.startCard}`, lines });
   }
+  const before = (seconds) => (manual ? 0 : begins - seconds / 60); // by hand: as it is launched
+  lines.push(auto(before(START_HERALD_S), script.startSay(routine)), sound(before(5), t.routineVoice.countdown));
+  groups.push({ id: "wake", title: `${manual ? "" : `${shortTime(lead ? minuteOf(routine.wake) : begins)} · `}${t.routineEdit.startCard}`, lines });
 
   routine.parts.forEach((part, index) => {
     const [from, to] = span(part);
     const minutes = to - from;
     const last = index === routine.parts.length - 1;
     const lines = [];
-    if (index === 0 && !manual) {
-      lines.push(sound(from, !routine.alarm ? t.routineVoice.ding : lead ? t.routineVoice.countdown : t.routineVoice.ringOnce));
-    }
     if (!manual) lines.push(auto(from, `${capital(itIs(from))}.`));
     lines.push(own(from, script.partOpening(part), {
       value: part.say, usual: script.usualOpening(part), label: t.routineVoice.openingLabel(part.name),

@@ -95,9 +95,10 @@ class RoutinePatch(BaseModel):
     alarm_before: int | None = Field(default=None, ge=0, le=60)
     last_countdown: str | None = Field(default=None, max_length=200)
     early_goal: str | None = Field(default=None, max_length=200)
+    warn_say: str | None = Field(default=None, max_length=200)  # null or empty: the usual one
     warn_about: Literal["end", "next"] | None = None
 
-    _sentences = field_validator("last_countdown", "early_goal")(_blank_is_usual)
+    _sentences = field_validator("last_countdown", "early_goal", "warn_say")(_blank_is_usual)
 
 
 class KidsIn(BaseModel):

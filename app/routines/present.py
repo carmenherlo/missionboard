@@ -50,6 +50,7 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
             "check_say": routine.goal.check_say,
         },
         "last_countdown": routine.last_countdown,
+        "warn_say": routine.warn_say,
         "early_goal": routine.early_goal,
         "warn_about": routine.warn_about,
         "music": _music(routine, songs),

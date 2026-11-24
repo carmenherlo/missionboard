@@ -18,7 +18,7 @@ from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.routines.links import kids_of
 from app.routines.model import Part, Routine
 from app.routines.people import People, Person
-from app.routines.race_rules import START_SECONDS, planned_minutes
+from app.routines.race_rules import INICIO_SECONDS, START_SECONDS, planned_minutes
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.timing import minute_of
@@ -124,7 +124,8 @@ class RoutinesService:
         run = dict.fromkeys(RunsRepository.FIELDS)
         started = None
         if routine.manual:
-            started, routine = minute, routine.started_at(int(minute))
+            # As when launched: "Va a empezar la misión…" first (a race counts in by itself, race.js)
+            started, routine = minute + (0 if routine.racing else INICIO_SECONDS / 60), routine.started_at(int(minute))
         return Current(
             routine,
             app_day(now, settings.day_starts_at),
@@ -190,7 +191,8 @@ class RoutinesService:
         now = self._clock.now()
         day = app_day(now, self._settings.settings().day_starts_at)
         self._runs.clear(day, routine_id)
-        started = now + timedelta(seconds=START_SECONDS) if routine.racing else now  # after "3, 2, 1, ¡YA!"
+        # After "3, 2, 1, ¡YA!", or "Va a empezar la misión…" and 5, 4, 3, 2, 1 (rutina-inicio.html)
+        started = now + timedelta(seconds=START_SECONDS if routine.racing else INICIO_SECONDS)
         self._runs.set(day, routine_id, started_at=started, kids=json.dumps(kids))
         for kid in kids:  # the mission's hours rule, but starting it by hand opens it (links.py)
             self._days.open_for_routine(kid, routine.mission_id)

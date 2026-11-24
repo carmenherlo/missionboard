@@ -68,11 +68,11 @@ def test_started_by_hand_with_who_has_come_home(client, landing, clock):
     assert start(client, landing, []).status_code == 422
     assert start(client, landing, [bea["id"]]).status_code == 204
     current = client.get("/api/routines/current").json()
-    assert current["manual"] is True and current["started"] == pytest.approx(17 * 60 + 1 / 6)
+    assert current["manual"] is True and current["started"] == pytest.approx(17 * 60 + 1 / 3)  # 10 s of "Va a empezar…"
     assert [p["start"] for p in current["parts"]] == ["17:00", "17:03"]
     assert [p["child"]["name"] for p in current["people"]] == ["Bea"]
     assert descriptions(client, limit=1) == ["Sonó la rutina «Aterrizaje»"]
-    clock.moment = MONDAY + timedelta(minutes=7)  # its time is up
+    clock.moment = MONDAY + timedelta(minutes=7, seconds=11)  # its time is up (7 min after its 10 s of start)
     assert client.get("/api/routines/current").json() is None
 
 
@@ -122,7 +122,7 @@ def test_not_on_its_days_or_unknown(client, landing, clock):
 def test_trying_one_by_hand_starts_it_now(client, landing):
     create_child(client)
     trial = client.get(f"/api/routines/{landing['id']}/trial", headers=PARENT).json()
-    assert trial["manual"] is True and trial["started"] == pytest.approx(17 * 60 + 1 / 6)
+    assert trial["manual"] is True and trial["started"] == pytest.approx(17 * 60 + 1 / 3)  # after its 10 s of start
     assert trial["parts"][0]["start"] == "17:00" and len(trial["people"]) == 1
 
 
@@ -141,7 +141,7 @@ def test_by_hand_it_can_have_its_goal_after_checking(client, landing, clock):
     assert current["goal"]["at"] == "17:12" and current["goal"]["check_minutes"] == 5
     clock.moment = MONDAY + timedelta(minutes=11)  # checking the missions
     assert client.get("/api/routines/current").json() is not None
-    clock.moment = MONDAY + timedelta(minutes=12)
+    clock.moment = MONDAY + timedelta(minutes=12, seconds=11)  # 12 minutes after its 10 s of start
     assert client.get("/api/routines/current").json() is None
     # With a time again, the goal gets its own; and by hand once more, it keeps its checking
     timed = client.patch(url, json={"wake": "18:00"}, headers=PARENT).json()
@@ -163,8 +163,8 @@ def test_a_parent_pauses_it_and_it_goes_on_where_it_was(client, landing, clock):
     assert current["paused"] is True and current["now"] == pytest.approx(17 * 60 + 2 + 1 / 6)
     assert client.put(url, json={"paused": False}, headers=PARENT).status_code == 204
     current = client.get("/api/routines/current").json()
-    assert current["paused"] is False and current["started"] == pytest.approx(17 * 60 + 28 + 1 / 6)
-    assert current["now"] - current["started"] == pytest.approx(2)
+    assert current["paused"] is False and current["started"] == pytest.approx(17 * 60 + 28 + 1 / 3)
+    assert current["now"] - current["started"] == pytest.approx(2 - 1 / 6)  # 2 min, less its 10 s of start
     assert descriptions(client, limit=2) == [
         "La rutina «Aterrizaje» siguió tras la pausa",
         "Pausaron la rutina «Aterrizaje»",

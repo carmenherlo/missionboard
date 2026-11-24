@@ -33,6 +33,7 @@ def stars_for(race: Race, result: str) -> int:
 
 
 START_SECONDS = 6  # "3, 2, 1, ¡YA!" before its first part: it does not count
+INICIO_SECONDS = 10  # by hand with the clock: "Va a empezar la misión…" and 5, 4, 3, 2, 1
 
 
 def planned_minutes(routine, people) -> int:

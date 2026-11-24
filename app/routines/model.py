@@ -111,6 +111,7 @@ class Routine(BaseModel):
     parts: tuple[Part, ...] = Field(min_length=1)
     goal: Goal | None = None
     # Sentences of its own (rutinas-5, "Lo que dice la voz"); None: the usual one (texts.js).
+    warn_say: str | None = Field(default=None, max_length=200)  # the warning before, after "Quedan N minutos"
     last_countdown: str | None = Field(default=None, max_length=200)  # ten seconds before the last part ends
     early_goal: str | None = Field(default=None, max_length=200)  # everyone signed before the goal
     # Before a part ends, the voice says "para que acabe el aseo" ("end") or "para que
