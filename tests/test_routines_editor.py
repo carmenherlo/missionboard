@@ -387,3 +387,10 @@ def test_a_warning_before_may_ring_before_its_mission_opens(client):
     routine = create(client, mission, starts="20:00").json()
     url = f"/api/routines/{routine['id']}"
     assert client.patch(url, json={"alarm": True, "alarm_before": 15}, headers=PARENT).json()["wake"] == "19:45"
+
+
+def test_the_warning_before_a_task_ends_is_always_a_minute():
+    from app.storage.config_migrations import upgrade
+
+    doc = upgrade({"version": 25, "settings": {"routine_warn_minutes": 0}, "routines": [{"id": "a"}]})
+    assert "routine_warn_minutes" not in doc["settings"]

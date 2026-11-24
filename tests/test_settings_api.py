@@ -63,7 +63,7 @@ def test_a_change_is_saved_in_config_yaml_and_logged(client, data_dir):
     [
         {"stars_per_mission": -1},
         {"day_starts_at": "25:00"},
-        {"routine_warn_minutes": 31},
+        {"daily_prize_spins": -1},
     ],
 )
 def test_a_value_that_does_not_do_is_not_saved(client, body):

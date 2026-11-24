@@ -9,7 +9,7 @@ import copy
 from collections.abc import Callable
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 25
+CURRENT_VERSION = 26
 
 
 class ConfigVersionError(Exception):
@@ -186,6 +186,17 @@ def _v24_to_v25(doc: dict) -> dict:
 
 
 _MIGRATIONS[24] = _v24_to_v25
+
+
+def _v25_to_v26(doc: dict) -> dict:
+    """The warning before each task ends (24/11): always a minute, unless the task has its
+    own; the setting for every routine goes."""
+    (doc.get("settings") or {}).pop("routine_warn_minutes", None)
+    doc["version"] = 26
+    return doc
+
+
+_MIGRATIONS[25] = _v25_to_v26
 
 
 def upgrade(doc: dict) -> dict:

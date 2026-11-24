@@ -162,9 +162,6 @@ class Settings(BaseModel):
     shop_notify: ShopNotify = ShopNotify()
     # Rachas: a day counts with all their missions done (fixed, 20/11).
     streak_week: StreakWeek = StreakWeek()
-    # Routines: before a part ends, the voice says "Queda un minuto para que acabe…"
-    # (in parts longer than this, so it does not clash with the 10-second countdown).
-    routine_warn_minutes: int = Field(default=1, ge=0, le=30)
 
     _day_starts_at = field_validator("day_starts_at", mode="before")(time_from_yaml_number)
 

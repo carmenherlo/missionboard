@@ -40,7 +40,6 @@ class SettingsPatch(BaseModel):
     notify: Notify | None = None
     shop_notify: ShopNotify | None = None
     streak_week: StreakWeek | None = None
-    routine_warn_minutes: int | None = None
 
 
 class FeaturesPatch(BaseModel):

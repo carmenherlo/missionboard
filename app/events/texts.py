@@ -39,7 +39,6 @@ _FIELDS = {
     "daily_prize_spins": lambda value: f"giros de la ruleta: {value}",
     "starting_stars": lambda value: f"estrellas de un niño nuevo: {value}",
     "day_starts_at": lambda value: f"el día empieza a las {value}",
-    "routine_warn_minutes": lambda value: f"aviso antes de acabar cada parte: {value} min",
     "seasons": lambda value: (
         "estaciones: "
         + " · ".join(

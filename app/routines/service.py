@@ -28,6 +28,9 @@ from app.today.service import DayService
 NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
 
 
+WARN_MINUTES = 1  # a task with no warnings of its own: "Queda un minuto…" (24/11: always, not a setting)
+
+
 @dataclass
 class Current:
     routine: Routine
@@ -35,7 +38,6 @@ class Current:
     minute: float  # minute of the day now, with seconds
     run: dict  # see RunsRepository
     people: list[Person]
-    warn_minutes: int
     started: float | None = None  # started by hand: the minute of the day it started, with seconds
 
     def warnings(self, part: Part) -> list[int]:
@@ -43,7 +45,7 @@ class Current:
         (only in parts longer than 2 minutes: the 10-second countdown is enough there)."""
         if part.warnings is not None:
             return list(part.warnings)
-        return [self.warn_minutes] if self.warn_minutes and part.minutes > 2 else []
+        return [WARN_MINUTES] if part.minutes > 2 else []
 
 
 class RoutinesService:
@@ -101,7 +103,6 @@ class RoutinesService:
                     at,
                     run,
                     people,
-                    settings.routine_warn_minutes,
                     started=start,
                 )
         for stored in self._live():
@@ -113,7 +114,7 @@ class RoutinesService:
             run = self._runs.get(day, routine.id)
             if run["finished_at"] or self._everyone_off(routine):
                 continue
-            return Current(routine, day, minute, run, self.people(routine), settings.routine_warn_minutes)
+            return Current(routine, day, minute, run, self.people(routine))
         return None
 
     def current_for(self, routine: Routine, now) -> Current:
@@ -132,7 +133,6 @@ class RoutinesService:
             minute,
             run,
             self.people(routine, trial=True),
-            settings.routine_warn_minutes,
             started=started,
         )
 
