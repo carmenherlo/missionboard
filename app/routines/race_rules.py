@@ -26,7 +26,6 @@ GHOST_FASTEST, GHOST_SLOWEST = 0.6, 1.0
 PACE_RACES = 5  # the alien runs like the team's last 5 races
 RECORD_RACES = 10  # the record: the best of the last 10 (an old lucky day must not stay forever)
 RECORD_STARS = 1  # beating the alien and the record: one more extra star
-DONE_AFTER = 1 / 3  # in a race, a task's «¡Hecho!» shows after a third of its minutes
 
 
 @dataclass(frozen=True)
@@ -68,9 +67,9 @@ def stars_for(race: Race, result: str) -> int:
 
 
 def done_after(part) -> float:
-    """In a race, the minutes before a task's «¡Hecho!» shows: its own if it goes «sin prisa»,
-    else a third of its minutes (nobody marks it at once)."""
-    return min(part.slow_minutes, part.minutes) if part.slow_minutes else part.minutes * DONE_AFTER
+    """In a race, the minutes before a task's «¡Hecho!» can be pressed: only a «sin prisa»
+    task waits (its own minimum); the others, none (25/11: a wait on every task was dropped)."""
+    return min(part.slow_minutes, part.minutes) if part.slow_minutes else 0
 
 
 START_SECONDS = 6  # "3, 2, 1, ¡YA!" before its first part: it does not count

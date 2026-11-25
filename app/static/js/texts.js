@@ -284,7 +284,6 @@ export const t = {
       "Si le ganan, estrellas extra, las mismas para todos. Si además baten su récord (el mejor tiempo de las 10 últimas carreras), una más.",
       "Si gana él, no hay extra, pero la misión cuenta normal. Si se acaba el tiempo, la misión sigue abierta y la acaban con su estrella de siempre.",
       "Al perder, el extraterrestre irá más despacio la próxima vez; al ganar, más rápido. Así el reto se ajusta solo, aunque los minutos sean holgados o justos.",
-      "El «¡Hecho!» de cada tarea sale pasado un tercio de sus minutos, para que nadie la marque sin hacerla.",
       "Las tareas que no se deben correr (los dientes) se marcan «Sin prisa» en cada tarea: su «¡Hecho!» espera sus propios minutos, no cuentan como carrera, tienen música tranquila y la voz pide hacerlas bien, «sin prisa pero sin pausa». Se marcan con la tortuga en la lista de tareas.",
       "Si no das las estrellas de una carrera al revisarla, esa carrera no cuenta para el extraterrestre ni para el récord.",
       "Una carrera por rutina y día.",

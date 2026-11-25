@@ -1,6 +1,5 @@
 """The alien trains (carrera-estrategia.html): it runs like the team's last races, a little
-faster; beating it and the record gives one star more; a task's «¡Hecho!» waits a third of
-its minutes."""
+faster; beating it and the record gives one star more."""
 
 from datetime import datetime
 from types import SimpleNamespace
@@ -76,12 +75,12 @@ def test_the_screen_gets_the_trained_alien_and_the_race_keeps_it(client, race, k
     assert (ended["outcome"], ended["stars"], ended["ghost_share"]) == ("record", 2, pytest.approx(0.76))
 
 
-def test_a_tasks_done_waits_a_third_of_its_minutes_or_its_own(client, race, kids):  # noqa: F811
+def test_only_a_sin_prisa_task_waits_before_its_done(client, race, kids):  # noqa: F811
     url = f"/api/routines/{race['id']}"
     client.put(f"{url}/parts/{race['tasks'][1]['id']}/slow", json={"minutes": 4}, headers=PARENT)
     start(client, race, [k["id"] for k in kids])
     parts = client.get("/api/routines/current").json()["parts"]
-    assert [p["done_after"] for p in parts] == [pytest.approx(10 / 3), 4]
+    assert [p["done_after"] for p in parts] == [0, 4]
 
 
 def test_muy_rapido_goes_from_the_config():

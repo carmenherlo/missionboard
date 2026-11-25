@@ -116,7 +116,7 @@ export function raceView(r) {
   }
 
   // The children on the side, each with one button always in the same place: «¡Hecho!»
-  // (blue), greyed with the minutes it still waits (a third of the part, or «sin prisa»'s),
+  // (blue), greyed with the minutes a «sin prisa» task still waits,
   // or «✓ Hecho» (a tap undoes it while it is still this part); "No le toca" for the others.
   // In a race the avatar does not open the mission (its task could be marked there at once).
   // Drawn again only when something changes, so no tap is lost while it is redrawn.
