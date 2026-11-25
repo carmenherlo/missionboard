@@ -211,3 +211,7 @@
 .routines-today__on { color: var(--success); font-weight: 800; }
 
 .routines-today__row--over .row__name { color: var(--muted); }
+
+.routines-today__link { color: inherit; text-decoration: none; }
+
+.routines-today__link:hover { text-decoration: underline; }

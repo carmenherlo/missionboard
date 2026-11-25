@@ -2,7 +2,8 @@
 // that ring at a time, with their hours (and «Terminada» once over); those started by hand,
 // with «Lanzar» (who has come home, everyone chosen at first: routine/chooser.js). Started
 // from a phone, it goes on the tablet too (the server says it). The one going on says so;
-// its banner on top has its controls (pause, finish). Hidden when there is none today.
+// its banner on top has its controls (pause, finish). A tap on a routine's name opens its
+// settings. Hidden when there is none today.
 import { api } from "../../api.js";
 import { h } from "../../dom.js";
 import { openChooser, routinesByHand } from "../../routine/chooser.js";
@@ -26,7 +27,8 @@ export async function routinesToday(redraw) {
   };
   const when = (routine) => (routine.manual ? t.overview.routineByHand(routine.minutes) : `${routine.starts}–${routine.ends}`);
   const row = (routine) => h("li", { class: `row${routine.state === "over" ? " routines-today__row--over" : ""}` },
-    h("span", { class: "row__name" }, routine.name, h("small", { class: "hint" }, ` · ${when(routine)}`)),
+    h("a", { class: "row__name routines-today__link", href: `#/parents/config/routines/${routine.id}` },
+      routine.name, h("small", { class: "hint" }, ` · ${when(routine)}`)),
     status(routine));
   return h("section", { class: "todo routines-today" },
     h("h3", { class: "todo__title" }, t.overview.routinesToday),
