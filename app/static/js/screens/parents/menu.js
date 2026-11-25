@@ -1,26 +1,32 @@
-// The parents' menu (menu-padres-2.html): four doors, one question each. Hoy (how are
-// they doing), Por dar (what to hand over, with how many), Niños (each child) and Ajustes
-// (the house rules, the same for everyone). On a wide screen, all at the side, Ajustes
-// open; on a vertical tablet, behind ☰; on a phone, a bar at the bottom with the four
-// and Ajustes as a page of its own (settings-home.js).
+// The parents' menu (padres-barra.html, 25/11): four doors. Hoy (how they are doing; a
+// child opens their card), Premios (what to hand over, with how many, and below how
+// they earn), Misiones (the missions and who has what, and below the routines) and
+// Ajustes (the family and the app). On a wide screen, all at the side; on a vertical
+// tablet, behind ☰; on a phone, a bar at the bottom with the four.
 import { api } from "../../api.js";
 import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 
-// [title, [path under #/parents/config, icon, label, options], key]: Ajustes by groups
-// (the key gives each group its colour on the Ajustes page).
+// [path under #/parents/config, icon, label, options]: what a door holds to set up,
+// under what it shows (the side menu lists them under their door).
+const PRIZES_SETUP = [
+  ["stars", "star", t.config.stars],
+  ["prizes", "wheel", t.config.prizes],
+  ["streaks", "rocket", t.config.streaksMenu],
+  ["shop", "shop", t.config.shop],
+];
+const MISSIONS_SETUP = [["routines", "clock", t.config.routines]];
+
+// [title, setup, key]: the Premios and Misiones pages end with theirs (the key, its colour).
+export const SETUP = {
+  give: [t.menu.prizesSetup, PRIZES_SETUP, "earn"],
+  missions: [t.menu.missionsSetup, MISSIONS_SETUP, "do"],
+};
+
+// [title, [path, icon, label, options], key]: Ajustes by groups.
 export const SETTINGS = [
-  [t.config.groupDo, [
-    ["missions", "missions", t.config.missions],
-    ["routines", "clock", t.config.routines],
-  ], "do"],
-  [t.config.groupEarn, [
-    ["stars", "star", t.config.stars],
-    ["prizes", "wheel", t.config.prizes],
-    ["streaks", "rocket", t.config.streaksMenu],
-    ["shop", "shop", t.config.shop],
-  ], "earn"],
+  [t.config.groupFamily, [["children", "children", t.config.children]], "do"],
   [t.config.groupApp, [
     ["appearance", "palette", t.config.appearance],
     ["notify", "phone", t.config.notify], // only with Home Assistant
@@ -32,6 +38,13 @@ export const SETTINGS = [
     ["backup", "download", t.config.backup],
     ["log", "history", t.config.eventLog],
   ], "safety"],
+];
+
+// [id, href, icon, label, setup]: the doors of every day, on top.
+const DOORS = [
+  ["today", "#/parents", "today", t.menu.today, []],
+  ["give", "#/parents/give", "prize", t.menu.prizes, PRIZES_SETUP],
+  ["missions", "#/parents/config/missions", "missions", t.config.missions, MISSIONS_SETUP],
 ];
 
 // Avisos al móvil only inside Home Assistant (nobody to tell elsewhere): asked once.
@@ -60,22 +73,22 @@ export function refreshToGive() {
   showToGive([...document.querySelectorAll(".nav-badge")]);
 }
 
-// The section open now: its id in the menu.
+// The section open now: its id in the menu. A child's card is opened from Hoy.
 function sectionNow() {
   const hash = location.hash;
   if (hash.startsWith("#/parents/give")) return "give";
   if (/^#\/parents\/config\/?$/.test(hash)) return "settings";
+  if (/^#\/parents\/config\/children\/(?!new)[\w-]+/.test(hash)) return "today";
   const match = hash.match(/^#\/parents\/config\/([\w-]+)/);
-  if (!match) return "today"; // Hoy and Padres · Niño
-  return { settings: "appearance", avatars: "children" }[match[1]] ?? match[1];
+  if (!match) return "today";
+  return { settings: "appearance", avatars: "children", songs: "routines" }[match[1]] ?? match[1];
 }
 
-// [id, href, icon, label]: the three doors of every day, on top.
-const DAILY = [
-  ["today", "#/parents", "today", t.menu.today],
-  ["give", "#/parents/give", "prize", t.menu.toGive],
-  ["children", "#/parents/config/children", "children", t.config.children],
-];
+// The door a section is behind (the bar at the bottom lights it).
+function doorOf(section) {
+  const door = DOORS.find(([id, , , , setup]) => id === section || setup.some(([path]) => path === section));
+  return door ? door[0] : "settings";
+}
 
 export function parentsMenu() {
   const on = sectionNow();
@@ -93,7 +106,8 @@ export function parentsMenu() {
 
   const drawer = h("nav", { class: "drawer", "aria-label": t.menu.label },
     h("p", { class: "drawer__brand" }, t.menu.brand),
-    DAILY.map(([id, href, iconName, label]) => item(id, href, iconName, label)),
+    DOORS.flatMap(([id, href, iconName, label, setup]) => [item(id, href, iconName, label),
+      ...setup.map(([path, subIcon, subLabel]) => item(path, `#/parents/config/${path}`, subIcon, subLabel, " nav-item--sub"))]),
     SETTINGS.flatMap(([title, sections]) => [
       h("p", { class: "drawer__group" }, title),
       ...sections.map(([path, iconName, label, { notOnPhone = false } = {}]) => {
@@ -117,13 +131,13 @@ export function parentsMenu() {
     "aria-label": t.menu.open, title: t.menu.open, onclick: open,
   }, icon("menu"));
 
-  // On a phone, the bar at the bottom for the thumb; any section of Ajustes lights it.
-  const tabOn = DAILY.some(([id]) => id === on) ? on : "settings";
+  // On a phone, the bar at the bottom for the thumb; a section lights its door.
+  const tabOn = doorOf(on);
   const tab = (id, href, iconName, label) => h("a", {
     class: `bottom-nav__item${id === tabOn ? " bottom-nav__item--on" : ""}`, href, ...current(id, tabOn),
   }, h("span", { class: "bottom-nav__icon" }, icon(iconName), badge(id)), h("span", {}, label));
   const bottom = h("nav", { class: "bottom-nav", "aria-label": t.menu.bottom },
-    DAILY.map(([id, href, iconName, label]) => tab(id, href, iconName, label)),
+    DOORS.map(([id, href, iconName, label]) => tab(id, href, iconName, label)),
     tab("settings", "#/parents/config", "settings", t.config.title));
 
   showToGive(badges);

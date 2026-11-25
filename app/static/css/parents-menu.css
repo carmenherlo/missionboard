@@ -54,6 +54,12 @@
   text-decoration: none;
 }
 
+/* What a door holds to set up, under it (Premios: stars, wheel…; Misiones: routines). */
+.nav-item--sub {
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+}
+
 .nav-item[hidden] {
   display: none;
 }

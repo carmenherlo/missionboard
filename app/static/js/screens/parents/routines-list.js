@@ -40,7 +40,7 @@ export async function viewRoutinesList() {
         h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))))));
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.routines.title, status.element), { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.routines.title, status.element), { href: "#/parents/config/missions", label: t.config.missions }),
     h("main", { class: "page stack" },
       featurePanel(t.settings.routinesTitle,
         featureSwitch({

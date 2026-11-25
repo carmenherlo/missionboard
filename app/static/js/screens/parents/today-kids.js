@@ -55,7 +55,7 @@ function prizeText(prize) {
 
 const weekShown = (day) => day.week?.on && day.week.shown && day.week.tanks.length > 0;
 const week = (day) => weekShown(day) && h("span", { class: "kid-week" },
-  weekMini(day.week), rocketReady(day.week) && h("span", { class: "kid-week__ready" }, t.overview.weekReady));
+  weekMini(day.week, { onTap: () => { location.hash = `#/parents/config/children/${day.child.id}`; } }), rocketReady(day.week) && h("span", { class: "kid-week__ready" }, t.overview.weekReady));
 
 const stars = (day) => h("span", { class: "day-card__count" }, h("img", { src: STAR, alt: "" }), String(day.stars));
 

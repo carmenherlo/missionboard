@@ -10,7 +10,7 @@ import { parentsHeader } from "./common.js";
 import { loadSettings, saveSettings, settingStepper } from "./settings-parts.js";
 
 const header = (title, status) =>
-  parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: "#/parents/config", label: t.config.back });
+  parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: "#/parents/give", label: t.menu.prizes });
 
 export async function viewStarsSettings() {
   const { settings } = await loadSettings();

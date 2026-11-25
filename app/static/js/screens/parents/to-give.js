@@ -1,15 +1,17 @@
-// Zona de padres · Por dar (menu-padres-2.html): what waits for a parent to hand over:
+// Zona de padres · Premios (padres-barra.html): on top, Por dar, what waits for a parent to hand over:
 // the week prizes, the shop's orders, the gift cards (with the momento de vales) and the
 // races whose extra stars wait for a parent's check (races-card.js).
 // Each block hides while empty; «✓ No tienes nada por dar» shows when all of them are.
+// Below, how they earn (stars, wheel, racha, shop: SETUP.give).
 import { api } from "../../api.js";
 import { avatar, loadAvatars } from "../../components/avatar.js";
 import { saveStatus } from "../../components/save-status.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
-import { refreshToGive } from "./menu.js";
+import { refreshToGive, SETUP } from "./menu.js";
 import { dayMonth, orderRow } from "./orders-panel.js";
+import { group } from "./settings-home.js";
 import { racesCard } from "./races-card.js";
 import { vouchersCard } from "./vouchers-card.js";
 
@@ -18,14 +20,16 @@ export async function viewToGive() {
     api("GET", "api/vouchers"), api("GET", "api/routines/races/to-review"), loadAvatars()]);
   const status = saveStatus();
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.overview.toGiveTitle, status.element)),
+    parentsHeader(h("span", { class: "title-line" }, t.menu.prizes, status.element)),
     h("main", { class: "page today-page" },
+      h("h2", { class: "settings-group__title" }, t.overview.toGiveTitle),
       h("div", { class: "todo-list" },
         weekPrizes(view, status),
         ordersBlock(orders, status),
         vouchersCard(vouchers, status, todoBlock),
         racesCard(races, status, todoBlock, viewToGive)),
-      h("p", { class: "todo-empty" }, t.overview.nothingToGive)));
+      h("p", { class: "todo-empty" }, t.overview.nothingToGive),
+      group(SETUP.give)));
 }
 
 // One thing to do, in yellow: its title, how many, and what to do. Hidden while empty

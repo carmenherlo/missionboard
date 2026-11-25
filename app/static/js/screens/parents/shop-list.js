@@ -116,7 +116,7 @@ export async function viewShopList() {
   }, text, price, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.shop.add));
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.shop.title, status.element), { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.shop.title, status.element), { href: "#/parents/give", label: t.menu.prizes }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
         featurePanel(t.settings.shopTitle,

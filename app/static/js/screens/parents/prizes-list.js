@@ -33,7 +33,7 @@ export async function viewPrizesList() {
   }, input, h("button", { class: "btn btn--primary", type: "submit" }, icon("plus"), t.prizes.add));
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.prizes.title, status.element), { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.prizes.title, status.element), { href: "#/parents/give", label: t.menu.prizes }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
         featurePanel(t.settings.prizeTitle,

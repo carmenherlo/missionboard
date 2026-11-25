@@ -20,7 +20,7 @@ export async function viewChildPage(childId) {
 
   render(
     parentsHeader(h("span", { class: "title-with-avatar" }, avatar(view.child, { size: "md" }), view.child.name),
-      { href: "#/parents/config/children", label: t.children.back }),
+      { href: "#/parents", label: t.menu.today }),
     h("main", { class: "page" },
       h("div", { class: "card-head" },
         h("p", { class: "card-head__stars" },

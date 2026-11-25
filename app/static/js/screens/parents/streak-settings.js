@@ -93,7 +93,7 @@ export async function viewStreakSettings() {
   draw();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.config.streaks, status.element), { href: "#/parents/config", label: t.config.back }),
+    parentsHeader(h("span", { class: "title-line" }, t.config.streaks, status.element), { href: "#/parents/give", label: t.menu.prizes }),
     h("main", { class: "page" },
       h("div", { class: "stack" },
         featurePanel(t.settings.streaksTitle, featureSwitch({
