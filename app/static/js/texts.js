@@ -1040,7 +1040,6 @@ export const t = {
   // A child's card (ficha-nino.html): Esta semana, Estrellas, and their settings apart.
   childCard: {
     settings: (name) => `Ajustes de ${name}`,
-    doneTitle: (n) => `Hechas esta semana (${n})`,
     chartTitle: "Últimas 2 semanas",
     chartLabel: (won, spent) => `En dos semanas: ${won} estrellas ganadas con misiones y ${spent} gastadas en la tienda`,
     won: (n) => `ganadas ${n}`,
@@ -1128,8 +1127,6 @@ export const t = {
     undoCardUsed: (text) => `La tarjeta «${text}» ya la usó: se queda así`,
     undoTank: "El depósito de ese día se vacía",
     undoDo: "Deshacer",
-    weekDoneHint: "Si se marcó una misión sin hacerla, tócala para deshacerla.",
-    noneDone: "Esta semana aún no ha completado ninguna misión.",
   },
   overview: {
     vouchersTitle: "Tarjetas regalo",

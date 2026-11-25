@@ -2,7 +2,7 @@
 // tabs, each with its tank (the letter inside); the day picked shows its missions, and a tap on one says what it
 // was (a day gone by: done → missed → free; today: pending → done → free; a day to come:
 // active ↔ free). Under them, the sums: missions, stars and the racha's day. «Deshacer
-// cambios» leaves the day as the app had it. Below, the missions done this week (undo-mission.js).
+// cambios» leaves the day as the app had it.
 import { api } from "../../api.js";
 import { folderTabs } from "../../components/choices.js";
 import { confirmBar } from "../../components/confirm-bar.js";
@@ -12,7 +12,6 @@ import { h } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { dayMonth } from "./orders-panel.js";
-import { askUndo } from "./undo-mission.js";
 
 const CYCLES = { past: ["done", "missed", "free"], today: ["pending", "done", "free"], later: ["active", "free"] };
 
@@ -98,25 +97,9 @@ async function fill(box, child, onChange) {
   await show(known ? picked.day : today ?? days.at(-1).day);
 }
 
-function doneThisWeek(child, done, onChange) {
-  if (!done.length) return h("p", { class: "hint" }, t.dayOff.noneDone);
-  return [
-    h("ul", { class: "thin-rows" }, done.map((d) => h("li", {},
-      h("button", { type: "button", class: "thin-row", onclick: () => askUndo(child, d.id, d.day, { onDone: onChange }) },
-        imageThumb(d.image_url, { size: "sm", label: d.name }),
-        h("span", { class: "thin-row__text" }, d.name),
-        h("span", { class: "thin-row__detail" }, dayMonth(d.day)),
-        icon("history"))))),
-    h("p", { class: "hint" }, t.dayOff.weekDoneHint),
-  ];
-}
-
-export function weekBlock(view, done, onChange) {
+export function weekBlock(view, onChange) {
   const box = h("div", { class: "day-marks" });
   if (view.week.on) fill(box, view.child, onChange);
   else box.append(h("p", { class: "hint" }, t.overview.weekOff));
-  return panel(t.overview.weekTitle,
-    box,
-    h("h3", { class: "card-block__sub" }, t.childCard.doneTitle(done.length)),
-    doneThisWeek(view.child, done, onChange));
+  return panel(t.overview.weekTitle, box);
 }

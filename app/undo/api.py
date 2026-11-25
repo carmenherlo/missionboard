@@ -76,24 +76,6 @@ def _present(view: dict, libraries: ImageLibraries) -> dict:
     }
 
 
-@router.get("/children/{child_id}/undoable")
-def undoable(
-    child_id: str,
-    undo: UndoService = Depends(get_undo_service),
-    libraries: ImageLibraries = Depends(get_image_libraries),
-):
-    """The missions completed this week that can still be undone (Padres · Niño)."""
-    return [
-        {
-            "day": d["day"].isoformat(),
-            "id": d["mission"].id,
-            "name": d["mission"].name,
-            "image_url": libraries.url(d["mission"].image),
-        }
-        for d in undo.done_this_week(child_id)
-    ]
-
-
 @router.get("/children/{child_id}/missions/{mission_id}/days/{day}/undo")
 def preview(
     child_id: str,

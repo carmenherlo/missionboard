@@ -16,7 +16,7 @@ from app.children.repository import ChildrenRepository
 from app.clock import Clock, app_day
 from app.daily_prize.repository import PrizeSpinsRepository
 from app.day_off.repository import DayOffsRepository
-from app.errors import ConflictError, NotFoundError
+from app.errors import NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import MissionsRepository
 from app.settings import SettingsRepository
@@ -54,19 +54,6 @@ class UndoService:
         self._settings = settings
         self._clock = clock
         self._events = events
-
-    def done_this_week(self, child_id: str) -> list[dict]:
-        """The missions the child completed this week, newest first: what can be undone."""
-        child = self._children.require(child_id)
-        names = {m.id: m for m in self._missions.list()}
-        today = self._today()
-        found = []
-        for day, missions in self._days.completions(child.id).items():
-            when = date.fromisoformat(day)
-            if (today - when).days > 6 or not self._undoable(child.id, when):
-                continue
-            found += [{"day": when, "mission": names[m]} for m in sorted(missions) if m in names]
-        return sorted(found, key=lambda d: d["day"], reverse=True)
 
     def preview(self, child_id: str, mission_id: str, day: date) -> dict:
         """What undoing it would take with it, for the window that asks."""
@@ -110,13 +97,6 @@ class UndoService:
 
     def _today(self) -> date:
         return app_day(self._clock.now(), self._settings.settings().day_starts_at)
-
-    def _undoable(self, child_id: str, day: date) -> bool:
-        try:
-            self._streaks.undo_check(child_id, day)
-        except ConflictError:
-            return False
-        return True
 
     def _completion(self, child_id: str, mission_id: str, day: date) -> dict:
         row = self._days.completion(day, child_id, mission_id)

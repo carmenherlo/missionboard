@@ -14,8 +14,7 @@ import { parentsHeader } from "./common.js";
 const STAR = "static/libraries/fluent/star.svg";
 
 export async function viewChildPage(childId) {
-  const [view, done] = await Promise.all([api("GET", `api/overview/children/${childId}`),
-    api("GET", `api/children/${childId}/undoable`), loadAvatars()]);
+  const [view] = await Promise.all([api("GET", `api/overview/children/${childId}`), loadAvatars()]);
   const here = `#/parents/config/children/${childId}`;
   const again = () => viewChildPage(childId);
 
@@ -28,6 +27,6 @@ export async function viewChildPage(childId) {
           h("img", { src: STAR, alt: "" }), t.childStars.has(view.stars)),
         h("a", { class: "btn", href: `${here}/settings` }, icon("settings"), t.childCard.settings(view.child.name))),
       h("div", { class: "card-blocks" },
-        weekBlock(view, done, again),
+        weekBlock(view, again),
         starsBlock(view, here, again))));
 }

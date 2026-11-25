@@ -77,8 +77,6 @@ def test_a_day_gone_by_of_this_week_closes_and_its_fuel_goes_back(client, bea, c
     check(client, bea, item, 0)
     assert client.post(f"/api/children/{bea['id']}/week/fuel/2026-11-02").status_code == 200
     clock.moment = MONDAY + timedelta(days=1)
-    listed = client.get(f"/api/children/{bea['id']}/undoable", headers=PARENT).json()
-    assert [(d["day"], d["name"]) for d in listed] == [("2026-11-02", "Despegue")]
     assert client.get(url(bea, item), headers=PARENT).json()["tank"] is True
     client.post(url(bea, item), json={}, headers=PARENT)
     week = client.get(f"/api/children/{bea['id']}/week").json()
@@ -90,4 +88,3 @@ def test_last_weeks_days_are_not_undone(client, bea, clock):
     check(client, bea, item, 0)
     clock.moment = MONDAY + timedelta(days=7)
     assert client.get(url(bea, item), headers=PARENT).status_code == 409
-    assert client.get(f"/api/children/{bea['id']}/undoable", headers=PARENT).json() == []
