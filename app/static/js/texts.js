@@ -252,7 +252,7 @@ export const t = {
     slowSaid: "¡Por muy poco! El próximo día, el extraterrestre irá un poco más despacio.",
     trained: (record) => `El extraterrestre ha entrenado · vuestro récord: ${record}`,
     trainedSaid: (record) => `El extraterrestre ha entrenado. Vuestro récord: ${record}.`,
-    doneIn: (left) => `¡Hecho! en ${left}`,
+    doneIn: (left) => `en ${left}`,
     calmSaid: "Esta, sin prisa pero sin pausa: lo importante es hacerla bien.",
     lostSaid: "Se acabó el tiempo. ¡Aún podéis terminar la misión!",
     resultLost: "¡Se acabó el tiempo!",

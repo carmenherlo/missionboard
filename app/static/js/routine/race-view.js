@@ -112,39 +112,41 @@ export function raceView(r) {
     parts.until.textContent = race.nextAt != null
       ? (race.index + 1 < r.legs().length ? t.race.next(r.legs()[race.index + 1].part.text) : t.race.toFinish)
       : late ? t.race.late(countdownText(-left * 60)) : t.race.endsIn(countdownText(left * 60));
-    if (parts.until.dataset.racers !== `${race.index}:${race.nextAt != null}:${Math.floor(spent * 6)}`) {
-      parts.until.dataset.racers = `${race.index}:${race.nextAt != null}:${Math.floor(spent * 6)}`;
-      r.renderRacers(); // "sin prisa" opens its «¡Hecho!» as time goes
-    }
+    r.renderRacers(); // the minimum before «¡Hecho!» counts down (drawn again only when it changes)
   }
 
-  // The children on the side: «¡Hecho!» for whoever has the part's task, ✓ once done
-  // (a tap undoes it while it is still this part), and "No le toca" for the others.
+  // The children on the side, each with one button always in the same place: «¡Hecho!»
+  // (blue), greyed with the minutes it still waits (a third of the part, or «sin prisa»'s),
+  // or «✓ Hecho» (a tap undoes it while it is still this part); "No le toca" for the others.
+  // In a race the avatar does not open the mission (its task could be marked there at once).
+  // Drawn again only when something changes, so no tap is lost while it is redrawn.
   function renderRacers() {
     const { view, data, race } = r.showing;
     const leg = r.legs()[race.index];
-    view.people.replaceChildren(...data.people.map((person) => {
-      const has = leg && person.mission && leg.part.id in person.mission.tasks;
+    const states = data.people.map((person) => {
+      const has = Boolean(leg && person.mission && leg.part.id in person.mission.tasks);
       const done = has && r.taskDone(person, leg.part.id);
-      const slow = leg?.part.slow_minutes;
       const wait = has && !done ? leg.part.done_after - (Math.max(0, r.elapsed()) - race.from) : 0; // nobody marks it at once
+      return { person, has, done, left: wait > 0 ? countdownText(wait * 60) : null };
+    });
+    const signature = JSON.stringify([leg?.part.id, states.map(({ has, done, left }) => [has, done, left])]);
+    if (view.people.dataset.signature === signature) return;
+    view.people.dataset.signature = signature;
+    view.people.replaceChildren(...states.map(({ person, has, done, left }) => {
       let action;
       if (!has) action = h("span", { class: "race-kid__off" }, t.race.notTheirs);
       else if (done) {
-        action = h("button", { type: "button", class: "btn race-kid__done", onclick: () => r.markDone(person, leg.part.id, false) },
+        action = h("button", { type: "button", class: "btn race-kid__go race-kid__done", onclick: () => r.markDone(person, leg.part.id, false) },
           t.race.doneAlready);
-      } else if (wait > 0) {
-        const left = countdownText(wait * 60);
-        action = h("span", { class: "race-kid__slow" }, slow ? t.race.slowFor(left) : t.race.doneIn(left));
-      }
-      else {
-        action = h("button", { type: "button", class: "btn btn--primary race-kid__go", onclick: () => r.markDone(person, leg.part.id) },
-          t.race.done);
+      } else {
+        action = h("button", {
+          type: "button", class: "btn btn--primary race-kid__go", disabled: Boolean(left),
+          onclick: () => r.markDone(person, leg.part.id),
+        }, left ? (leg.part.slow_minutes ? t.race.slowFor(left) : t.race.doneIn(left)) : t.race.done);
       }
       return h("li", {},
         h("div", { class: `race-kid${done ? " race-kid--done" : ""}${has ? "" : " race-kid--off"}`, style: `--child-color: ${person.colors.color}` },
-          h("button", { type: "button", class: "race-kid__who", onclick: () => person.mission && r.openKid(person) },
-            avatar(person.child, { size: "md" }), h("b", {}, person.child.name)),
+          h("div", { class: "race-kid__who" }, avatar(person.child, { size: "md" }), h("b", {}, person.child.name)),
           action));
     }));
   }

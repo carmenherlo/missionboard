@@ -167,17 +167,19 @@
   color: inherit;
   font: inherit;
   font-size: var(--text-lg);
-  cursor: pointer;
 }
 
 .race-kid__go {
   min-height: 64px;
-  padding: 0 var(--space-4);
-  font-size: var(--text-xl);
+  max-width: 100%;
+  padding: 0 var(--space-3);
+  font-size: var(--text-lg);
+  white-space: nowrap; /* the same button, done or waiting: one line */
 }
 
+.race-kid__go:disabled { font-size: var(--text-md); } /* waiting its minimum: the minutes fit */
 .race-kid__done { color: var(--success); font-weight: 800; }
-.race-kid__off, .race-kid__slow { color: var(--muted); font-weight: 700; text-align: center; }
+.race-kid__off { color: var(--muted); font-weight: 700; text-align: center; }
 
 /* ---------- the start, and the result: over the race ---------- */
 
