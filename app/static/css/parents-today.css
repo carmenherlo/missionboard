@@ -209,3 +209,5 @@
 .routines-today .row { gap: var(--space-2); }
 
 .routines-today__on { color: var(--success); font-weight: 800; }
+
+.routines-today__row--over .row__name { color: var(--muted); }

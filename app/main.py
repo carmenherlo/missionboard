@@ -37,6 +37,7 @@ from app.prizes import api as prizes_api
 from app.routines import api as routines_api
 from app.routines import control_api as routine_control_api
 from app.routines import race_api
+from app.routines import today_api as routines_today_api
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.settings import SettingsRepository
@@ -197,6 +198,7 @@ def create_app(
     app.include_router(day_marks_api.router)
     app.include_router(vouchers_api.router)
     app.include_router(race_api.router)  # before the routines' /{routine_id} routes
+    app.include_router(routines_today_api.router)  # the same
     app.include_router(routines_api.router)
     app.include_router(routine_control_api.router)
     app.include_router(voice_api.router)

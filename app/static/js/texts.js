@@ -1165,6 +1165,8 @@ export const t = {
     routinesToday: "Rutinas de hoy",
     launch: "Lanzar",
     routineOn: "En marcha",
+    routineOver: "Terminada",
+    routineByHand: (minutes) => `a mano · ${minutes} min`,
     nothingToGive: "✓ No tienes nada por dar.",
     stepsLeft: (n) => `Te ${n === 1 ? "queda 1 paso" : `quedan ${n} pasos`} para empezar`,
     progressShort: (done, total) => `${done} de ${total}`,
