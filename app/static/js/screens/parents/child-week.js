@@ -1,9 +1,10 @@
-// A child's card · Esta semana (semana-misiones.html, 25/11): the racha's days as tabs
-// (their tanks' colours); the day picked shows its missions, and a tap on one says what it
+// A child's card · Esta semana (semana-misiones.html, 25/11): the racha's days as folder
+// tabs, each with a small tank in its colours; the day picked shows its missions, and a tap on one says what it
 // was (a day gone by: done → missed → free; today: pending → done → free; a day to come:
 // active ↔ free). Under them, the sums: missions, stars and the racha's day. «Deshacer
 // cambios» leaves the day as the app had it. Below, the missions done this week (undo-mission.js).
 import { api } from "../../api.js";
+import { folderTabs } from "../../components/choices.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { panel } from "../../components/panel.js";
@@ -23,15 +24,9 @@ const next = (kind, state) => {
   return cycle[(cycle.indexOf(state) + 1) % cycle.length];
 };
 
-function tabs(days, selected, onPick) {
-  return h("div", { class: "week-days", role: "tablist" }, days.map((d) => h("button", {
-    type: "button", role: "tab",
-    class: `week-mini__tank week-mini__tank--${d.state} week-days__day${d.day === selected ? " week-days__day--picked" : ""}`,
-    "aria-selected": String(d.day === selected),
-    title: dayMonth(d.day),
-    onclick: () => onPick(d.day),
-  }, t.dayMarks.letter(d.day))));
-}
+// Each tab: its letter and a small tank in that day's colours (the workshop's).
+const tabLabel = (d) => h("span", { class: "day-tab", title: dayMonth(d.day) },
+  t.dayMarks.letter(d.day), h("span", { class: `week-mini__tank week-mini__tank--${d.state} day-tab__tank` }));
 
 function missionRow(child, view, mission, onChange) {
   const tap = async () => {
@@ -96,7 +91,8 @@ async function fill(box, child, onChange) {
   const show = async (day) => {
     Object.assign(picked, { child: child.id, day });
     const view = await api("GET", `api/children/${child.id}/marks/${day}`);
-    box.replaceChildren(tabs(days, day, show), dayCard(child, view, onChange));
+    const items = days.map((d) => ({ label: tabLabel(d), on: d.day === day, onSelect: () => show(d.day) }));
+    box.replaceChildren(folderTabs(items, dayCard(child, view, onChange)));
   };
   await show(known ? picked.day : today ?? days.at(-1).day);
 }
