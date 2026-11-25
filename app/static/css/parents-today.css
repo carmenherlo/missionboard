@@ -199,3 +199,13 @@
 
   .kid-cards { display: grid; }
 }
+
+/* Rutinas de hoy (padres-barra.html): blue, not yellow (nothing waits for a parent here). */
+.routines-today {
+  border-left-color: var(--primary);
+  background: color-mix(in srgb, var(--primary-soft) 45%, var(--surface));
+}
+
+.routines-today .row { gap: var(--space-2); }
+
+.routines-today__on { color: var(--success); font-weight: 800; }

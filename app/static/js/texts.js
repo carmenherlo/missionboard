@@ -353,7 +353,6 @@ export const t = {
     toGive: "Por dar",
     prizes: "Premios",
     prizesSetup: "Configurar",
-    missionsSetup: "Configurar",
     toGiveCount: (n) => `${n} por dar`,
     kids: "A los niños",
     open: "Abrir el menú",
@@ -1163,6 +1162,9 @@ export const t = {
     today: (date) => `Hoy, ${date}`,
     // «Te toca» (zona-padres.html): only what asks something of a parent
     toGiveTitle: "Por dar",
+    routinesToday: "Rutinas de hoy",
+    launch: "Lanzar",
+    routineOn: "En marcha",
     nothingToGive: "✓ No tienes nada por dar.",
     stepsLeft: (n) => `Te ${n === 1 ? "queda 1 paso" : `quedan ${n} pasos`} para empezar`,
     progressShort: (done, total) => `${done} de ${total}`,

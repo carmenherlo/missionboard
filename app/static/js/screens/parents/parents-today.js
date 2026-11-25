@@ -1,5 +1,6 @@
 // Zona de padres · Hoy (menu-padres-2.html): the first screen after the code. Only to look:
-// each child's day (today-kids.js), with the steps to start on top while some are missing.
+// each child's day (today-kids.js), with the steps to start on top while some are missing
+// and the routines to start by hand today (today-routines.js).
 // What a parent has to hand over is in «Por dar» (to-give.js).
 import { api } from "../../api.js";
 import { loadAvatars } from "../../components/avatar.js";
@@ -7,15 +8,18 @@ import { h, render } from "../../dom.js";
 import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { routinesToday } from "./today-routines.js";
 import { kidsDay } from "./today-kids.js";
 
 export async function viewParentsToday() {
-  const [view, setup] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/overview/setup"), loadAvatars()]);
+  const [view, setup, routines] = await Promise.all([api("GET", "api/overview/today"), api("GET", "api/overview/setup"),
+    routinesToday(viewParentsToday), loadAvatars()]);
   const date = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   render(
     parentsHeader(t.overview.today(date)),
     h("main", { class: "page today-page" },
       firstSteps(setup),
+      routines,
       h("section", { class: "today-section" },
         view.children.length
           ? kidsDay(view, viewParentsToday)

@@ -21,7 +21,7 @@ const MISSIONS_SETUP = [["routines", "clock", t.config.routines]];
 // [title, setup, key]: the Premios and Misiones pages end with theirs (the key, its colour).
 export const SETUP = {
   give: [t.menu.prizesSetup, PRIZES_SETUP, "earn"],
-  missions: [t.menu.missionsSetup, MISSIONS_SETUP, "do"],
+  missions: [null, MISSIONS_SETUP, "do"], // the whole page is setting up: no title
 };
 
 // [title, [path, icon, label, options], key]: Ajustes by groups.

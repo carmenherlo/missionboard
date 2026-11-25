@@ -12,7 +12,8 @@ export function routinesByHand() {
   return api("GET", "api/routines/by-hand").catch(() => []);
 }
 
-export async function openChooser(routines) {
+// From the parents' Hoy (padres-barra.html): everyone chosen at first, and onStarted after.
+export async function openChooser(routines, { allChosen = false, onStarted = () => {} } = {}) {
   await loadAvatars();
   const close = () => layer.remove();
   const layer = h("div", { class: "mission-layer chooser", onclick: (e) => { if (e.target === e.currentTarget) close(); } },
@@ -22,21 +23,22 @@ export async function openChooser(routines) {
         h("span", { class: "child-bar__spacer" }),
         h("button", { type: "button", class: "icon-button mission-sheet__close", "aria-label": t.child.close, onclick: close },
           icon("close"))),
-      h("div", { class: "chooser__routines" }, routines.map((routine) => choice(routine, close)))));
+      h("div", { class: "chooser__routines" }, routines.map((routine) => choice(routine, close, { allChosen, onStarted })))));
   document.body.append(layer);
 }
 
-function choice(routine, close) {
-  const chosen = new Set();
+function choice(routine, close, { allChosen, onStarted }) {
+  const chosen = new Set(allChosen ? routine.kids.map((kid) => kid.id) : []);
   const error = h("p", { class: "form-error", role: "alert" });
   const start = h("button", {
-    type: "button", class: "btn btn--primary spin-button", disabled: true,
+    type: "button", class: "btn btn--primary spin-button", disabled: chosen.size === 0,
     onclick: async () => {
       start.disabled = true;
       try {
         await api("POST", `api/routines/${routine.id}/start`, { json: { kids: [...chosen] } });
         close();
         refreshRoutines();
+        onStarted();
       } catch (err) {
         error.textContent = errorMessage(err);
         start.disabled = false;
@@ -46,7 +48,8 @@ function choice(routine, close) {
   const kids = routine.kids.map((kid) => {
     const { color, soft, strong, on } = kid.colors;
     const button = h("button", {
-      type: "button", class: "routine-kid", "aria-pressed": "false",
+      type: "button", class: `routine-kid${chosen.has(kid.id) ? " routine-kid--done" : ""}`,
+      "aria-pressed": String(chosen.has(kid.id)),
       style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
       onclick: () => {
         if (chosen.has(kid.id)) chosen.delete(kid.id);

@@ -19,7 +19,7 @@ export function group([title, sections, key]) {
     return path === "notify" ? notifyOnlyWithHA(link, "settings") : link;
   };
   return h("section", { class: `settings-group settings-group--${key}` },
-    h("h2", { class: "settings-group__title" }, title),
+    title && h("h2", { class: "settings-group__title" }, title),
     h("div", { class: "settings-group__card" }, sections.map(item)));
 }
 
