@@ -1,12 +1,13 @@
 // Zona de padres · Hoy · Rutinas de hoy (padres-barra.html): every routine of today. Those
 // that ring at a time, with their hours (and «Terminada» once over); those started by hand,
 // with «Lanzar» (who has come home, everyone chosen at first: routine/chooser.js). Started
-// from a phone, it goes on the tablet too (the server says it). The one going on says so;
-// its banner on top has its controls (pause, finish). A tap on a routine's name opens its
+// from a phone, it goes on the tablet too (the server says it). «En marcha» opens the one
+// going on, as its banner does (± Tiempo, pause, finish: just for today). A tap on a routine's name opens its
 // settings. Hidden when there is none today.
 import { api } from "../../api.js";
 import { h } from "../../dom.js";
 import { openChooser, routinesByHand } from "../../routine/chooser.js";
+import { openRoutine } from "../../routine/routine.js";
 import { t } from "../../texts.js";
 
 export async function routinesToday(redraw) {
@@ -15,7 +16,9 @@ export async function routinesToday(redraw) {
   if (!routines.length) return null;
   const startable = new Map(byHand.map((routine) => [routine.id, routine]));
   const status = (routine) => {
-    if (current?.id === routine.id) return h("span", { class: "routines-today__on" }, t.overview.routineOn);
+    if (current?.id === routine.id) {
+      return h("button", { type: "button", class: "btn routines-today__on", onclick: openRoutine }, t.overview.routineOn);
+    }
     if (routine.manual && startable.has(routine.id)) {
       return h("button", {
         type: "button", class: "btn btn--primary",

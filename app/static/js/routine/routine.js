@@ -69,6 +69,11 @@ export function refreshRoutines() {
   controller?.check();
 }
 
+// The routine going on, opened from the parents' Hoy («En marcha»), as its banner does.
+export function openRoutine() {
+  controller?.reopen();
+}
+
 export function startRoutines() {
   // The routine on screen and its pieces share this object: `r.showing` is what is shown
   // now (null: nothing), and every piece adds its functions to it, so they call each other.
@@ -201,6 +206,7 @@ export function startRoutines() {
   addEventListener("hashchange", () => r.showing && r.place());
   controller = {
     check,
+    reopen: () => r.showing && r.reopen(),
     trial(data) {
       if (r.showing) r.end();
       r.begin(data);
