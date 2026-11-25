@@ -82,6 +82,8 @@ def test_the_screen_gets_its_rules_and_who_has_each_task(client, race, kids):
         "minutes": 20,
         "ghost": 18,
         "record": None,
+        "cheers": [],
+        "cheer_seconds": 5,
     }
     homework, shower = (t["id"] for t in race["tasks"])
     assert [p["mission"]["tasks"] for p in current["people"]] == [

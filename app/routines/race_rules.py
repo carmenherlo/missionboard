@@ -2,6 +2,7 @@
 kept or run: its settings, the alien that trains with the team's last races, the record and
 the extra stars for how it went."""
 
+import json
 from dataclasses import dataclass
 from statistics import median
 
@@ -26,6 +27,7 @@ GHOST_FASTEST, GHOST_SLOWEST = 0.6, 1.0
 PACE_RACES = 5  # the alien runs like the team's last 5 races
 RECORD_RACES = 10  # the record: the best of the last 10 (an old lucky day must not stay forever)
 RECORD_STARS = 1  # beating the alien and the record: one more extra star
+CHEER_SECONDS = 5  # «¡Ánimo, equipo!»: each cheer, the alien stumbles and loses this much
 
 
 @dataclass(frozen=True)
@@ -64,6 +66,16 @@ def stars_for(race: Race, result: str) -> int:
     if not race.on_time:
         return 0
     return {"record": race.on_time + RECORD_STARS, "won": race.on_time}.get(result, 0)
+
+
+def cheered(run: dict) -> list[str]:
+    """Today's cheers in a race: "task id:child id", once each."""
+    return json.loads(run["cheers"] or "[]")
+
+
+def stumbled_minutes(run: dict) -> float:
+    """How far behind the alien is from its cheers."""
+    return len(cheered(run)) * CHEER_SECONDS / 60
 
 
 def done_after(part) -> float:

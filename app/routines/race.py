@@ -4,12 +4,15 @@ task on their own mission); here, how it ends: the time it took against the ghos
 extra stars and the parent who checks before they are given. Running out of time is in
 RoutinesService.current (the race is lost there, whoever is looking)."""
 
+import json
+
 from app.children.repository import ChildrenRepository
 from app.clock import Clock
 from app.errors import ConflictError, NotFoundError
 from app.events.service import EventLog
-from app.routines.race_rules import outcome, planned_minutes, stars_for
+from app.routines.race_rules import cheered, outcome, planned_minutes, stars_for, stumbled_minutes
 from app.routines.races_repository import RacesRepository
+from app.routines.repository import RunsRepository
 from app.routines.service import RoutinesService
 from app.stars.repository import StarsRepository
 
@@ -23,7 +26,9 @@ class RaceService:
         children: ChildrenRepository,
         clock: Clock,
         events: EventLog,
+        runs: RunsRepository,
     ):
+        self._runs = runs
         self._routines = routines
         self._races = races
         self._stars = stars
@@ -42,7 +47,7 @@ class RaceService:
         routine, race = current.routine, current.routine.race
         took = current.minute - current.started
         planned = planned_minutes(routine, current.people)
-        result = outcome(took, planned, current.pace)
+        result = outcome(took - stumbled_minutes(current.run), planned, current.pace)  # its cheers count
         stars = stars_for(race, result)
         kids = [p.child for p in current.people]
         waits = bool(stars) and race.review
@@ -64,6 +69,29 @@ class RaceService:
         self._routines.note(routine_id, "ended", early=True)
         self._events.routine_did(f"race_{result}", routine.name, part=_detail(took, planned, stars))
         return self._races.get(race_id)
+
+    def cheer(self, routine_id: str, child_id: str, part_id: str) -> list[str]:
+        """«¡Ánimo, equipo!»: a child who did their task, or does not have it, cheers the
+        ones still on it; the alien stumbles. Once per child and task. Today's cheers."""
+        current = self._routines.current()
+        if current is None or current.routine.id != routine_id or current.started is None or not current.routine.racing:
+            raise ConflictError("That race is not going on now")
+        person = next((p for p in current.people if p.child.id == child_id), None)
+        going = next(
+            (
+                part.id
+                for part in current.routine.parts
+                if any(part.id in p.mission["tasks"] and not p.mission["tasks"][part.id] for p in current.people)
+            ),
+            None,
+        )
+        if person is None or part_id != going or (person.mission or {}).get("tasks", {}).get(part_id) is False:
+            raise ConflictError("Nobody to cheer there")
+        cheers = cheered(current.run)
+        if f"{part_id}:{child_id}" not in cheers:
+            cheers.append(f"{part_id}:{child_id}")
+            self._runs.set(current.day, routine_id, cheers=json.dumps(cheers))
+        return cheers
 
     def to_review(self) -> list[dict]:
         """Today's races whose extra stars wait for a parent (Padres · Por dar)."""

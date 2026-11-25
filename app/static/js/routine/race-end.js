@@ -34,8 +34,9 @@ export function raceEnd(r) {
     const took = r.elapsed();
     let result = { outcome: "lost", stars: 0, given: true, took_seconds: null, planned_seconds: data.race.minutes * 60 };
     if (!lost) {
-      result = data.trial ? pretendResult(data.race, took)
-        : await api("POST", `api/routines/${data.id}/race/end`).catch(() => null) ?? { ...pretendResult(data.race, took), given: true };
+      const run = took - r.stumbled(); // its cheers count, as on the server
+      result = data.trial ? { ...pretendResult(data.race, run), took_seconds: Math.round(took * 60) }
+        : await api("POST", `api/routines/${data.id}/race/end`).catch(() => null) ?? { ...pretendResult(data.race, run), given: true };
     }
     if (!r.showing) return;
     showResult(result);

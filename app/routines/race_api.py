@@ -42,6 +42,11 @@ class SlowIn(BaseModel):
     minutes: int | None = Field(default=None, ge=1, le=180)  # null: it is a race too
 
 
+class CheerIn(BaseModel):
+    child_id: str
+    part_id: str
+
+
 class ReviewIn(BaseModel):
     give: bool
 
@@ -58,8 +63,9 @@ def get_race_service(
     stars: StarsRepository = Depends(get_stars_repository),
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
+    runs: RunsRepository = Depends(get_runs_repository),
 ) -> RaceService:
-    return RaceService(routines, races, stars, ChildrenRepository(store), clock, events)
+    return RaceService(routines, races, stars, ChildrenRepository(store), clock, events, runs)
 
 
 # ---------- Configurar → Rutinas: "Con el reloj" or "Carrera" ----------
@@ -104,6 +110,12 @@ def set_slow(
 def end_race(routine_id: str, races: RaceService = Depends(get_race_service)):
     """Everyone has done their tasks (no code: it is the kids' screen). Its result."""
     return races.end(routine_id)
+
+
+@router.post("/{routine_id}/race/cheer")
+def cheer(routine_id: str, body: CheerIn, races: RaceService = Depends(get_race_service)):
+    """«¡Ánimo, equipo!» (no code: it is the kids' screen). Today's cheers."""
+    return {"cheers": races.cheer(routine_id, body.child_id, body.part_id)}
 
 
 @router.get("/races/to-review", dependencies=parent_only)

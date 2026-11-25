@@ -77,7 +77,7 @@ export function raceView(r) {
     if (race.ended) return;
     // The race: the rocket, the ghost and the gap between them.
     const at = Math.max(0, time);
-    const ghostAt = r.placeOf(at * data.race.ghost / data.race.minutes, all);
+    const ghostAt = r.placeOf(r.ghostTime(at), all); // it gets to the moon at its time (24/11: it was drawn as slow as the flag)
     const rocketAt = r.placeOf(r.rocketTime(at), all);
     const lead = r.lead(at);
     const side = lead >= EVEN_MIN ? "ahead" : lead <= -EVEN_MIN ? "behind" : "even";
@@ -127,17 +127,18 @@ export function raceView(r) {
       const has = Boolean(leg && person.mission && leg.part.id in person.mission.tasks);
       const done = has && r.taskDone(person, leg.part.id);
       const wait = has && !done ? leg.part.done_after - (Math.max(0, r.elapsed()) - race.from) : 0; // nobody marks it at once
-      return { person, has, done, left: wait > 0 ? countdownText(wait * 60) : null };
+      return { person, has, done, left: wait > 0 ? countdownText(wait * 60) : null, cheers: r.canCheer(person, leg) };
     });
-    const signature = JSON.stringify([leg?.part.id, states.map(({ has, done, left }) => [has, done, left])]);
+    const signature = JSON.stringify([leg?.part.id, states.map(({ has, done, left, cheers }) => [has, done, left, cheers])]);
     if (view.people.dataset.signature === signature) return;
     view.people.dataset.signature = signature;
-    view.people.replaceChildren(...states.map(({ person, has, done, left }) => {
+    view.people.replaceChildren(...states.map(({ person, has, done, left, cheers }) => {
+      const cheer = cheers && h("button", { type: "button", class: "btn race-kid__cheer", onclick: () => r.cheer(person, leg) }, t.race.cheer);
       let action;
-      if (!has) action = h("span", { class: "race-kid__off" }, t.race.notTheirs);
+      if (!has) action = cheer || h("span", { class: "race-kid__off" }, t.race.notTheirs);
       else if (done) {
-        action = h("button", { type: "button", class: "btn race-kid__go race-kid__done", onclick: () => r.markDone(person, leg.part.id, false) },
-          t.race.doneAlready);
+        action = [h("button", { type: "button", class: "btn race-kid__go race-kid__done", onclick: () => r.markDone(person, leg.part.id, false) },
+          t.race.doneAlready), cheer];
       } else {
         action = h("button", {
           type: "button", class: "btn btn--primary race-kid__go", disabled: Boolean(left),
@@ -145,7 +146,7 @@ export function raceView(r) {
         }, left ? (leg.part.slow_minutes ? t.race.slowFor(left) : t.race.doneIn(left)) : t.race.done);
       }
       return h("li", {},
-        h("div", { class: `race-kid${done ? " race-kid--done" : ""}${has ? "" : " race-kid--off"}`, style: `--child-color: ${person.colors.color}` },
+        h("div", { class: `race-kid${done ? " race-kid--done" : ""}${has || cheers ? "" : " race-kid--off"}`, style: `--child-color: ${person.colors.color}` },
           h("div", { class: "race-kid__who" }, avatar(person.child, { size: "md" }), h("b", {}, person.child.name)),
           action));
     }));

@@ -1,7 +1,7 @@
 """The alien trains (carrera-estrategia.html): it runs like the team's last races, a little
 faster; beating it and the record gives one star more."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -10,8 +10,9 @@ from app.routines.race_rules import Pace, Race, outcome, pace_of, stars_for
 from app.routines.races_repository import RacesRepository
 from app.storage.config_migrations import upgrade
 from tests.conftest import PARENT
-from tests.test_routines_by_hand import start
+from tests.test_routines_by_hand import MONDAY, start
 from tests.test_routines_race import client, clock, kids, race, run  # noqa: F401 (fixtures)
+from tests.test_today import mark
 
 
 def past(took_seconds, planned_seconds=1200, stars=0, given=False):
@@ -88,3 +89,22 @@ def test_muy_rapido_goes_from_the_config():
         {"version": 26, "routines": [{"id": "a", "race": {"on_time": 1, "fast": 2, "review": True}}, {"id": "b"}]}
     )
     assert [r.get("race") for r in doc["routines"]] == [{"on_time": 1, "review": True}, None]
+
+
+def test_a_child_with_nothing_to_do_cheers_and_the_alien_stumbles(client, race, kids, clock):  # noqa: F811
+    homework, shower = (t["id"] for t in race["tasks"])
+    bea, alex = kids
+    start(client, race, [bea["id"], alex["id"]])
+    url = f"/api/routines/{race['id']}/race/cheer"
+    assert client.post(url, json={"child_id": bea["id"], "part_id": homework}).status_code == 409  # still on it
+    assert client.post(url, json={"child_id": alex["id"], "part_id": shower}).status_code == 409  # not going on
+    for _ in range(2):  # once per child and task
+        cheers = client.post(url, json={"child_id": alex["id"], "part_id": homework}).json()["cheers"]
+    assert cheers == [f"{homework}:{alex['id']}"]
+    assert client.get("/api/routines/current").json()["race"]["cheers"] == cheers
+    for task in race["tasks"]:
+        for kid in kids:
+            mark(client, kid, race["mission"], task["id"])
+    clock.moment = MONDAY + timedelta(minutes=18.15)  # 18:03 of 20:00: the alien got there at 18:00 ...
+    ended = client.post(f"/api/routines/{race['id']}/race/end").json()
+    assert ended["outcome"] == "won"  # ... but it stumbled 5 seconds

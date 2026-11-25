@@ -59,6 +59,7 @@ export function race(r) {
     r.showing.race = {
       index, from: Math.min(Math.max(0, elapsed()), planned), nextAt: null, said: new Set(), doneSeen: doneKeys(all),
       ahead: null, counted: elapsed() >= 0 ? 0 : null, ended: false, // opened once started: no "¡YA!"
+      cheered: new Set(), // «¡Ánimo, equipo!» sent from here
       music: raceMusic(),
     };
     r.buildRace();
@@ -185,12 +186,36 @@ export function race(r) {
       if (ahead) r.flashPassed();
     }
     state.ahead = ahead;
-    if (time >= data().race.ghost) once("ghost", "¡El extraterrestre ha llegado a la meta! Aún podéis terminar.");
+    if (ghostTime(time) >= data().race.ghost) once("ghost", "¡El extraterrestre ha llegado a la meta! Aún podéis terminar.");
   }
 
   // How far ahead of the ghost, in minutes (negative: behind).
   function lead(time) {
-    return rocketTime(time) - time;
+    return rocketTime(time) - ghostTime(time);
+  }
+
+  // «¡Ánimo, equipo!» (carrera-estrategia.html): who cheered ("task:child", the server's
+  // and the ones sent from here); each cheer, the alien stumbles and loses a few seconds.
+  const cheers = () => new Set([...(data().race.cheers ?? []), ...r.showing.race.cheered]);
+  const stumbled = () => cheers().size * data().race.cheer_seconds / 60;
+  const ghostTime = (time) => Math.max(0, time - stumbled()); // how far the alien has run
+
+  // Whoever did their task, or does not have it, cheers the ones still on it: once a task.
+  function canCheer(person, leg) {
+    if (!leg || r.showing.race.nextAt != null || r.showing.race.ended) return false;
+    const mine = Boolean(person.mission && leg.part.id in person.mission.tasks);
+    const someoneOnIt = leg.having.some((p) => !taskDone(p, leg.part.id));
+    return someoneOnIt && (!mine || taskDone(person, leg.part.id)) && !cheers().has(`${leg.part.id}:${person.child.id}`);
+  }
+
+  async function cheer(person, leg) {
+    r.showing.race.cheered.add(`${leg.part.id}:${person.child.id}`);
+    sounds.boing(); // the alien trips
+    say(t.race.cheerSaid);
+    r.renderRacers();
+    if (data().trial) return;
+    const json = { child_id: person.child.id, part_id: leg.part.id };
+    await api("POST", `api/routines/${data().id}/race/cheer`, { json }).catch(() => {});
   }
 
   // Where the rocket is, as the ghost's time to get there.
@@ -219,5 +244,5 @@ export function race(r) {
     r.check();
   }
 
-  return { legs, taskDone, ghostStarts, placeOf, startRace, raceTick, lead, rocketTime, markDone, elapsed };
+  return { legs, taskDone, ghostStarts, placeOf, startRace, raceTick, lead, rocketTime, markDone, elapsed, ghostTime, stumbled, canCheer, cheer };
 }

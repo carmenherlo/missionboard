@@ -179,6 +179,7 @@
 
 .race-kid__go:disabled { font-size: var(--text-md); } /* waiting its minimum: the minutes fit */
 .race-kid__done { color: var(--success); font-weight: 800; }
+.race-kid__cheer { background: var(--accent-soft); font-size: var(--text-md); font-weight: 800; } /* «¡Ánimo!» */
 .race-kid__off { color: var(--muted); font-weight: 700; text-align: center; }
 
 /* ---------- the start, and the result: over the race ---------- */

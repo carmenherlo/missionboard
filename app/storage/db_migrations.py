@@ -274,4 +274,9 @@ MIGRATIONS: list[str] = [
     """
     ALTER TABLE races ADD COLUMN ghost_share REAL
     """,
+    # 19 · «¡Ánimo, equipo!» (carrera-estrategia.html, 25/11): who cheered in today's race,
+    # and in which task (JSON ["task id:child id", …]); each cheer makes the alien stumble.
+    """
+    ALTER TABLE routine_runs ADD COLUMN cheers TEXT
+    """,
 ]
