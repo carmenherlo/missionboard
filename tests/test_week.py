@@ -227,12 +227,12 @@ def test_a_day_fixed_changes_the_week_and_the_workshop_shows_it_as_it_is_now(cli
     clock.moment = MONDAY + timedelta(days=5)  # Saturday: Friday was missed (they forgot to sign)
     assert week(client, bea)["result"]["tier"] == "second"
     client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")  # took off with the smaller prize
-    fix = f"/api/children/{bea['id']}/days/2026-11-06"
-    assert client.put(fix, json={"choice": "done"}, headers=PARENT).status_code == 204
+    fix = f"/api/children/{bea['id']}/marks/2026-11-06/{item['id']}"
+    assert client.put(fix, json={"state": "done"}, headers=PARENT).status_code == 200
     view = week(client, bea)
     assert view["result"]["tier"] == "full" and view["result"]["prize_text"] == "Parque"  # ready again
     client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
-    assert client.put(fix, json={"choice": "missed"}, headers=PARENT).status_code == 204
+    assert client.put(fix, json={"state": "missed"}, headers=PARENT).status_code == 200
     view = week(client, bea)
     assert view["result"]["tier"] == "second" and view["took_off"] is False  # worse: shown again, as it is now
     [prize] = client.get("/api/overview/today", headers=PARENT).json()["week_prizes"]
@@ -240,7 +240,7 @@ def test_a_day_fixed_changes_the_week_and_the_workshop_shows_it_as_it_is_now(cli
     client.post(f"/api/children/{bea['id']}/week/2026-11-06/seen")
     assert week(client, bea)["took_off"] is True
     for day in ("2026-11-04", "2026-11-05"):  # two more days were a mistake: no prize at all
-        client.put(f"/api/children/{bea['id']}/days/{day}", json={"choice": "missed"}, headers=PARENT)
+        client.put(f"/api/children/{bea['id']}/marks/{day}/{item['id']}", json={"state": "missed"}, headers=PARENT)
     view = week(client, bea)
     assert view["result"]["tier"] == "none" and view["took_off"] is False  # the rocket is back, and coughs
     assert client.get("/api/overview/today", headers=PARENT).json()["week_prizes"] == []

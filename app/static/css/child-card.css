@@ -136,3 +136,53 @@ button.thin-row { cursor: pointer; }
 .star-chart__key--won { background: var(--accent-vivid); }
 
 .star-chart__key--spent { background: var(--danger); }
+
+/* ---------- Esta semana, mission by mission (semana-misiones.html) ---------- */
+
+.week-days__day--picked { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+.mark-card { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
+
+.mark-card__date { margin: 0; font-weight: 700; }
+
+.mark-card__date .save-status { margin-left: var(--space-2); }
+
+.mark-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  border: 3px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mark-row:disabled { cursor: default; }
+
+.mark-row--done { border-color: var(--success); background: var(--success-soft); }
+
+.mark-row--missed { border-color: var(--danger); background: var(--danger-soft); }
+
+.mark-row--free { border-style: dashed; color: var(--muted); }
+
+.mark-row__name { flex: 1; min-width: 0; overflow: hidden; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+
+.mark-row__state { font-weight: 700; }
+
+.mark-sums { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); margin: var(--space-1) 0 0; }
+
+.mark-sums dt, .mark-sums dd { margin: 0; }
+
+.mark-sums dd { font-weight: 700; text-align: right; }
+
+.mark-sums__racha--won { color: var(--success); }
+
+.mark-sums__racha--lost { color: var(--danger); }
+
+.mark-reset { justify-self: end; }

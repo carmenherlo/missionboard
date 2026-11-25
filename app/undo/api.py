@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -29,15 +28,10 @@ from app.streaks.service import StreaksService
 from app.today.api import get_day_service
 from app.today.repository import DayRepository
 from app.today.service import DayService
-from app.undo.day_fix import DayFix
 from app.undo.service import UndoService
 
 # Undoing a mission is for parents: with the code.
 router = APIRouter(prefix="/api", tags=["undo"], dependencies=[Depends(require_parent)])
-
-
-class DayFixIn(BaseModel):
-    choice: Literal["done", "missed", "free"]
 
 
 class UndoIn(BaseModel):
@@ -123,37 +117,3 @@ def undo_mission(
 ):
     """«No la ha hecho»: the mission, its stars, the day's gift card and the tank, undone."""
     return _present(undo.undo(child_id, mission_id, day, body.keep_card), libraries)
-
-
-def get_day_fix(
-    undo: UndoService = Depends(get_undo_service),
-    store: ConfigStore = Depends(get_config_store),
-    days: DayRepository = Depends(get_day_repository),
-    offs: DayOffsRepository = Depends(get_day_offs_repository),
-    streaks: StreaksService = Depends(get_streaks_service),
-    clock=Depends(get_clock),
-    events: EventLog = Depends(get_event_log),
-) -> DayFix:
-    return DayFix(
-        undo,
-        ChildrenRepository(store),
-        MissionsRepository(store),
-        days,
-        offs,
-        streaks,
-        SettingsRepository(store),
-        clock,
-        events,
-    )
-
-
-@router.get("/children/{child_id}/days/{day}")
-def day_fix_preview(child_id: str, day: date, fix: DayFix = Depends(get_day_fix)) -> dict:
-    """What «Lo hizo» and «No lo hizo» would do to the stars that day (the menu says it)."""
-    return fix.preview(child_id, day)
-
-
-@router.put("/children/{child_id}/days/{day}", status_code=204)
-def fix_day(child_id: str, day: date, body: DayFixIn, fix: DayFix = Depends(get_day_fix)) -> None:
-    """Padres · Niño: what a day of this week was: «Lo hizo», «No lo hizo» or «Libre»."""
-    fix.fix(child_id, day, body.choice)

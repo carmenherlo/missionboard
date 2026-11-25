@@ -56,6 +56,10 @@ class StreaksService:
         # A day let off neither counts nor breaks it, as a day without missions.
         return streak(day, lambda d: set() if d.isoformat() in free else had(d), self._days.completions(child_id))
 
+    def started(self, child_id: str) -> date:
+        """The day the child's racha started: the days before it are not judged."""
+        return self._streaks.start(child_id, self.today())
+
     # ---------- the week the child and the parents see ----------
 
     def week(self, child_id: str) -> dict | None:
@@ -114,7 +118,7 @@ class StreaksService:
     # ---------- the parents ----------
 
     def undo_check(self, child_id: str, day: date) -> None:
-        """Before changing a day gone by (undo/, day_fix): its week can be changed until the
+        """Before changing a day gone by (undo/, day_marks/): its week can be changed until the
         next one starts, its first day that counts (with Monday to Friday, until Monday), even
         if its rocket took off. A day to come is only let off."""
         rules, today = self._settings.settings().streak_week, self.today()

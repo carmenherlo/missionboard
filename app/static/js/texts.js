@@ -1040,7 +1040,6 @@ export const t = {
   // A child's card (ficha-nino.html): Esta semana, Estrellas, and their settings apart.
   childCard: {
     settings: (name) => `Ajustes de ${name}`,
-    weekHint: "Toca un día para cambiarlo.",
     doneTitle: (n) => `Hechas esta semana (${n})`,
     chartTitle: "Últimas 2 semanas",
     chartLabel: (won, spent) => `En dos semanas: ${won} estrellas ganadas con misiones y ${spent} gastadas en la tienda`,
@@ -1059,24 +1058,33 @@ export const t = {
   },
   // Padres · Hoy and Padres · Niño (step 7)
   // Días libres and undoing a mission (dias-libres.html, 19/11).
-  dayFix: {
-    title: (name, day) => {
+  // Padres · Niños · Esta semana, mission by mission (semana-misiones.html, 25/11).
+  dayMarks: {
+    letter: (day) => "DLMXJVS"[new Date(`${day}T12:00:00`).getDay()],
+    date: (day) => {
       const d = new Date(`${day}T12:00:00`);
-      return `${name} · ${d.toLocaleDateString("es-ES", { weekday: "long" })} ${d.getDate()}/${d.getMonth() + 1}`;
+      const name = d.toLocaleDateString("es-ES", { weekday: "long" });
+      return `${name[0].toUpperCase()}${name.slice(1)} ${d.getDate()}/${d.getMonth() + 1}`;
     },
-    now: (state) => `Ahora: ${state.toLowerCase()}.`,
-    done: "Lo hizo",
-    // Each choice says what it does (20/11): the stars follow the missions, the racha the days.
-    doneHint: (gain) => gain
-      ? `Marca sus misiones como hechas: +${gain} ${gain === 1 ? "estrella" : "estrellas"}. El depósito se llena.`
-      : "Sus misiones ya están hechas: el depósito se llena.",
-    missed: "No lo hizo",
-    missedHint: (loss) => loss
-      ? `Deshace sus misiones: −${loss} ${loss === 1 ? "estrella" : "estrellas"} (y la tarjeta regalo de ese día, si no la ha usado). El depósito queda en rojo.`
-      : "No tiene misiones hechas: las estrellas no cambian. El depósito queda en rojo.",
-    free: "Libre",
-    freeHint: () => "No pudo (enfermo, de viaje…): ese día no cuenta en la racha. Las estrellas no cambian.",
-    error: "No se ha podido cambiar: ese día es de una semana que ya terminó (empezó la siguiente).",
+    states: { done: "Hecha ✓", missed: "No hecha ✕", free: "Libre", pending: "Pendiente", active: "Activa" },
+    missions: (done, counted) => `${done} / ${counted} misiones`,
+    stars: (n) => `${n} ★`,
+    racha: {
+      won: "Día de racha conseguido",
+      lost: "Día de racha no conseguido",
+      waiting: "Día de racha por conseguir",
+    },
+    allFree: "Todas libres: este día no cuenta para la racha.",
+    changed: "cambiado por un padre",
+    over: "Esta semana ya terminó: no se puede cambiar.",
+    noDays: "Esta semana no tiene días de racha.",
+    reset: "Deshacer cambios",
+    resetAsk: (day, name) => {
+      const d = new Date(`${day}T12:00:00`);
+      return `¿Dejar el ${d.toLocaleDateString("es-ES", { weekday: "long" })} como lo marcó ${name}?`;
+    },
+    resetStars: (n) => n > 0 ? `Se devuelven ${n} ${n === 1 ? "estrella" : "estrellas"}.`
+      : n < 0 ? `Se quitan ${-n} ${n === -1 ? "estrella" : "estrellas"}.` : "Las estrellas no cambian.",
   },
   dayOff: {
     offTag: "Hoy no toca",
@@ -1140,9 +1148,7 @@ export const t = {
     ordersTitle: "Pedidos",
     noOrders: "✓ No hay pedidos por entregar.",
     weekTitle: "Esta semana",
-    weekLegend: { full: "Lleno", missed: "No lo hizo", now: "Hoy", later: "Por venir", free: "Libre" },
     weekOff: "Las rachas están apagadas (menú → Rachas).",
-    freeDay: "libre",
     firstSteps: "Primeros pasos",
     firstStepsHint: "Para dejar la app lista. Esta lista se va sola cuando están hechos los cuatro primeros.",
     stepChildren: "Añadir a los niños",

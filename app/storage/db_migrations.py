@@ -279,4 +279,16 @@ MIGRATIONS: list[str] = [
     """
     ALTER TABLE routine_runs ADD COLUMN cheers TEXT
     """,
+    # 20 · The week, mission by mission (semana-misiones.html, 25/11): the first time a parent
+    # changes a child's day, how the app had left it (JSON {"done": {mission id: [stars, name]},
+    # "off": {mission id or '': phrase}}), so «Deshacer cambios» can bring it back.
+    """
+    CREATE TABLE day_snapshots (
+        child_id TEXT NOT NULL,
+        day TEXT NOT NULL,
+        snapshot TEXT NOT NULL,
+        at TEXT NOT NULL,
+        PRIMARY KEY (child_id, day)
+    )
+    """,
 ]

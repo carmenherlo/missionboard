@@ -18,6 +18,8 @@ from app.children.repository import ChildrenRepository
 from app.clock import Clock, SystemClock, app_day
 from app.daily_prize import api as daily_prize_api
 from app.daily_prize.repository import PrizeSpinsRepository
+from app.day_marks import api as day_marks_api
+from app.day_marks.repository import DaySnapshotsRepository
 from app.day_off import api as day_off_api
 from app.day_off.repository import DayOffsRepository
 from app.events import api as events_api
@@ -156,6 +158,7 @@ def create_app(
     app.state.prize_spins_repository = PrizeSpinsRepository(data_dir)
     app.state.streaks_repository = StreaksRepository(data_dir)
     app.state.day_offs_repository = DayOffsRepository(data_dir)
+    app.state.day_snapshots_repository = DaySnapshotsRepository(data_dir)
     app.state.moments_repository = MomentsRepository(data_dir)
     app.state.runs_repository = RunsRepository(data_dir)
     app.state.races_repository = RacesRepository(data_dir)
@@ -191,6 +194,7 @@ def create_app(
     app.include_router(streaks_api.router)
     app.include_router(day_off_api.router)
     app.include_router(undo_api.router)
+    app.include_router(day_marks_api.router)
     app.include_router(vouchers_api.router)
     app.include_router(race_api.router)  # before the routines' /{routine_id} routes
     app.include_router(routines_api.router)

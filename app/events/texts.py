@@ -223,6 +223,7 @@ _CONFIG = {
     ("day_off", "off"): "Quitaste el día libre de {child} del {mission}",
     ("mission_off", "on"): "Dejaste libre «{mission}» a {child}",
     ("mission_off", "off"): "Quitaste lo libre de «{mission}» a {child}",
+    ("day", "reset"): "Dejaste el {mission} de {child} como lo marcó la app",
     ("mission", "undone"): "Deshiciste «{mission}» de {child}: no la había hecho",
     ("mission", "marked_done"): "Marcaste «{mission}» de {child} como hecha",
     ("prize", "created"): "Añadiste el premio «{mission}»",
