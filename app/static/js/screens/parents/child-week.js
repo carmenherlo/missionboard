@@ -1,5 +1,5 @@
 // A child's card · Esta semana (semana-misiones.html, 25/11): the racha's days as folder
-// tabs, each with a small tank in its colours; the day picked shows its missions, and a tap on one says what it
+// tabs, each with its tank (the letter inside); the day picked shows its missions, and a tap on one says what it
 // was (a day gone by: done → missed → free; today: pending → done → free; a day to come:
 // active ↔ free). Under them, the sums: missions, stars and the racha's day. «Deshacer
 // cambios» leaves the day as the app had it. Below, the missions done this week (undo-mission.js).
@@ -24,9 +24,10 @@ const next = (kind, state) => {
   return cycle[(cycle.indexOf(state) + 1) % cycle.length];
 };
 
-// Each tab: its letter and a small tank in that day's colours (the workshop's).
-const tabLabel = (d) => h("span", { class: "day-tab", title: dayMonth(d.day) },
-  t.dayMarks.letter(d.day), h("span", { class: `week-mini__tank week-mini__tank--${d.state} day-tab__tank` }));
+// Each tab: that day's tank, its letter inside (the workshop's colours).
+const tabLabel = (d) => h("span", {
+  class: `week-mini__tank week-mini__tank--${d.state} day-tab__tank`, title: dayMonth(d.day),
+}, t.dayMarks.letter(d.day));
 
 function missionRow(child, view, mission, onChange) {
   const tap = async () => {

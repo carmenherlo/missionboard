@@ -139,11 +139,7 @@ button.thin-row { cursor: pointer; }
 
 /* ---------- Esta semana, mission by mission (semana-misiones.html) ---------- */
 
-.day-tab { display: grid; justify-items: center; gap: 2px; }
-
-.day-tab__tank { width: 22px; height: 16px; border-radius: 5px; }
-
-.day-tab__tank.week-mini__tank--missed::after { top: -5px; right: -6px; width: 12px; height: 12px; font-size: 0.5rem; }
+.folder__tab .day-tab__tank { width: 40px; height: 40px; margin: 0 auto; font-size: 1rem; }
 
 .mark-card { display: grid; gap: var(--space-2); }
 
