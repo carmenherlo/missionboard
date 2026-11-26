@@ -57,6 +57,7 @@ import { view } from "./view.js";
 
 const CHECK_MS = 20_000; // how often it asks the server (and how the kids' missions go)
 const TICK_MS = 250; // how often the clock moves (the second hand, smoothly)
+const LATE_CHECK_MIN = 0.5; // a race this close to its time when the server says it is over: lost
 
 let controller = null;
 
@@ -93,7 +94,9 @@ export function startRoutines() {
       return; // no connection now: next time
     }
     if (!data) {
-      if (r.showing && !r.showing.finishing) r.end(); // started by hand and over: its "¡Hecho!" stays a while
+      // A race whose time ran out on the server first: its result here too, not just gone.
+      if (r.showing?.race && !r.showing.finishing && r.raceTime() >= r.showing.data.race.minutes - LATE_CHECK_MIN) r.endRace(true);
+      else if (r.showing && !r.showing.finishing) r.end(); // started by hand and over: its "¡Hecho!" stays a while
       return;
     }
     if (!r.showing || r.showing.data.id !== data.id || r.showing.data.day !== data.day) {

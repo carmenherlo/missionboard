@@ -15,6 +15,7 @@ import { countdownText, list } from "./words.js";
 const FLUENT = "static/libraries/fluent";
 const img = (name, cls) => h("img", { class: cls, src: `${FLUENT}/${name}.svg`, alt: "" });
 const EVEN_MIN = 0.5;
+export const silverMoon = () => h("span", { class: "silver-moon", "aria-hidden": "true" });
 const GO_SHOWN_S = 1.2; // "¡YA!" stays on screen this long
 const PASSED_MS = 1600; // the race shines this long when they overtake the ghost
 export function raceView(r) {
@@ -87,8 +88,12 @@ export function raceView(r) {
     const seconds = Math.round(Math.abs(lead) * 60);
     const gap = ["ahead", "behind"].includes(side) ? (side === "ahead" ? t.race.lead : t.race.lag)(t.race.gap(seconds)) : "";
     parts.big.dataset.side = side;
-    parts.big.textContent = [{ ahead: t.race.winning, behind: t.race.behind, even: t.race.even, boxes: t.race.boxesBig,
+    const big = [{ ahead: t.race.winning, behind: t.race.behind, even: t.race.even, boxes: t.race.boxesBig,
       landing: t.race.landingBig }[side], gap].filter(Boolean).join(" · ");
+    if (parts.big.dataset.text !== big) { // the landing with the silver Moon (race.css)
+      parts.big.dataset.text = big;
+      parts.big.replaceChildren(side === "landing" ? silverMoon() : "", big);
+    }
     const total = r.ghostStarts(all).at(-1);
     const starts = r.ghostStarts(all).map((at) => at / total);
     parts.road.replaceChildren(raceRoad({ legs: all, starts, index: race.index, rocketAt: race.flagged ? 1 : rocketAt, ghostAt,

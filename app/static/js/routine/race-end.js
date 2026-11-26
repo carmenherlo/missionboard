@@ -2,20 +2,23 @@
 // last raced task done (the server says how it went and keeps it), or the time ran out
 // (only the extra stars are lost: the mission goes on, 24/11). The result is celebrated
 // at once: the time against the alien and the extra stars, which wait for the judges (a
-// parent, later, in Padres · Por dar) if the race says so. With «con cuidado» tasks after
-// the flag, the landing comes next, calm; once landed, the result again, quietly.
+// parent, later, in Padres · Por dar) if the race says so: the party (effects/race-party.js:
+// podium, up to the Moon, traca and fireworks; lost, the alien laughing on the Moon), then
+// the result card. With «con cuidado» tasks after the flag, only a short notice at the flag,
+// the landing, and the party once landed.
 import { api } from "../api.js";
 import { avatar } from "../components/avatar.js";
 import { isOff, sounds } from "../components/sound.js";
 import { say } from "../components/speech.js";
 import { h } from "../dom.js";
-import { confetti } from "../effects/confetti.js";
+import { raceParty } from "../effects/race-party.js";
 import { t } from "../texts.js";
+import { silverMoon } from "./race-view.js";
 import * as script from "./script.js";
 import { countdownText } from "./words.js";
 
 const SHOWN_MS = 30_000; // the result stays this long at the end
-const BEFORE_LANDING_MS = 9_000; // with a landing to do: the result this long, then the landing
+const BEFORE_LANDING_MS = 5_000; // with a landing to do: the flag's notice this long, then the landing
 
 // What the server says, worked out here for a trial (nothing is kept).
 const RECORD_STARS = 1; // as the server (race_rules.py)
@@ -45,7 +48,7 @@ export function raceEnd(r) {
     }
     if (r.showing?.race !== race) return;
     race.result = result;
-    showResult(result);
+    showResult(result, { flag: landing });
     if (landing) {
       setTimeout(() => {
         if (r.showing?.race !== race) return;
@@ -64,7 +67,7 @@ export function raceEnd(r) {
     race.ended = true;
     r.showing.finishing = true;
     if (!r.closed()) r.note("ended", { early: true }); // once, from a tablet showing it (the server ends it anyway)
-    showResult(race.result ?? pretendResult(data.race, data.race.minutes), { again: true });
+    showResult(race.result ?? pretendResult(data.race, data.race.minutes), { landed: true });
     finishIn(data.id);
   }
 
@@ -72,7 +75,8 @@ export function raceEnd(r) {
     setTimeout(() => r.showing?.data.id === id && r.end(), Math.max(SHOWN_MS, r.songLeftMs?.() ?? 0));
   }
 
-  function showResult(result, { again = false } = {}) {
+  // flag: only the notice at the flag (the landing comes next); landed: after the landing.
+  function showResult(result, { flag = false, landed: afterLanding = false } = {}) {
     const { view, data } = r.showing;
     const box = view.raceParts.result;
     const won = result.outcome === "record" || result.outcome === "won";
@@ -80,7 +84,7 @@ export function raceEnd(r) {
     const planned = countdownText(result.planned_seconds);
     const judges = result.given === null && result.stars && !data.trial;
     box.replaceChildren(
-      again ? h("p", { class: "race__landed" }, t.race.landed) : "",
+      flag ? h("p", { class: "race__landed" }, t.race.flag) : afterLanding ? h("p", { class: "race__landed" }, silverMoon(), t.race.landed) : "",
       h("h2", { class: "race__result-title" }, title),
       h("ul", { class: "race__champions" }, data.people.map((p) => h("li", { class: "routine__champion", style: `--child-color: ${p.colors.color}` },
         avatar(p.child, { size: "lg", fx: won ? "shine" : null }), h("span", {}, p.child.name)))),
@@ -91,20 +95,22 @@ export function raceEnd(r) {
     view.raceParts.start.hidden = true;
     if (r.closed()) return; // hidden here: the others celebrate
     r.showing.race.music.stop();
-    if (again) {
+    const said = (text) => text.charAt(0) + text.slice(1).toLowerCase();
+    if (flag) { // the party waits for the landing
       sounds.chime();
-      say(t.race.landedSaid);
-    } else if (won) {
+      say([t.race.flagSaid, said(title)]);
+      return;
+    }
+    const sentences = won
+      ? [script.goalSay(data), said(title), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null, judges ? t.race.judgesSaid : null, t.race.wonSaid]
+      : [result.outcome === "slow" ? t.race.slowSaid : t.race.lostSaid]; // nobody named: nobody to blame
+    say([afterLanding ? t.race.landedSaid : null, ...sentences].filter(Boolean));
+    if (won) {
       if (isOff("music")) sounds.win();
       else r.showing.race.music.fanfare(); // the end's melody (race-music.js)
-      confetti(view.layer);
-      say([script.goalSay(data), title.charAt(0) + title.slice(1).toLowerCase(), result.stars ? t.race.starsSaid(result.stars, data.people.length) : null,
-        judges ? t.race.judgesSaid : null, t.race.wonSaid].filter(Boolean));
-    } else if (result.outcome === "slow") {
-      say(t.race.slowSaid);
-    } else {
-      say(t.race.lostSaid); // nobody named: nobody to blame
     }
+    const partyTitle = won ? title : result.outcome === "slow" ? t.race.almost : title;
+    raceParty(view.layer, { people: data.people, won, title: partyTitle, alienSays: won ? t.race.alienFlees : t.race.alienLaughs });
   }
 
   return { endRace, landed };

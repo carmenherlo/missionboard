@@ -158,4 +158,31 @@
   --race-count-pop: 450ms;
   --race-beat: 1.6s;
   --race-passed: 1.6s;
+  /* The race's party (race-party.js, race-party-effects.css) */
+  --party-podium: 2000ms; /* the team on the podium, before rising */
+  --party-rise: 2600ms; /* up to the Moon, the podium down */
+  --party-finale: 3500ms; /* the fireworks after the boom, before it fades */
+  --party-out: 600ms;
+  --party-moon-size: min(48vh, 64vw);
+  --party-moon-top: 42%;
+  --party-gold: #ffd60a; /* the podium's top step */
+  --party-on-gold: #141a3d;
+  --party-flash: #fff3b0; /* a banger of the traca */
+  --party-flash-edge: rgb(255 180 80 / 0);
+  --party-smoke: rgb(220 225 235 / 0.6);
+  --party-shadow: rgb(0 0 0 / 0.6);
+  /* The silver Moon: the party's and the race road's */
+  --moon-1: #ffffff;
+  --moon-2: #e3eaf0;
+  --moon-3: #b3c2cf;
+  --moon-4: #8a9aab;
+  --moon-glow: rgb(191 239 255 / 0.45);
+  --moon-glow-soft: rgb(191 239 255 / 0.4);
+  --moon-glow-strong: rgb(191 239 255 / 0.7);
+  --moon-crater-1: #9aa9b8;
+  --moon-crater-2: #a9b8c6;
+  --moon-crater-3: #c2cfda;
+  --moon-crater-shadow: rgb(70 85 100 / 0.35);
+  --party-say: #ffffff;
+  --party-on-say: #141a3d;
 }

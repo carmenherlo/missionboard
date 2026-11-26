@@ -74,6 +74,16 @@
 .race-road__planet--done { stroke: var(--race-ahead); }
 .race-road__planet--now { stroke: var(--race-behind); }
 .race-road__stop--pit .race-road__planet { fill: var(--race-calm); }
+.race-road__moon-face { fill: url(#race-moon); }
+.race-road__moon-glow { fill: var(--moon-glow); }
+.race-road__crater { fill: url(#race-crater); }
+.race-moon-1 { stop-color: var(--moon-1); }
+.race-moon-2 { stop-color: var(--moon-2); }
+.race-moon-3 { stop-color: var(--moon-3); }
+.race-moon-4 { stop-color: var(--moon-4); }
+.race-crater-1 { stop-color: var(--moon-crater-1); }
+.race-crater-2 { stop-color: var(--moon-crater-2); }
+.race-crater-3 { stop-color: var(--moon-crater-3); }
 
 /* ---------- the part going on, below ---------- */
 
@@ -210,6 +220,15 @@
 
 .race__start[hidden], .race__result[hidden] { display: none; }
 
+/* The result, in space like the race and its party (carrera-divertida.html). */
+.race__result {
+  background: radial-gradient(circle at 50% 40%, var(--race-space-top), var(--race-space-bottom));
+  color: var(--race-text);
+}
+
+.race__result .hint { color: var(--race-even); }
+.race__result .routine__champion { color: var(--race-text); }
+
 .race__start-title, .race__result-title {
   margin: 0;
   font-size: var(--race-big-size);
@@ -259,3 +278,15 @@
 .extra-time__steps { display: flex; align-items: center; gap: var(--space-1); }
 .extra-time__minutes { min-width: 4.5em; text-align: center; }
 .extra-time__step { min-width: 52px; padding: 0 var(--space-2); }
+
+/* The silver Moon in a line of text (the landing), as the road's. */
+.silver-moon {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.3em;
+  border-radius: 50%;
+  vertical-align: -0.1em;
+  background: radial-gradient(circle at 35% 30%, var(--moon-1) 0%, var(--moon-2) 35%, var(--moon-3) 72%, var(--moon-4) 100%);
+  box-shadow: 0 0 0.3em var(--moon-glow);
+}

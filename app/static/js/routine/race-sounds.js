@@ -1,7 +1,7 @@
 // What is heard of a race from the bathroom (carrera-divertida.html, 26/11), made by the
 // browser like the app's other sounds: the alien's own call, always the same, so it is
 // known without looking (more often and louder the closer it is), its giggle when it goes
-// ahead, its "¡aaay!" when it trips, its snoring in a pit stop; the turbo; the tank full.
+// ahead, its "¡aaay!" when it trips, its snoring in a pit stop; the turbo; the party's bangs.
 import { playEffect } from "../components/sound.js";
 
 const note = (n, at, freq, length, type = "sine", volume = 0.3, to = null) =>
@@ -55,6 +55,25 @@ export const raceSounds = {
     playEffect((n, now) => {
       note(n, now, 300, 0.5, "sine", 0.3, 1400);
       note(n, now + 0.05, 450, 0.45, "triangle", 0.12, 2000);
+    });
+  },
+
+  // The party (effects/race-party.js): a firework, a banger of the traca, the boom.
+  pop(loud = 1) {
+    playEffect((n, now, noise) => {
+      noise({ at: now, length: 0.3, volume: 0.3 * loud });
+      note(n, now + 0.05, 1500 + Math.random() * 900, 0.25, "sine", 0.25 * loud);
+    });
+  },
+
+  crack() {
+    playEffect((n, now, noise) => noise({ at: now, length: 0.05, volume: 0.7 }));
+  },
+
+  boom() {
+    playEffect((n, now, noise) => {
+      noise({ at: now, length: 0.9, volume: 0.8 });
+      note(n, now, 95, 1, "sine", 1, 35);
     });
   },
 };

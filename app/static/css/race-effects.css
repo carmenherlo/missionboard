@@ -30,3 +30,7 @@
     animation: none !important;
   }
 }
+
+/* The road's silver Moon shines, as the party's (race-road.js). */
+.race-road__moon-glow { animation: road-moon-shine 1.4s ease-in-out infinite alternate; }
+@keyframes road-moon-shine { from { opacity: 0.5; } to { opacity: 1; } }

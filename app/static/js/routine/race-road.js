@@ -1,7 +1,7 @@
 // The race's road (carrera-recorrido.html): a long "S" across the space, like a board
 // game, so the rocket is seen moving even in a 30-minute race. Each task's planet sits
 // where its time starts (a 10-minute task takes twice the road of a 5-minute one), the
-// moon at the end. The rocket runs on the left of the road and the alien on the right:
+// silver Moon at the end. The rocket runs on the left of the road and the alien on the right:
 // neck and neck, they never cover each other. Drawn like the clock: positions as SVG
 // attributes, not styles. A planet tapped (pointerdown, data-leg) says its task. A «con
 // cuidado» task in the middle is a pit stop (a fuel pump, no road: the race stands still).
@@ -69,6 +69,25 @@ function track(rows) {
   return { d, total, at, height: 2 * PAD + (rows - 1) * ROW };
 }
 
+// The silver Moon at the end (as the party's): a shining glow, a face
+// lit from the top left, and its craters ([left, top, size] in % of the Moon's box).
+const CRATERS = [[28, 30, 18], [60, 22, 11], [55, 58, 22], [25, 65, 10], [75, 45, 8]];
+
+function gradient(id, cx, cy, stops) {
+  return el("radialGradient", { id, cx, cy, r: "70%" },
+    ...stops.map((offset, i) => el("stop", { offset, class: `${id}-${i + 1}` })));
+}
+
+function silverMoon(x, y, r) {
+  return el("g", { class: "race-road__moon" },
+    el("defs", {}, gradient("race-moon", "35%", "30%", ["0", "0.35", "0.72", "1"]), gradient("race-crater", "40%", "35%", ["0", "0.6", "1"])),
+    el("circle", { class: "race-road__moon-glow", cx: x, cy: y, r: r * 1.3 }),
+    el("circle", { class: "race-road__moon-face", cx: x, cy: y, r }),
+    ...CRATERS.map(([left, top, size]) => el("circle", {
+      class: "race-road__crater", cx: x - r + ((left + size / 2) / 50) * r, cy: y - r + ((top + size / 2) / 50) * r, r: (size / 100) * r,
+    })));
+}
+
 // The road at one moment: `starts` where each leg starts (shares of the road), the leg
 // going on (`index`), and where the rocket and the alien are (shares too).
 export function raceRoad({ legs, starts, index, rocketAt, ghostAt, minutes }) {
@@ -87,7 +106,7 @@ export function raceRoad({ legs, starts, index, rocketAt, ghostAt, minutes }) {
       image ? picture(image, x, y, PLANET * (leg.careful ? 1 : 1.3)) : ""));
   });
   const end = road.at(1);
-  svg.append(picture(`${FLUENT}/full-moon.svg`, end.x, end.y, PLANET * 2.8));
+  svg.append(silverMoon(end.x, end.y, PLANET * 1.4));
   const them = road.at(ghostAt);
   const stop = legs[index]?.careful && !legs[index].landing; // in a pit stop: the rocket waits there
   const us = road.at(stop ? starts[index] - PIT_BACK / road.total : rocketAt);

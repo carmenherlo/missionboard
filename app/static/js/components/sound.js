@@ -340,9 +340,23 @@ export function playNotes(draw) {
   play((ctx, out, now) => draw((n) => blip(ctx, out, n), now), "music");
 }
 
-// Sounds made elsewhere (routine/race-sounds.js), with the effects' volume.
+// Sounds made elsewhere (routine/race-sounds.js), with the effects' volume: notes and noise.
 export function playEffect(draw) {
-  play((ctx, out, now) => draw((n) => blip(ctx, out, n), now));
+  play((ctx, out, now) => draw((n) => blip(ctx, out, n), now, (n) => hiss(ctx, out, n)));
+}
+
+// A burst of noise (a banger, a boom), fading out.
+function hiss(ctx, out, { at, length, volume: loud }) {
+  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * length), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  source.buffer = buffer;
+  gain.gain.setValueAtTime(loud, at);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+  source.connect(gain).connect(out);
+  source.start(at);
 }
 
 function play(draw, channel = "effects", { full = false } = {}) {

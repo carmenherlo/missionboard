@@ -42,9 +42,11 @@ export const GAME_TUNES = ["game", "game2", "game3"];
 // The danger layer: a kick and a snare on each pair of steps.
 const DRUMS = [[55, 0.5, "sine", 0.5, 40], null, [180, 0.2, "square", 0.08, 120], null];
 
-// The end: a short fanfare, once. [midi, start, length] in seconds.
-const FANFARE = [[67, 0, 0.14], [72, 0.15, 0.14], [76, 0.3, 0.14], [79, 0.45, 0.4], [76, 0.9, 0.14], [79, 1.05, 0.9],
-  [55, 0.45, 0.4], [60, 1.05, 0.9]];
+// The end, "¡Hemos llegado!": up the chord, a cheer, then down home
+// (C · F · G · C), with a bass. [midi, start, length] in seconds.
+const FANFARE = [[67, 0, 0.14], [72, 0.15, 0.14], [76, 0.3, 0.14], [79, 0.45, 0.32], [76, 0.8, 0.14], [79, 0.95, 0.6],
+  [81, 1.6, 0.14], [79, 1.75, 0.14], [77, 1.9, 0.14], [76, 2.05, 0.14], [74, 2.2, 0.14], [76, 2.35, 0.14], [72, 2.5, 1.1]];
+const FANFARE_BASS = [[48, 0, 1.5], [53, 1.6, 0.6], [55, 2.2, 0.3], [48, 2.5, 1.2]];
 
 export function raceMusic() {
   let tune = null;
@@ -80,9 +82,10 @@ export function raceMusic() {
     update(null);
     playNotes((note, now) => {
       for (const [midi, at, length] of FANFARE) {
-        note({ at: now + at, freq: hz(midi), length, type: "triangle", volume: 0.35 });
-        note({ at: now + at, freq: hz(midi + 12), length, type: "square", volume: 0.06 });
+        note({ at: now + at, freq: hz(midi), length, type: "square", volume: 0.22 });
+        note({ at: now + at, freq: hz(midi + 12), length, type: "sine", volume: 0.12 });
       }
+      for (const [midi, at, length] of FANFARE_BASS) note({ at: now + at, freq: hz(midi), length, type: "triangle", volume: 0.45 });
     });
   }
 

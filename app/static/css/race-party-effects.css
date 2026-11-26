@@ -1,0 +1,254 @@
+/* ---------- The race's party (race-party.js): what moves ----------
+   The podium, up to the Moon, a traca and fireworks. All of it is an effect: with "reduce motion" it is not
+   drawn, and the result card shows alone. */
+
+.party {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, var(--race-space-top), var(--race-space-bottom));
+  color: var(--race-text);
+  text-align: center;
+  animation: party-in 400ms ease-out both;
+}
+
+.party--out { animation: party-out var(--party-out) ease-in forwards; }
+@keyframes party-in { from { opacity: 0; } }
+@keyframes party-out { to { opacity: 0; } }
+
+.party[data-shake] { animation: party-shake 0.6s linear; }
+@keyframes party-shake {
+  0%, 100% { translate: 0 0; }
+  10% { translate: -10px 6px; }
+  25% { translate: 9px -8px; }
+  40% { translate: -8px -6px; }
+  55% { translate: 6px 7px; }
+  75% { translate: -4px 3px; }
+}
+
+/* The sky */
+.party__star {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: var(--race-text);
+  opacity: 0.5;
+}
+
+.party__star--twinkle { animation: party-twinkle 3s ease-in-out infinite; }
+@keyframes party-twinkle { 50% { opacity: 0.1; } }
+
+/* The silver Moon: shining, with craters; above the screen until it comes down. */
+.party__moon {
+  position: absolute;
+  top: var(--party-moon-top);
+  left: 50%;
+  z-index: 1;
+  width: var(--party-moon-size);
+  height: var(--party-moon-size);
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--moon-1) 0%, var(--moon-2) 35%, var(--moon-3) 72%, var(--moon-4) 100%);
+  box-shadow: 0 0 4rem 1rem var(--moon-glow);
+  transform: translate(-50%, calc(-50% - 100vh));
+  transition: transform var(--party-rise) ease-out;
+  animation: moon-shine 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes moon-shine {
+  from { box-shadow: 0 0 3rem 0.5rem var(--moon-glow-soft); }
+  to { box-shadow: 0 0 7rem 2rem var(--moon-glow-strong); }
+}
+
+.party:is([data-phase="rise"], [data-phase="moon"], [data-phase="lost"]) .party__moon { transform: translate(-50%, -50%); }
+.party--lost .party__moon { transition: none; }
+
+.party__crater {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--moon-crater-1) 0%, var(--moon-crater-2) 60%, var(--moon-crater-3) 100%);
+  box-shadow: inset 0.2rem 0.2rem 0.4rem var(--moon-crater-shadow);
+}
+
+.party__crater:nth-child(1) { left: 28%; top: 30%; width: 18%; height: 18%; }
+.party__crater:nth-child(2) { left: 60%; top: 22%; width: 11%; height: 11%; }
+.party__crater:nth-child(3) { left: 55%; top: 58%; width: 22%; height: 22%; }
+.party__crater:nth-child(4) { left: 25%; top: 65%; width: 10%; height: 10%; }
+.party__crater:nth-child(5) { left: 75%; top: 45%; width: 8%; height: 8%; }
+
+/* The podium: one top step, for the whole team (they won together). */
+.party__podium {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  z-index: 2;
+  width: min(80vw, 26rem);
+  height: 24vh;
+  padding-top: var(--space-2);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--party-gold);
+  color: var(--party-on-gold);
+  font-size: 2.5rem;
+  font-weight: 900;
+  transform: translateX(-50%);
+  transition: transform var(--party-rise) ease-in, opacity var(--party-rise) ease-in;
+}
+
+.party:is([data-phase="rise"], [data-phase="moon"]) .party__podium { opacity: 0; transform: translate(-50%, 70vh); }
+
+/* The team: on the podium, jumping; then up to the Moon, bigger. */
+.party__team {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  gap: var(--space-3);
+  transform: translate(-50%, -100%);
+  transition: top var(--party-rise) ease-in-out, transform var(--party-rise) ease-in-out;
+}
+
+.party:is([data-phase="rise"], [data-phase="moon"]) .party__team { top: var(--party-moon-top); transform: translate(-50%, -50%) scale(0.85); }
+.party--lost .party__team { top: 80%; transform: translate(-50%, -100%) scale(0.8); }
+.party__team .avatar { animation: party-jump 0.9s ease-in-out infinite; }
+.party__team .avatar:nth-child(2n) { animation-delay: -0.45s; }
+.party--lost .party__team .avatar { animation: none; }
+
+@keyframes party-jump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  15% { transform: translateY(0) scale(1.1, 0.9); }
+  50% { transform: translateY(-18%) scale(0.95, 1.05); }
+}
+
+/* The alien: won, it turns up dizzy at the Moon and flies off; lost, it jumps on the Moon. */
+.party__alien {
+  position: absolute;
+  top: 20%;
+  left: 115%;
+  z-index: 4;
+  width: 6rem;
+}
+
+.party__alien img { width: 100%; }
+
+.party__say {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--party-say);
+  color: var(--party-on-say);
+  font-weight: 900;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-50%);
+}
+
+.party[data-phase="moon"] .party__alien { animation: alien-flee 4.5s ease-in-out forwards; }
+.party[data-phase="moon"] .party__say { animation: alien-say 4.5s ease-in-out forwards; }
+
+@keyframes alien-flee {
+  0% { left: 115%; rotate: 0deg; }
+  25% { left: 76%; rotate: 720deg; }
+  35%, 70% { left: 76%; rotate: 700deg; }
+  45%, 60% { rotate: 740deg; }
+  100% { left: 120%; top: -20%; rotate: 1080deg; }
+}
+
+@keyframes alien-say {
+  0%, 30% { opacity: 0; }
+  35%, 75% { opacity: 1; }
+  85%, 100% { opacity: 0; }
+}
+
+.party--lost .party__alien {
+  top: calc(var(--party-moon-top) - var(--party-moon-size) / 2);
+  left: 50%;
+  translate: -50% -60%;
+  animation: party-jump 0.6s ease-in-out infinite;
+}
+
+.party--lost .party__say { bottom: 50%; left: 110%; opacity: 1; transform: none; animation: none; }
+
+/* The title: on the Moon (won), or at once (lost). */
+.party__title {
+  position: absolute;
+  bottom: 8%;
+  left: 0;
+  z-index: 5;
+  width: 100%;
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 900;
+  text-shadow: 0 4px 16px var(--party-shadow);
+  opacity: 0;
+}
+
+.party:is([data-phase="moon"], [data-phase="lost"]) .party__title { animation: party-pop 0.6s ease-out both; }
+@keyframes party-pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+
+/* Confetti on the podium */
+.party__confetti {
+  position: absolute;
+  top: -3rem;
+  left: var(--x);
+  z-index: 4;
+  width: 0.7rem;
+  height: 1.1rem;
+  border-radius: 2px;
+  background: var(--c);
+  animation: party-fall var(--d) linear forwards;
+}
+
+@keyframes party-fall { to { transform: translateY(115vh) rotate(540deg); } }
+
+/* 🧨 The traca around the Moon: a flash and a puff of smoke each. */
+.party__flash {
+  position: absolute;
+  left: calc(50% + var(--cx) * (var(--party-moon-size) / 2 + 12px));
+  top: calc(var(--party-moon-top) + var(--cy) * (var(--party-moon-size) / 2 + 12px));
+  z-index: 3;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: -0.8rem 0 0 -0.8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--party-say) 0%, var(--party-flash) 35%, var(--party-flash-edge) 70%);
+  animation: party-flash 1.2s ease-out forwards;
+}
+
+@keyframes party-flash {
+  0% { opacity: 1; transform: scale(0.4); }
+  12% { opacity: 1; transform: scale(2.2); }
+  30% { opacity: 0.7; transform: scale(1.6); background: radial-gradient(circle, var(--party-smoke) 0%, var(--party-flash-edge) 70%); }
+  100% { opacity: 0; transform: scale(3) translateY(-1rem); background: radial-gradient(circle, var(--party-smoke) 0%, var(--party-flash-edge) 70%); }
+}
+
+/* 🎆 Fireworks: sparks flying out in two rings; far ones behind the Moon, near ones over all. */
+.party__burst { position: absolute; left: var(--x); top: var(--y); z-index: 2; width: 0; height: 0; }
+.party__burst--far { z-index: 0; opacity: 0.6; }
+.party__burst--near { z-index: 6; opacity: 0.85; filter: blur(1.5px); }
+
+.party__spark {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  margin: -0.5rem 0 0 -0.5rem;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 1rem 0.2rem var(--c);
+  animation: party-spark 1.3s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.party__burst--far .party__spark { width: 0.5rem; height: 0.5rem; margin: -0.25rem 0 0 -0.25rem; }
+.party__burst--near .party__spark { width: 1.6rem; height: 1.6rem; margin: -0.8rem 0 0 -0.8rem; }
+
+@keyframes party-spark {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.5); }
+  60% { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) translateY(4vmin) scale(0.4); }
+}
