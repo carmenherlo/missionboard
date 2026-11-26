@@ -48,9 +48,8 @@ class RaceService:
         if legs.flag_at is None:
             raise ConflictError("Somebody still has tasks left")
         routine, race = current.routine, current.routine.race
-        done = next((r for r in self._races.of_day(current.day) if r["routine_id"] == routine_id), None)
-        if done is not None:
-            return done
+        if current.result is not None:  # this run's, already kept
+            return current.result
         took = legs.race_seconds(legs.flag_at) / 60
         planned = max(1, planned_minutes(routine, current.people))
         turbos = legs.turbos(current.pace.ghost)

@@ -13,7 +13,8 @@ export function routinesByHand() {
 }
 
 // From the parents' Hoy (padres-barra.html): everyone chosen at first, and onStarted after.
-export async function openChooser(routines, { allChosen = false, onStarted = () => {} } = {}) {
+// again: a race already run today, started again by a parent.
+export async function openChooser(routines, { allChosen = false, onStarted = () => {}, again = false } = {}) {
   await loadAvatars();
   const close = () => layer.remove();
   const layer = h("div", { class: "mission-layer chooser", onclick: (e) => { if (e.target === e.currentTarget) close(); } },
@@ -23,11 +24,11 @@ export async function openChooser(routines, { allChosen = false, onStarted = () 
         h("span", { class: "child-bar__spacer" }),
         h("button", { type: "button", class: "icon-button mission-sheet__close", "aria-label": t.child.close, onclick: close },
           icon("close"))),
-      h("div", { class: "chooser__routines" }, routines.map((routine) => choice(routine, close, { allChosen, onStarted })))));
+      h("div", { class: "chooser__routines" }, routines.map((routine) => choice(routine, close, { allChosen, onStarted, again })))));
   document.body.append(layer);
 }
 
-function choice(routine, close, { allChosen, onStarted }) {
+function choice(routine, close, { allChosen, onStarted, again }) {
   const chosen = new Set(allChosen ? routine.kids.map((kid) => kid.id) : []);
   const error = h("p", { class: "form-error", role: "alert" });
   const start = h("button", {
@@ -35,7 +36,7 @@ function choice(routine, close, { allChosen, onStarted }) {
     onclick: async () => {
       start.disabled = true;
       try {
-        await api("POST", `api/routines/${routine.id}/start`, { json: { kids: [...chosen] } });
+        await api("POST", `api/routines/${routine.id}/${again ? "start-again" : "start"}`, { json: { kids: [...chosen] } });
         close();
         refreshRoutines();
         onStarted();

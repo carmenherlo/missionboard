@@ -180,3 +180,25 @@ def test_the_races_tasks_and_tips_come_with_a_migration(tmp_path):
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(races)")}
         assert {"tasks", "redo"} <= columns
         assert conn.execute("SELECT count(*) FROM race_tips").fetchone()[0] == 0
+
+
+def test_a_parent_starts_a_race_again_the_same_day(client, kids, alunizaje, clock):
+    dinner, clothes, teeth = alunizaje["tasks"]
+    ids = [k["id"] for k in kids]
+    start(client, alunizaje, ids)
+    clock.moment = MONDAY + timedelta(minutes=GO + 25)  # started by mistake: lost
+    assert race_now(client) is None
+    assert client.get("/api/routines/by-hand").json() == []  # the children's ⏰: once a day
+    assert start(client, alunizaje, ids).status_code == 404
+    url = f"/api/routines/{alunizaje['id']}/start-again"
+    assert client.post(url, json={"kids": ids}).status_code == 401
+    assert [r["id"] for r in client.get("/api/routines/races/again", headers=PARENT).json()] == [alunizaje["id"]]
+    for kid in kids:  # the mission goes on after a lost race: undone, as if again
+        for task in alunizaje["tasks"]:
+            mark(client, kid, alunizaje["mission"], task, checked=False)
+    assert client.post(url, json={"kids": ids}, headers=PARENT).status_code == 204
+    assert race_now(client)["race"]["result"] is None  # not the race lost before
+    done_at(client, alunizaje, kids, clock, dinner, GO + 25 + 5)
+    done_at(client, alunizaje, kids, clock, clothes, GO + 25 + 12)
+    ended = client.post(f"/api/routines/{alunizaje['id']}/race/end").json()
+    assert ended["outcome"] == "won" and ended["took_seconds"] == 12 * 60 - 6

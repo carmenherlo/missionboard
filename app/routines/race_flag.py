@@ -33,11 +33,16 @@ class RaceFlag:
         self._lost(routine, day, people, pace, planned, flag)
         return False
 
-    def today(self, routine_id: str, day: date) -> dict:
+    def today(self, routine_id: str, day: date, run: dict) -> dict:
         """What the race's screen needs from before: its result once past the flag, and
         how many times the voice explained each new thing (it does it the first times)."""
-        result = next((r for r in self._races.of_day(day) if r["routine_id"] == routine_id), None)
-        return {"result": result, "tips": self._races.tips(routine_id)}
+        return {"result": self.result(routine_id, day, run), "tips": self._races.tips(routine_id)}
+
+    def result(self, routine_id: str, day: date, run: dict) -> dict | None:
+        """This run's race once past the flag (not an earlier one today: a parent may start it again)."""
+        started = datetime.fromisoformat(run["started_at"])
+        races = [r for r in self._races.of_day(day) if r["routine_id"] == routine_id]
+        return next((r for r in reversed(races) if datetime.fromisoformat(r["at"]) >= started), None)
 
     def _lost(self, routine: Routine, day: date, people: list[Person], pace: Pace, planned: int, flag: datetime):
         """Its time is up and not everyone finished: once (the run is finished)."""

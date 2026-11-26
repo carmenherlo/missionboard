@@ -82,7 +82,7 @@ class RoutinesService:
                     continue
             elif at >= start + routine.length:
                 continue
-            race = self._flag.today(routine.id, day) if routine.racing else {}
+            race = self._flag.today(routine.id, day, run) if routine.racing else {}
             return Current(routine.started_at(int(start)), day, at, run, people, started=start, pace=pace, **race)
         for stored in self._live():
             if not stored.goes_on(weekday) or stored.manual:
@@ -150,19 +150,24 @@ class RoutinesService:
                 return found
         return None
 
-    def by_hand(self) -> list[tuple[Routine, list[Child]]]:
-        """The routines that can be started by hand today, each with its children."""
+    def by_hand(self, again: bool = False) -> list[tuple[Routine, list[Child]]]:
+        """The routines that can be started by hand today, each with its children. A race
+        only once a day, unless a parent starts it `again` (one started by mistake, 26/11)."""
         settings = self._settings.settings()
         weekday = WEEKDAYS[app_day(self._clock.now(), settings.day_starts_at).weekday()]
         children = self._children.list()
         day = app_day(self._clock.now(), settings.day_starts_at)
         raced = {race["routine_id"] for race in self._races.of_day(day)}  # a race, once a day
-        routines = [r for r in self._live() if r.manual and r.goes_on(weekday) and not (r.racing and r.id in raced)]
+        routines = [
+            r
+            for r in self._live()
+            if r.manual and r.goes_on(weekday) and not (r.racing and r.id in raced and not again)
+        ]
         return [(r.on(weekday), kids_of(r, children)) for r in routines]
 
-    def start(self, routine_id: str, kids: list[str]) -> None:
-        """Start a routine by hand with the children who have come home."""
-        found = next(((r, c) for r, c in self.by_hand() if r.id == routine_id), None)
+    def start(self, routine_id: str, kids: list[str], again: bool = False) -> None:
+        """Start a routine by hand with the children who have come home (`again`: a race run today, by a parent)."""
+        found = next(((r, c) for r, c in self.by_hand(again) if r.id == routine_id), None)
         if found is None:
             raise NotFoundError("No routine to start by hand today with that id")
         routine, children = found

@@ -3,8 +3,6 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.children import avatars
-from app.children.api import public_child
 from app.children.repository import ChildrenRepository
 from app.deps import (
     get_clock,
@@ -20,7 +18,7 @@ from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
 from app.routines.editor import TIMING, RoutinesEditor
 from app.routines.model import Routine
-from app.routines.present import present_current
+from app.routines.present import present_by_hand, present_current
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.service import NOTES, RoutinesService, kids_of
@@ -196,15 +194,7 @@ def next_ring(
 @router.get("/by-hand")
 def by_hand(routines: RoutinesService = Depends(get_routines_service)):
     """The routines that can be started by hand today (⏰ on the home screen), with their children."""
-    return [
-        {
-            "id": r.id,
-            "name": r.name,
-            "minutes": r.length,
-            "kids": [{**public_child(c), "colors": avatars.tones(c.color)} for c in kids],
-        }
-        for r, kids in routines.by_hand()
-    ]
+    return [present_by_hand(r, kids) for r, kids in routines.by_hand()]
 
 
 @router.post("/{routine_id}/start", status_code=204)

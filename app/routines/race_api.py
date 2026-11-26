@@ -18,10 +18,11 @@ from app.deps import (
 )
 from app.errors import ConflictError
 from app.events.service import EventLog
-from app.routines.api import Editing, get_routines_editor, get_routines_service, get_runs_repository
+from app.routines.api import Editing, StartIn, get_routines_editor, get_routines_service, get_runs_repository
 from app.routines.editor import RoutinesEditor
 from app.routines.extra_time import ExtraTime
 from app.routines.model import Routine
+from app.routines.present import present_by_hand
 from app.routines.race import RaceService
 from app.routines.race_rules import Race
 from app.routines.races_repository import RacesRepository
@@ -137,6 +138,19 @@ def races_to_review(races: RaceService = Depends(get_race_service)):
 @router.post("/races/{race_id}/review", dependencies=parent_only)
 def review_race(race_id: int, body: ReviewIn, races: RaceService = Depends(get_race_service)):
     return races.review(race_id, body.give)
+
+
+@router.get("/races/again", dependencies=parent_only)
+def races_again(routines: RoutinesService = Depends(get_routines_service)):
+    """Races already run today that a parent may start again (Rutinas de hoy · «Lanzar otra vez»)."""
+    today = {r.id for r, _ in routines.by_hand()}
+    return [present_by_hand(r, kids) for r, kids in routines.by_hand(again=True) if r.id not in today]
+
+
+@router.post("/{routine_id}/start-again", status_code=204, dependencies=parent_only)
+def start_again(routine_id: str, body: StartIn, routines: RoutinesService = Depends(get_routines_service)) -> None:
+    """A parent starts a race already run today again (one started by mistake)."""
+    routines.start(routine_id, body.kids, again=True)
 
 
 @router.post("/races/{race_id}/redo", dependencies=parent_only)

@@ -69,6 +69,16 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
     }
 
 
+def present_by_hand(routine: Routine, kids: list) -> dict:
+    """A routine that can be started by hand today, with its children (⏰, Rutinas de hoy)."""
+    return {
+        "id": routine.id,
+        "name": routine.name,
+        "minutes": routine.length,
+        "kids": [{**public_child(c), "colors": avatars.tones(c.color)} for c in kids],
+    }
+
+
 def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
     """The songs for the screen: its parts have no ids, so where each one starts and ends
     goes as "alarm", a part's index or "goal" (until null: once, until it ends)."""
