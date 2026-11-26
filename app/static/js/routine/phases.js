@@ -39,7 +39,8 @@ export function phases(r) {
   const keyOf = (phase) => (phase.kind === "part" ? `part-${phase.index}` : phase.kind);
 
   // Hidden on this device (closing.js): silent and out of sight here, until shown again.
-  const closed = () => Boolean(r.showing.hidden);
+  // The parents' phone (remote.js) is always silent: only its bar, unless seen big.
+  const closed = () => Boolean(r.showing.hidden) || (r.isRemote() && !r.showing.big);
 
   // Every kid has done their mission, from the first part to the goal (also before checking,
   // 17/11): the goal now. Without a goal (started by hand) it ends in finish() instead.

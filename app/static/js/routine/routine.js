@@ -33,7 +33,8 @@
 //   soundtrack.js its songs · view.js what is seen · kids.js the kids on a side ·
 //   trial.js "Probar ahora" · closing.js "Cerrar", "Volver" and "Finalizar" ·
 //   notices.js the notices before it rings · extra-time.js «± Tiempo» ·
-//   race.js, race-view.js and race-end.js a routine by hand as a race (modo-carrera.html).
+//   race.js, race-view.js and race-end.js a routine by hand as a race (modo-carrera.html) ·
+//   remote.js the parents' phone: a bar and a control panel instead of the routine on top.
 import { api } from "../api.js";
 import { loadAvatars } from "../components/avatar.js";
 import { onSay, quiet } from "../components/speech.js";
@@ -49,6 +50,7 @@ import { phases } from "./phases.js";
 import { race } from "./race.js";
 import { raceEnd } from "./race-end.js";
 import { raceView } from "./race-view.js";
+import { remote } from "./remote.js";
 import { soundtrack } from "./soundtrack.js";
 import { trial } from "./trial.js";
 import { view } from "./view.js";
@@ -80,7 +82,7 @@ export function startRoutines() {
   const r = { showing: null };
   Object.assign(r, { check, begin, sync, end, note, now, tick },
     phases(r), heard(r), goal(r), soundtrack(r), trial(r), view(r), kids(r), closing(r), pause(r),
-    race(r), raceView(r), raceEnd(r), extraTime(r));
+    race(r), raceView(r), raceEnd(r), extraTime(r), remote(r));
 
   async function check() {
     if (r.showing?.data.trial) return; // a trial goes on until it is closed
@@ -130,15 +132,18 @@ export function startRoutines() {
       pretend: new Map(), // child id → Set of step ids
       pretendLog: [], // [{ time, pretend }]
       hidden: false, // hidden on this device (closing.js)
+      big: false, // the parents' phone: shown over the screen («Ver en grande», remote.js)
       player: musicPlayer(),
       musicOff: new Set(), // songs silenced today ("Parar", or ♪)
       ticker: setInterval(r.tick, TICK_MS),
     };
     r.showing.hidden = r.wasHidden();
-    document.body.append(view.layer, view.banner);
+    view.remote = r.buildRemote();
+    document.body.append(view.layer, view.banner, view.remote.bar);
     if (data.trial) r.startPretending();
     if (data.race) r.startRace(); // modo carrera (race.js): its own phases and screen
     r.renderTrialTools();
+    r.startRemote();
     r.note("started");
     r.renderPeople();
     r.tick();
@@ -149,6 +154,7 @@ export function startRoutines() {
     r.showing.data = data;
     r.showing.fetchedAt = Date.now();
     r.renderPeople();
+    r.drawPanel();
   }
 
   function end() {
@@ -160,6 +166,8 @@ export function startRoutines() {
     r.showing.mission?.close();
     r.showing.view.layer.remove();
     r.showing.view.banner.remove();
+    r.showing.view.remote.bar.remove();
+    document.body.classList.remove("has-remote-bar");
     r.showing = null;
   }
 

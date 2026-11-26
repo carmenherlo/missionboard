@@ -1,6 +1,7 @@
 // «± Tiempo» (modo-carrera.html, screen 6): a routine started by hand going on, a parent
 // adds minutes to a part, or takes them, only today. The code once; then each tap is
 // saved at once and the routine goes on with it (on every device at its next check).
+// The same list is in the parents' phone's panel (remote.js), where the code is known.
 import { api } from "../api.js";
 import { saveStatus } from "../components/save-status.js";
 import { h } from "../dom.js";
@@ -22,22 +23,22 @@ export function extraTime(r) {
     });
   }
 
-  // Which parts can still change: in a race, the one going on and the next; by the clock, those not over.
+  // Which parts can still change: in a race, those nobody finished yet (carrera-divertida.html);
+  // by the clock, those not over.
   function over(index) {
     const { data } = r.showing;
     if (data.race) {
-      const leg = r.legs().findIndex((l) => l.part.id === data.parts[index].id);
-      return leg >= 0 && leg < r.showing.race.index;
+      const leg = r.legs().find((l) => l.part.id === data.parts[index].id);
+      return !leg || leg.done.length === leg.having.length;
     }
     return r.parts()[index].to <= r.now();
   }
 
-  function openPanel(parentCode) {
-    if (!r.showing) return;
+  // The parts with their minutes and −5 −1 +1 +5; `parentCode` null: the session's.
+  function extraList(parentCode = null) {
     const status = saveStatus();
     const body = h("ul", { class: "rows extra-time__parts" });
     const hint = h("p", { class: "hint" });
-    const close = () => r.showing?.view.finish.replaceChildren();
 
     async function add(part, minutes) {
       await status.track(api("POST", `api/routines/${r.showing.data.id}/extra`, { parentCode, json: { part_id: part.id, minutes } }))
@@ -70,10 +71,17 @@ export function extraTime(r) {
     }, n < 0 ? `−${-n}` : `+${n}`);
 
     draw();
+    return { status: status.element, body, hint, draw };
+  }
+
+  function openPanel(parentCode) {
+    if (!r.showing) return;
+    const list = extraList(parentCode);
+    const close = () => r.showing?.view.finish.replaceChildren();
     r.showing.view.finish.replaceChildren(h("div", { class: "routine__code extra-time", role: "dialog", "aria-modal": "true" },
-      h("h2", {}, t.routine.extraTitle, status.element), body, hint,
+      h("h2", {}, t.routine.extraTitle, list.status), list.body, list.hint,
       h("div", { class: "form-actions" }, h("button", { type: "button", class: "btn btn--primary", onclick: close }, t.routine.extraDone))));
   }
 
-  return { askExtra };
+  return { askExtra, extraList };
 }

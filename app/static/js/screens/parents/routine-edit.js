@@ -18,7 +18,7 @@ import { hhmm, lengthText, minuteOf, movedTime, shortTime } from "./routine-time
 import { addSongForm, songWraps } from "./routine-music.js";
 import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
-const TURTLE = "static/libraries/fluent/turtle.svg";
+const TANK = "static/libraries/fluent/fuel-pump.svg";
 
 const LIST_HREF = "#/parents/config/routines";
 const DEFAULT_WAKE = "07:00"; // back to a time with none put away (server) and a mission with no hours
@@ -204,14 +204,14 @@ export async function viewRoutineEdit(routineId) {
   }
   const partsList = h("ul", { class: "rows" });
   const someDaysDiffer = h("p", { class: "hint" }, t.routineEdit.someDaysDiffer);
-  // «Sin prisa» straight from the list (a race): the turtle; on, all its minutes (changed in the task).
+  // «Con cuidado» straight from the list (a race): the tank; on, all its minutes (changed in the task).
   function slowToggle(part) {
     const on = Boolean(part.slow_minutes);
     return h("button", {
       type: "button", class: "icon-button slow-toggle", "aria-pressed": String(on),
       "aria-label": t.race.slowToggle(part.text), title: t.race.slowTitle,
       onclick: () => save(api("PUT", `${url}/parts/${part.id}/slow`, { json: { minutes: on ? null : part.minutes } })).catch(() => {}),
-    }, h("img", { src: TURTLE, alt: "" }));
+    }, h("img", { src: TANK, alt: "" }));
   }
   function renderParts() {
     renderCards();

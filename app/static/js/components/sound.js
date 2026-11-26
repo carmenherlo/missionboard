@@ -340,6 +340,11 @@ export function playNotes(draw) {
   play((ctx, out, now) => draw((n) => blip(ctx, out, n), now), "music");
 }
 
+// Sounds made elsewhere (routine/race-sounds.js), with the effects' volume.
+export function playEffect(draw) {
+  play((ctx, out, now) => draw((n) => blip(ctx, out, n), now));
+}
+
 function play(draw, channel = "effects", { full = false } = {}) {
   if (isOff(channel)) return;
   const ctx = context();

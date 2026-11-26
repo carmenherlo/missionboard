@@ -43,6 +43,7 @@
 .race__big[data-side="ahead"] { color: var(--race-ahead); }
 .race__big[data-side="behind"] { color: var(--race-behind); }
 .race__big[data-side="even"] { color: var(--race-even); }
+.race__big:is([data-side="boxes"], [data-side="landing"]) { color: var(--race-calm); }
 
 .race-road {
   display: block;
@@ -72,6 +73,7 @@
 .race-road__planet--coming { fill: var(--race-planet-coming); stroke: none; }
 .race-road__planet--done { stroke: var(--race-ahead); }
 .race-road__planet--now { stroke: var(--race-behind); }
+.race-road__stop--pit .race-road__planet { fill: var(--race-calm); }
 
 /* ---------- the part going on, below ---------- */
 
@@ -85,6 +87,7 @@
 
 .race__part {
   display: grid;
+  align-content: start; /* its name on top, whatever is under it (a tank, or nothing) */
   gap: var(--space-2);
   flex: 1;
   min-width: 0;
@@ -142,6 +145,15 @@
   color: var(--muted);
   font-weight: 700;
 }
+
+/* A «con cuidado» task: its tank fills (race-road.js draws it), then «¡Hecho!» comes out. */
+.race__tank { justify-self: start; }
+.race__tank[hidden] { display: none; }
+.race-tank { display: block; width: var(--race-tank-size); height: auto; }
+.race-tank__case { fill: none; stroke: var(--race-tank-case); stroke-width: 4; }
+.race-tank__fuel { fill: var(--race-tank-fuel); }
+.race-tank--full .race-tank__fuel { fill: var(--race-tank-full); }
+.race__landed { margin: 0; font-size: var(--text-xl); font-weight: 800; }
 
 /* ---------- the children on the side ---------- */
 

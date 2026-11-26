@@ -285,6 +285,13 @@
   --race-hint-size: 96px; /* each hint's card */
   --race-road-max: 48vh; /* the S-shaped road (race-road.js) */
   --race-start-count-size: 160px;
+  --race-calm: #9fd8ff; /* a pit stop and the landing (carrera-divertida.html) */
+  --race-tank-size: 72px; /* a «con cuidado» task's tank (race-road.js) */
+  --race-tank-case: #3a4560;
+  --race-tank-fuel: #ffc233;
+  --race-tank-full: #2fd69b;
+  --remote-bar-height: 48px; /* the parents' phone: a routine going on (routine-remote.css) */
+  --remote-panel-max: 70vh;
   /* Songs (rutinas-4, screen 4 bis): pink-lilac, like Scratch's sound blocks; only in the parents' editor */
   --song-bar: #f7def7;
   --song-edge: #c55ec5;

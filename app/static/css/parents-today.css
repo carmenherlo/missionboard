@@ -215,3 +215,21 @@
 .routines-today__link { color: inherit; text-decoration: none; }
 
 .routines-today__link:hover { text-decoration: underline; }
+
+/* ---------- Por dar · the judges of a race (races-card.js, carrera-divertida.html 8) ---------- */
+
+.race-review { display: grid; gap: var(--space-2); padding: var(--space-2) 0; }
+.race-review__tasks { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+
+.race-review__task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.race-review__task--odd { background: var(--alarm-card); }
+.race-review__task--redo { outline: 2px solid var(--primary); }
+.race-review__redo[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.race-review__actions { display: flex; justify-content: flex-end; }

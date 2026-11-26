@@ -1,7 +1,7 @@
 // Editar rutina · Se lanza a mano (rutina-modos.html): "Con el reloj" (as before) or as a
 // "Carrera" (modo-carrera.html), with the extra stars for beating the alien (it trains with
 // their last races; the record gives one more), and whether a parent checks before they are given. Saved at once. It goes in
-// the box of the "Se lanza a mano" folder tab. "Sin prisa" is each part's own (routine-part-edit.js).
+// the box of the "Se lanza a mano" folder tab. "Con cuidado" is each part's own (routine-part-edit.js).
 import { api } from "../../api.js";
 import { choiceList } from "../../components/choices.js";
 import { layer } from "../../components/layer.js";

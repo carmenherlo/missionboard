@@ -1,0 +1,73 @@
+/* The parents' phone (remote.js, carrera-divertida.html 9b): instead of the routine on top,
+   a thin bar fixed on top of any screen, and under it, when opened, the control panel. */
+.remote-bar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--shadow-lifted);
+}
+
+.remote-bar[hidden] { display: none; }
+
+body.has-remote-bar { padding-top: var(--remote-bar-height); }
+
+.remote-bar__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--remote-bar-height);
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.remote-bar__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remote-bar--open .remote-bar__arrow { transform: rotate(180deg); }
+
+.remote-panel {
+  display: grid;
+  gap: var(--space-2);
+  max-height: var(--remote-panel-max);
+  overflow-y: auto;
+  padding: var(--space-3);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.remote-panel[hidden] { display: none; }
+
+.remote-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.remote-panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+/* What else sits on top of the screen moves down under the bar. */
+body.has-remote-bar .drawer { top: var(--remote-bar-height); }
+
+@media (max-width: 599.98px) {
+  body.has-remote-bar .top-bar .fullscreen-button { top: calc(1rem + var(--remote-bar-height)); }
+}

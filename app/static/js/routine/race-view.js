@@ -8,7 +8,7 @@ import { avatar } from "../components/avatar.js";
 import { say } from "../components/speech.js";
 import { h } from "../dom.js";
 import { t } from "../texts.js";
-import { RIVAL, raceRoad } from "./race-road.js";
+import { RIVAL, raceRoad, tankGauge } from "./race-road.js";
 import * as script from "./script.js";
 import { countdownText, list } from "./words.js";
 
@@ -27,6 +27,7 @@ export function raceView(r) {
     const what = h("button", { type: "button", class: "race__what" });
     const hints = h("ul", { class: "race__hints" });
     const until = h("p", { class: "race__until" });
+    const tank = h("div", { class: "race__tank", hidden: true }); // «con cuidado»: the tank filling
     const start = h("div", { class: "race__start", hidden: true },
       h("h2", { class: "race__start-title" }, t.race.title(data.name)),
       h("div", { class: "race__line" },
@@ -39,10 +40,10 @@ export function raceView(r) {
     const result = h("div", { class: "race__result", hidden: true });
     view.race.replaceChildren(
       h("div", { class: "race__space" }, big, road),
-      h("div", { class: "race__bottom" }, h("div", { class: "race__part" }, what, until, hints)),
+      h("div", { class: "race__bottom" }, h("div", { class: "race__part" }, what, until, tank, hints)),
       start, result);
     view.layer.classList.add("routine-layer--race");
-    view.raceParts = { big, road, what, hints, until, start, result };
+    view.raceParts = { big, road, what, hints, until, tank, start, result };
     // A planet tapped: what that task is and its hints (for whoever got lost). On
     // pointerdown: the road is drawn again every tick, a click could miss it.
     road.addEventListener("pointerdown", (event) => {
@@ -71,7 +72,7 @@ export function raceView(r) {
         parts.start.lastChild.classList.toggle("race__count--go", go);
       }
     }
-    view.time.textContent = data.paused ? t.routine.paused
+    view.time.textContent = data.paused ? t.routine.paused : race.flagged ? t.race.landingTop
       : t.race.leftInTotal(countdownText((data.race.minutes - Math.max(0, time)) * 60));
     r.renderPause({ kind: race.ended ? "done" : "part" });
     if (race.ended) return;
@@ -79,15 +80,19 @@ export function raceView(r) {
     const at = Math.max(0, time);
     const ghostAt = r.placeOf(r.ghostTime(at), all); // it gets to the moon at its time (24/11: it was drawn as slow as the flag)
     const rocketAt = r.placeOf(r.rocketTime(at), all);
+    const leg = all[race.index];
     const lead = r.lead(at);
-    const side = lead >= EVEN_MIN ? "ahead" : lead <= -EVEN_MIN ? "behind" : "even";
+    const side = race.flagged ? "landing" : leg?.careful && race.nextAt == null ? "boxes"
+      : lead >= EVEN_MIN ? "ahead" : lead <= -EVEN_MIN ? "behind" : "even";
     const seconds = Math.round(Math.abs(lead) * 60);
-    const gap = side === "even" ? "" : (side === "ahead" ? t.race.lead : t.race.lag)(t.race.gap(seconds));
+    const gap = ["ahead", "behind"].includes(side) ? (side === "ahead" ? t.race.lead : t.race.lag)(t.race.gap(seconds)) : "";
     parts.big.dataset.side = side;
-    parts.big.textContent = [{ ahead: t.race.winning, behind: t.race.behind, even: t.race.even }[side], gap].filter(Boolean).join(" · ");
+    parts.big.textContent = [{ ahead: t.race.winning, behind: t.race.behind, even: t.race.even, boxes: t.race.boxesBig,
+      landing: t.race.landingBig }[side], gap].filter(Boolean).join(" · ");
     const total = r.ghostStarts(all).at(-1);
     const starts = r.ghostStarts(all).map((at) => at / total);
-    parts.road.replaceChildren(raceRoad({ legs: all, starts, index: race.index, rocketAt, ghostAt, minutes: data.race.minutes }));
+    parts.road.replaceChildren(raceRoad({ legs: all, starts, index: race.index, rocketAt: race.flagged ? 1 : rocketAt, ghostAt,
+      minutes: data.race.minutes }));
     renderPart(all[Math.min(race.index, all.length - 1)], at);
   }
 
@@ -109,14 +114,18 @@ export function raceView(r) {
     const spent = time - race.from;
     const left = leg.part.minutes - spent;
     const late = left < 0;
+    const fill = leg.careful ? r.tankFill(leg) : null;
     parts.until.textContent = race.nextAt != null
       ? (race.index + 1 < r.legs().length ? t.race.next(r.legs()[race.index + 1].part.text) : t.race.toFinish)
-      : late ? t.race.late(countdownText(-left * 60)) : t.race.endsIn(countdownText(left * 60));
+      : leg.careful ? (fill >= 1 ? t.race.tankFull : t.race.tankFilling)
+        : late ? t.race.late(countdownText(-left * 60)) : t.race.endsIn(countdownText(left * 60));
+    parts.tank.hidden = !leg.careful;
+    if (leg.careful) parts.tank.replaceChildren(tankGauge(fill));
     r.renderRacers(); // the minimum before «¡Hecho!» counts down (drawn again only when it changes)
   }
 
   // The children on the side, each with one button always in the same place: «¡Hecho!»
-  // (blue), greyed with the minutes a «sin prisa» task still waits,
+  // (blue), greyed with the minutes a «con cuidado» task's tank still takes to fill,
   // or «✓ Hecho» (a tap undoes it while it is still this part); "No le toca" for the others.
   // In a race the avatar does not open the mission (its task could be marked there at once).
   // Drawn again only when something changes, so no tap is lost while it is redrawn.
@@ -126,7 +135,7 @@ export function raceView(r) {
     const states = data.people.map((person) => {
       const has = Boolean(leg && person.mission && leg.part.id in person.mission.tasks);
       const done = has && r.taskDone(person, leg.part.id);
-      const wait = has && !done ? leg.part.done_after - (Math.max(0, r.elapsed()) - race.from) : 0; // nobody marks it at once
+      const wait = has && !done ? leg.part.done_after - Math.max(0, r.elapsed() - race.fromWall) : 0; // the tank fills first
       return { person, has, done, left: wait > 0 ? countdownText(wait * 60) : null, cheers: r.canCheer(person, leg) };
     });
     const signature = JSON.stringify([leg?.part.id, states.map(({ has, done, left, cheers }) => [has, done, left, cheers])]);
@@ -143,7 +152,7 @@ export function raceView(r) {
         action = h("button", {
           type: "button", class: "btn btn--primary race-kid__go", disabled: Boolean(left),
           onclick: () => r.markDone(person, leg.part.id),
-        }, left ? (leg.part.slow_minutes ? t.race.slowFor(left) : t.race.doneIn(left)) : t.race.done);
+        }, left ? (leg.part.slow_minutes ? t.race.tankFor(left) : t.race.doneIn(left)) : t.race.done);
       }
       return h("li", {},
         h("div", { class: `race-kid${done ? " race-kid--done" : ""}${has || cheers ? "" : " race-kid--off"}`, style: `--child-color: ${person.colors.color}` },

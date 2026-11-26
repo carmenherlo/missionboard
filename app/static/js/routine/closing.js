@@ -36,6 +36,10 @@ export function closing(r) {
 
   // ✕: a trial, or its goal already celebrated, just goes; otherwise, the choice.
   function askClose() {
+    if (r.isRemote()) { // the parents' phone: back to its bar
+      r.showBig(false);
+      return;
+    }
     if (r.showing.data.trial || r.showing.finishing) {
       r.end();
       return;
@@ -65,6 +69,10 @@ export function closing(r) {
   // The beating clock (or "Rutina en marcha · Abrir", in the parents' zone): shown again here;
   // from the parents' zone, to the home screen with it on top.
   function reopen() {
+    if (r.isRemote()) { // the parents' phone («En marcha»): its panel, not the routine on top
+      r.openPanel(true);
+      return;
+    }
     if (r.showing.hidden) {
       r.showing.hidden = false;
       writeHidden(null);

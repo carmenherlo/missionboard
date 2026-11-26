@@ -95,7 +95,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
     }));
   }
 
-  // ---------- "Sin prisa" (modo-carrera.html): in a race, a part that must not be rushed ----------
+  // ---------- "Con cuidado" (carrera-divertida.html): in a race, a part not raced: a tank to fill ----------
   const slow = h("div", { class: "field" });
   function renderSlow() {
     slow.hidden = !routine.race;
@@ -105,7 +105,7 @@ export async function viewRoutinePartEdit(routineId, partId) {
     slow.replaceChildren(
       h("label", { class: "toggle" },
         h("input", { type: "checkbox", checked: Boolean(minutes), onchange: (e) => put(e.target.checked ? part().minutes : null) }),
-        h("img", { class: "slow-icon", src: "static/libraries/fluent/turtle.svg", alt: "" }), t.race.slowOn),
+        h("img", { class: "slow-icon", src: "static/libraries/fluent/fuel-pump.svg", alt: "" }), t.race.slowOn),
       minutes ? h("div", { class: "part-length" }, h("span", { class: "field__label" }, t.race.slowMinimum),
         stepper({ value: minutes, min: 1, max: part().minutes, format: t.routine.minutes, label: t.race.slowMinimum, onChange: put })) : "",
       h("span", { class: "hint" }, t.race.slowHintOn));

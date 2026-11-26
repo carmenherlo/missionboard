@@ -3,7 +3,8 @@
 // where its time starts (a 10-minute task takes twice the road of a 5-minute one), the
 // moon at the end. The rocket runs on the left of the road and the alien on the right:
 // neck and neck, they never cover each other. Drawn like the clock: positions as SVG
-// attributes, not styles. A planet tapped (pointerdown, data-leg) says its task.
+// attributes, not styles. A planet tapped (pointerdown, data-leg) says its task. A «con
+// cuidado» task in the middle is a pit stop (a fuel pump, no road: the race stands still).
 
 const FLUENT = "static/libraries/fluent";
 const RIVAL = "alien-monster"; // the friendly little alien (24/11)
@@ -15,6 +16,7 @@ const PAD = 70; // above the first row and below the last
 const ROW = 130; // between rows
 const R = ROW / 2; // the turns
 const PLANET = 30;
+const PIT_BACK = 70; // a pit stop, this much road before the next planet
 const ROCKET = { size: 72, off: 34 };
 const ALIEN = { size: 56, off: 30 };
 
@@ -75,20 +77,34 @@ export function raceRoad({ legs, starts, index, rocketAt, ghostAt, minutes }) {
   svg.append(el("path", { class: "race-road__line", d: road.d }),
     el("path", { class: "race-road__done", d: road.d, "stroke-dasharray": `${rocketAt * road.total} ${road.total}` }));
   legs.forEach((leg, i) => {
-    const { x, y } = road.at(starts[i]);
+    if (leg.landing) return; // past the flag: the moon is the landing
+    // A pit stop takes no road: drawn a little before the next planet, so it does not cover it.
+    const { x, y } = road.at(leg.careful ? starts[i] - PIT_BACK / road.total : starts[i]);
     const state = i < index ? "done" : i === index ? "now" : "coming";
-    svg.append(el("g", { class: "race-road__stop", "data-leg": i },
-      el("circle", { class: `race-road__planet race-road__planet--${state}`, cx: x, cy: y, r: PLANET }),
-      leg.part.image_url ? picture(leg.part.image_url, x, y, PLANET * 1.3) : ""));
+    const image = leg.careful ? `${FLUENT}/fuel-pump.svg` : leg.part.image_url; // a pit stop
+    svg.append(el("g", { class: `race-road__stop${leg.careful ? " race-road__stop--pit" : ""}`, "data-leg": i },
+      el("circle", { class: `race-road__planet race-road__planet--${state}`, cx: x, cy: y, r: leg.careful ? PLANET * 0.75 : PLANET }),
+      image ? picture(image, x, y, PLANET * (leg.careful ? 1 : 1.3)) : ""));
   });
   const end = road.at(1);
   svg.append(picture(`${FLUENT}/full-moon.svg`, end.x, end.y, PLANET * 2.8));
   const them = road.at(ghostAt);
-  const us = road.at(rocketAt);
+  const stop = legs[index]?.careful && !legs[index].landing; // in a pit stop: the rocket waits there
+  const us = road.at(stop ? starts[index] - PIT_BACK / road.total : rocketAt);
   svg.append(
     picture(`${FLUENT}/${RIVAL}.svg`, them.x - them.nx * ALIEN.off, them.y - them.ny * ALIEN.off, ALIEN.size, "race-road__ghost"),
     picture(`${FLUENT}/rocket.svg`, us.x + us.nx * ROCKET.off, us.y + us.ny * ROCKET.off, ROCKET.size, "race-road__rocket"));
   return svg;
+}
+
+// The tank of a «con cuidado» task (carrera-divertida.html): it fills (0 to 1) as they take
+// their time; full, its «¡Hecho!» comes out. Drawn like the road: sizes as SVG attributes.
+export function tankGauge(fill) {
+  const [w, h, pad] = [60, 120, 6];
+  const level = Math.round((h - 2 * pad) * fill);
+  return el("svg", { viewBox: `0 0 ${w} ${h}`, class: `race-tank${fill >= 1 ? " race-tank--full" : ""}`, "aria-hidden": "true" },
+    el("rect", { class: "race-tank__case", x: 2, y: 2, width: w - 4, height: h - 4, rx: 12 }),
+    el("rect", { class: "race-tank__fuel", x: pad, y: h - pad - level, width: w - 2 * pad, height: level, rx: 8 }));
 }
 
 export { RIVAL };

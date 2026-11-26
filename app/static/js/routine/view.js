@@ -65,8 +65,9 @@ export function view(r) {
     const { layer, banner } = r.showing.view;
     const trial = Boolean(r.showing.data.trial);
     const hidden = r.closed();
-    layer.hidden = hidden || (inParents() && !trial);
-    banner.hidden = trial || (!hidden && !inParents());
+    r.renderRemote(); // the parents' phone: its bar instead of the banner
+    layer.hidden = hidden || (inParents() && !trial && !r.showing.big);
+    banner.hidden = trial || r.isRemote() || (!hidden && !inParents());
     if (banner.dataset.hidden === String(hidden)) return;
     banner.dataset.hidden = String(hidden);
     banner.classList.toggle("routine-banner--clock", hidden);
