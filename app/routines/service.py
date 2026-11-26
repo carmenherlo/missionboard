@@ -18,7 +18,8 @@ from app.routines.current import Current
 from app.routines.links import kids_of
 from app.routines.model import Routine
 from app.routines.people import People, Person
-from app.routines.race_rules import INICIO_SECONDS, RECORD_RACES, START_SECONDS, Pace, pace_of, planned_minutes
+from app.routines.race_flag import RaceFlag
+from app.routines.race_rules import INICIO_SECONDS, RECORD_RACES, START_SECONDS, Pace, pace_of
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.timing import minute_of
@@ -42,6 +43,7 @@ class RoutinesService:
         races: RacesRepository,
     ):
         self._races = races
+        self._flag = RaceFlag(runs, races, events)
         self._missions = missions
         self._people = People(children, days, missions)
         self._routines = routines
@@ -69,24 +71,19 @@ class RoutinesService:
             if not run or not run["started_at"] or run["finished_at"]:
                 continue
             start = _minute(datetime.fromisoformat(run["started_at"]))
-            at = _minute(datetime.fromisoformat(run["paused_at"])) if run["paused_at"] else minute  # paused: still
+            moment = datetime.fromisoformat(run["paused_at"]) if run["paused_at"] else now  # paused: still
+            at = _minute(moment)
             routine = stored.on(weekday).lengthened(json.loads(run["extra"] or "{}"))  # ± minutes today
             kids = json.loads(run["kids"] or "[]")
             people = [p for p in self.people(stored) if p.child.id in kids]
             pace = self.pace(stored)
-            if routine.racing and at >= start + planned_minutes(routine, people):  # the flag: the race is lost
-                self._race_lost(routine, day, run, people, pace)
+            if routine.racing:  # until the flag and its landing, or lost (race_flag.py)
+                if not self._flag.goes_on(routine, day, run, people, pace, moment):
+                    continue
+            elif at >= start + routine.length:
                 continue
-            if at < start + routine.length:
-                return Current(
-                    routine.started_at(int(start)),
-                    day,
-                    at,
-                    run,
-                    people,
-                    started=start,
-                    pace=pace,
-                )
+            race = self._flag.today(routine.id, day) if routine.racing else {}
+            return Current(routine.started_at(int(start)), day, at, run, people, started=start, pace=pace, **race)
         for stored in self._live():
             if not stored.goes_on(weekday) or stored.manual:
                 continue
@@ -263,27 +260,6 @@ class RoutinesService:
     def pace(self, routine: Routine) -> Pace | None:
         """A race: the alien trains with this routine's last races."""
         return pace_of(self._races.recent(routine.id, RECORD_RACES)) if routine.racing else None
-
-    def _race_lost(self, routine: Routine, day: date, run: dict, people: list[Person], pace: Pace) -> None:
-        """Its time is up and not everyone finished: it ends, and its mission closes for its
-        children at that moment (once: the run is finished)."""
-        planned = planned_minutes(routine, people) * 60
-        flag = datetime.fromisoformat(run["started_at"]) + timedelta(seconds=planned)
-        self._runs.set(day, routine.id, finished_at=flag)
-        kids = [p.child for p in people]
-        self._races.add(
-            day,
-            routine,
-            kids,
-            planned_seconds=planned,
-            took_seconds=None,
-            outcome="lost",
-            stars=0,
-            at=flag,
-            given=None,
-            ghost_share=pace.ghost,
-        )
-        self._events.routine_did("race_lost", routine.name)
 
     def _everyone_off(self, routine: Routine) -> bool:
         return self._people.everyone_off(routine)

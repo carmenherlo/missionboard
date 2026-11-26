@@ -2,6 +2,7 @@
 parent who checks it, and «± Tiempo» on any routine started by hand."""
 
 from types import SimpleNamespace
+from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -49,6 +50,15 @@ class CheerIn(BaseModel):
 
 class ReviewIn(BaseModel):
     give: bool
+
+
+class RedoIn(BaseModel):
+    tasks: list[str] = Field(min_length=1)
+
+
+class TipIn(BaseModel):
+    # The new things the voice explains the first times (carrera-divertida.html)
+    tip: Literal["turbo", "boxes", "landing", "overtake", "final", "cheer"]
 
 
 class ExtraIn(BaseModel):
@@ -127,6 +137,24 @@ def races_to_review(races: RaceService = Depends(get_race_service)):
 @router.post("/races/{race_id}/review", dependencies=parent_only)
 def review_race(race_id: int, body: ReviewIn, races: RaceService = Depends(get_race_service)):
     return races.review(race_id, body.give)
+
+
+@router.post("/races/{race_id}/redo", dependencies=parent_only)
+def redo_race(race_id: int, body: RedoIn, races: RaceService = Depends(get_race_service)):
+    """The judges send some of its tasks to be done again: its stars wait for «Ya está»."""
+    return races.redo(race_id, body.tasks)
+
+
+@router.post("/races/{race_id}/fixed", dependencies=parent_only)
+def race_fixed(race_id: int, races: RaceService = Depends(get_race_service)):
+    """«Ya está»: done again. Its extra stars, given."""
+    return races.fixed(race_id)
+
+
+@router.post("/{routine_id}/race/tips", status_code=204)
+def tip_said(routine_id: str, body: TipIn, races: RacesRepository = Depends(get_races_repository)) -> None:
+    """The voice explained something new in this routine's race (no code: the kids' screen)."""
+    races.tip_said(routine_id, body.tip)
 
 
 @router.post("/{routine_id}/extra", dependencies=parent_only)

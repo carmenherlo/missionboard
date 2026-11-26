@@ -15,28 +15,41 @@ from tests.test_routines_race import client, clock, kids, race, run  # noqa: F40
 from tests.test_today import mark
 
 
-def past(took_seconds, planned_seconds=1200, stars=0, given=False):
-    return {"took_seconds": took_seconds, "planned_seconds": planned_seconds, "stars": stars, "given": given}
+def past(took_seconds, planned_seconds=1200, stars=0, given=False, outcome="won"):
+    outcome = "lost" if took_seconds is None else outcome
+    return {
+        "took_seconds": took_seconds,
+        "planned_seconds": planned_seconds,
+        "stars": stars,
+        "given": given,
+        "outcome": outcome,
+    }
 
 
 def test_with_no_races_the_alien_runs_at_90_percent():
     assert pace_of([]) == Pace(0.9, None)
 
 
-def test_it_runs_like_the_last_races_a_little_faster():
+def test_after_two_won_it_runs_a_little_faster_than_the_last_races():
     pace = pace_of([past(960), past(960), past(1080)])
     assert pace.ghost == pytest.approx(0.8 * 0.95)
     assert pace.record == pytest.approx(0.8)
 
 
+def test_after_one_won_like_them_and_after_one_lost_slower():
+    assert pace_of([past(960), past(960, outcome="slow")]).ghost == pytest.approx(0.8)
+    assert pace_of([past(960, outcome="slow"), past(960)]).ghost == pytest.approx(0.8 * 1.05)
+
+
 def test_only_the_last_five_and_never_too_fast_or_slow():
     assert pace_of([past(600)] * 5 + [past(1200)] * 5).ghost == 0.6
-    assert pace_of([past(None)] * 3).ghost == pytest.approx(0.95)  # lost: as the whole time
+    assert pace_of([past(None)] * 3).ghost == 1.0  # lost: as the whole time, slower, but never past the flag
     assert pace_of([past(None)] * 3).record is None
 
 
-def test_races_whose_stars_were_refused_do_not_count():
-    assert pace_of([past(300, stars=1, given=False), past(1080)]) == Pace(pytest.approx(0.9 * 0.95), 0.9)
+def test_races_whose_stars_were_refused_or_had_to_be_done_again_do_not_count():
+    assert pace_of([past(300, stars=1, given=False), past(1080)]) == Pace(pytest.approx(0.9), 0.9)
+    assert pace_of([{**past(300, stars=1, given=True), "redo": ["a"]}, past(1080)]) == Pace(pytest.approx(0.9), 0.9)
 
 
 def test_the_record_needs_beating_the_alien_too():
@@ -102,9 +115,10 @@ def test_a_child_with_nothing_to_do_cheers_and_the_alien_stumbles(client, race, 
         cheers = client.post(url, json={"child_id": alex["id"], "part_id": homework}).json()["cheers"]
     assert cheers == [f"{homework}:{alex['id']}"]
     assert client.get("/api/routines/current").json()["race"]["cheers"] == cheers
-    for task in race["tasks"]:
+    # Each task a little slower than the alien (9 min each): no turbo. 18:03 of 20:00: the alien got there at 18:00 ...
+    for task, at in zip(race["tasks"], (9.12, 18.15), strict=True):
+        clock.moment = MONDAY + timedelta(minutes=at)
         for kid in kids:
             mark(client, kid, race["mission"], task["id"])
-    clock.moment = MONDAY + timedelta(minutes=18.15)  # 18:03 of 20:00: the alien got there at 18:00 ...
     ended = client.post(f"/api/routines/{race['id']}/race/end").json()
     assert ended["outcome"] == "won"  # ... but it stumbled 5 seconds

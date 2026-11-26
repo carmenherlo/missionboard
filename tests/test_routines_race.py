@@ -48,13 +48,14 @@ def race(client, kids):
     return {**client.get(url).json(), "mission": mission, "tasks": tasks}
 
 
-def run(client, race, kids, clock, minutes):
-    """Start it with both, everyone does everything, and `minutes` later it ends."""
+def run(client, race, kids, clock, minutes, *, first=None):
+    """Start it with both; everyone does the homework at `first` (by default, half of it)
+    and the shower at `minutes`, and it ends: the race goes by the times of their «¡Hecho!»."""
     start(client, race, [k["id"] for k in kids])
-    for task in race["tasks"]:
+    for task, at in zip(race["tasks"], (first or minutes / 2, minutes), strict=True):
+        clock.moment = MONDAY + timedelta(minutes=at)
         for kid in kids:
             mark(client, kid, race["mission"], task["id"])
-    clock.moment = MONDAY + timedelta(minutes=minutes)
     return client.post(f"/api/routines/{race['id']}/race/end")
 
 
@@ -84,6 +85,11 @@ def test_the_screen_gets_its_rules_and_who_has_each_task(client, race, kids):
         "record": None,
         "cheers": [],
         "cheer_seconds": 5,
+        "boxes": 0,
+        "turbos": [],
+        "turbo_seconds": 10,
+        "result": None,
+        "tips": {},
     }
     homework, shower = (t["id"] for t in race["tasks"])
     assert [p["mission"]["tasks"] for p in current["people"]] == [

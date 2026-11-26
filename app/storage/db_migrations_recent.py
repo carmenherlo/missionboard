@@ -47,4 +47,18 @@ RECENT: list[str] = [
         PRIMARY KEY (child_id, day)
     )
     """,
+    # 21 · The race, more fun (carrera-divertida.html, 26/11): each race keeps its tasks as
+    # they went (JSON [{"id", "name", "minutes", "seconds", "careful"}]) for the judges, the
+    # tasks a parent sent to do again (JSON [task id]: then it does not train the alien), and
+    # how many times the voice explained each new thing in each routine ("turbo", "boxes"…).
+    """
+    ALTER TABLE races ADD COLUMN tasks TEXT;
+    ALTER TABLE races ADD COLUMN redo TEXT;
+    CREATE TABLE race_tips (
+        routine_id TEXT NOT NULL,
+        tip TEXT NOT NULL,
+        times INTEGER NOT NULL,
+        PRIMARY KEY (routine_id, tip)
+    )
+    """,
 ]

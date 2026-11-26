@@ -1,6 +1,6 @@
 """A routine going on: which one, today, now, its run and who does it (RoutinesService.current)."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 from app.routines.model import Part, Routine
@@ -19,6 +19,8 @@ class Current:
     people: list[Person]
     started: float | None = None  # started by hand: the minute of the day it started, with seconds
     pace: Pace | None = None  # a race: how fast the alien runs and the record
+    result: dict | None = None  # a race past its flag: how it went (the landing may go on)
+    tips: dict = field(default_factory=dict)  # a race: how many times each new thing was explained
 
     def warnings(self, part: Part) -> list[int]:
         """When the voice warns before the part ends: its own, or else the default

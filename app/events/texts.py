@@ -115,6 +115,7 @@ _ROUTINE = {
     "race_slow": "Carrera «{routine}»: acabaron, pero ganó el extraterrestre",
     "race_lost": "Carrera «{routine}»: se acabó el tiempo",
     "race_reviewed": "Revisaron la carrera «{routine}»",
+    "race_redo": "Carrera «{routine}»: los jueces piden repasar",
 }
 
 

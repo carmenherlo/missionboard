@@ -32,10 +32,12 @@ class People:
             item = self._item(routine, child)
             if item is not None and item.state == OFF and not trial:
                 continue  # let off today: the goal does not wait for them
+            done_at = {}
             if item is not None:
                 done = len(item.marks) if item.state == DONE else len(item.checked)
                 mission, marks, completed = item.mission, item.marks, item.state == DONE
                 tasks = {t.task.id: completed or t.task.id in item.checked for t in item.tasks}
+                done_at = self._days.checked_at(child.id, mission.id)
             elif trial:
                 mission = self._missions.get(routine.mission_id)
                 marks = [mark for task in child_tasks(mission, child.id) for mark in task.marks]
@@ -55,6 +57,7 @@ class People:
                             "completed": completed,
                             "marks": marks,
                             "tasks": tasks,  # their tasks of it today: task id → done (a race's "¡Hecho!")
+                            "done_at": {task: at.isoformat() for task, at in done_at.items() if task in tasks},
                             "colors": avatars.tones(mission.color),
                         },
                     )

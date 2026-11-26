@@ -225,6 +225,11 @@ class DayService:
             self._events.config_changed("mission", "opened_today", child=today.child, mission=item.mission)
         return self.today(child_id)
 
+    def checked_at(self, child_id: str, mission_id: str) -> dict:
+        """When each task of a mission was checked today (a race goes by them)."""
+        day = app_day(self._clock.now(), self._settings.settings().day_starts_at)
+        return self._days.checked_at(day, child_id, mission_id)
+
     def open_for_routine(self, child_id: str, mission_id: str) -> None:
         """Its routine started by hand opens the mission for this child, only today, if it
         was not open yet (one let off stays off). Not logged: the routine starting is."""

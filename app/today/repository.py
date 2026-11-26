@@ -24,6 +24,15 @@ class DayRepository:
             checked.setdefault(row["mission_id"], set()).add(row["step_id"])
         return checked
 
+    def checked_at(self, day: date, child_id: str, mission_id: str) -> dict[str, datetime]:
+        """When each of its tasks was checked today (a race's «¡Hecho!»)."""
+        with db.connect(self._data_dir) as conn:
+            rows = conn.execute(
+                "SELECT step_id, at FROM step_checks WHERE day = ? AND child_id = ? AND mission_id = ?",
+                (day.isoformat(), child_id, mission_id),
+            ).fetchall()
+        return {row["step_id"]: datetime.fromisoformat(row["at"]) for row in rows}
+
     def completed_missions(self, day: date, child_id: str) -> set[str]:
         with db.connect(self._data_dir) as conn:
             rows = conn.execute(

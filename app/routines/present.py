@@ -2,13 +2,15 @@
 times, its goal, its songs and its children with how their mission goes."""
 
 import json
+from datetime import datetime, timedelta
 
 from app.children import avatars
 from app.children.api import public_child
 from app.images.libraries import ImageLibraries
 from app.routines.current import Current
 from app.routines.model import Routine
-from app.routines.race_rules import CHEER_SECONDS, Pace, cheered, done_after, planned_minutes
+from app.routines.race_legs import race_legs
+from app.routines.race_rules import CHEER_SECONDS, TURBO_SECONDS, cheered, done_after, planned_minutes
 from app.routines.timing import hhmm
 from app.songs.repository import SongsRepository
 
@@ -59,9 +61,7 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
         "stopped": bool(current.run["stopped_at"]),
         "paused": bool(current.run["paused_at"]),  # started by hand: its time stands still
         "extra": json.loads(current.run["extra"] or "{}"),  # minutes a parent added to each part today
-        "race": current.started is not None
-        and routine.racing
-        and race_of(routine, current.people, current.pace, cheered(current.run)),  # only started by hand
+        "race": current.started is not None and routine.racing and race_of(current),  # only started by hand
         "people": [
             {"child": public_child(p.child), "colors": avatars.tones(p.child.color), "mission": p.mission}
             for p in current.people
@@ -93,17 +93,28 @@ def _music(routine: Routine, songs: SongsRepository) -> list[dict]:
     return played
 
 
-def race_of(routine: Routine, people: list, pace: Pace, cheers: list[str]) -> dict:
+def race_of(current: Current) -> dict:
     """A race's rules for its screen, in minutes from its start: the alien gets to the
     flag at `ghost`, the team's record is `record` (null: none yet) and the time is up at
-    `minutes`; `cheers`, who cheered in which task (the alien lost `cheer_seconds` each)."""
+    `minutes`; `cheers`, who cheered in which task (the alien lost `cheer_seconds` each);
+    `boxes`, how long it stood still in its pit stops so far; `turbos`, the tasks done
+    faster than the alien (it lost `turbo_seconds` each); `result`, once past the flag."""
+    routine, people, pace = current.routine, current.people, current.pace
     minutes = planned_minutes(routine, people)
+    started = datetime.fromisoformat(current.run["started_at"]) if current.run["started_at"] else None
+    legs = started and race_legs(routine, people, started)
+    now = started and started + timedelta(minutes=current.minute - current.started)
     return {
         "on_time": routine.race.on_time,
         "review": routine.race.review,
         "minutes": minutes,
         "ghost": minutes * pace.ghost,
         "record": pace.record and minutes * pace.record,
-        "cheers": cheers,
+        "cheers": cheered(current.run),
         "cheer_seconds": CHEER_SECONDS,
+        "boxes": legs.boxes_seconds(now) / 60 if legs else 0,
+        "turbos": legs.turbos(pace.ghost) if legs else [],
+        "turbo_seconds": TURBO_SECONDS,
+        "result": current.result,
+        "tips": current.tips,
     }
