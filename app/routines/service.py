@@ -15,7 +15,6 @@ from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.routines.current import Current
-from app.routines.links import kids_of
 from app.routines.model import Routine
 from app.routines.people import People, Person
 from app.routines.race_flag import RaceFlag
@@ -23,7 +22,6 @@ from app.routines.race_rules import INICIO_SECONDS, RECORD_RACES, START_SECONDS,
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
 from app.routines.timing import minute_of
-from app.settings import SettingsRepository
 from app.today.service import DayService
 
 NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
@@ -36,7 +34,6 @@ class RoutinesService:
         runs: RunsRepository,
         children: ChildrenRepository,
         days: DayService,
-        settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
         missions: MissionsRepository,
@@ -50,13 +47,12 @@ class RoutinesService:
         self._runs = runs
         self._children = children
         self._days = days
-        self._settings = settings
         self._clock = clock
         self._events = events
 
     def _live(self) -> list[Routine]:
-        """The routines that ring and start: none while they are switched off (features.routines)."""
-        return self._routines.list() if self._settings.features().routines else []
+        """The routines that ring and start."""
+        return self._routines.live()
 
     def current(self) -> Current | None:
         """The routine going on at this moment, if any: one started by hand (until its
@@ -73,8 +69,8 @@ class RoutinesService:
             moment = datetime.fromisoformat(run["paused_at"]) if run["paused_at"] else now  # paused: still
             at = _minute(moment)
             routine = stored.on(weekday).lengthened(json.loads(run["extra"] or "{}"))  # ± minutes today
-            kids = json.loads(run["kids"] or "[]")
-            people = [p for p in self.people(stored) if p.child.id in kids]
+            kids = tuple(json.loads(run["kids"] or "[]"))  # who it was started with, of its mission's
+            people = self.people(stored.model_copy(update={"kids": kids}))
             pace = self.pace(stored)
             if routine.racing:  # until the flag and its landing, or lost (race_flag.py)
                 if not self._flag.goes_on(routine, day, run, people, pace, moment):
@@ -148,8 +144,9 @@ class RoutinesService:
         return None
 
     def by_hand(self, again: bool = False) -> list[tuple[Routine, list[Child]]]:
-        """The routines that can be started by hand today, each with its children. A race
-        only once a day, unless a parent starts it `again` (one started by mistake, 26/11)."""
+        """The routines that can be started by hand today, each with the children it can
+        start with: its mission's (its own, chosen at first: present.py). A race only once a
+        day, unless a parent starts it `again` (one started by mistake, 26/11)."""
         weekday = WEEKDAYS[app_day(self._clock.now()).weekday()]
         children = self._children.list()
         day = app_day(self._clock.now())
@@ -159,7 +156,8 @@ class RoutinesService:
             for r in self._live()
             if r.manual and r.goes_on(weekday) and not (r.racing and r.id in raced and not again)
         ]
-        return [(r.on(weekday), kids_of(r, children)) for r in routines]
+        theirs = {m.id: m.kids for m in self._missions.list()}
+        return [(r.on(weekday), [c for c in children if c.id in theirs.get(r.mission_id, ())]) for r in routines]
 
     def start(self, routine_id: str, kids: list[str], again: bool = False) -> None:
         """Start a routine by hand with the children who have come home (`again`: a race run today, by a parent)."""
@@ -193,7 +191,7 @@ class RoutinesService:
         hidden on a device (or shown again), or (started by hand) it ended: its time is up then,
         so it is no longer on."""
         if kind == "ended":
-            routine = next((r for r in self._routines.list() if r.id == routine_id), None)
+            routine = self._routines.get(routine_id)
             if routine is None:
                 raise NotFoundError("Routine not found")
             self._runs.clear(app_day(self._clock.now()), routine_id)

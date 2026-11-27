@@ -47,7 +47,6 @@ class FeaturesPatch(BaseModel):
     daily_prize: bool | None = None
     shop: bool | None = None
     streaks: bool | None = None
-    routines: bool | None = None
 
 
 def get_settings_service(

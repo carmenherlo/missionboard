@@ -58,7 +58,6 @@ _FIELDS = {
     "due_day": lambda value: "llega " + (_day(value) if value else "pronto"),
     "daily_prize": lambda value: "premio del día " + ("encendido" if value else "apagado"),
     "shop": lambda value: "tienda " + ("encendida" if value else "apagada"),
-    "routines": lambda value: "rutinas " + ("encendidas" if value else "apagadas"),
     "streaks": lambda value: "rachas " + ("encendidas" if value else "apagadas"),
     "streak_week": lambda value: "semana de la racha cambiada",
     "streak_rule": lambda value: "la racha cuenta con " + ("una misión" if value == "any" else "todas las misiones"),

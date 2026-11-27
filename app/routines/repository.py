@@ -79,6 +79,10 @@ class RoutinesRepository:
         mission = next(m for m in doc["missions"] if m["id"] == stored["mission_id"])
         return resolved(stored, mission)
 
+    def live(self) -> list[Routine]:
+        """The ones that ring and start: not the ones switched off in their mission."""
+        return [r for r in self.list() if not r.off]
+
     def list(self) -> list[Routine]:
         doc = self._store.load()
         missions = {m["id"]: m for m in doc["missions"]}

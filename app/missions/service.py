@@ -313,7 +313,7 @@ class MissionsService:
         """A routine's parts are its mission's tasks: a change that would break its times,
         take it out of the mission's hours or make it ring with another, is refused."""
         try:
-            routines = self._routines.list()
+            routines = self._routines.live()
         except ValidationError as err:
             raise InvalidError("It no longer fits in its routine") from err
         for i, routine in enumerate(routines):

@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from tests.conftest import PARENT
-from tests.test_missions import create_child
+from tests.test_missions import create_child, put_in
 from tests.test_routines import make_morning
 from tests.test_routines_editor import MADRID, edit
 from tests.test_settings import FixedClock
@@ -195,5 +195,6 @@ def test_started_by_hand_a_song_at_its_goal(client):
     assert edit(client, "POST", "/music", song=song, start="goal").status_code == 200
     routine = edit(client, "GET").json()
     bea = create_child(client)
+    put_in(client, routine["mission_id"], bea)
     client.post(f"/api/routines/{routine['id']}/start", json={"kids": [bea["id"]]})
     assert [m["start"] for m in client.get("/api/routines/current").json()["music"]] == ["goal"]

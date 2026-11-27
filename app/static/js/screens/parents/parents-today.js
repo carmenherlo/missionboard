@@ -49,5 +49,5 @@ function firstSteps(setup) {
     h("ul", { class: "rows first-steps" },
       line(setup.prizes > 0, t.overview.stepPrizes, "#/parents/config/prizes"),
       line(setup.shop > 0, t.overview.stepShop, "#/parents/config/shop"),
-      line(setup.routines > 0, t.overview.stepRoutines, "#/parents/config/routines")));
+      line(setup.routines > 0, t.overview.stepRoutines, "#/parents/config/missions")));
 }

@@ -78,6 +78,7 @@ def test_started_by_hand_with_who_has_come_home(client, landing, clock):
 
 def test_it_ends_and_can_start_again(client, landing):
     bea = create_child(client)
+    put_in(client, landing["mission_id"], bea)
     start(client, landing, [bea["id"]])
     assert client.post(f"/api/routines/{landing['id']}/notes", json={"kind": "ended", "early": True}).status_code == 204
     assert client.get("/api/routines/current").json() is None
@@ -87,6 +88,7 @@ def test_it_ends_and_can_start_again(client, landing):
 
 def test_finished_for_everyone_it_does_not_come_back(client, landing):
     bea = create_child(client)
+    put_in(client, landing["mission_id"], bea)
     start(client, landing, [bea["id"]])
     assert client.post(f"/api/routines/{landing['id']}/finish", headers=PARENT).status_code == 204
     assert client.get("/api/routines/current").json() is None
@@ -134,6 +136,7 @@ def test_it_never_overlaps_a_routine_with_a_time(client, landing):
 
 def test_by_hand_it_can_have_its_goal_after_checking(client, landing, clock):
     bea = create_child(client)
+    put_in(client, landing["mission_id"], bea)
     url = f"/api/routines/{landing['id']}"
     routine = client.patch(url, json={"goal": {"check_minutes": 5, "at": "10:00"}}, headers=PARENT).json()
     assert routine["manual"] is True and routine["goal"]["at"] is None and routine["minutes"] == 12
@@ -153,6 +156,7 @@ def test_by_hand_it_can_have_its_goal_after_checking(client, landing, clock):
 
 def test_a_parent_pauses_it_and_it_goes_on_where_it_was(client, landing, clock):
     bea = create_child(client)
+    put_in(client, landing["mission_id"], bea)
     url = f"/api/routines/{landing['id']}/paused"
     assert client.put(url, json={"paused": True}, headers=PARENT).status_code == 409  # not on
     start(client, landing, [bea["id"]])

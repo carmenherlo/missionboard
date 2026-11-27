@@ -96,7 +96,7 @@ export function addSongForm(routineId, { save, status }) {
   const element = h("div", {});
   // Only "Añadir" here (05/11): uploading a new one is the last choice of the list, and
   // goes to the library (and back here).
-  const library = `${ROUTINES_HREF}/songs?from=${routineId}`;
+  const library = `#/parents/config/songs?from=${routineId}`;
   function draw(routine, songs) {
     if (!songs.length) {
       element.replaceChildren(h("p", { class: "hint" }, t.routineMusic.noSongs),

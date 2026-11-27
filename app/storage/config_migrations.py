@@ -9,9 +9,10 @@ import copy
 from collections.abc import Callable
 
 from app.storage.config_initial import PRIZES, SHOP
+from app.storage.config_migrations_recent import RECENT
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 29
+CURRENT_VERSION = 30
 
 
 class ConfigVersionError(Exception):
@@ -22,7 +23,7 @@ class ConfigTooOldError(Exception):
     """The file is from before FIRST_VERSION (a copy of then, being put back)."""
 
 
-_MIGRATIONS: dict[int, Callable[[dict], dict]] = {}
+_MIGRATIONS: dict[int, Callable[[dict], dict]] = {}  # from 27 on, also RECENT (config_migrations_recent.py)
 
 
 def _hhmm(minute: int) -> str:
@@ -214,38 +215,7 @@ def _v26_to_v27(doc: dict) -> dict:
 _MIGRATIONS[26] = _v26_to_v27
 
 
-def _v27_to_v28(doc: dict) -> dict:
-    """The day always starts at 00:00 (misiones-para-quien.html, 27/11): its setting goes."""
-    (doc.get("settings") or {}).pop("day_starts_at", None)
-    doc["version"] = 28
-    return doc
-
-
-_MIGRATIONS[27] = _v27_to_v28
-
-
-def _v28_to_v29(doc: dict) -> dict:
-    """Who a mission is for (misiones-para-quien.html, 27/11): the children who saw any task
-    of it. Tasks are switched on and off whole: one with any step on stays on, steps go."""
-    child_ids = [child["id"] for child in doc.get("children") or []]
-    for mission in doc.get("missions") or []:
-        off = mission.get("off") or {}
-        hidden = {
-            child: {
-                t["id"]
-                for t in mission.get("tasks") or []
-                if {t["id"], *(s["id"] for s in t.get("steps") or [])} <= set(ids)
-            }
-            for child, ids in off.items()
-        }
-        tasks = [t["id"] for t in mission.get("tasks") or []]
-        mission["kids"] = [c for c in child_ids if not tasks or set(tasks) - hidden.get(c, set())]
-        mission["off"] = {c: [t for t in tasks if t in hidden[c]] for c in mission["kids"] if hidden.get(c)}
-    doc["version"] = 29
-    return doc
-
-
-_MIGRATIONS[28] = _v28_to_v29
+_MIGRATIONS.update(RECENT)
 
 
 def upgrade(doc: dict) -> dict:
@@ -274,7 +244,6 @@ def initial() -> dict:
             "shop": True,
             "streaks": True,
             "dashboard": True,
-            "routines": True,
             "games": False,
         },
         "missions": [],

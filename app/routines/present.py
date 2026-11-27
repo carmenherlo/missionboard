@@ -70,12 +70,13 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
 
 
 def present_by_hand(routine: Routine, kids: list) -> dict:
-    """A routine that can be started by hand today, with its children (⏰, Rutinas de hoy)."""
+    """A routine that can be started by hand today, with the children it can start with
+    (⏰, Rutinas de hoy): its own come chosen (rutina-en-mision.html)."""
     return {
         "id": routine.id,
         "name": routine.name,
         "minutes": routine.length,
-        "kids": [{**public_child(c), "colors": avatars.tones(c.color)} for c in kids],
+        "kids": [{**public_child(c), "colors": avatars.tones(c.color), "chosen": c.id in routine.kids} for c in kids],
     }
 
 

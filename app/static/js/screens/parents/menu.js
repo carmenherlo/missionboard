@@ -16,12 +16,11 @@ const PRIZES_SETUP = [
   ["streaks", "rocket", t.config.streaksMenu],
   ["shop", "shop", t.config.shop],
 ];
-const MISSIONS_SETUP = [["routines", "clock", t.config.routines]];
 
-// [title, setup, key]: the Premios and Misiones pages end with theirs (the key, its colour).
+// [title, setup, key]: the Premios page ends with its own (the key, its colour). Misiones has
+// none: a routine is set up inside its mission (rutina-en-mision.html).
 export const SETUP = {
   give: [t.menu.prizesSetup, PRIZES_SETUP, "earn"],
-  missions: [null, MISSIONS_SETUP, "do"], // the whole page is setting up: no title
 };
 
 // [title, [path, icon, label, options], key]: Ajustes by groups.
@@ -29,6 +28,7 @@ export const SETTINGS = [
   [t.config.groupFamily, [["children", "children", t.config.children]], "do"],
   [t.config.groupApp, [
     ["appearance", "palette", t.config.appearance],
+    ["songs", "music", t.songs.title], // the routines' songs, the family's
     ["notify", "phone", t.config.notify], // only with Home Assistant
     ["display", "eye", t.config.display, { notOnPhone: true }], // the screen the children use
   ], "app"],
@@ -44,7 +44,7 @@ export const SETTINGS = [
 const DOORS = [
   ["today", "#/parents", "today", t.menu.today, []],
   ["give", "#/parents/give", "prize", t.menu.prizes, PRIZES_SETUP],
-  ["missions", "#/parents/config/missions", "missions", t.config.missions, MISSIONS_SETUP],
+  ["missions", "#/parents/config/missions", "missions", t.config.missions, []],
 ];
 
 // Avisos al móvil only inside Home Assistant (nobody to tell elsewhere): asked once.
@@ -81,7 +81,7 @@ function sectionNow() {
   if (/^#\/parents\/config\/children\/(?!new)[\w-]+/.test(hash)) return "today";
   const match = hash.match(/^#\/parents\/config\/([\w-]+)/);
   if (!match) return "today";
-  return { settings: "appearance", avatars: "children", songs: "routines" }[match[1]] ?? match[1];
+  return { settings: "appearance", avatars: "children", routines: "missions" }[match[1]] ?? match[1];
 }
 
 // The door a section is behind (the bar at the bottom lights it).

@@ -2,7 +2,7 @@
 
 Every change is checked as a whole routine (the times must add up) and
 against the other routines (two must not ring at the same time). A change
-that breaks either is refused and nothing is saved.
+that breaks either is refused and nothing is saved (one out of its mission's hours opens them).
 """
 
 import secrets
@@ -15,7 +15,7 @@ from app.errors import ConflictError, InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import WEEKDAYS, MissionsRepository
 from app.routines import timed_memory
-from app.routines.links import check_fits
+from app.routines.mission_hours import open_for
 from app.routines.model import Part, Routine
 from app.routines.repository import NEW_PART_MINUTES, RoutinesRepository
 from app.routines.timing import card_positions, hhmm, minute_of, music_kept, settled
@@ -67,6 +67,7 @@ class RoutinesEditor:
             raise ConflictError("That mission already has its routine")
         parts = [{"id": task.id, "minutes": NEW_PART_MINUTES} for task in mission.tasks]
         doc = {"id": _new_id(), "mission_id": mission_id, "days": list(mission.days), "parts": parts}
+        doc["kids"] = mission.kids  # every child of its mission, to start with
         doc["goal"] = {"check_minutes": 0}  # always one (rutina-modos.html)
         if ends:  # no warning before: it opens a minute before its start, for "Va a empezar…"
             parts[0]["at"] = ends
@@ -97,6 +98,7 @@ class RoutinesEditor:
         warn_say=UNSET,
         early_goal=UNSET,
         warn_about=UNSET,
+        off=UNSET,
         **timing,
     ) -> Routine:
         """`timing` (anchor, starts, ends, alarm, alarm_before): see `_retimed`. The
@@ -114,6 +116,7 @@ class RoutinesEditor:
                 "warn_say": warn_say,
                 "early_goal": early_goal,
                 "warn_about": warn_about,
+                "off": off,
             }.items()
             if v is not UNSET
         }
@@ -175,14 +178,11 @@ class RoutinesEditor:
         self._log("deleted", routine)
 
     def set_kids(self, routine_id: str, kids: list[str]) -> Routine:
-        """Who follows it. Every child of the family listed means "every child"."""
-        children = [c.id for c in self._children.list()]
-        if any(kid not in children for kid in kids) or len(set(kids)) != len(kids):
-            raise InvalidError("Unknown or repeated child")
-        if not kids:
-            raise InvalidError("One child at least")
-        kept = [] if set(kids) == set(children) else [c for c in children if c in kids]
-        routine = self._change(routine_id, {"kids": kept})
+        """Who follows it: some of its mission's children, one at least."""
+        theirs = self._missions.get(self.get(routine_id).mission_id).kids
+        if any(kid not in theirs for kid in kids) or len(set(kids)) != len(kids) or not kids:
+            raise InvalidError("Only children of its mission, each once, one at least")
+        routine = self._change(routine_id, {"kids": [k for k in theirs if k in kids]})
         self._log("changed", routine)
         return routine
 
@@ -283,9 +283,9 @@ class RoutinesEditor:
             routine = Routine.model_validate(music_kept(settled(doc)))
         except ValidationError as err:
             raise InvalidError("The times do not add up") from err
-        check_fits(routine, self._missions.get(routine.mission_id))
-        if check_others:
-            for other in self._routines.list():
+        open_for(routine, self._missions, self._events)
+        if check_others and not routine.off:
+            for other in self._routines.live():
                 if other.id != routine.id and routine.overlaps(other):
                     raise ConflictError(f"It overlaps with {other.name}")
         return routine
@@ -305,7 +305,7 @@ class RoutinesEditor:
     # ---------- ChildDependent ----------
 
     def remove_child_data(self, child_id: str) -> list[str]:
-        """A child deleted: out of every routine (a routine left without children is for everyone)."""
+        """A child deleted: out of every routine."""
         for routine in self._routines.list():
             if child_id in routine.kids:
                 kids = [k for k in routine.kids if k != child_id]

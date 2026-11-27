@@ -7,9 +7,7 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { missionStyle } from "../child/ring.js";
 import { parentsHeader } from "./common.js";
-import { SETUP } from "./menu.js";
 import { missionPills } from "./mission-summary.js";
-import { group } from "./settings-home.js";
 
 // The family's missions, in the order of the children's route. Each card says who has
 // something on, and opens the mission.
@@ -59,6 +57,5 @@ export async function viewMissionsHome() {
         h("p", { class: "hint" }, missions.length ? t.missions.hint : t.missions.empty),
         h("a", { class: "btn btn--primary", href: "#/parents/config/missions/new" }, icon("plus"), t.missions.add)),
       missions.length ? list : null,
-      error,
-      group(SETUP.missions)));
+      error));
 }

@@ -82,7 +82,7 @@ def test_missing_settings_are_written_into_the_file_and_kept(tmp_path):
         "tarde": "14:30",
         "noche": "18:30",
     }
-    assert doc["features"]["shop"] is False and doc["features"]["routines"] is True
+    assert doc["features"]["shop"] is False and doc["features"]["dashboard"] is True
     assert list(doc["settings"])[:2] == ["stars_per_mission", "daily_prize_spins"]
     # Written once; the defaults in a later version do not change the family's
     assert SettingsRepository(ConfigStore(tmp_path)).settings() == Settings(starting_stars=5)

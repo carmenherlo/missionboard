@@ -7,7 +7,7 @@ import { icon } from "../../icons.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
 
-const BACK_HREF = "#/parents/config/routines";
+const BACK_HREF = "#/parents/config"; // Ajustes → La app
 const MAX_SONG_BYTES = 15 * 1024 * 1024;
 
 // Configurar → Rutinas → Música (rutinas-4, screen 3; "Canciones" until 05/11): the family's songs, uploaded
@@ -16,7 +16,7 @@ const MAX_SONG_BYTES = 15 * 1024 * 1024;
 export async function viewSongsList(fromRoutine = null) {
   let songs = await api("GET", "api/songs");
   const routine = fromRoutine && await api("GET", `api/routines/${fromRoutine}`).catch(() => null);
-  const back = routine ? { href: `${BACK_HREF}/${routine.id}`, label: routine.name } : { href: BACK_HREF, label: t.routines.title };
+  const back = routine ? { href: `${BACK_HREF}/${routine.id}`, label: routine.name } : { href: BACK_HREF, label: t.config.back };
   const status = saveStatus();
   const list = h("ul", { class: "rows" });
   const actions = h("div", { class: "form-actions form-actions--start" });

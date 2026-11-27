@@ -131,6 +131,6 @@ def document() -> dict:
         "settings": {"starting_stars": STARTING_STARS},
         "children": [{**child, "id": ids[child["id"]]} for child in CHILDREN],
         "missions": [{**mission, "kids": list(ids.values())} for mission in MISSIONS],
-        "routines": [{**routine, "kids": [ids[kid] for kid in routine["kids"]]} for routine in ROUTINES],
+        "routines": [{**routine, "kids": [ids[kid] for kid in routine["kids"] or ids]} for routine in ROUTINES],
         "songs": [dict(song) for song in SONGS],
     }

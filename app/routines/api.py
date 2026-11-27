@@ -17,13 +17,14 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
 from app.routines.editor import TIMING, RoutinesEditor
+from app.routines.links import kids_of
 from app.routines.model import Routine
 from app.routines.present import present_by_hand, present_current
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
-from app.routines.service import NOTES, RoutinesService, kids_of
+from app.routines.service import NOTES, RoutinesService
 from app.routines.timing import hhmm
-from app.settings import TIME, SettingsRepository
+from app.settings import TIME
 from app.songs.repository import SongsRepository
 from app.storage.config_store import ConfigStore
 from app.today.api import get_day_service
@@ -95,6 +96,7 @@ class RoutinePatch(BaseModel):
     early_goal: str | None = Field(default=None, max_length=200)
     warn_say: str | None = Field(default=None, max_length=200)  # null or empty: the usual one
     warn_about: Literal["end", "next"] | None = None
+    off: bool | None = None  # «Sin rutina» in its mission: kept, switched off
 
     _sentences = field_validator("last_countdown", "early_goal", "warn_say")(_blank_is_usual)
 
@@ -143,7 +145,6 @@ def get_routines_service(
         runs,
         ChildrenRepository(store),
         days,
-        SettingsRepository(store),
         clock,
         events,
         MissionsRepository(store),
@@ -239,7 +240,6 @@ class Editing:
         kids = kids_of(routine, self._children.list())
         return {
             **routine.to_doc(),
-            "every_child": not routine.kids,
             "kids": [c.id for c in kids],
             "ends": hhmm(routine.ends),
             "starts": None if routine.manual else hhmm(routine.starts),

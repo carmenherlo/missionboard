@@ -1,18 +1,13 @@
 /* Configurar → Misiones: a mission's tasks and steps, its colour, and the
    routine it goes with. */
 
-/* A mission that goes with a routine (rutinas-8): its days and hours are the routine's. */
+/* A mission with a routine on: an alarm clock, in the routines' colour (rutina-en-mision.html). */
 .pill--routine {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   background: var(--alarm-card);
   color: var(--text);
-}
-
-.pill--routine img {
-  width: 16px;
-  height: 16px;
 }
 
 /* Editar misión → Cuándo → Con la rutina: the routine it goes with, to see. */

@@ -180,7 +180,6 @@ class Features(BaseModel):
     shop: bool = True
     streaks: bool = True
     dashboard: bool = True
-    routines: bool = True
     games: bool = False
 
 

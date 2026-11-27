@@ -7,7 +7,7 @@ start of a new installation.
 
 With no config.yaml at all, a new installation. What it starts with (`first_run`):
 - FAMILY, a family's installation (the real app, primer-arranque.html): no children nor
-  missions, and the extras (routines, daily prize, shop, streaks) switched off, to switch
+  missions, and the extras (daily prize, shop, streaks) switched off, to switch
   on once the missions work;
 - SAMPLES, the examples with their songs (development and screenshots);
 - PLAIN, nothing written: everything as `initial()` has it (tests).
@@ -32,7 +32,7 @@ REMOVED_FOLDERS = ("photos", "backgrounds")  # the backgrounds are the app's now
 
 
 PLAIN, FAMILY, SAMPLES = "plain", "family", "samples"
-EXTRAS = ("routines", "daily_prize", "shop", "streaks")  # the app works without them
+EXTRAS = ("daily_prize", "shop", "streaks")  # the app works without them
 
 
 def family() -> dict:

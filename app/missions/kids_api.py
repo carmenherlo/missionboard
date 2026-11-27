@@ -9,6 +9,7 @@ from app.events.service import EventLog
 from app.missions.api import Presenter
 from app.missions.kids import MissionKidsService
 from app.missions.repository import MissionsRepository
+from app.routines.repository import RoutinesRepository
 from app.storage.config_store import ConfigStore
 
 router = APIRouter(prefix="/api", tags=["missions"], dependencies=[Depends(require_parent)])
@@ -25,7 +26,7 @@ class ActiveIn(BaseModel):
 def get_mission_kids_service(
     store: ConfigStore = Depends(get_config_store), events: EventLog = Depends(get_event_log)
 ) -> MissionKidsService:
-    return MissionKidsService(MissionsRepository(store), ChildrenRepository(store), events)
+    return MissionKidsService(MissionsRepository(store), ChildrenRepository(store), RoutinesRepository(store), events)
 
 
 @router.put("/missions/{mission_id}/children/{child_id}")

@@ -212,9 +212,12 @@ def test_the_missions_hours_rule_and_its_routine_fits_inside_them(client, clock)
         refused = patch(client, mission_id, schedule={"start": start, "end": end})
         assert refused.status_code == 409 and refused.json()["detail"] == "It does not fit in its mission's hours"
     assert patch(client, mission_id, schedule={"start": "06:30", "end": "07:30"}).status_code == 200
-    # Nor the routine move out of them
-    assert client.patch(url, json={"starts": "06:45"}, headers=PARENT).status_code == 409
-    assert client.get(url).json()["wake"] == "06:30"
+    # The routine moved out of them opens them, never closes them (rutina-en-mision.html)
+    assert client.patch(url, json={"starts": "06:45"}, headers=PARENT).status_code == 200
+    assert client.get(f"/api/missions/{mission_id}").json()["schedule"] == {"start": "06:30", "end": "07:40"}
+    assert descriptions(client, limit=2)[1] == "Cambiaste «Despegue» · horario: 06:30–07:40"
+    client.patch(url, json={"starts": "06:35"}, headers=PARENT)
+    assert client.get(f"/api/missions/{mission_id}").json()["schedule"] == {"start": "06:30", "end": "07:40"}
     patch(client, mission_id, schedule={"start": "06:00", "end": "09:00"})
     clock.moment = MONDAY.replace(hour=6, minute=15)  # before it rings: the mission's hours, for its children too
     day = client.get(f"/api/children/{bea['id']}/today").json()["missions"][0]

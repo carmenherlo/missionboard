@@ -1,6 +1,6 @@
 // Zona de padres · Hoy · Rutinas de hoy (padres-barra.html): every routine of today. Those
 // that ring at a time, with their hours (and «Terminada» once over); those started by hand,
-// with «Lanzar» (who has come home, everyone chosen at first: routine/chooser.js). Started
+// with «Lanzar» (who has come home, its own children chosen at first: routine/chooser.js). Started
 // from a phone, it goes on the tablet too (the server says it). «En marcha» opens the one
 // going on, as its banner does (± Tiempo, pause, finish: just for today). A race already run
 // today: «Lanzar otra vez» (one started by mistake; the children's ⏰ only once a day). A tap on a routine's name opens its

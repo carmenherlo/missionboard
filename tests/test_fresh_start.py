@@ -211,7 +211,7 @@ def test_a_family_starts_with_no_children_nor_missions_and_the_extras_off(data_d
         assert client.get("/api/children").json() == [] and client.get("/api/missions").json() == []
         assert client.get("/api/routines", headers=PARENT).json() == []
         features = client.get("/api/settings", headers=PARENT).json()["features"]
-        assert not any(features[extra] for extra in ("routines", "daily_prize", "shop", "streaks"))
+        assert not any(features[extra] for extra in ("daily_prize", "shop", "streaks"))
     assert config_path(data_dir).exists()
 
 

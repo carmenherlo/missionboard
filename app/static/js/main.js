@@ -28,7 +28,6 @@ import { viewRoutineGoalEdit, viewRoutineStartEdit } from "./screens/parents/rou
 import { viewRoutinePartEdit } from "./screens/parents/routine-part-edit.js";
 import { viewRoutineMusic } from "./screens/parents/routine-music.js";
 import { viewRoutineVoice } from "./screens/parents/routine-voice.js";
-import { viewRoutinesList } from "./screens/parents/routines-list.js";
 import { viewSongsList } from "./screens/parents/songs-list.js";
 import { viewShopItemEdit } from "./screens/parents/shop-item-edit.js";
 import { viewShopList } from "./screens/parents/shop-list.js";
@@ -104,9 +103,8 @@ const routes = [
   [parentsPath("/missions/:mission/routine"), (ids) => viewRoutineNew(ids.mission), "parents", "routine_new"],
   [parentsPath("/missions/:mission/children/:child"),
     (ids) => viewMissionChild(ids.mission, ids.child), "parents", "mission_child"],
-  [parentsPath("/routines"), () => viewRoutinesList(), "parents", "routines"],
-  // From a routine (?from=<id>), "←" goes back to it (05/11), not to the list of routines.
-  [parentsPath("/routines/songs(\\?from=(?<routine>[\\w-]+))?"), (ids) => viewSongsList(ids.routine), "parents", "songs"],
+  // From a routine (?from=<id>), "←" goes back to it (05/11), not to Ajustes.
+  [parentsPath("/songs(\\?from=(?<routine>[\\w-]+))?"), (ids) => viewSongsList(ids.routine), "parents", "songs"],
   [parentsPath("/routines/:routine"), (ids) => viewRoutineEdit(ids.routine), "parents", "routine_edit"],
   [parentsPath("/routines/:routine/music/:music"),
     (ids) => viewRoutineMusic(ids.routine, ids.music), "parents", "routine_music"],

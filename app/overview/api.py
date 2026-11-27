@@ -108,7 +108,7 @@ def setup(overview: OverviewService = Depends(get_overview_service), store: Conf
         ParentsRepository(store).code() == DEFAULT_PARENT_CODE,
         len(PrizesRepository(store).list()),
         len(ShopRepository(store).list()),
-        len(RoutinesRepository(store).list()),
+        len(RoutinesRepository(store).live()),
     )
 
 

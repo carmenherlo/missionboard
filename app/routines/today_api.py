@@ -9,7 +9,6 @@ from app.missions.repository import WEEKDAYS
 from app.routines.api import get_runs_repository
 from app.routines.day_list import routines_of_day
 from app.routines.repository import RoutinesRepository, RunsRepository
-from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 
 router = APIRouter(prefix="/api/routines", tags=["routines"], dependencies=[Depends(require_parent)])
@@ -21,11 +20,8 @@ def routines_today(
     runs: RunsRepository = Depends(get_runs_repository),
     clock=Depends(get_clock),
 ) -> list[dict]:
-    settings = SettingsRepository(store)
-    if not settings.features().routines:
-        return []
     now = clock.now()
     day = app_day(now)
-    routines = RoutinesRepository(store).list()
+    routines = RoutinesRepository(store).live()
     finished = {r.id for r in routines if runs.get(day, r.id)["finished_at"]}
     return routines_of_day(routines, WEEKDAYS[day.weekday()], now.hour * 60 + now.minute, finished)

@@ -6,6 +6,8 @@ from app.children.repository import Child, ChildrenRepository
 from app.errors import InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import Mission, MissionsRepository
+from app.routines.model import Routine
+from app.routines.repository import RoutinesRepository
 
 
 def check_kids(kids: list[str], children: list[Child]) -> list[str]:
@@ -17,19 +19,25 @@ def check_kids(kids: list[str], children: list[Child]) -> list[str]:
 
 
 class MissionKidsService:
-    def __init__(self, missions: MissionsRepository, children: ChildrenRepository, events: EventLog):
+    def __init__(
+        self, missions: MissionsRepository, children: ChildrenRepository, routines: RoutinesRepository, events: EventLog
+    ):
         self._missions = missions
+        self._routines = routines
         self._children = children
         self._events = events
 
     def set_kid(self, mission_id: str, child_id: str, on: bool) -> Mission:
-        """Put a child in a mission or take them out. What they had switched off is kept."""
+        """Put a child in a mission or take them out, and in its routine too (P4 of
+        rutina-en-mision.html). What they had switched off is kept."""
         with self._missions.atomic():
             mission, child = self._get(mission_id, child_id)
             changed = (child_id in mission.kids) != on
             wanted = [*mission.kids, child_id] if on else [k for k in mission.kids if k != child_id]
             mission.kids = check_kids(wanted, self._children.list())
             self._missions.update(mission)
+            if changed:
+                self._follow(mission, child_id, on)
         if changed:
             self._events.config_changed("mission_kid", "on" if on else "off", child=child, mission=mission)
         return mission
@@ -59,6 +67,12 @@ class MissionKidsService:
                     mission.off = {k: v for k, v in mission.off.items() if k != child_id}
                     self._missions.update(mission)
         return []
+
+    def _follow(self, mission: Mission, child_id: str, on: bool) -> None:
+        routine = self._routines.of_mission(mission.id)
+        if routine is not None:
+            kids = [k for k in mission.kids if k in routine.kids or (on and k == child_id)]
+            self._routines.update(Routine.model_validate({**routine.to_doc(), "kids": kids}))
 
     def _get(self, mission_id: str, child_id: str) -> tuple[Mission, Child]:
         mission = self._missions.get(mission_id)

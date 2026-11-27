@@ -15,8 +15,8 @@ OUTSIDE = "It does not fit in its mission's hours"  # the screens tell it by the
 
 
 def kids_of(routine: Routine, children: list[Child]) -> list[Child]:
-    """The routine's children, in the family's order (none listed: every child)."""
-    return [c for c in children if not routine.kids or c.id in routine.kids]
+    """The routine's children, in the family's order."""
+    return [c for c in children if c.id in routine.kids]
 
 
 def routine_by_mission(routines: list[Routine]) -> dict[str, Routine]:

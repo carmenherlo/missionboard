@@ -26,16 +26,16 @@ export function scheduleText(schedule) {
   return schedule.end ? t.missions.range(schedule.start, schedule.end) : t.missions.from(schedule.start);
 }
 
-// [L M X J V] [7:00–9:00] [6 tareas · 14 pasos]
+// [⏰] [L M X J V] [7:00–9:00] [6 tareas · 14 pasos]: the alarm clock, if it has a routine on
+// (rutina-en-mision.html: its hours or children would say less than they seem).
 export function missionPills(mission) {
   const steps = mission.tasks.reduce((sum, task) => sum + task.steps.length, 0);
   const size = [t.missions.tasks(mission.tasks.length), steps > 0 && t.missions.steps(steps)].filter(Boolean).join(" · ");
   const { routine } = mission;
   return [
-    routine && h("span", { class: "pill pill--routine" }, mission.image_url && h("img", { src: mission.image_url, alt: "" }),
-      routine.manual ? t.missions.routineByHand
-        : routine.anchor === "end" ? t.missions.routineEnds(routine.goal.replace(/^0/, ""))
-        : t.missions.routineStarts(routine.start.replace(/^0/, ""))),
+    routine && !routine.off && h("span", {
+      class: "pill pill--routine", title: t.missions.withRoutine, "aria-label": t.missions.withRoutine,
+    }, icon("alarm")),
     h("span", { class: "pill" }, daysText(mission.days)),
     mission.schedule
       ? h("span", { class: "pill" }, icon("clock"), scheduleText(mission.schedule))

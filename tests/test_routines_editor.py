@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from tests.conftest import PARENT
-from tests.test_missions import add_task, create_child, create_mission, patch, saved
+from tests.test_missions import add_task, create_child, create_mission, patch, put_in, saved
 from tests.test_routines import PARTS, make_morning
 from tests.test_settings import FixedClock
 from tests.test_today import descriptions
@@ -55,7 +55,7 @@ def create(client, mission, **times):
 def test_the_list_has_the_routines_with_their_missions_name_and_picture(client, morning):
     routines = client.get("/api/routines").json()
     assert [r["name"] for r in routines] == ["Despegue"]
-    assert routines[0]["every_child"] is True and routines[0]["ends"] == "07:30"
+    assert routines[0]["kids"] == [] and routines[0]["off"] is False and routines[0]["ends"] == "07:30"
     assert routines[0]["image_url"].endswith("rocket.svg")
     assert client.get(f"/api/missions/{morning['mission_id']}").json()["routine"]["id"] == morning["id"]
 
@@ -113,21 +113,24 @@ def test_times_that_do_not_add_up_are_refused(client, body):
     assert edit(client, "GET").json()["wake"] == "06:30"
 
 
-def test_who_follows_it(client):
+def test_who_follows_it_some_of_its_missions_children(client, morning):
     bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
-    routine = edit(client, "PUT", "/kids", kids=[bea["id"]]).json()
-    assert routine["every_child"] is False and routine["kids"] == [bea["id"]]
-    assert edit(client, "PUT", "/kids", kids=[alex["id"], bea["id"]]).json()["every_child"] is True
-    assert edit(client, "PUT", "/kids", kids=[]).status_code == 422
+    noa = create_child(client, name="Noa", preset="fox")
+    put_in(client, morning["mission_id"], alex, bea)  # put in the mission: in its routine too
+    assert edit(client, "GET").json()["kids"] == [bea["id"], alex["id"]]
+    assert edit(client, "PUT", "/kids", kids=[bea["id"]]).json()["kids"] == [bea["id"]]
+    for wrong in ([noa["id"]], [bea["id"], bea["id"]], []):  # not in the mission, twice, nobody
+        assert edit(client, "PUT", "/kids", kids=wrong).status_code == 422
+    put_in(client, morning["mission_id"], bea, on=False)  # out of the mission: out of its routine
+    assert edit(client, "GET").json()["kids"] == []
 
 
-def test_a_deleted_child_leaves_the_routines(client, data_dir):
+def test_a_deleted_child_leaves_the_routines(client, data_dir, morning):
     bea = create_child(client)
-    create_child(client, name="Alex", preset="dinosaur")
+    put_in(client, morning["mission_id"], bea, create_child(client, name="Alex", preset="dinosaur"))
     edit(client, "PUT", "/kids", kids=[bea["id"]])
     client.delete(f"/api/children/{bea['id']}", headers=PARENT)
-    routine = saved(data_dir)["routines"][0]
-    assert routine["kids"] == []  # nobody listed: every child
+    assert saved(data_dir)["routines"][0]["kids"] == []
 
 
 def test_delete_a_routine_keeps_the_mission(client, morning):
@@ -388,3 +391,35 @@ def test_the_warning_before_a_task_ends_is_always_a_minute():
 
     doc = upgrade({"version": 25, "settings": {"routine_warn_minutes": 0}, "routines": [{"id": "a"}]})
     assert "routine_warn_minutes" not in doc["settings"]
+
+
+# ---------- «Sin rutina» in its mission (rutina-en-mision.html) ----------
+
+
+def test_switched_off_it_neither_rings_nor_holds_its_mission_and_comes_back_as_it_was(client, clock, morning):
+    clock.moment = clock.moment.replace(hour=6, minute=40)
+    assert client.get("/api/routines/current").json()["id"] == morning["id"]
+    assert edit(client, "PATCH", off=True).json()["off"] is True
+    assert client.get("/api/routines/current").json() is None
+    assert client.get(f"/api/missions/{morning['mission_id']}").json()["routine"]["off"] is True
+    # Off, the mission's hours are free; on again, they open for it
+    assert patch(client, morning["mission_id"], schedule={"start": "08:00", "end": "09:00"}).status_code == 200
+    edit(client, "PATCH", off=False)
+    assert client.get(f"/api/missions/{morning['mission_id']}").json()["schedule"] == {"start": "06:35", "end": "09:00"}
+    assert client.get("/api/routines/current").json()["id"] == morning["id"]
+
+
+def test_the_switch_for_every_routine_goes_and_the_children_are_the_missions():
+    from app.storage.config_migrations import upgrade
+
+    doc = upgrade(
+        {
+            "version": 29,
+            "features": {"routines": False, "shop": True},
+            "children": [{"id": "bea"}, {"id": "alex"}, {"id": "noa"}],
+            "missions": [{"id": "m", "kids": ["bea", "noa"], "tasks": []}, {"id": "n", "kids": ["alex"], "tasks": []}],
+            "routines": [{"id": "r", "mission_id": "m", "kids": []}, {"id": "s", "mission_id": "n", "kids": ["bea"]}],
+        }
+    )
+    assert doc["features"] == {"shop": True}
+    assert [(r["kids"], r["off"]) for r in doc["routines"]] == [(["bea", "noa"], True), ([], True)]

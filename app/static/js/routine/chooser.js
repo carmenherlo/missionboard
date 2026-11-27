@@ -12,7 +12,7 @@ export function routinesByHand() {
   return api("GET", "api/routines/by-hand").catch(() => []);
 }
 
-// From the parents' Hoy (padres-barra.html): everyone chosen at first, and onStarted after.
+// From the parents' Hoy (padres-barra.html): the routine's own children chosen at first, and onStarted after.
 // again: a race already run today, started again by a parent.
 export async function openChooser(routines, { allChosen = false, onStarted = () => {}, again = false } = {}) {
   await loadAvatars();
@@ -29,7 +29,8 @@ export async function openChooser(routines, { allChosen = false, onStarted = () 
 }
 
 function choice(routine, close, { allChosen, onStarted, again }) {
-  const chosen = new Set(allChosen ? routine.kids.map((kid) => kid.id) : []);
+  // rutina-en-mision.html: of its mission's children, its own come chosen; on the tablet, nobody.
+  const chosen = new Set(allChosen ? routine.kids.filter((kid) => kid.chosen).map((kid) => kid.id) : []);
   const error = h("p", { class: "form-error", role: "alert" });
   const start = h("button", {
     type: "button", class: "btn btn--primary spin-button", disabled: chosen.size === 0,

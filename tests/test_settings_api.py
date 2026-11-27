@@ -10,7 +10,6 @@ from app.main import create_app
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_events import descriptions
-from tests.test_routines import make_morning
 from tests.test_settings import FixedClock
 
 MADRID = timezone(timedelta(hours=1))
@@ -100,17 +99,6 @@ def test_switches_that_do_something(client):
     assert got["features"]["shop"] is False and got["features"]["daily_prize"] is False
     assert descriptions(client)[0] == "Cambiaste lo que está encendido · premio del día apagado · tienda apagada"
     assert client.patch(url, json={"shop": "no"}, headers=PARENT).status_code == 422
-
-
-def test_routines_switched_off_do_not_ring_and_are_kept(client):
-    routine = make_morning(client)
-    assert client.get("/api/routines/current").json()["id"] == routine["id"]
-    client.patch("/api/settings/features", json={"routines": False}, headers=PARENT)
-    assert client.get("/api/routines/current").json() is None
-    assert client.get("/api/routines/next").json() is None
-    assert [r["id"] for r in client.get("/api/routines").json()] == [routine["id"]]
-    client.patch("/api/settings/features", json={"routines": True}, headers=PARENT)
-    assert client.get("/api/routines/current").json() is not None
 
 
 def test_how_the_home_screen_looks_changed_in_ajustes_and_read_without_a_code(client, data_dir):

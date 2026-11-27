@@ -20,13 +20,13 @@ import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const TANK = "static/libraries/fluent/fuel-pump.svg";
 
-const LIST_HREF = "#/parents/config/routines";
+const ROUTINES_HREF = "#/parents/config/routines"; // a routine's pages: /<id>, /<id>/voice…
 const DEFAULT_WAKE = "07:00"; // back to a time with none put away (server) and a mission with no hours
 const PINNED_STEP = 5; // the time that stays put, − / + on its card: 5 minutes at a time
 const MAX_PART_MINUTES = 180;
 
-// Where "←" and «Hecho» go (24/11): back to where the routine was opened from, the list of
-// routines, Hoy (its Rutinas de hoy) or its mission (the default: also after creating it from there).
+// Where "←" and «Hecho» go (24/11): back to where the routine was opened from, Hoy (its
+// Rutinas de hoy) or its mission (the default: also after creating it from there).
 const BACK_KEY = "routine-back";
 const TODAY_HREF = "#/parents";
 export const openedFrom = (href) => sessionStorage.setItem(BACK_KEY, href);
@@ -38,7 +38,7 @@ export function routineError(err) {
   return errorMessage(err);
 }
 
-const backLabel = (href, routine) => ({ [LIST_HREF]: t.routines.title, [TODAY_HREF]: t.menu.today })[href] ?? routine.name;
+const backLabel = (href, routine) => (href === TODAY_HREF ? t.menu.today : routine.name);
 
 // Like Editar misión: panels that save every change on the spot.
 export async function viewRoutineEdit(routineId) {
@@ -49,7 +49,7 @@ export async function viewRoutineEdit(routineId) {
   const mission = await api("GET", `api/missions/${routine.mission_id}`);
   const missionHref = `#/parents/config/missions/${routine.mission_id}`;
   const openedAt = sessionStorage.getItem(BACK_KEY);
-  const backHref = [LIST_HREF, TODAY_HREF].includes(openedAt) ? openedAt : missionHref;
+  const backHref = openedAt === TODAY_HREF ? openedAt : missionHref;
 
   const status = saveStatus();
   // Every change comes back as the whole routine; a refused one says why.
@@ -142,7 +142,7 @@ export async function viewRoutineEdit(routineId) {
   // ---------- who follows it ----------
   const kidsList = h("ul", { class: "rows" });
   function renderKids() {
-    kidsList.replaceChildren(...children.map((child) => {
+    kidsList.replaceChildren(...children.filter((c) => mission.kids.includes(c.id)).map((child) => {
       const inIt = routine.kids.includes(child.id);
       return h("li", { class: "row row--compact" },
         h("input", {
@@ -180,7 +180,7 @@ export async function viewRoutineEdit(routineId) {
   // Inicio and Meta (rutina-modos.html): always there, each opens its own screen.
   const endCard = (kind, iconName, title, detail, time) => [
     h("span", { "aria-hidden": "true" }, icon(iconName)),
-    h("a", { class: "routine-card__text row__cover", href: `${LIST_HREF}/${routineId}/${kind}` }, title,
+    h("a", { class: "routine-card__text row__cover", href: `${ROUTINES_HREF}/${routineId}/${kind}` }, title,
       h("span", { class: "routine-card__detail" }, detail)),
     time, h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))];
   const clock = (time) => !routine.manual && h("span", { class: "routine-card__time" }, shortTime(time));
@@ -227,7 +227,7 @@ export async function viewRoutineEdit(routineId) {
         // The whole card opens it; − / + do not.
         h("a", {
           class: "row__text row__cover",
-          href: `${LIST_HREF}/${routineId}/parts/${part.id}`,
+          href: `${ROUTINES_HREF}/${routineId}/parts/${part.id}`,
           "aria-label": t.routineEdit.editPartNamed(part.text),
         }, part.text,
           part.steps.length > 0 && h("span", { class: "step-reminders", "aria-hidden": "true" },
@@ -331,7 +331,7 @@ export async function viewRoutineEdit(routineId) {
         h("div", { class: "stack" },
           panel(t.routineEdit.panelParts(routine.name), cardsBox, someDaysDiffer,
             h("a", { class: "btn btn--start", href: missionHref }, t.routineEdit.changeInMission, icon("next")),
-            h("a", { class: "btn btn--start", href: `${LIST_HREF}/${routineId}/voice` }, icon("speaker"), t.routineEdit.voice)),
+            h("a", { class: "btn btn--start", href: `${ROUTINES_HREF}/${routineId}/voice` }, icon("speaker"), t.routineEdit.voice)),
           warnPanel,
           // Each thing in its own panel (04/11): the songs apart, like the goal.
           songsPanel)),

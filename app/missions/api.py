@@ -161,7 +161,7 @@ class Presenter:
             "manual": routine.manual,
             "anchor": routine.anchor,
             "kids": [c.id for c in links.kids_of(routine, children)],
-            "every_child": not routine.kids,
+            "off": routine.off,
             "start": None if routine.manual else hhmm(routine.starts),
             "end": None if routine.manual else hhmm(routine.timeline()[-1][2]),  # when its parts end
             "goal": None if routine.manual else hhmm(routine.ends),

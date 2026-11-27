@@ -99,7 +99,8 @@ class Routine(BaseModel):
     name: str = "-"  # the mission's
     image: str | None = None  # the mission's
     days: tuple[str, ...] = tuple(WEEKDAYS)  # always within the mission's
-    kids: tuple[str, ...] = ()  # who follows it (child ids); empty: every child, also the ones added later
+    kids: tuple[str, ...] = ()  # who follows it (child ids): some of its mission's (rutina-en-mision.html)
+    off: bool = False  # «Sin rutina» in its mission: kept as it was, but it neither rings nor starts
     wake: str | None = Field(default=None, pattern=TIME)  # None: started by hand (R2)
     remind_every: int = Field(default=5, ge=0, le=30)
     # Which time stays put when the parts change: "start" (Empieza a las), or "end"
