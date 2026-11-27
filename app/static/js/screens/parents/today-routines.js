@@ -10,6 +10,7 @@ import { h } from "../../dom.js";
 import { openChooser, routinesByHand } from "../../routine/chooser.js";
 import { openRoutine } from "../../routine/routine.js";
 import { t } from "../../texts.js";
+import { openedFrom } from "./routine-edit.js";
 
 export async function routinesToday(redraw) {
   const [routines, byHand, current, again] = await Promise.all([api("GET", "api/routines/today").catch(() => []),
@@ -38,7 +39,8 @@ export async function routinesToday(redraw) {
   };
   const when = (routine) => (routine.manual ? t.overview.routineByHand(routine.minutes) : `${routine.starts}–${routine.ends}`);
   const row = (routine) => h("li", { class: `row${routine.state === "over" ? " routines-today__row--over" : ""}` },
-    h("a", { class: "row__name routines-today__link", href: `#/parents/config/routines/${routine.id}` },
+    h("a", { class: "row__name routines-today__link", href: `#/parents/config/routines/${routine.id}`,
+      onclick: () => openedFrom("#/parents") },
       routine.name, h("small", { class: "hint" }, ` · ${when(routine)}`)),
     status(routine));
   return h("section", { class: "todo routines-today" },

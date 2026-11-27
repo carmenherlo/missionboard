@@ -26,8 +26,9 @@ const PINNED_STEP = 5; // the time that stays put, − / + on its card: 5 minute
 const MAX_PART_MINUTES = 180;
 
 // Where "←" and «Hecho» go (24/11): back to where the routine was opened from, the list of
-// routines or its mission (the default: also after creating it from there).
+// routines, Hoy (its Rutinas de hoy) or its mission (the default: also after creating it from there).
 const BACK_KEY = "routine-back";
+const TODAY_HREF = "#/parents";
 export const openedFrom = (href) => sessionStorage.setItem(BACK_KEY, href);
 
 // What a refused change means: the times do not add up, or it overlaps another routine.
@@ -37,6 +38,8 @@ export function routineError(err) {
   return errorMessage(err);
 }
 
+const backLabel = (href, routine) => ({ [LIST_HREF]: t.routines.title, [TODAY_HREF]: t.menu.today })[href] ?? routine.name;
+
 // Like Editar misión: panels that save every change on the spot.
 export async function viewRoutineEdit(routineId) {
   const url = `api/routines/${routineId}`;
@@ -45,7 +48,8 @@ export async function viewRoutineEdit(routineId) {
   let routine = first;
   const mission = await api("GET", `api/missions/${routine.mission_id}`);
   const missionHref = `#/parents/config/missions/${routine.mission_id}`;
-  const backHref = sessionStorage.getItem(BACK_KEY) === LIST_HREF ? LIST_HREF : missionHref;
+  const openedAt = sessionStorage.getItem(BACK_KEY);
+  const backHref = [LIST_HREF, TODAY_HREF].includes(openedAt) ? openedAt : missionHref;
 
   const status = saveStatus();
   // Every change comes back as the whole routine; a refused one says why.
@@ -314,7 +318,7 @@ export async function viewRoutineEdit(routineId) {
   renderFooter();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, t.routineEdit.title(routine.name), status.element), { href: backHref, label: backHref === LIST_HREF ? t.routines.title : routine.name },
+    parentsHeader(h("span", { class: "title-line" }, t.routineEdit.title(routine.name), status.element), { href: backHref, label: backLabel(backHref, routine) },
       h("button", { type: "button", class: "btn", onclick: () => tryRoutine(routineId) }, icon("play"), t.routines.tryNow)),
     h("main", { class: "page" },
       h("div", { class: "columns columns--parts" },
