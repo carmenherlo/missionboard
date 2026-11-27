@@ -66,6 +66,13 @@ def test_one_at_a_time_by_hand_only_once_over_and_for_who_is_left(client, clock,
     current = client.get("/api/routines/current").json()
     assert current["manual"] is True and [p["child"]["name"] for p in current["people"]] == ["Noa"]
     assert current["parts"][0]["minutes"] == 10  # its minutes, one part after the other
+    # The parents' hand on it, as on any one by hand: ± Tiempo, pause, who is in it
+    url = f"/api/routines/{routine_id}"
+    first = current["parts"][0]["id"]
+    assert client.post(f"{url}/extra", json={"part_id": first, "minutes": 5}, headers=PARENT).status_code == 200
+    assert client.get("/api/routines/current").json()["parts"][0]["minutes"] == 15
+    assert client.put(f"{url}/paused", json={"paused": True}, headers=PARENT).status_code == 204
+    assert client.get(f"{url}/who", headers=PARENT).status_code == 200
 
 
 def test_by_hand_once_finished_and_it_ends_for_today_but_stays_for_the_others(client, clock, morning):
