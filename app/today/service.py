@@ -129,7 +129,7 @@ class DayService:
         child = self._children.require(child_id)
         settings = self._settings.settings()
         now = self._clock.now()
-        day = app_day(now, settings.day_starts_at)
+        day = app_day(now)
         time = now.strftime("%H:%M")
         weekday = WEEKDAYS[day.weekday()]
 
@@ -227,7 +227,7 @@ class DayService:
 
     def checked_at(self, child_id: str, mission_id: str) -> dict:
         """When each task of a mission was checked today (a race goes by them)."""
-        day = app_day(self._clock.now(), self._settings.settings().day_starts_at)
+        day = app_day(self._clock.now())
         return self._days.checked_at(day, child_id, mission_id)
 
     def open_for_routine(self, child_id: str, mission_id: str) -> None:

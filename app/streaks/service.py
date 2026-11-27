@@ -46,7 +46,7 @@ class StreaksService:
         self._events = events
 
     def today(self) -> date:
-        return app_day(self._clock.now(), self._settings.settings().day_starts_at)
+        return app_day(self._clock.now())
 
     def streak(self, child_id: str, day: date | None = None) -> int:
         """Days in a row with all their missions done (count.py)."""
@@ -176,7 +176,7 @@ class StreaksService:
     def _builder(self, child_id: str):
         """The rules, today, and build(end): the week ending then, as it is today."""
         settings = self._settings.settings()
-        today = app_day(self._clock.now(), settings.day_starts_at)
+        today = app_day(self._clock.now())
         since = self._streaks.start(child_id, today)
         offs = self._offs.by_day(child_id)
         had = missions_by_day(self._missions.list(), child_id, offs)

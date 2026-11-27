@@ -47,9 +47,7 @@ def get_children_service(
 
     def welcome(child: Child) -> None:
         now = clock.now()
-        request.app.state.stars_repository.add_starting_stars(
-            child, settings.starting_stars, app_day(now, settings.day_starts_at), now
-        )
+        request.app.state.stars_repository.add_starting_stars(child, settings.starting_stars, app_day(now), now)
 
     return ChildrenService(
         ChildrenRepository(store),

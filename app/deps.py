@@ -17,7 +17,6 @@ from app.images.libraries import ImageLibraries
 from app.parents.repository import ParentsRepository
 from app.parents.service import ParentsService
 from app.routines.races_repository import RacesRepository
-from app.settings import SettingsRepository
 from app.songs.repository import SoundFiles
 from app.stars.repository import StarsRepository
 from app.storage.config_store import ConfigStore
@@ -89,11 +88,10 @@ def get_image_libraries(request: Request) -> ImageLibraries:
 
 def get_event_log(
     request: Request,
-    store: ConfigStore = Depends(get_config_store),
     clock: Clock = Depends(get_clock),
 ) -> EventLog:
     events: EventsRepository = request.app.state.events_repository
-    return EventLog(events, clock, SettingsRepository(store))
+    return EventLog(events, clock)
 
 
 def get_parents_service(

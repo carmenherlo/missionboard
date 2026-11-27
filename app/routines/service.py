@@ -61,9 +61,8 @@ class RoutinesService:
     def current(self) -> Current | None:
         """The routine going on at this moment, if any: one started by hand (until its
         time is up), or else one ringing by its time (finished ones stay away today)."""
-        settings = self._settings.settings()
         now = self._clock.now()
-        day = app_day(now, settings.day_starts_at)
+        day = app_day(now)
         minute = _minute(now)
         weekday = WEEKDAYS[day.weekday()]
         for stored in self._live():
@@ -99,7 +98,6 @@ class RoutinesService:
     def current_for(self, routine: Routine, now) -> Current:
         """Any routine as if it were going on at `now` ("Probar ahora"); one started by
         hand, as if started now with all its children."""
-        settings = self._settings.settings()
         minute = now.hour * 60 + now.minute + now.second / 60
         run = dict.fromkeys(RunsRepository.FIELDS)
         started = None
@@ -108,7 +106,7 @@ class RoutinesService:
             started, routine = minute + (0 if routine.racing else INICIO_SECONDS / 60), routine.started_at(int(minute))
         return Current(
             routine,
-            app_day(now, settings.day_starts_at),
+            app_day(now),
             minute,
             run,
             self.people(routine, trial=True),
@@ -118,8 +116,7 @@ class RoutinesService:
 
     def notices(self) -> list[dict]:
         """Today's notices before the routines ring: {"routine", "at" (minute of the day), "say"}."""
-        settings = self._settings.settings()
-        day = app_day(self._clock.now(), settings.day_starts_at)
+        day = app_day(self._clock.now())
         weekday = WEEKDAYS[day.weekday()]
         found = []
         for stored in self._live():
@@ -153,10 +150,9 @@ class RoutinesService:
     def by_hand(self, again: bool = False) -> list[tuple[Routine, list[Child]]]:
         """The routines that can be started by hand today, each with its children. A race
         only once a day, unless a parent starts it `again` (one started by mistake, 26/11)."""
-        settings = self._settings.settings()
-        weekday = WEEKDAYS[app_day(self._clock.now(), settings.day_starts_at).weekday()]
+        weekday = WEEKDAYS[app_day(self._clock.now()).weekday()]
         children = self._children.list()
-        day = app_day(self._clock.now(), settings.day_starts_at)
+        day = app_day(self._clock.now())
         raced = {race["routine_id"] for race in self._races.of_day(day)}  # a race, once a day
         routines = [
             r
@@ -174,7 +170,7 @@ class RoutinesService:
         if not kids or any(k not in {c.id for c in children} for k in kids):
             raise InvalidError("Choose who has come home, among the routine's children")
         now = self._clock.now()
-        day = app_day(now, self._settings.settings().day_starts_at)
+        day = app_day(now)
         self._runs.clear(day, routine_id)
         # After "3, 2, 1, ¡YA!", or "Va a empezar la misión…" and 5, 4, 3, 2, 1 (rutina-inicio.html)
         started = now + timedelta(seconds=START_SECONDS if routine.racing else INICIO_SECONDS)
@@ -200,7 +196,7 @@ class RoutinesService:
             routine = next((r for r in self._routines.list() if r.id == routine_id), None)
             if routine is None:
                 raise NotFoundError("Routine not found")
-            self._runs.clear(app_day(self._clock.now(), self._settings.settings().day_starts_at), routine_id)
+            self._runs.clear(app_day(self._clock.now()), routine_id)
             self._events.routine_did("routine_ended", routine.name, early=early)
             return
         current = self._current(routine_id)
@@ -251,7 +247,7 @@ class RoutinesService:
 
     def current_day(self) -> date:
         """Today, by the household's clock (a day may start after midnight)."""
-        return app_day(self._clock.now(), self._settings.settings().day_starts_at)
+        return app_day(self._clock.now())
 
     def _current(self, routine_id: str) -> Current:
         current = self.current()

@@ -25,7 +25,7 @@ def routines_today(
     if not settings.features().routines:
         return []
     now = clock.now()
-    day = app_day(now, settings.settings().day_starts_at)
+    day = app_day(now)
     routines = RoutinesRepository(store).list()
     finished = {r.id for r in routines if runs.get(day, r.id)["finished_at"]}
     return routines_of_day(routines, WEEKDAYS[day.weekday()], now.hour * 60 + now.minute, finished)

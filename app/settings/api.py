@@ -33,7 +33,6 @@ class SettingsPatch(BaseModel):
     stars_per_mission: int | None = None
     daily_prize_spins: int | None = None
     starting_stars: int | None = None
-    day_starts_at: str | None = None
     seasons: list[Season] | None = None
     home: HomeLook | None = None
     route: RouteLook | None = None
@@ -60,7 +59,7 @@ def get_settings_service(
 def _now(settings, clock: Clock) -> dict:
     """The season and the moment of the day now, and its picture."""
     now = clock.now()
-    season = current_season(settings.seasons, app_day(now, settings.day_starts_at))
+    season = current_season(settings.seasons, app_day(now))
     moment = current_moment(season, now.strftime("%H:%M"))
     return {"season": season.name, "moment": moment, "background_url": background_url(season.name, moment)}
 

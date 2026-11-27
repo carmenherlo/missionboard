@@ -38,7 +38,6 @@ _FIELDS = {
     "stars_per_mission": lambda value: f"estrellas por misión: {value}",
     "daily_prize_spins": lambda value: f"giros de la ruleta: {value}",
     "starting_stars": lambda value: f"estrellas de un niño nuevo: {value}",
-    "day_starts_at": lambda value: f"el día empieza a las {value}",
     "seasons": lambda value: (
         "estaciones: "
         + " · ".join(

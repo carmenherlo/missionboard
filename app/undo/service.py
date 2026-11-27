@@ -19,7 +19,6 @@ from app.day_off.repository import DayOffsRepository
 from app.errors import NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import MissionsRepository
-from app.settings import SettingsRepository
 from app.stars.repository import StarsRepository
 from app.streaks.service import StreaksService
 from app.streaks.week import FULL
@@ -39,7 +38,6 @@ class UndoService:
         spins: PrizeSpinsRepository,
         streaks: StreaksService,
         offs: DayOffsRepository,
-        settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
     ):
@@ -51,7 +49,6 @@ class UndoService:
         self._spins = spins
         self._streaks = streaks
         self._offs = offs
-        self._settings = settings
         self._clock = clock
         self._events = events
 
@@ -96,7 +93,7 @@ class UndoService:
     # ---------- helpers ----------
 
     def _today(self) -> date:
-        return app_day(self._clock.now(), self._settings.settings().day_starts_at)
+        return app_day(self._clock.now())
 
     def _completion(self, child_id: str, mission_id: str, day: date) -> dict:
         row = self._days.completion(day, child_id, mission_id)

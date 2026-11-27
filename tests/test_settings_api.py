@@ -49,11 +49,11 @@ def test_what_there_is_and_the_season_now(client):
 
 
 def test_a_change_is_saved_in_config_yaml_and_logged(client, data_dir):
-    got = patch(client, stars_per_mission=2, day_starts_at="04:00").json()
+    got = patch(client, stars_per_mission=2, daily_prize_spins=3).json()
     assert got["settings"]["stars_per_mission"] == 2
     saved = yaml.safe_load(config_path(data_dir).read_text())["settings"]
-    assert saved["stars_per_mission"] == 2 and saved["day_starts_at"] == "04:00"
-    assert descriptions(client)[0] == "Cambiaste los ajustes · estrellas por misión: 2 · el día empieza a las 04:00"
+    assert saved["stars_per_mission"] == 2 and saved["daily_prize_spins"] == 3
+    assert descriptions(client)[0] == "Cambiaste los ajustes · estrellas por misión: 2 · giros de la ruleta: 3"
     patch(client, stars_per_mission=2)  # nothing changes: nothing logged
     assert descriptions(client)[0].startswith("Cambiaste los ajustes · estrellas por misión: 2 ·")
 
@@ -62,7 +62,6 @@ def test_a_change_is_saved_in_config_yaml_and_logged(client, data_dir):
     "body",
     [
         {"stars_per_mission": -1},
-        {"day_starts_at": "25:00"},
         {"daily_prize_spins": -1},
     ],
 )

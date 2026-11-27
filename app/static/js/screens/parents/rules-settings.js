@@ -1,9 +1,7 @@
 // Rules that are not how anything looks (12/11, taken out of Ajustes): the page
-// Recompensas → Estrellas, and the panel with when the app's day starts (in Misiones).
-// Saved on the spot.
+// Recompensas → Estrellas. Saved on the spot.
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
-import { timeInput } from "../../components/time-input.js";
 import { h, render } from "../../dom.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
@@ -28,18 +26,4 @@ export async function viewStarsSettings() {
           onChange: (n) => saveSettings(status, { starting_stars: n }),
         })),
         h("p", { class: "hint" }, t.settings.giftHint))));
-}
-
-// When the app's day starts (was its own page, El día; 13/11 moved under Misiones):
-// a panel that saves on the spot.
-export async function dayStartPanel(status) {
-  const { settings } = await loadSettings();
-  const dayStart = timeInput({
-    value: settings.day_starts_at, required: true, label: t.settings.dayStarts,
-    onchange: (e) => e.target.value && saveSettings(status, { day_starts_at: e.target.value }),
-  });
-  return panel(t.settings.dayTitle,
-    h("div", { class: "setting" },
-      h("label", { class: "setting__line" }, h("span", { class: "setting__label" }, t.settings.dayStarts), dayStart),
-      h("p", { class: "hint" }, t.settings.dayHint)));
 }

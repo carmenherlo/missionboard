@@ -135,16 +135,6 @@ def test_the_focus_is_the_first_open_mission_or_else_the_next_one(client, bea, c
     assert day["focus_is_now"] is False
 
 
-def test_the_weekday_is_the_one_of_the_app_day(data_dir, clock):
-    write_config(data_dir, {"day_starts_at": "04:00"})
-    clock.moment = datetime(2026, 11, 3, 1, 0, tzinfo=MADRID)  # Tuesday 01:00: still Monday for the app
-    with TestClient(create_app(data_dir, clock=clock)) as client:
-        bea = create_child(client)
-        mission(client, bea, "Lunes", days=["mon"])
-        assert [m["name"] for m in today(client, bea)["missions"]] == ["Lunes"]
-        assert today(client, bea)["day"] == "2026-11-02"
-
-
 def test_an_unknown_child(client):
     assert client.get("/api/children/nobody/today").status_code == 404
 

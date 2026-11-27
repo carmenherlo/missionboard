@@ -91,7 +91,7 @@ REMIND_EVERY_S = 60
 
 
 def _orders(app: FastAPI):
-    events = EventLog(app.state.events_repository, app.state.clock, SettingsRepository(app.state.config_store))
+    events = EventLog(app.state.events_repository, app.state.clock)
     return shop_api.build_orders(app.state, events)
 
 
@@ -130,9 +130,7 @@ def create_app(
         if with_examples:
             settings = SettingsRepository(config_store).settings()
             for child in ChildrenRepository(config_store).list():
-                app.state.stars_repository.add_starting_stars(
-                    child, settings.starting_stars, app_day(now, settings.day_starts_at), now
-                )
+                app.state.stars_repository.add_starting_stars(child, settings.starting_stars, app_day(now), now)
         # Fail at startup, not mid-use, if settings were mistyped by hand.
         settings = SettingsRepository(config_store)
         settings.settings()

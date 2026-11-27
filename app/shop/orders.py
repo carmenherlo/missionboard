@@ -190,7 +190,7 @@ class OrdersService:
         return order
 
     def _today(self) -> date:
-        return app_day(self._clock.now(), self._settings.settings().day_starts_at)
+        return app_day(self._clock.now())
 
     def _stamp(self) -> str:
         now: datetime = self._clock.now()

@@ -17,7 +17,6 @@ from app.deps import (
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
-from app.settings import SettingsRepository
 from app.storage.config_store import ConfigStore
 
 # Letting a child off is for parents: with the code.
@@ -36,9 +35,7 @@ def get_day_off_service(
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
 ) -> DayOffService:
-    return DayOffService(
-        ChildrenRepository(store), MissionsRepository(store), offs, SettingsRepository(store), clock, events
-    )
+    return DayOffService(ChildrenRepository(store), MissionsRepository(store), offs, clock, events)
 
 
 def _present(view: dict, libraries: ImageLibraries) -> dict:

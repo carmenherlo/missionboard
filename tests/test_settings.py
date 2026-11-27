@@ -29,19 +29,19 @@ def test_values_from_file(tmp_path):
         tmp_path,
         {
             "version": CURRENT_VERSION,
-            "settings": {"stars_per_mission": 2, "day_starts_at": "04:30"},
+            "settings": {"stars_per_mission": 2, "starting_stars": 5},
             "features": {"shop": False},
         },
     )
     assert repo.settings().stars_per_mission == 2
-    assert repo.settings().day_starts_at == "04:30"
+    assert repo.settings().starting_stars == 5
     assert repo.features().shop is False
 
 
 def test_unquoted_time_from_yaml(tmp_path):
     tmp_path.mkdir(parents=True, exist_ok=True)
-    config_path(tmp_path).write_text(f"version: {CURRENT_VERSION}\nsettings:\n  day_starts_at: 4:30\n")
-    assert SettingsRepository(ConfigStore(tmp_path)).settings().day_starts_at == "04:30"
+    config_path(tmp_path).write_text(f"version: {CURRENT_VERSION}\nsettings:\n  shop_notify:\n    remind_at: 4:30\n")
+    assert SettingsRepository(ConfigStore(tmp_path)).settings().shop_notify.remind_at == "04:30"
 
 
 def test_missing_keys_take_defaults(tmp_path):
@@ -55,7 +55,7 @@ def test_missing_keys_take_defaults(tmp_path):
     [
         ("settings", {"stars_per_mission": -1}),
         ("settings", {"stars_per_mission": "dos"}),
-        ("settings", {"day_starts_at": "25:00"}),
+        ("settings", {"shop_notify": {"remind_at": "25:00"}}),
         ("features", {"shop": "no"}),
     ],
 )
@@ -139,3 +139,10 @@ def test_seasons_with_sunrise_and_sunset_become_the_start_of_each_moment(tmp_pat
     assert doc["settings"]["seasons"] == [
         {"name": "otono", "start": "09-23", "manana": "06:00", "dia": "09:00", "tarde": "17:30", "noche": "20:30"}
     ]
+
+
+def test_the_day_start_setting_goes_and_the_day_starts_at_midnight():
+    from app.storage.config_migrations import upgrade
+
+    doc = upgrade({"version": 27, "settings": {"stars_per_mission": 2, "day_starts_at": "04:00"}})
+    assert doc["settings"] == {"stars_per_mission": 2}

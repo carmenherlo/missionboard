@@ -15,7 +15,6 @@ from app.day_off.repository import WHOLE_DAY, DayOffsRepository
 from app.errors import InvalidError, NotFoundError
 from app.events.service import EventLog
 from app.missions.repository import MissionsRepository
-from app.settings import SettingsRepository
 from app.today.plan import missions_by_day
 
 
@@ -25,19 +24,17 @@ class DayOffService:
         children: ChildrenRepository,
         missions: MissionsRepository,
         offs: DayOffsRepository,
-        settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
     ):
         self._children = children
         self._missions = missions
         self._offs = offs
-        self._settings = settings
         self._clock = clock
         self._events = events
 
     def today(self) -> date:
-        return app_day(self._clock.now(), self._settings.settings().day_starts_at)
+        return app_day(self._clock.now())
 
     def day(self, child_id: str, day: date) -> dict:
         """What the child has that day and what of it is off."""

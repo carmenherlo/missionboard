@@ -10,7 +10,7 @@ class Event:
     """Something that happened in the app, with the names it had at that moment.
 
     at: when it happened (local time with its offset); day: the app's day,
-    which starts at settings.day_starts_at. subject and action say what
+    from 00:00. subject and action say what
     kind of thing it was about and what was done to it (for config_changed:
     "mission" and "changed"; for screen_opened, subject is the screen).
     """

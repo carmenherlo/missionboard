@@ -5,7 +5,6 @@ from app.children.repository import ChildrenRepository
 from app.clock import Clock, app_day
 from app.errors import InvalidError
 from app.events.service import EventLog
-from app.settings import SettingsRepository
 from app.stars.repository import StarsRepository
 
 
@@ -14,13 +13,11 @@ class StarsService:
         self,
         children: ChildrenRepository,
         stars: StarsRepository,
-        settings: SettingsRepository,
         clock: Clock,
         events: EventLog,
     ):
         self._children = children
         self._stars = stars
-        self._settings = settings
         self._clock = clock
         self._events = events
 
@@ -31,7 +28,7 @@ class StarsService:
         """A parent gives a child some stars, as a present; says how many they have now."""
         child = self._children.require(child_id)
         now = self._clock.now()
-        self._stars.give(child, stars, app_day(now, self._settings.settings().day_starts_at), now)
+        self._stars.give(child, stars, app_day(now), now)
         self._events.config_changed("stars", "given", child=child, changes={"gift": stars})
         return self._stars.balance(child.id)
 
@@ -41,7 +38,7 @@ class StarsService:
         if stars > self._stars.balance(child.id):
             raise InvalidError("Not that many stars")
         now = self._clock.now()
-        self._stars.give(child, -stars, app_day(now, self._settings.settings().day_starts_at), now, "taken")
+        self._stars.give(child, -stars, app_day(now), now, "taken")
         self._events.config_changed("stars", "taken", child=child, changes={"gift": -stars})
         return self._stars.balance(child.id)
 

@@ -11,7 +11,7 @@ from collections.abc import Callable
 from app.storage.config_initial import PRIZES, SHOP
 
 FIRST_VERSION = 16  # family missions: mission → task → step
-CURRENT_VERSION = 27
+CURRENT_VERSION = 28
 
 
 class ConfigVersionError(Exception):
@@ -214,6 +214,16 @@ def _v26_to_v27(doc: dict) -> dict:
 _MIGRATIONS[26] = _v26_to_v27
 
 
+def _v27_to_v28(doc: dict) -> dict:
+    """The day always starts at 00:00 (misiones-para-quien.html, 27/11): its setting goes."""
+    (doc.get("settings") or {}).pop("day_starts_at", None)
+    doc["version"] = 28
+    return doc
+
+
+_MIGRATIONS[27] = _v27_to_v28
+
+
 def upgrade(doc: dict) -> dict:
     """Return the document at CURRENT_VERSION. The input is not modified."""
     version = doc.get("version", 1)
@@ -234,7 +244,7 @@ def initial() -> dict:
         "version": CURRENT_VERSION,
         "parents": {"code": "1234"},
         "children": [],
-        "settings": {"stars_per_mission": 1, "daily_prize_spins": 1, "day_starts_at": "00:00"},
+        "settings": {"stars_per_mission": 1, "daily_prize_spins": 1},
         "features": {
             "daily_prize": True,
             "shop": True,

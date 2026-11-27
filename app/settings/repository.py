@@ -154,7 +154,6 @@ class Settings(BaseModel):
     stars_per_mission: int = Field(default=1, ge=0)
     daily_prize_spins: int = Field(default=1, ge=0)
     starting_stars: int = Field(default=0, ge=0)  # what a new child starts with
-    day_starts_at: str = Field(default="00:00", pattern=TIME)
     seasons: tuple[Season, ...] = DEFAULT_SEASONS
     home: HomeLook = HomeLook()
     route: RouteLook = RouteLook()
@@ -162,8 +161,6 @@ class Settings(BaseModel):
     shop_notify: ShopNotify = ShopNotify()
     # Rachas: a day counts with all their missions done (fixed, 20/11).
     streak_week: StreakWeek = StreakWeek()
-
-    _day_starts_at = field_validator("day_starts_at", mode="before")(time_from_yaml_number)
 
     @field_validator("seasons")
     @classmethod

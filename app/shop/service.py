@@ -144,7 +144,7 @@ class ShopService:
         if not item.for_child(child.id):
             raise NotFoundError("Item not found")
         now = self._clock.now()
-        day = app_day(now, self._settings.settings().day_starts_at)
+        day = app_day(now)
         order_id = self._purchases.buy(day, child, item, now)
         if order_id is None:
             raise InvalidError("Not enough stars")

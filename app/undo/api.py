@@ -20,7 +20,6 @@ from app.deps import (
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
 from app.missions.repository import MissionsRepository
-from app.settings import SettingsRepository
 from app.stars.repository import StarsRepository
 from app.storage.config_store import ConfigStore
 from app.streaks.api import get_streaks_service
@@ -58,7 +57,6 @@ def get_undo_service(
         spins,
         streaks,
         offs,
-        SettingsRepository(store),
         clock,
         events,
     )

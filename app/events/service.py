@@ -8,7 +8,6 @@ from app.clock import Clock, app_day, today
 from app.events import texts
 from app.events.repository import Event, EventsRepository
 from app.missions.repository import MissionsRepository
-from app.settings import SettingsRepository
 
 
 class Named(Protocol):
@@ -28,10 +27,9 @@ class EventLog:
     deleting a mission later does not change what the log says.
     """
 
-    def __init__(self, events: EventsRepository, clock: Clock, settings: SettingsRepository):
+    def __init__(self, events: EventsRepository, clock: Clock):
         self._events = events
         self._clock = clock
-        self._settings = settings
 
     # ---------- writing ----------
 
@@ -105,7 +103,7 @@ class EventLog:
         )
 
     def day_of(self, moment: datetime) -> date:
-        return app_day(moment, self._settings.settings().day_starts_at)
+        return app_day(moment)
 
     # ---------- reading ----------
 

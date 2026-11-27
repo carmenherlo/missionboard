@@ -3,13 +3,10 @@ import io
 from datetime import datetime, timedelta, timezone
 
 import pytest
-import yaml
 from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.storage import db
-from app.storage.config_migrations import CURRENT_VERSION
-from app.storage.config_store import config_path
 from tests.conftest import PARENT
 from tests.test_missions import add_step, add_task, create_child, create_mission, patch, upload
 from tests.test_settings import FixedClock
@@ -280,17 +277,3 @@ def test_csv_for_a_spreadsheet_in_spanish(client):
         "días: L M",
         "Cambiaste «Aterrizaje; tarde» · días: L M",
     ]
-
-
-def test_the_day_starts_at_the_configured_time(data_dir, clock):
-    data_dir.mkdir(parents=True)
-    config_path(data_dir).write_text(
-        yaml.safe_dump({"version": CURRENT_VERSION, "settings": {"day_starts_at": "04:00"}})
-    )
-    clock.moment = datetime(2026, 11, 4, 0, 30, tzinfo=MADRID)
-    with TestClient(create_app(data_dir, clock=clock)) as client:
-        open_screen(client, screen="config")
-        clock.moment = datetime(2026, 11, 4, 4, 0, tzinfo=MADRID)
-        open_screen(client, screen="config")
-        assert [e["day"] for e in latest(client)] == ["2026-11-04", "2026-11-03"]
-        assert [row[:2] for row in csv_rows(client)[1:]] == [["2026-11-03", "00:30:00"], ["2026-11-04", "04:00:00"]]

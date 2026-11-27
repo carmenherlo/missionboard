@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 from app.children.repository import ChildrenRepository
 from app.deps import get_clock, get_config_store, get_event_log, get_stars_repository, require_parent
 from app.events.service import EventLog
-from app.settings import SettingsRepository
 from app.stars.repository import StarsRepository
 from app.stars.service import StarsService
 from app.storage.config_store import ConfigStore
@@ -24,7 +23,7 @@ def get_stars_service(
     clock=Depends(get_clock),
     events: EventLog = Depends(get_event_log),
 ) -> StarsService:
-    return StarsService(ChildrenRepository(store), stars, SettingsRepository(store), clock, events)
+    return StarsService(ChildrenRepository(store), stars, clock, events)
 
 
 @router.get("/children/{child_id}/stars")
