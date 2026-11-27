@@ -14,6 +14,7 @@ import { viewAvatarNew } from "./screens/parents/avatar-new.js";
 import { viewAvatarsList } from "./screens/parents/avatars-list.js";
 import { viewBackup } from "./screens/parents/backup.js";
 import { viewDevice } from "./screens/parents/device.js";
+import { viewAnimationLab } from "./screens/parents/animation-lab.js";
 import { viewDisplaySettings } from "./screens/parents/display-settings.js";
 import { viewNotifySettings } from "./screens/parents/notify-settings.js";
 import { viewAppearance, viewAppearanceHome, viewAppearanceMissions, viewSeasons } from "./screens/parents/settings.js";
@@ -80,6 +81,7 @@ const routes = [
   [parentsPath("/appearance/home"), () => viewAppearanceHome(), "parents", "appearance_home"],
   [parentsPath("/appearance/missions"), () => viewAppearanceMissions(), "parents", "appearance_missions"],
   [parentsPath("/appearance/seasons"), () => viewSeasons(), "parents", "appearance_seasons"],
+  [parentsPath("/appearance/lab"), () => viewAnimationLab(), "parents", "appearance_lab"],
   [parentsPath("/stars"), () => viewStarsSettings(), "parents", "stars_settings"],
   [parentsPath("/streaks"), () => viewStreakSettings(), "parents", "streak_settings"],
   [parentsPath("/day"), () => { location.hash = "#/parents/config/missions"; }, "parents"], // moved there 13/11

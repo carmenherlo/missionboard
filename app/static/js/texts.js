@@ -433,6 +433,21 @@ export const t = {
     home: "Pantalla de inicio",
     missions: "Camino de misiones",
     seasons: "Fondos y estaciones",
+    lab: "Laboratorio de animaciones",
+  },
+  // Apariencia → Laboratorio de animaciones (laboratorio-animaciones.html)
+  lab: {
+    title: "Laboratorio de animaciones",
+    hint: "Para ver cómo quedan las animaciones. No guarda nada ni da estrellas.",
+    race: "Carrera · la fiesta del final",
+    outcome: "Cómo acaba",
+    outcomes: { record: "Récord", won: "Ganan", slow: "Casi", lost: "Gana el marcianito" },
+    kids: "Cuántos niños",
+    kidsHint: "Primero los de la familia; si faltan, niños de prueba.",
+    play: "Ver la fiesta",
+    close: "Cerrar",
+    mission: "Despegue",
+    reduced: "«Reducir movimiento» está encendido en este aparato: la fiesta no se ve, solo el resultado.",
   },
   // Apariencia, Estrellas, El día, and the switches and settings on each screen where they are used (ajustes.html)
   settings: {

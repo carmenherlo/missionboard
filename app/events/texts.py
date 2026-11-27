@@ -130,6 +130,7 @@ SCREENS = {
     "appearance_home": ("Apariencia · Pantalla de inicio", None),
     "appearance_missions": ("Apariencia · Camino de misiones", None),
     "appearance_seasons": ("Apariencia · Fondos y estaciones", None),
+    "appearance_lab": ("Apariencia · Laboratorio de animaciones", None),
     "stars_settings": ("Estrellas por misión", None),
     "streak_settings": ("Racha y premio de la semana", None),
     "parents_today": ("Padres · Hoy", None),

@@ -123,7 +123,7 @@ const pageHeader = (title, status) => parentsHeader(h("span", { class: "title-li
 // Apariencia: one row for each screen (more will come).
 export function viewAppearance() {
   const pages = [["home", "home", t.appearance.home], ["missions", "missions", t.appearance.missions],
-    ["seasons", "sun", t.appearance.seasons]];
+    ["seasons", "sun", t.appearance.seasons], ["lab", "play", t.appearance.lab]];
   render(
     parentsHeader(t.appearance.title, { href: "#/parents/config", label: t.config.back }),
     h("main", { class: "page" },

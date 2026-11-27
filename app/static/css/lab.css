@@ -1,0 +1,16 @@
+/* ---------- Apariencia → Laboratorio de animaciones (animation-lab.js) ----------
+   The race's end over the whole screen, as on the tablet: the result card, and the party over it. */
+
+.lab__stage {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+/* Over the party too: it can be closed at any moment. */
+.lab__close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 41;
+}
