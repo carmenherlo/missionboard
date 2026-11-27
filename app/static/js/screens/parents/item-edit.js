@@ -13,6 +13,17 @@ import { WEEKDAYS, daysLongText } from "./mission-summary.js";
 
 const TEXT_SAVE_DELAY_MS = 600;
 
+// Opened from a routine's task («Cambiar en la misión»): its «←» and «Listo» go back there,
+// not to the mission. Kept for that task only, once.
+const BACK_KEY = "task-back";
+export const taskOpenedFrom = (taskId, href, label) =>
+  sessionStorage.setItem(BACK_KEY, JSON.stringify({ taskId, href, label }));
+function openedFrom(taskId) {
+  const saved = JSON.parse(sessionStorage.getItem(BACK_KEY) ?? "null");
+  sessionStorage.removeItem(BACK_KEY);
+  return saved?.taskId === taskId ? { href: saved.href, label: saved.label } : null;
+}
+
 export async function viewTaskEdit(missionId, taskId) {
   const mission = await api("GET", `api/missions/${missionId}`);
   await itemEditor(mission, {
@@ -23,6 +34,7 @@ export async function viewTaskEdit(missionId, taskId) {
     deleteLabel: t.taskEdit.delete,
     confirmDelete: t.taskEdit.confirmDelete,
     extra: taskDays,
+    back: openedFrom(taskId),
   });
 }
 
@@ -83,7 +95,7 @@ function taskDays({ mission, item, save, url }) {
   return panel(t.taskEdit.days, box);
 }
 
-async function itemEditor(start, { find, url, title, textHint, deleteLabel, confirmDelete, extra }) {
+async function itemEditor(start, { find, url, title, textHint, deleteLabel, confirmDelete, extra, back = null }) {
   let mission = start;
   const missionHref = `#/parents/config/missions/${mission.id}`;
   if (!find(mission)) {
@@ -140,7 +152,7 @@ async function itemEditor(start, { find, url, title, textHint, deleteLabel, conf
   function renderFooter() {
     footer.replaceChildren(
       h("button", { type: "button", class: "link-danger", onclick: showConfirm }, deleteLabel),
-      h("a", { class: "btn btn--primary", href: missionHref }, t.common.done));
+      h("a", { class: "btn btn--primary", href: back?.href ?? missionHref }, t.common.done));
   }
   function showConfirm() {
     footer.replaceChildren(confirmBar({
@@ -156,7 +168,7 @@ async function itemEditor(start, { find, url, title, textHint, deleteLabel, conf
   renderFooter();
 
   render(
-    parentsHeader(h("span", { class: "title-line" }, title, status.element), { href: missionHref, label: mission.name }),
+    parentsHeader(h("span", { class: "title-line" }, title, status.element), back ?? { href: missionHref, label: mission.name }),
     h("main", { class: "page" },
       h("div", { class: "columns columns--equal" },
         h("div", { class: "stack" },

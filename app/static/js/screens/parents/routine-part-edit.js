@@ -9,6 +9,7 @@ import { tryRoutine } from "../../routine/routine.js";
 import * as script from "../../routine/script.js";
 import { t } from "../../texts.js";
 import { parentsHeader } from "./common.js";
+import { taskOpenedFrom } from "./item-edit.js";
 import { routineError } from "./routine-edit.js";
 
 const TEXT_SAVE_DELAY_MS = 600;
@@ -130,7 +131,10 @@ export async function viewRoutinePartEdit(routineId, partId) {
               imageThumb(part().image_url, { size: "lg", label: part().text }),
               h("label", {}, t.routinePart.spoken, spoken)),
             h("span", { class: "hint" }, t.routinePart.spokenHint),
-            h("a", { class: "btn", href: `#/parents/config/missions/${routine.mission_id}/tasks/${partId}` }, t.routinePart.changeInMission),
+            h("a", {
+              class: "btn", href: `#/parents/config/missions/${routine.mission_id}/tasks/${partId}`,
+              onclick: () => taskOpenedFrom(partId, location.hash, part().text), // its «←» comes back here
+            }, t.routinePart.changeInMission),
             when, slow)),
         h("div", { class: "stack" },
           panel(t.routinePart.panelSay,

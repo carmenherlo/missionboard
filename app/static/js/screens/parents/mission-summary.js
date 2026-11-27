@@ -26,11 +26,10 @@ export function scheduleText(schedule) {
   return schedule.end ? t.missions.range(schedule.start, schedule.end) : t.missions.from(schedule.start);
 }
 
-// [⏰] [L M X J V] [7:00–9:00] [6 tareas · 14 pasos]: the alarm clock, if it has a routine on
+// [⏰] [L M X J V] [7:00–9:00] [6 tareas]: the alarm clock, if it has a routine on
 // (rutina-en-mision.html: its hours or children would say less than they seem).
 export function missionPills(mission) {
-  const steps = mission.tasks.reduce((sum, task) => sum + task.steps.length, 0);
-  const size = [t.missions.tasks(mission.tasks.length), steps > 0 && t.missions.steps(steps)].filter(Boolean).join(" · ");
+  const size = t.missions.tasks(mission.tasks.length); // its steps do not matter here (27/11)
   const { routine } = mission;
   return [
     routine && !routine.off && h("span", {
