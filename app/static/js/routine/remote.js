@@ -2,12 +2,13 @@
 // opens straight in the parents' zone, and a routine going on never covers it by itself (in
 // a race the parent does not run, only adjusts). A thin bar on top, on any screen, says how
 // it goes; a tap opens the control panel: «± Tiempo» for every task still to do, pause,
-// finish, «Ver en grande» (the routine as on the tablet) and, past the flag, «Revisar».
+// finish, «Ver en grande» (the routine as on the tablet), ¿Quién está? (who.js) and, past the flag, «Revisar».
 // Silent here: the tablet speaks. The tablets work as before.
 import { api } from "../api.js";
 import { h } from "../dom.js";
 import { rememberedCode } from "../remembered-device.js";
 import { t } from "../texts.js";
+import { whoList } from "./who.js";
 import { countdownText } from "./words.js";
 
 const EVEN_MIN = 0.5; // as race-view.js: closer than this, neck and neck
@@ -22,7 +23,7 @@ export function remote(r) {
     const toggle = h("button", { type: "button", class: "remote-bar__toggle", "aria-expanded": "false", onclick: () => openPanel(panel.hidden) },
       label, h("span", { class: "remote-bar__arrow", "aria-hidden": "true" }, "▾"));
     const bar = h("section", { class: "remote-bar", "aria-label": t.remote.label, hidden: true }, toggle, panel);
-    return { bar, label, toggle, panel, list: null, finishing: false };
+    return { bar, label, toggle, panel, list: null, who: null, finishing: false };
   }
 
   // On this phone, at its start: the bar, and the panel open if it was just launched.
@@ -38,6 +39,7 @@ export function remote(r) {
     parts.toggle.setAttribute("aria-expanded", String(open));
     parts.bar.classList.toggle("remote-bar--open", open);
     parts.list = open ? r.extraList() : null;
+    parts.who = open ? whoList(r) : null;
     parts.finishing = false;
     drawPanel();
   }
@@ -55,7 +57,7 @@ export function remote(r) {
       button(t.remote.big, showBig),
       result?.given === null && result.stars ? h("a", { class: "btn btn--primary", href: "#/parents/give" }, t.remote.review) : "");
     parts.panel.replaceChildren(actions, h("h3", { class: "remote-panel__title" }, t.routine.extraTitle, parts.list.status),
-      parts.list.body, parts.list.hint);
+      parts.list.body, parts.list.hint, parts.who.element);
   }
 
   const button = (text, onclick, primary = false) =>

@@ -7,6 +7,7 @@ import { saveStatus } from "../components/save-status.js";
 import { h } from "../dom.js";
 import { t } from "../texts.js";
 import { askParentCode } from "./code-dialog.js";
+import { whoList } from "./who.js";
 
 const STEPS = [-5, -1, 1, 5];
 
@@ -79,7 +80,7 @@ export function extraTime(r) {
     const list = extraList(parentCode);
     const close = () => r.showing?.view.finish.replaceChildren();
     r.showing.view.finish.replaceChildren(h("div", { class: "routine__code extra-time", role: "dialog", "aria-modal": "true" },
-      h("h2", {}, t.routine.extraTitle, list.status), list.body, list.hint,
+      h("h2", {}, t.routine.extraTitle, list.status), list.body, list.hint, whoList(r, parentCode).element,
       h("div", { class: "form-actions" }, h("button", { type: "button", class: "btn btn--primary", onclick: close }, t.routine.extraDone))));
   }
 

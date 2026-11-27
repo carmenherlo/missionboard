@@ -4,8 +4,9 @@ changed meanwhile, the routine grows or shrinks from it, see timing.settled)."""
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.routines.model import Routine
 from app.routines.repository import NEW_PART_MINUTES
-from app.routines.timing import hhmm, minute_of
+from app.routines.timing import hhmm, minute_of, settled
 from app.settings import TIME
 
 
@@ -64,3 +65,13 @@ def switched(doc: dict, wake: str | None) -> dict:
     parts = [dict(part) for part in doc["parts"]]
     parts[0]["at"] = hhmm((minute_of(wake) + NEW_PART_MINUTES) % (24 * 60))
     return {"parts": parts}
+
+
+def as_by_hand(routine: Routine) -> Routine:
+    """A routine that rings at a time, started by hand today for who is left
+    (rutinas-flexibles.html): its parts one after the other with their minutes, its goal after them."""
+    doc = routine.to_doc()
+    doc |= {"wake": None, **switched(doc, None)}
+    if doc.get("goal"):
+        doc["goal"] = {**doc["goal"], "at": None}
+    return Routine.model_validate(settled(doc))

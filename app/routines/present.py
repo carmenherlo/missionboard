@@ -12,6 +12,7 @@ from app.routines.model import Routine
 from app.routines.race_legs import race_legs
 from app.routines.race_rules import CHEER_SECONDS, TURBO_SECONDS, cheered, done_after, planned_minutes
 from app.routines.timing import hhmm
+from app.routines.who_left import Startable
 from app.songs.repository import SongsRepository
 
 
@@ -69,14 +70,24 @@ def present_current(current: Current, libraries: ImageLibraries, songs: SongsRep
     }
 
 
-def present_by_hand(routine: Routine, kids: list) -> dict:
-    """A routine that can be started by hand today, with the children it can start with
-    (⏰, Rutinas de hoy): its own come chosen (rutina-en-mision.html)."""
+def present_by_hand(startable: Startable) -> dict:
+    """A routine that can be started by hand today, with its mission's children (⏰, Rutinas
+    de hoy): its own come chosen (rutina-en-mision.html); who did it already, greyed out
+    (`done`, rutinas-flexibles.html)."""
+    routine = startable.routine
     return {
         "id": routine.id,
         "name": routine.name,
         "minutes": routine.length,
-        "kids": [{**public_child(c), "colors": avatars.tones(c.color), "chosen": c.id in routine.kids} for c in kids],
+        "kids": [
+            {
+                **public_child(c),
+                "colors": avatars.tones(c.color),
+                "done": c.id in startable.done,
+                "chosen": c.id in routine.kids and c.id not in startable.done,
+            }
+            for c in startable.kids
+        ],
     }
 
 

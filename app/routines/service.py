@@ -21,7 +21,9 @@ from app.routines.race_flag import RaceFlag
 from app.routines.race_rules import INICIO_SECONDS, RECORD_RACES, START_SECONDS, Pace, pace_of
 from app.routines.races_repository import RacesRepository
 from app.routines.repository import RoutinesRepository, RunsRepository
+from app.routines.timed_memory import as_by_hand
 from app.routines.timing import minute_of
+from app.routines.who_left import Startable, WhoLeft
 from app.today.service import DayService
 
 NOTES = ("started", "stopped", "part", "goal", "closed", "reopened", "ended")
@@ -43,6 +45,7 @@ class RoutinesService:
         self._flag = RaceFlag(runs, races, events)
         self._missions = missions
         self._people = People(children, days, missions)
+        self._who_left = WhoLeft(children, days, missions, runs, races)
         self._routines = routines
         self._runs = runs
         self._children = children
@@ -61,16 +64,16 @@ class RoutinesService:
         day = app_day(now)
         minute = _minute(now)
         weekday = WEEKDAYS[day.weekday()]
-        for stored in self._live():
-            run = self._runs.get(day, stored.id) if stored.manual else None
-            if not run or not run["started_at"] or run["finished_at"]:
+        for stored in self._live():  # started by hand: one that is, or one that rings at a time (who_left.py)
+            run = self._runs.get(day, stored.id)
+            if not (stored.manual or run["by_hand"]) or not run["started_at"] or run["finished_at"]:
                 continue
+            stored = stored if stored.manual else as_by_hand(stored)
             start = _minute(datetime.fromisoformat(run["started_at"]))
             moment = datetime.fromisoformat(run["paused_at"]) if run["paused_at"] else now  # paused: still
             at = _minute(moment)
             routine = stored.on(weekday).lengthened(json.loads(run["extra"] or "{}"))  # ± minutes today
-            kids = tuple(json.loads(run["kids"] or "[]"))  # who it was started with, of its mission's
-            people = self.people(stored.model_copy(update={"kids": kids}))
+            people = self.people(_with_kids(stored, run))
             pace = self.pace(stored)
             if routine.racing:  # until the flag and its landing, or lost (race_flag.py)
                 if not self._flag.goes_on(routine, day, run, people, pace, moment):
@@ -86,9 +89,9 @@ class RoutinesService:
             if not minute_of(routine.wake) <= minute < routine.ends:
                 continue
             run = self._runs.get(day, routine.id)
-            if run["finished_at"] or self._everyone_off(routine):
+            if run["finished_at"] or run["by_hand"] or self._everyone_off(routine):
                 continue
-            return Current(routine, day, minute, run, self.people(routine))
+            return Current(routine, day, minute, run, self.people(_with_kids(routine, run)))
         return None
 
     def current_for(self, routine: Routine, now) -> Current:
@@ -143,39 +146,50 @@ class RoutinesService:
                 return found
         return None
 
-    def by_hand(self, again: bool = False) -> list[tuple[Routine, list[Child]]]:
-        """The routines that can be started by hand today, each with the children it can
-        start with: its mission's (its own, chosen at first: present.py). A race only once a
-        day, unless a parent starts it `again` (one started by mistake, 26/11)."""
-        weekday = WEEKDAYS[app_day(self._clock.now()).weekday()]
-        children = self._children.list()
-        day = app_day(self._clock.now())
-        raced = {race["routine_id"] for race in self._races.of_day(day)}  # a race, once a day
-        routines = [
-            r
-            for r in self._live()
-            if r.manual and r.goes_on(weekday) and not (r.racing and r.id in raced and not again)
-        ]
-        theirs = {m.id: m.kids for m in self._missions.list()}
-        return [(r.on(weekday), [c for c in children if c.id in theirs.get(r.mission_id, ())]) for r in routines]
+    def by_hand(self, again: bool = False, timed: bool = False) -> list[Startable]:
+        """The routines that can be started by hand today, with who can still do them
+        (who_left.py; `timed`, also the ones that ring at a time, for parents). A race
+        once each a day, unless a parent starts it `again` (one started by mistake, 26/11)."""
+        now = self._clock.now()
+        day = app_day(now)
+        return self._who_left.startable(
+            self._live(), day, WEEKDAYS[day.weekday()], _minute(now), timed=timed, again=again
+        )
 
     def start(self, routine_id: str, kids: list[str], again: bool = False) -> None:
         """Start a routine by hand with the children who have come home (`again`: a race run today, by a parent)."""
-        found = next(((r, c) for r, c in self.by_hand(again) if r.id == routine_id), None)
+        found = next((s for s in self.by_hand(again, timed=True) if s.routine.id == routine_id), None)
         if found is None:
             raise NotFoundError("No routine to start by hand today with that id")
-        routine, children = found
-        if not kids or any(k not in {c.id for c in children} for k in kids):
-            raise InvalidError("Choose who has come home, among the routine's children")
-        now = self._clock.now()
+        if not kids or any(k not in {c.id for c in found.missing} for k in kids):
+            raise InvalidError("Choose who has come home, among the routine's children who have not done it")
+        routine, now = found.routine, self._clock.now()
         day = app_day(now)
         self._runs.clear(day, routine_id)
         # After "3, 2, 1, ¡YA!", or "Va a empezar la misión…" and 5, 4, 3, 2, 1 (rutina-inicio.html)
         started = now + timedelta(seconds=START_SECONDS if routine.racing else INICIO_SECONDS)
-        self._runs.set(day, routine_id, started_at=started, kids=json.dumps(kids))
+        timed = not self._routines.get(routine_id).manual  # one that rings at a time, for who is left
+        self._runs.set(day, routine_id, started_at=started, kids=json.dumps(kids), by_hand=1 if timed else None)
         for kid in kids:  # the mission's hours rule, but starting it by hand opens it (links.py)
             self._days.open_for_routine(kid, routine.mission_id)
         self._events.routine_did("routine_started", routine.name)
+
+    def who(self, routine_id: str) -> tuple[list[Child], set[str]]:
+        """¿Quién está? (rutinas-flexibles.html): the children of the routine going on's mission, and who is in it."""
+        current = self._current(routine_id)
+        theirs = self._missions.get(current.routine.mission_id).kids
+        here = json.loads(current.run["kids"]) if current.run["kids"] else current.routine.kids
+        return [c for c in self._children.list() if c.id in theirs], set(here)
+
+    def set_who(self, routine_id: str, kids: list[str]) -> None:
+        """A parent takes children out of the routine going on, or puts them back: they lose
+        nothing, their mission stays as it is. Nobody left: it is finished."""
+        children, _ = self.who(routine_id)
+        if any(k not in {c.id for c in children} for k in kids):
+            raise InvalidError("Only children of its mission")
+        if not kids:
+            return self.finish(routine_id)
+        self._runs.set(self.current_day(), routine_id, kids=json.dumps([c.id for c in children if c.id in kids]))
 
     def note(  # noqa: C901 (to split)
         self,
@@ -194,7 +208,10 @@ class RoutinesService:
             routine = self._routines.get(routine_id)
             if routine is None:
                 raise NotFoundError("Routine not found")
-            self._runs.clear(app_day(self._clock.now()), routine_id)
+            if routine.manual:
+                self._runs.clear(app_day(self._clock.now()), routine_id)
+            else:  # rang at its time, then by hand for who was left: over today (it may go again for others)
+                self._runs.set(app_day(self._clock.now()), routine_id, finished_at=self._clock.now())
             self._events.routine_did("routine_ended", routine.name, early=early)
             return
         current = self._current(routine_id)
@@ -262,6 +279,11 @@ class RoutinesService:
 
     def _everyone_off(self, routine: Routine) -> bool:
         return self._people.everyone_off(routine)
+
+
+def _with_kids(routine: Routine, run: dict) -> Routine:
+    """The routine with who is in it today, if they were chosen (by hand, or ¿Quién está?)."""
+    return routine.model_copy(update={"kids": tuple(json.loads(run["kids"]))}) if run["kids"] else routine
 
 
 def _minute(moment: datetime) -> float:

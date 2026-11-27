@@ -61,4 +61,7 @@ RECENT: list[str] = [
         PRIMARY KEY (routine_id, tip)
     )
     """,
+    # 22 · Rutinas de hoy, flexibles (rutinas-flexibles.html, 27/11): a routine that rings at a
+    # time, started by hand today for who was left; and who is in a routine going on (kids).
+    "ALTER TABLE routine_runs ADD COLUMN by_hand INTEGER",
 ]

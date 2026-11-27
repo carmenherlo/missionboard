@@ -7,9 +7,10 @@ import { icon } from "../icons.js";
 import { t } from "../texts.js";
 import { refreshRoutines } from "./routine.js";
 
-// The routines that can be started by hand today ([] when none).
-export function routinesByHand() {
-  return api("GET", "api/routines/by-hand").catch(() => []);
+// The routines that can be started by hand today ([] when none), with who did it already (done).
+// `timed`: also the ones that ring at a time, once over, for who is left (parents, Rutinas de hoy).
+export function routinesByHand(timed = false) {
+  return api("GET", `api/routines/by-hand?timed=${timed}`).catch(() => []);
 }
 
 // From the parents' Hoy (padres-barra.html): the routine's own children chosen at first, and onStarted after.
@@ -51,7 +52,7 @@ function choice(routine, close, { allChosen, onStarted, again }) {
     const { color, soft, strong, on } = kid.colors;
     const button = h("button", {
       type: "button", class: `routine-kid${chosen.has(kid.id) ? " routine-kid--done" : ""}`,
-      "aria-pressed": String(chosen.has(kid.id)),
+      "aria-pressed": String(chosen.has(kid.id)), disabled: kid.done, // did it already (rutinas-flexibles.html)
       style: `--child-color: ${color}; --child-soft: ${soft}; --child-strong: ${strong}; --on-child: ${on}`,
       onclick: () => {
         if (chosen.has(kid.id)) chosen.delete(kid.id);
@@ -60,7 +61,8 @@ function choice(routine, close, { allChosen, onStarted, again }) {
         button.setAttribute("aria-pressed", String(chosen.has(kid.id)));
         start.disabled = chosen.size === 0;
       },
-    }, avatar(kid, { size: "md" }), h("span", { class: "routine-kid__name" }, kid.name));
+    }, avatar(kid, { size: "md" }), h("span", { class: "routine-kid__name" }, kid.name),
+    kid.done && h("span", { class: "routine-kid__progress" }, t.routine.alreadyDone));
     return h("li", {}, button);
   });
   return h("section", { class: "chooser__routine" },

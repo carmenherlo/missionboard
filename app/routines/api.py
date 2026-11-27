@@ -193,9 +193,10 @@ def next_ring(
 
 
 @router.get("/by-hand")
-def by_hand(routines: RoutinesService = Depends(get_routines_service)):
-    """The routines that can be started by hand today (⏰ on the home screen), with their children."""
-    return [present_by_hand(r, kids) for r, kids in routines.by_hand()]
+def by_hand(timed: bool = False, routines: RoutinesService = Depends(get_routines_service)):
+    """The routines that can be started by hand today (⏰ on the home screen), with their
+    children; `timed`, also the ones that ring at a time, once over (Rutinas de hoy)."""
+    return [present_by_hand(s) for s in routines.by_hand(timed=timed)]
 
 
 @router.post("/{routine_id}/start", status_code=204)

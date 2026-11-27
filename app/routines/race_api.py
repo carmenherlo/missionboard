@@ -143,8 +143,8 @@ def review_race(race_id: int, body: ReviewIn, races: RaceService = Depends(get_r
 @router.get("/races/again", dependencies=parent_only)
 def races_again(routines: RoutinesService = Depends(get_routines_service)):
     """Races already run today that a parent may start again (Rutinas de hoy · «Lanzar otra vez»)."""
-    today = {r.id for r, _ in routines.by_hand()}
-    return [present_by_hand(r, kids) for r, kids in routines.by_hand(again=True) if r.id not in today]
+    today = {s.routine.id for s in routines.by_hand()}
+    return [present_by_hand(s) for s in routines.by_hand(again=True) if s.routine.id not in today]
 
 
 @router.post("/{routine_id}/start-again", status_code=204, dependencies=parent_only)

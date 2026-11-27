@@ -118,10 +118,13 @@ class RoutinesRepository:
 class RunsRepository:
     """What happened to each routine each day: started, stopped (the alarm) and finished
     (for the day), and, started by hand, since when it is paused and the minutes a parent
-    added to its parts (`extra`) and who cheered in a race (`cheers`). `closed_phase` is no
+    added to its parts (`extra`) and who cheered in a race (`cheers`). `by_hand`: one that
+    rings at a time, started by hand today for who was left (rutinas-flexibles.html). `closed_phase` is no
     longer set (16/11: hidden on one device only)."""
 
-    FIELDS = ("started_at", "stopped_at", "closed_phase", "finished_at", "kids", "paused_at", "extra", "cheers")
+    FIELDS = (
+        "started_at", "stopped_at", "closed_phase", "finished_at", "kids", "paused_at", "extra", "cheers", "by_hand"
+    )  # fmt: skip
 
     def __init__(self, data_dir: Path):
         self._data_dir = data_dir
