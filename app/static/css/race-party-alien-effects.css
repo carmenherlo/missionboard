@@ -1,0 +1,168 @@
+/* ---------- The alien in the race's party (race-party.js) ----------
+   Won (data-alien, its own moment before the traca): it comes in angry, tries to land on the Moon, the
+   team kicks it off, it stays dizzy («¡Mañana os pillo!», the bubble still), and it flies off like a
+   shooting star. Lost: it jumps on the Moon, laughing. Its steps' lengths: --party-alien-* (tokens-effects.css). */
+
+.party__alien {
+  --rest-x: min(calc(50% + var(--party-moon-size) * 0.62), calc(100% - var(--party-alien-size) * 0.6));
+  --rest-y: max(calc(var(--party-moon-top) - var(--party-moon-size) * 0.5), var(--party-alien-size)); /* room for its words above */
+  --touch-x: calc(50% + var(--party-moon-size) * 0.38);
+  --touch-y: calc(var(--party-moon-top) - var(--party-moon-size) * 0.4);
+  position: absolute;
+  top: 10%;
+  left: 115%;
+  z-index: 4;
+  width: var(--party-alien-size);
+  translate: -50% -50%;
+}
+
+.party__alien-body { position: relative; }
+.party__alien img { display: block; width: 100%; }
+
+/* Its words: still, over its head, toward the middle (so they are read). */
+.party__say {
+  position: absolute;
+  right: 55%;
+  bottom: 95%;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--party-say);
+  color: var(--party-on-say);
+  font-size: var(--text-xl);
+  font-weight: 900;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* 1 · In, angry: red and shaking. */
+.party[data-alien="in"] .party__alien { animation: alien-in var(--party-alien-in) ease-out forwards; }
+.party[data-alien="in"] .party__alien-body { animation: alien-angry 0.16s linear infinite; filter: drop-shadow(0 0 1rem var(--party-angry)); }
+
+@keyframes alien-in {
+  from { left: 115%; top: 10%; }
+  to { left: var(--rest-x); top: var(--rest-y); }
+}
+
+@keyframes alien-angry {
+  0%, 100% { rotate: -7deg; }
+  50% { rotate: 7deg; }
+}
+
+/* 2 · It dives at the Moon, and is kicked off (the team jumps: data-kick). */
+.party[data-alien="kick"] .party__alien { animation: alien-kick var(--party-alien-kick) ease-in-out forwards; }
+.party[data-alien="kick"] .party__alien-body { animation: alien-kicked var(--party-alien-kick) ease-in-out forwards; filter: drop-shadow(0 0 1rem var(--party-angry)); }
+
+@keyframes alien-kick {
+  0% { left: var(--rest-x); top: var(--rest-y); }
+  40%, 50% { left: var(--touch-x); top: var(--touch-y); }
+  100% { left: var(--rest-x); top: calc(var(--rest-y) - 4%); }
+}
+
+@keyframes alien-kicked {
+  0%, 50% { rotate: 0deg; scale: 1; }
+  60% { scale: 1.25 0.8; }
+  100% { rotate: 720deg; scale: 1; }
+}
+
+.party[data-kick] .party__team .avatar { animation: party-kick 0.5s ease-out; }
+
+@keyframes party-kick {
+  0%, 100% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-45%) scale(1.15); }
+}
+
+/* 3 · Dizzy: swaying, stars round its head, and its words. */
+.party[data-alien="dizzy"] .party__alien { left: var(--rest-x); top: calc(var(--rest-y) - 4%); }
+.party[data-alien="dizzy"] .party__alien-body { animation: alien-sway 0.9s ease-in-out infinite; }
+.party[data-alien="dizzy"] .party__say { animation: alien-say-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) forwards; }
+.party[data-alien="dizzy"] .party__dizzy { opacity: 1; }
+
+@keyframes alien-sway {
+  0%, 100% { rotate: -14deg; }
+  50% { rotate: 14deg; }
+}
+
+@keyframes alien-say-pop {
+  from { opacity: 0; scale: 0.3; }
+  to { opacity: 1; scale: 1; }
+}
+
+.party__dizzy { position: absolute; top: 2%; left: 50%; opacity: 0; }
+
+.party__dizzy span {
+  position: absolute;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: -0.8rem;
+  background: var(--party-gold);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: alien-dizzy 0.9s linear infinite;
+}
+
+.party__dizzy span:nth-child(2) { animation-delay: -0.3s; }
+.party__dizzy span:nth-child(3) { animation-delay: -0.6s; }
+
+@keyframes alien-dizzy {
+  0%, 100% { translate: 3.6rem 0; scale: 1; }
+  25% { translate: 0 1rem; scale: 1.25; }
+  50% { translate: -3.6rem 0; scale: 1; }
+  75% { translate: 0 -1rem; scale: 0.6; }
+}
+
+/* 4 · Off like a shooting star: spinning, smaller and smaller, a trail behind (race-party.js), a twinkle at the end. */
+.party[data-alien="off"] .party__alien { animation: alien-off var(--party-alien-off) ease-in forwards; }
+.party[data-alien="off"] .party__alien-body { animation: alien-spin 0.35s linear infinite; }
+.party[data-alien="gone"] .party__alien { display: none; }
+
+@keyframes alien-off {
+  from { left: var(--rest-x); top: calc(var(--rest-y) - 4%); scale: 1; }
+  to { left: 96%; top: 3%; scale: 0.15; }
+}
+
+@keyframes alien-spin { to { rotate: 360deg; } }
+
+.party__trail {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 3;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin: -0.7rem;
+  border-radius: 50%;
+  background: var(--party-trail);
+  box-shadow: 0 0 1rem 0.3rem var(--party-trail);
+  animation: party-trail 0.7s ease-out forwards;
+}
+
+@keyframes party-trail { to { opacity: 0; scale: 0.2; } }
+
+.party__twinkle {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 3;
+  width: 3rem;
+  height: 3rem;
+  margin: -1.5rem;
+  background: var(--party-say);
+  clip-path: polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%);
+  animation: party-twinkle-out 0.9s ease-out forwards;
+}
+
+@keyframes party-twinkle-out {
+  0% { opacity: 0; scale: 0.2; rotate: 0deg; }
+  30% { opacity: 1; scale: 1.4; }
+  100% { opacity: 0; scale: 0.4; rotate: 90deg; }
+}
+
+/* Lost: on the Moon, jumping and laughing. */
+.party--lost .party__alien {
+  top: calc(var(--party-moon-top) - var(--party-moon-size) / 2);
+  left: 50%;
+  width: var(--party-alien-lost-size);
+  translate: -50% -60%;
+  animation: party-jump 0.6s ease-in-out infinite;
+}
+
+.party--lost .party__say { right: auto; bottom: 50%; left: 110%; font-size: inherit; opacity: 1; }

@@ -124,56 +124,7 @@
   50% { transform: translateY(-18%) scale(0.95, 1.05); }
 }
 
-/* The alien: won, it turns up dizzy at the Moon and flies off; lost, it jumps on the Moon. */
-.party__alien {
-  position: absolute;
-  top: 20%;
-  left: 115%;
-  z-index: 4;
-  width: 6rem;
-}
-
-.party__alien img { width: 100%; }
-
-.party__say {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--party-say);
-  color: var(--party-on-say);
-  font-weight: 900;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translateX(-50%);
-}
-
-.party[data-phase="moon"] .party__alien { animation: alien-flee 4.5s ease-in-out forwards; }
-.party[data-phase="moon"] .party__say { animation: alien-say 4.5s ease-in-out forwards; }
-
-@keyframes alien-flee {
-  0% { left: 115%; rotate: 0deg; }
-  25% { left: 76%; rotate: 720deg; }
-  35%, 70% { left: 76%; rotate: 700deg; }
-  45%, 60% { rotate: 740deg; }
-  100% { left: 120%; top: -20%; rotate: 1080deg; }
-}
-
-@keyframes alien-say {
-  0%, 30% { opacity: 0; }
-  35%, 75% { opacity: 1; }
-  85%, 100% { opacity: 0; }
-}
-
-.party--lost .party__alien {
-  top: calc(var(--party-moon-top) - var(--party-moon-size) / 2);
-  left: 50%;
-  translate: -50% -60%;
-  animation: party-jump 0.6s ease-in-out infinite;
-}
-
-.party--lost .party__say { bottom: 50%; left: 110%; opacity: 1; transform: none; animation: none; }
+/* The alien: race-party-alien-effects.css */
 
 /* The title: on the Moon (won), or at once (lost). */
 .party__title {

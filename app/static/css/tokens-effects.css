@@ -171,6 +171,15 @@
   --party-flash-edge: rgb(255 180 80 / 0);
   --party-smoke: rgb(220 225 235 / 0.6);
   --party-shadow: rgb(0 0 0 / 0.6);
+  /* The alien, thrown off the Moon when the team wins (race-party-alien-effects.css): its four steps */
+  --party-alien-in: 900ms; /* comes in, angry */
+  --party-alien-kick: 800ms; /* tries to land; the team kicks it off */
+  --party-alien-dizzy: 1600ms; /* dizzy, «¡Mañana os pillo!» */
+  --party-alien-off: 1000ms; /* off like a shooting star */
+  --party-alien-size: 10rem;
+  --party-alien-lost-size: 6rem; /* lost: jumping on the Moon */
+  --party-angry: rgb(255 70 70 / 0.95);
+  --party-trail: #bfefff;
   /* The silver Moon: the party's and the race road's */
   --moon-1: #ffffff;
   --moon-2: #e3eaf0;
