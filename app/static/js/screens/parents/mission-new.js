@@ -1,4 +1,5 @@
 import { api, errorMessage } from "../../api.js";
+import { loadAvatars } from "../../components/avatar.js";
 import { imageThumb } from "../../components/image-thumb.js";
 import { newMissionForm } from "../../components/new-mission-form.js";
 import { panel } from "../../components/panel.js";
@@ -12,18 +13,22 @@ const SHOWN_TASKS = 3;
 
 const openMission = (mission) => { location.hash = `${LIST_HREF}/${mission.id}`; };
 
-// A new mission: from scratch (the form, first) or from one of the app's templates below (a copy, the family's to change).
+// A new mission: from scratch (the form, first) or from one of the app's templates below (a copy, the family's to
+// change, for every child).
 export async function viewMissionNew() {
-  const [templates, form] = await Promise.all([
+  const [templates, children] = await Promise.all([
     api("GET", "api/mission-templates"),
-    newMissionForm({
-      createUrl: "api/missions",
-      itemUrl: (mission) => `api/missions/${mission.id}`,
-      cancelHref: LIST_HREF,
-      missingName: t.missionNew.missingName,
-      onCreated: openMission,
-    }),
+    api("GET", "api/children"),
+    loadAvatars(),
   ]);
+  const form = await newMissionForm({
+    createUrl: "api/missions",
+    itemUrl: (mission) => `api/missions/${mission.id}`,
+    cancelHref: LIST_HREF,
+    missingName: t.missionNew.missingName,
+    onCreated: openMission,
+    children,
+  });
   const error = h("p", { class: "form-error", role: "alert" });
 
   async function use(template, button) {

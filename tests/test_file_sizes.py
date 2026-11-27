@@ -20,8 +20,8 @@ TOO_BIG = {
     "static/css/effects.css": 612,
     "static/css/routine.css": 432,
     "routines/api.py": 405,  # finishing went to control_api.py (18/11), what the screen gets to present.py (23/11)
-    "missions/service.py": 377,
-    "missions/api.py": 358,  # +1 import line when routines/repository.py was split (1d)
+    "missions/service.py": 345,  # who does what went to kids.py (27/11)
+    "missions/api.py": 340,  # who does what went to kids_api.py (27/11)
     "routines/editor.py": 323,
 }
 

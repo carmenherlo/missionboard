@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends
 
 from app.children import avatars
+from app.children.repository import ChildrenRepository
 from app.deps import get_config_store, get_event_log, get_image_libraries, require_parent
 from app.events.service import EventLog
 from app.images.libraries import ImageLibraries
@@ -18,7 +19,7 @@ parent_only = [Depends(require_parent)]
 def get_templates_service(
     store: ConfigStore = Depends(get_config_store), events: EventLog = Depends(get_event_log)
 ) -> MissionTemplatesService:
-    return MissionTemplatesService(MissionsRepository(store), events)
+    return MissionTemplatesService(MissionsRepository(store), ChildrenRepository(store), events)
 
 
 @router.get("/mission-templates")

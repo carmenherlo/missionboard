@@ -1,4 +1,4 @@
-"""The family's missions: their tasks and steps, and what each child has switched on."""
+"""The family's missions: their tasks and steps (who does what: kids.py)."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from app.events.service import EventLog
 from app.images.libraries import ImageLibraries, photo_filename, photo_ref
 from app.images.photos import validate_photo
 from app.images.rules import ImageRules
+from app.missions.kids import check_kids
 from app.missions.repository import WEEKDAYS, Mission, MissionsRepository, Schedule, Step, Task
 from app.routines import links
 from app.routines.repository import RoutinesRepository
@@ -85,9 +86,12 @@ class MissionsService:
             raise NotFoundError("Mission not found")
         return mission
 
-    def create(self, name: str, image: str | None = None) -> Mission:
+    def create(self, name: str, image: str | None = None, kids: list[str] | None = None) -> Mission:
+        """kids: who it is for; None, every child."""
         with self._missions.atomic():
-            mission = Mission(id=_new_id(), name=name, color=self._next_color())
+            children = self._children.list()
+            kids = check_kids([c.id for c in children] if kids is None else kids, children)
+            mission = Mission(id=_new_id(), name=name, color=self._next_color(), kids=kids)
             if image is not None:
                 mission.image = self._images.check_library_image(image)
             else:
@@ -302,41 +306,6 @@ class MissionsService:
         self._images.drop_replaced_photo(old_image, item.image)
         self._log(subject, "changed", mission, step=item, changes={"image": item.image})
         return mission
-
-    # ---------- each child ----------
-
-    def set_active(self, mission_id: str, child_id: str, item_id: str, active: bool) -> Mission:
-        """Switch a task or step on or off for one child."""
-        with self._missions.atomic():
-            mission = self.get(mission_id)
-            child = self._children.get(child_id)
-            if child is None:
-                raise NotFoundError("Child not found")
-            item = mission.item(item_id)
-            if item is None:
-                raise NotFoundError("Task or step not found")
-            off = [i for i in mission.off.get(child_id, []) if i != item_id]
-            if not active:
-                off.append(item_id)
-            changed = off != mission.off.get(child_id, []) and mission.is_on(child_id, item_id) != active
-            mission.off = {**mission.off, child_id: off}
-            if not off:
-                del mission.off[child_id]
-            self._missions.update(mission)
-        if changed:
-            self._events.config_changed(
-                "activation", "on" if active else "off", child=child, mission=mission, step=item
-            )
-        return mission
-
-    def remove_child_data(self, child_id: str) -> list[str]:
-        """A child deleted: what they had switched off goes too. No photos of theirs here."""
-        with self._missions.atomic():
-            for mission in self._missions.list():
-                if child_id in mission.off:
-                    mission.off = {k: v for k, v in mission.off.items() if k != child_id}
-                    self._missions.update(mission)
-        return []
 
     # ---------- helpers ----------
 

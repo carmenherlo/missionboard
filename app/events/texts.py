@@ -198,6 +198,8 @@ _CONFIG = {
     ("steps", "reordered"): "Ordenaste los pasos de «{mission}»",
     ("activation", "on"): "Activaste «{step}» de «{mission}» a {child}",
     ("activation", "off"): "Apagaste «{step}» de «{mission}» a {child}",
+    ("mission_kid", "on"): "Pusiste a {child} en «{mission}»",
+    ("mission_kid", "off"): "Quitaste a {child} de «{mission}»",
     ("parent_code", "changed"): "Cambiaste el código de padres",
     ("routine", "created"): "Creaste la rutina «{mission}»",
     ("routine", "changed"): "Cambiaste la rutina «{mission}»",

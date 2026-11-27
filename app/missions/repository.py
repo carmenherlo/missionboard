@@ -55,7 +55,8 @@ class Mission:
     days: list[str] = field(default_factory=lambda: list(WEEKDAYS))
     schedule: Schedule | None = None  # None: always open
     tasks: list[Task] = field(default_factory=list)
-    off: dict[str, list[str]] = field(default_factory=dict)  # child id → what they have switched off
+    kids: list[str] = field(default_factory=list)  # who it is for (child ids)
+    off: dict[str, list[str]] = field(default_factory=dict)  # child id → the tasks switched off for them
 
     def task(self, task_id: str) -> Task | None:
         return next((t for t in self.tasks if t.id == task_id), None)
@@ -76,14 +77,14 @@ class Mission:
     def items(self) -> list[Task | Step]:
         return [item for task in self.tasks for item in (task, *task.steps)]
 
-    def is_on(self, child_id: str, item_id: str) -> bool:
-        return item_id not in self.off.get(child_id, ())
+    def is_on(self, child_id: str, task_id: str) -> bool:
+        """A task, for a child the mission is for. Its steps go with it."""
+        return child_id in self.kids and task_id not in self.off.get(child_id, ())
 
 
 @dataclass
 class ChildTask:
-    """A task as one child has it, with the steps (reminders) they have on. It is there
-    if the task or any of its steps is on for them."""
+    """A task as one child has it, with all its steps (reminders)."""
 
     task: Task
     steps: list[Step]
@@ -100,9 +101,8 @@ def child_tasks(mission: Mission, child_id: str, weekday: str | None = None) -> 
     for task in mission.tasks:
         if weekday is not None and not task.on_day(mission.days, weekday):
             continue
-        steps = [s for s in task.steps if mission.is_on(child_id, s.id)]
-        if steps or mission.is_on(child_id, task.id):
-            found.append(ChildTask(task, steps))
+        if mission.is_on(child_id, task.id):
+            found.append(ChildTask(task, task.steps))
     return found
 
 
@@ -135,6 +135,7 @@ def from_doc(entry: dict) -> Mission:
             )
             for t in entry.get("tasks") or []
         ],
+        kids=list(entry.get("kids") or []),
         off={child: list(ids) for child, ids in (entry.get("off") or {}).items() if ids},
     )
 

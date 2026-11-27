@@ -9,9 +9,9 @@ from app.children.service import ChildData, ChildrenService
 from app.clock import app_day
 from app.deps import get_clock, get_config_store, get_event_log, get_photo_store, require_parent
 from app.events.service import EventLog
-from app.missions.api import get_missions_service
+from app.missions.kids import MissionKidsService
+from app.missions.kids_api import get_mission_kids_service
 from app.missions.repository import MissionsRepository
-from app.missions.service import MissionsService
 from app.routines.editor import RoutinesEditor
 from app.routines.repository import RoutinesRepository
 from app.settings import SettingsRepository
@@ -38,7 +38,7 @@ def get_children_service(
     request: Request,
     store: ConfigStore = Depends(get_config_store),
     photos: PhotoStore = Depends(get_photo_store),
-    missions: MissionsService = Depends(get_missions_service),
+    missions: MissionKidsService = Depends(get_mission_kids_service),
     events: EventLog = Depends(get_event_log),
     clock=Depends(get_clock),
 ) -> ChildrenService:

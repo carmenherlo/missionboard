@@ -1,4 +1,4 @@
-// Editar misión: its name, picture, colour, hours and days; the children; and its tasks
+// Editar misión: its name, picture, colour, hours and days; who it is for; and its tasks
 // as cards with their steps below, to order, drag to another task, or let go in the
 // bin. Every change is saved on the spot; "Listo" just goes back.
 import { api } from "../../api.js";
@@ -6,6 +6,7 @@ import { avatar, loadAvatars } from "../../components/avatar.js";
 import { confirmBar } from "../../components/confirm-bar.js";
 import { imagePicker, saveImageChoice } from "../../components/image-picker.js";
 import { imageThumb } from "../../components/image-thumb.js";
+import { kidChips } from "../../components/kid-chips.js";
 import { panel } from "../../components/panel.js";
 import { saveStatus } from "../../components/save-status.js";
 import { sortable } from "../../components/sortable.js";
@@ -21,7 +22,7 @@ import { openedFrom, routineError } from "./routine-edit.js";
 const NAME_SAVE_DELAY_MS = 600;
 const LIST_HREF = "#/parents/config/missions";
 
-// [14 de 14 activos], or [nada activo: no la verá]
+// [5 de 6 tareas], or [ninguna tarea: no la verá]
 export function childCount(mission, childId) {
   const count = mission.children.find((c) => c.id === childId);
   return count?.active
@@ -207,14 +208,21 @@ export async function viewMissionEdit(missionId) {
   }
 
   // ---------- children ----------
-  const kidsBox = h("ul", { class: "rows" });
+  // Who it is for (chips, saved on the spot); below, those who have it, to open their tasks.
+  const kidsBox = h("div", { class: "stack stack--tight" });
   function renderKids() {
-    kidsBox.replaceChildren(...children.map((child) =>
+    const chips = kidChips(children, {
+      isOn: (child) => mission.kids.includes(child.id),
+      onToggle: (child, on) => save(api("PUT", `${missionUrl}/children/${child.id}`, { json: { on } }))
+        .catch(() => {}).then(renderKids),
+    });
+    const theirs = children.filter((c) => mission.kids.includes(c.id));
+    kidsBox.replaceChildren(chips, theirs.length ? h("ul", { class: "rows" }, theirs.map((child) =>
       h("li", { class: "row row--compact row--covered" },
         avatar(child, { size: "sm" }),
         h("a", { class: "row__text row__cover", href: `${editHref}/children/${child.id}` }, child.name,
           h("span", { class: "row__detail" }, childCount(mission, child.id))),
-        h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next")))));
+        h("span", { class: "row__chevron", "aria-hidden": "true" }, icon("next"))))) : h("p", { class: "hint" }, t.missionEdit.nobody));
   }
 
   // ---------- tasks and steps ----------

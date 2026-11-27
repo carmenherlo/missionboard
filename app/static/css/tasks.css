@@ -90,8 +90,7 @@
   object-fit: contain;
 }
 
-.task-card__letter,
-.square__letter {
+.task-card__letter {
   color: var(--mission-strong, var(--child-strong));
   font-size: 2rem;
   font-weight: 800;
@@ -166,80 +165,9 @@
 
 .task-card--done .reminders { opacity: 0.45; }
 
-.squares {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-/* Big enough for a child's finger (--square-size: over 64px, the size to aim at). */
-.square {
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 2px;
-  width: var(--square-size);
-  min-height: var(--square-size);
-  padding: var(--space-1);
-  border: 3px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.square__picture {
-  display: grid;
-  place-items: center;
-  width: calc(var(--square-size) * 0.55);
-  height: calc(var(--square-size) * 0.55);
-}
-
-.square__picture img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.square__text {
-  max-width: 100%;
-  font-size: 0.9rem;
-  font-weight: 800;
-  line-height: 1.1;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-/* Parents, switching things on and off for a child: off, grey and saying so; no ✓. */
-.square--off,
-.task-card--off {
-  background: var(--container);
-  color: var(--muted);
-}
-
-.square--off img,
-.task-card--off img {
-  filter: grayscale(1);
-  opacity: 0.55;
-}
-
-.task-card--parents .task-card__toggle { cursor: pointer; }
-
-.task-card__off {
-  flex: none;
-  color: var(--muted);
-  font-size: var(--text-sm);
-  font-style: normal;
-  font-weight: 700;
-}
-
-.task-grid--parents { padding: var(--space-2) 0 0; }
-
 .mission-sheet--past .task-grid {
   filter: grayscale(1);
   opacity: 0.65;
 }
 
-.mission-sheet--past .task-card__toggle,
-.mission-sheet--past .square { cursor: default; }
+.mission-sheet--past .task-card__toggle { cursor: default; }

@@ -167,16 +167,10 @@ def test_tasks_are_changed_in_the_mission_not_here(client, method, path):
     assert edit(client, method, path, x=1).status_code in (404, 405)
 
 
-def test_only_the_steps_some_child_of_the_routine_has_on(client, morning):
-    bea, noa = create_child(client), create_child(client, name="Noa", preset="fox")
+def test_a_part_has_every_step_of_its_task(client, morning):
+    bea = create_child(client)
     edit(client, "PUT", "/kids", kids=[bea["id"]])
-    mission = client.get(f"/api/missions/{morning['mission_id']}").json()
-    step = mission["tasks"][2]["steps"][0]
-    url = f"/api/missions/{mission['id']}/children/{{}}/items/{step['id']}"
-    client.put(url.format(noa["id"]), json={"active": False}, headers=PARENT)  # not in the routine: no matter
     assert [s["text"] for s in edit(client, "GET").json()["parts"][2]["steps"]] == ["Dientes", "Cara"]
-    client.put(url.format(bea["id"]), json={"active": False}, headers=PARENT)
-    assert [s["text"] for s in edit(client, "GET").json()["parts"][2]["steps"]] == ["Cara"]
 
 
 def test_trial_keeps_the_routines_own_times(client, clock):

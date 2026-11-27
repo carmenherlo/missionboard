@@ -16,6 +16,12 @@ def create_child(client, name="Bea", preset="unicorn"):
     return client.post("/api/children", json=body, headers=PARENT).json()
 
 
+def put_in(client, mission_id, *children, on=True):
+    """Put children in a mission (or take them out): a new child is in none."""
+    for child in children:
+        client.put(f"/api/missions/{mission_id}/children/{child['id']}", json={"on": on}, headers=PARENT)
+
+
 def create_mission(client, name="Despegue", **fields):
     return client.post("/api/missions", json={"name": name, **fields}, headers=PARENT)
 
@@ -114,7 +120,8 @@ def test_invalid_mission_name(client, name):
         ("delete", "/api/missions/x/steps/y"),
         ("put", "/api/missions/x/steps/y/place"),
         ("put", "/api/missions/x/steps/y/photo"),
-        ("put", "/api/missions/x/children/y/items/z"),
+        ("put", "/api/missions/x/children/y"),
+        ("put", "/api/missions/x/children/y/tasks/z"),
     ],
 )
 def test_writes_require_parent_code(client, method, path):
@@ -302,50 +309,90 @@ def test_deleting_a_mission_removes_its_photos(client, mission, aseo, data_dir):
     assert photo_files(data_dir) == []
 
 
-# ---------- each child, with what they have on ----------
+# ---------- who it is for, and their tasks ----------
 
 
-def test_everything_is_on_for_everyone_by_default(client, mission, aseo, bea):
-    alex = create_child(client, name="Alex", preset="dinosaur")
-    found = client.get(f"/api/missions/{mission['id']}").json()
-    assert found["children"] == [
-        {"id": bea["id"], "active": 3, "total": 3},
-        {"id": alex["id"], "active": 3, "total": 3},
+def two_tasks(client, mission_id):
+    """«Aseo», with two steps, and «Cena»."""
+    task = add_task(client, mission_id, "Aseo").json()["tasks"][0]
+    add_step(client, mission_id, task["id"], "Dientes")
+    add_task(client, mission_id, "Cena")
+    return client.get(f"/api/missions/{mission_id}").json()["tasks"]
+
+
+def test_a_new_mission_is_for_every_child_or_for_whom_it_says(client):
+    bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
+    assert create_mission(client).json()["kids"] == [bea["id"], alex["id"]]
+    assert create_mission(client, name="Deberes", kids=[alex["id"]]).json()["kids"] == [alex["id"]]
+    assert create_mission(client, name="Otra", kids=["nope"]).status_code == 422
+
+
+def test_a_new_child_is_in_no_mission_until_put_in(client, mission):
+    bea = create_child(client)
+    assert client.get(f"/api/missions/{mission['id']}").json()["children"] == [
+        {"id": bea["id"], "on": False, "active": 0, "total": 0}
     ]
+    put_in(client, mission["id"], bea)
+    assert client.get(f"/api/missions/{mission['id']}").json()["kids"] == [bea["id"]]
 
 
-def test_switch_off_and_on_for_one_child(client, mission, aseo, bea, data_dir):
+def test_tasks_are_switched_whole_for_one_child(client, data_dir):
+    create_child(client)
     alex = create_child(client, name="Alex", preset="dinosaur")
-    url = f"/api/missions/{mission['id']}/children/{alex['id']}/items"
-    step = aseo["steps"][0]["id"]
-    off = client.put(f"{url}/{step}", json={"active": False}, headers=PARENT).json()
-    assert off["off"] == {alex["id"]: [step]}
-    assert off["children"][1]["active"] == 2 and off["children"][0]["active"] == 3
-    assert saved(data_dir)["missions"][0]["off"] == {alex["id"]: [step]}
-    assert client.put(f"{url}/{step}", json={"active": True}, headers=PARENT).json()["off"] == {}
-    assert client.put(f"{url}/nope", json={"active": False}, headers=PARENT).status_code == 404
-    gone = f"/api/missions/{mission['id']}/children/nope/items/{step}"
-    assert client.put(gone, json={"active": False}, headers=PARENT).status_code == 404
+    mission = create_mission(client).json()
+    aseo, cena = two_tasks(client, mission["id"])
+    url = f"/api/missions/{mission['id']}/children/{alex['id']}/tasks"
+    off = client.put(f"{url}/{aseo['id']}", json={"active": False}, headers=PARENT).json()
+    assert off["off"] == {alex["id"]: [aseo["id"]]} and saved(data_dir)["missions"][0]["off"] == off["off"]
+    assert [(c["active"], c["total"]) for c in off["children"]] == [(2, 2), (1, 2)]
+    assert client.put(f"{url}/{aseo['id']}", json={"active": True}, headers=PARENT).json()["off"] == {}
+    for wrong in (f"{url}/{aseo['steps'][0]['id']}", f"/api/missions/{mission['id']}/children/nope/tasks/{cena['id']}"):
+        assert client.put(wrong, json={"active": False}, headers=PARENT).status_code == 404
 
 
-def test_new_things_are_on_for_everyone(client, mission, aseo, bea):
-    url = f"/api/missions/{mission['id']}/children/{bea['id']}/items/{aseo['id']}"
-    client.put(url, json={"active": False}, headers=PARENT)
-    added = add_step(client, mission["id"], aseo["id"], "Peine").json()
-    assert added["children"][0] == {"id": bea["id"], "active": 3, "total": 4}
+def test_out_and_back_in_a_child_keeps_what_they_had_off(client):
+    bea = create_child(client)
+    mission = create_mission(client).json()
+    aseo, _ = two_tasks(client, mission["id"])
+    client.put(
+        f"/api/missions/{mission['id']}/children/{bea['id']}/tasks/{aseo['id']}", json={"active": False}, headers=PARENT
+    )
+    put_in(client, mission["id"], bea, on=False)
+    found = client.get(f"/api/missions/{mission['id']}").json()
+    assert found["kids"] == [] and found["children"][0]["active"] == 0
+    put_in(client, mission["id"], bea)
+    assert client.get(f"/api/missions/{mission['id']}").json()["children"][0]["active"] == 1
 
 
-def test_what_is_deleted_or_whoever_leaves_is_forgotten(client, mission, aseo, bea):
-    alex = create_child(client, name="Alex", preset="dinosaur")
+def test_what_is_deleted_or_whoever_leaves_is_forgotten(client):
+    bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
+    mission = create_mission(client).json()
+    aseo, cena = two_tasks(client, mission["id"])
     base = f"/api/missions/{mission['id']}"
-    step = aseo["steps"][0]["id"]
-    client.put(f"{base}/children/{bea['id']}/items/{step}", json={"active": False}, headers=PARENT)
-    client.put(f"{base}/children/{alex['id']}/items/{aseo['id']}", json={"active": False}, headers=PARENT)
-    assert client.delete(f"{base}/steps/{step}", headers=PARENT).json()["off"] == {alex["id"]: [aseo["id"]]}
-    assert [c["id"] for c in client.get(base).json()["children"]] == [bea["id"], alex["id"]]
+    client.put(f"{base}/children/{bea['id']}/tasks/{aseo['id']}", json={"active": False}, headers=PARENT)
+    client.put(f"{base}/children/{alex['id']}/tasks/{cena['id']}", json={"active": False}, headers=PARENT)
+    assert client.delete(f"{base}/tasks/{aseo['id']}", headers=PARENT).json()["off"] == {alex["id"]: [cena["id"]]}
     client.delete(f"/api/children/{alex['id']}", headers=PARENT)
-    assert client.get(base).json()["off"] == {}
-    assert client.get(base).status_code == 200  # the mission stays: it is the family's
+    found = client.get(base).json()
+    assert found["off"] == {} and found["kids"] == [bea["id"]]  # the mission stays: it is the family's
+
+
+def test_the_old_switches_become_who_it_is_for(client):
+    from app.storage.config_migrations import upgrade
+
+    tasks = [{"id": "t1", "steps": [{"id": "s1"}]}, {"id": "t2", "steps": []}]
+    doc = upgrade(
+        {
+            "version": 28,
+            "children": [{"id": "bea"}, {"id": "alex"}, {"id": "noa"}],
+            "missions": [
+                {"id": "m", "tasks": tasks, "off": {"bea": ["t1"], "alex": ["t1", "s1", "t2"], "noa": ["t1", "s1"]}}
+            ],
+        }
+    )
+    mission = doc["missions"][0]
+    assert mission["kids"] == ["bea", "noa"]  # Alex saw nothing; Bea still saw «t1» by its step
+    assert mission["off"] == {"noa": ["t1"]}  # Noa saw nothing of «t1»: off, whole
 
 
 # ---------- suggested images ----------

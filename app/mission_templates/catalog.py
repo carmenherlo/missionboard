@@ -43,6 +43,7 @@ def _mission(mission_id: str, name: str, image: str, color: str, days: list[str]
         "days": days,
         "schedule": None,  # always open: each family sets its own times
         "tasks": _tasks(mission_id, tasks),
+        "kids": [],  # a copy is for every child (service.py)
         "off": {},
     }
 

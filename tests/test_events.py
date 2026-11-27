@@ -143,7 +143,7 @@ def test_tasks_steps_and_their_order(client):
     first = add_step(client, mission["id"], task["id"], "Ducharse").json()["tasks"][0]["steps"][0]
     client.patch(f"{base}/steps/{first['id']}", json={"text": "Ducha"}, headers=PARENT)
     client.put(f"{base}/steps/{first['id']}/place", json={"task_id": other["id"], "position": 0}, headers=PARENT)
-    client.put(f"{base}/children/{bea['id']}/items/{first['id']}", json={"active": False}, headers=PARENT)
+    client.put(f"{base}/children/{bea['id']}/tasks/{other['id']}", json={"active": False}, headers=PARENT)
     client.put(f"{base}/tasks/order", json={"ids": [other["id"], task["id"]]}, headers=PARENT)
     client.delete(f"{base}/steps/{first['id']}", headers=PARENT)
     client.delete(f"{base}/tasks/{task['id']}", headers=PARENT)
@@ -151,7 +151,7 @@ def test_tasks_steps_and_their_order(client):
         "Quitaste la tarea «Aseo» de «Alunizaje»",
         "Quitaste el paso «Ducha» de «Alunizaje»",
         "Ordenaste las tareas de «Alunizaje» · orden: Cena, Aseo",
-        "Apagaste «Ducha» de «Alunizaje» a Bea",
+        "Apagaste «Cena» de «Alunizaje» a Bea",
         "Ordenaste los pasos de «Alunizaje» · orden: Ducha",
         "Cambiaste el paso «Ducha» de «Alunizaje» · texto: Ducha",
         "Añadiste el paso «Ducharse» a «Alunizaje»",

@@ -8,7 +8,7 @@ from app.main import create_app
 from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
-from tests.test_missions import add_step, add_task, create_child, create_mission, patch
+from tests.test_missions import add_step, add_task, create_child, create_mission, patch, put_in
 from tests.test_settings import FixedClock
 from tests.test_today import descriptions, mark, set_active
 
@@ -182,8 +182,6 @@ def test_only_its_children_with_something_on_and_the_goal_waits_for_them(client)
     assert all(noa["id"] != p["child"]["id"] for p in current(client)["people"])
     for task in mission["tasks"]:  # nothing on for Alex: not beside the clock
         set_active(client, mission, alex, task["id"], False)
-        for step in task["steps"]:
-            set_active(client, mission, alex, step["id"], False)
     people = current(client)["people"]
     assert [p["child"]["name"] for p in people] == ["Bea"]
     assert people[0]["mission"]["total"] == 6 and people[0]["mission"]["done"] == 0
@@ -273,6 +271,7 @@ def test_a_routine_with_no_task_that_day_does_not_go(client, clock):
 
 def test_a_trial_on_any_day_with_what_they_have(client, clock, morning):
     bea = create_child(client)
+    put_in(client, morning["mission_id"], bea)
     clock.moment = MONDAY.replace(day=7)  # Saturday: no mission today
     trial = client.get(f"/api/routines/{morning['id']}/trial", headers=PARENT).json()
     assert trial["trial"] is True

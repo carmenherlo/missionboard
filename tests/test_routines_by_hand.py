@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.storage.config_store import config_path
 from tests.conftest import PARENT
-from tests.test_missions import add_task, create_child, create_mission, patch
+from tests.test_missions import add_task, create_child, create_mission, patch, put_in
 from tests.test_settings import FixedClock
 from tests.test_today import descriptions, mark
 
@@ -60,7 +60,7 @@ def test_a_routine_by_hand_has_no_times_of_its_own(client, landing):
 
 def test_started_by_hand_with_who_has_come_home(client, landing, clock):
     bea = create_child(client)
-    create_child(client, name="Alex", preset="dinosaur")
+    put_in(client, landing["mission_id"], bea, create_child(client, name="Alex", preset="dinosaur"))
     assert client.get("/api/routines/current").json() is None
     by_hand = client.get("/api/routines/by-hand").json()
     assert [r["name"] for r in by_hand] == ["Aterrizaje"] and by_hand[0]["minutes"] == 7
@@ -96,6 +96,7 @@ def test_finished_for_everyone_it_does_not_come_back(client, landing):
 
 def test_the_missions_hours_rule_until_it_is_started_by_hand(client, landing):
     bea, alex = create_child(client), create_child(client, name="Alex", preset="dinosaur")
+    put_in(client, landing["mission_id"], bea, alex)
     patch(client, landing["mission_id"], schedule={"start": "18:00", "end": "21:00"})  # it is 17:00
     mission = client.get(f"/api/missions/{landing['mission_id']}").json()
 
@@ -120,7 +121,7 @@ def test_not_on_its_days_or_unknown(client, landing, clock):
 
 
 def test_trying_one_by_hand_starts_it_now(client, landing):
-    create_child(client)
+    put_in(client, landing["mission_id"], create_child(client))
     trial = client.get(f"/api/routines/{landing['id']}/trial", headers=PARENT).json()
     assert trial["manual"] is True and trial["started"] == pytest.approx(17 * 60 + 1 / 3)  # after its 10 s of start
     assert trial["parts"][0]["start"] == "17:00" and len(trial["people"]) == 1

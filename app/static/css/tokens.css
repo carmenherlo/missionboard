@@ -132,7 +132,6 @@
   --step-tile-size: 120px;
   --task-card-width: 300px;
   --task-icon-size: 64px;
-  --square-size: 84px; /* a child's finger: not under 64px */
   --task-speak-size: 34px; /* 🔊 on a task's card (13/11: it was hardly seen) */
   --reminder-size: 40px; /* a step on a child's card: a reminder, not a button (misiones-3) */
   --shadow-badge: 0 3px 10px rgb(0 0 0 / 0.15);

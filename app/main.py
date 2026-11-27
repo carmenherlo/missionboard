@@ -29,6 +29,7 @@ from app.images import api as images_api
 from app.images.libraries import LIBRARIES, ImageLibraries, Library
 from app.mission_templates import api as mission_templates_api
 from app.missions import api as missions_api
+from app.missions import kids_api as mission_kids_api
 from app.notify import HomeAssistant
 from app.notify import api as notify_api
 from app.overview import api as overview_api
@@ -183,6 +184,7 @@ def create_app(
     app.include_router(avatars_api.router)
     app.include_router(children_api.router)
     app.include_router(missions_api.router)
+    app.include_router(mission_kids_api.router)
     app.include_router(mission_templates_api.router)
     app.include_router(prizes_api.router)
     app.include_router(images_api.router)

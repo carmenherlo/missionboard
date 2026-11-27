@@ -284,6 +284,11 @@
   z-index: 1;
 }
 
+/* Not theirs, or switched off for them (a mission or a task): greyed out, the box still on top. */
+.row--off > :not(input) {
+  opacity: var(--unused-opacity);
+}
+
 /* ---------- the clock screen and rest mode (reloj.html) ---------- */
 
 .icon-button--label {

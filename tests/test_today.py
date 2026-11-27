@@ -10,7 +10,7 @@ from app.storage.config_migrations import CURRENT_VERSION
 from app.storage.config_store import config_path
 from app.today.api import background_url
 from tests.conftest import PARENT
-from tests.test_missions import add_step, add_task, create_child, create_mission, patch
+from tests.test_missions import add_step, add_task, create_child, create_mission, patch, put_in
 from tests.test_settings import FixedClock
 
 MADRID = timezone(timedelta(hours=1))
@@ -86,7 +86,7 @@ def descriptions(client, limit=20):
 
 
 def set_active(client, mission, child, item_id, active):
-    url = f"/api/missions/{mission['id']}/children/{child['id']}/items/{item_id}"
+    url = f"/api/missions/{mission['id']}/children/{child['id']}/tasks/{item_id}"
     return client.put(url, json={"active": active}, headers=PARENT)
 
 
@@ -287,10 +287,10 @@ def test_steps_are_reminders_and_the_child_checks_the_task(client, bea):
     assert mark(client, bea, despegue, despegue["tasks"][0]["id"]).json()["completed"] is True
 
 
-def test_a_step_off_for_a_child_is_not_shown_to_them(client, bea):
+def test_steps_go_with_their_task_and_are_not_switched_one_by_one(client, bea):
     despegue = with_steps(client, "Despegue", ("Dientes", "Cara"))
-    set_active(client, despegue, bea, despegue["tasks"][0]["steps"][1]["id"], False)
-    assert [s["text"] for s in today(client, bea)["missions"][0]["tasks"][0]["steps"]] == ["Dientes"]
+    assert set_active(client, despegue, bea, despegue["tasks"][0]["steps"][1]["id"], False).status_code == 404
+    assert [s["text"] for s in today(client, bea)["missions"][0]["tasks"][0]["steps"]] == ["Dientes", "Cara"]
 
 
 def test_steps_checked_before_reminders_count_for_their_task(client, bea, data_dir):
@@ -311,7 +311,6 @@ def test_steps_checked_before_reminders_count_for_their_task(client, bea, data_d
 
 def test_a_task_with_everything_off_is_gone_and_with_nothing_the_mission_too(client, bea):
     despegue = with_steps(client, "Despegue", ("Dientes",))
-    set_active(client, despegue, bea, despegue["tasks"][0]["steps"][0]["id"], False)
     set_active(client, despegue, bea, despegue["tasks"][0]["id"], False)
     assert today(client, bea)["missions"] == []
 
@@ -369,7 +368,9 @@ def test_a_parent_opens_a_mission_only_today_with_its_star(client, bea, clock):
     assert client.post(url, headers=PARENT).json()["missions"][0]["state"] == "open"
     assert descriptions(client, limit=1) == ["Abriste «Deberes» solo por hoy para Bea"]
     alex = create_child(client, name="Alex", preset="dinosaur")
-    assert states(client, alex) == {"Deberes": "closed"}  # only for that child
+    assert states(client, alex) == {}  # a new child is in no mission
+    put_in(client, deberes["id"], alex)
+    assert states(client, alex) == {"Deberes": "closed"}  # opened only for Bea
     assert check(client, bea, deberes, 0).json()["stars_earned"] == 1
     clock.moment = MONDAY + timedelta(days=1)
     assert states(client, bea) == {"Deberes": "closed"}

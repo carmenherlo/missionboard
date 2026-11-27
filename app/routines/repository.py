@@ -17,14 +17,12 @@ from app.storage.config_store import ConfigStore
 NEW_PART_MINUTES = 5
 
 
-def resolved(stored: dict, mission: dict, children: list[str]) -> dict:
+def resolved(stored: dict, mission: dict) -> dict:
     """A stored routine with what comes from its mission: its name and picture, and its
-    tasks as parts, in their order (a new one, 5 minutes). The steps are the ones some
-    child of the routine has on. The times settle again: tasks may have come or gone."""
+    tasks as parts, in their order (a new one, 5 minutes), with all their steps. The times
+    settle again: tasks may have come or gone."""
     own = {part["id"]: part for part in stored.get("parts") or []}
     first_at = (stored.get("parts") or [{}])[0].get("at")
-    kids = stored.get("kids") or children
-    off = mission.get("off") or {}
     mission_days = mission.get("days") or WEEKDAYS
     parts = []
     for task in mission["tasks"]:
@@ -40,11 +38,7 @@ def resolved(stored: dict, mission: dict, children: list[str]) -> dict:
                 "image": task.get("image"),
                 "image_suggested": bool(task.get("image_suggested")),
                 "days": [d for d in mission_days if not task.get("days") or d in task["days"]],
-                "steps": [
-                    {"text": step["text"], "image": step.get("image")}
-                    for step in task.get("steps") or []
-                    if not kids or any(step["id"] not in off.get(kid, ()) for kid in kids)
-                ],
+                "steps": [{"text": step["text"], "image": step.get("image")} for step in task.get("steps") or []],
             }
         )
     if stored.get("wake") is not None:
@@ -83,14 +77,13 @@ class RoutinesRepository:
         """A routine not saved yet, as it would be read (its mission must have tasks)."""
         doc = self._store.load()
         mission = next(m for m in doc["missions"] if m["id"] == stored["mission_id"])
-        return resolved(stored, mission, [c["id"] for c in doc["children"]])
+        return resolved(stored, mission)
 
     def list(self) -> list[Routine]:
         doc = self._store.load()
         missions = {m["id"]: m for m in doc["missions"]}
-        children = [c["id"] for c in doc["children"]]
         return [
-            Routine.model_validate(resolved(entry, missions[entry["mission_id"]], children))
+            Routine.model_validate(resolved(entry, missions[entry["mission_id"]]))
             for entry in doc.get("routines") or []
             if missions.get(entry["mission_id"], {}).get("tasks")  # mission without tasks: not a routine yet
         ]

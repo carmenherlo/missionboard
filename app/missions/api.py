@@ -43,6 +43,7 @@ class ScheduleIn(BaseModel):
 class MissionCreate(BaseModel):
     name: str = Field(max_length=MISSION_NAME_MAX)
     image: str | None = None
+    kids: list[str] | None = None  # who it is for; not sent, every child
 
     _name = field_validator("name")(_not_blank)
 
@@ -95,10 +96,6 @@ class OrderIn(BaseModel):
     ids: list[str]
 
 
-class ActiveIn(BaseModel):
-    active: bool
-
-
 def get_missions_service(
     store: ConfigStore = Depends(get_config_store),
     libraries: ImageLibraries = Depends(get_image_libraries),
@@ -125,7 +122,7 @@ def _media_type(content_type: str) -> str:
 
 class Presenter:
     """Turns missions into JSON: the URL of every image, the tones of its colour, how
-    much each child has switched on, and its routine."""
+    who it is for, how many tasks each child has on, and its routine."""
 
     def __init__(
         self, libraries: ImageLibraries = Depends(get_image_libraries), store: ConfigStore = Depends(get_config_store)
@@ -151,9 +148,10 @@ class Presenter:
             task["image_url"] = self._libraries.url(task["image"])
             for step in task["steps"]:
                 step["image_url"] = self._libraries.url(step["image"])
-        total = len(mission.items())
+        total = len(mission.tasks)
         data["children"] = [
-            {"id": c.id, "active": sum(mission.is_on(c.id, i.id) for i in mission.items()), "total": total}
+            {"id": c.id, "on": c.id in mission.kids, "active": sum(mission.is_on(c.id, t.id) for t in mission.tasks)}
+            | {"total": total}
             for c in children
         ]
         routine = routines.get(mission.id)
@@ -180,7 +178,7 @@ def list_missions(missions: MissionsService = Depends(get_missions_service), pre
 def create_mission(
     body: MissionCreate, missions: MissionsService = Depends(get_missions_service), present: Presenter = Depends()
 ):
-    return present(missions.create(body.name, body.image))
+    return present(missions.create(body.name, body.image, body.kids))
 
 
 @router.put("/missions/order", dependencies=parent_only)
@@ -340,19 +338,3 @@ async def upload_step_photo(
     present: Presenter = Depends(),
 ):
     return present(missions.set_step_photo(mission_id, step_id, await request.body(), _media_type(content_type)))
-
-
-# ---------- each child ----------
-
-
-@router.put("/missions/{mission_id}/children/{child_id}/items/{item_id}", dependencies=parent_only)
-def set_active(
-    mission_id: str,
-    child_id: str,
-    item_id: str,
-    body: ActiveIn,
-    missions: MissionsService = Depends(get_missions_service),
-    present: Presenter = Depends(),
-):
-    """Switch a task or a step on or off for one child."""
-    return present(missions.set_active(mission_id, child_id, item_id, body.active))
